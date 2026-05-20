@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ColosmartTraining — L'Espace</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Playfair+Display:ital,wght@1,500;1,600&display=swap">
+
+  <link rel="stylesheet" href="cst-tokens.css">
+
+  <style>
+    html, body { margin: 0; padding: 0; background: #f0eee9; font-family: var(--cst-ui); }
+    * { box-sizing: border-box; }
+    /* Make artboards crop content cleanly */
+    [data-dc-artboard] .cst-screen { position: relative; }
+  </style>
+</head>
+<body>
+
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script type="text/babel" src="design-canvas.jsx"></script>
+  <script type="text/babel" src="cst-atoms.jsx"></script>
+  <script type="text/babel" src="cst-auth.jsx"></script>
+  <script type="text/babel" src="cst-coach.jsx"></script>
+  <script type="text/babel" src="cst-builder.jsx"></script>
+  <script type="text/babel" src="cst-import.jsx"></script>
+  <script type="text/babel" src="cst-member.jsx"></script>
+  <script type="text/babel" src="cst-logger.jsx"></script>
+
+  <script type="text/babel" data-presets="react">
+    const MOBILE_W = 390;
+    const MOBILE_H = 780;
+    const DESKTOP_W = 1440;
+    const DESKTOP_H = 900;
+
+    function App() {
+      return (
+        <DesignCanvas
+          docTitle="COLOSMARTRAINING — L'Espace"
+          docSubtitle="App de coaching · Maquettes hi-fi · 20 mai 2026"
+        >
+          <DCSection
+            id="auth"
+            title="Auth & Onboarding"
+            subtitle="Mobile · 390 × 780 — Entrée dans l'équipage."
+          >
+            <DCArtboard id="login" label="01 · Login" width={MOBILE_W} height={MOBILE_H}>
+              <CSTLogin />
+            </DCArtboard>
+            <DCArtboard id="ob1" label="02 · Onboarding — Bienvenue" width={MOBILE_W} height={MOBILE_H}>
+              <CSTOnboard1 />
+            </DCArtboard>
+            <DCArtboard id="ob2" label="03 · Onboarding — Profil" width={MOBILE_W} height={MOBILE_H}>
+              <CSTOnboard2 />
+            </DCArtboard>
+            <DCArtboard id="ob3" label="04 · Onboarding — Terrain" width={MOBILE_W} height={MOBILE_H}>
+              <CSTOnboard3 />
+            </DCArtboard>
+            <DCArtboard id="ob4" label="05 · Onboarding — Prêt" width={MOBILE_W} height={MOBILE_H}>
+              <CSTOnboard4 />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection
+            id="coach"
+            title="Espace Coach"
+            subtitle="Desktop · 1440 × 900 — Tableau de bord, fiche membre, builder, import Excel."
+          >
+            <DCArtboard id="coach-dash" label="06 · Coach — Dashboard" width={DESKTOP_W} height={1280}>
+              <CSTCoachDashboard />
+            </DCArtboard>
+            <DCArtboard id="coach-member" label="07 · Coach — Fiche membre" width={DESKTOP_W} height={1100}>
+              <CSTCoachMember />
+            </DCArtboard>
+            <DCArtboard id="coach-builder" label="08 · Coach — Builder programme" width={DESKTOP_W} height={1340}>
+              <CSTBuilder />
+            </DCArtboard>
+            <DCArtboard id="coach-import" label="09 · Coach — Import Excel" width={DESKTOP_W} height={1080}>
+              <CSTExcelImport />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection
+            id="member"
+            title="Espace Membre"
+            subtitle="Mobile · 390 × 780 — L'expérience de l'athlète, du dashboard au log."
+          >
+            <DCArtboard id="m-dash" label="10 · Membre — Dashboard" width={MOBILE_W} height={MOBILE_H}>
+              <CSTMemberDashboard />
+            </DCArtboard>
+            <DCArtboard id="m-prog" label="11 · Membre — Mon programme" width={MOBILE_W} height={MOBILE_H}>
+              <CSTMemberProgramme />
+            </DCArtboard>
+            <DCArtboard id="m-log" label="12 · Membre — Logger ★" width={MOBILE_W} height={MOBILE_H}>
+              <CSTSessionLogger />
+            </DCArtboard>
+            <DCArtboard id="m-hist" label="13 · Membre — Historique" width={MOBILE_W} height={MOBILE_H}>
+              <CSTHistory />
+            </DCArtboard>
+            <DCArtboard id="m-prog2" label="14 · Membre — Progression" width={MOBILE_W} height={MOBILE_H}>
+              <CSTProgression />
+            </DCArtboard>
+          </DCSection>
+        </DesignCanvas>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
