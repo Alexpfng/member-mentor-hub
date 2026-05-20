@@ -154,6 +154,7 @@ html {
 
   /* Drawer */
   .coach-drawer {
+    display: block;
     position: fixed;
     top: 0;
     left: 0;
@@ -210,11 +211,17 @@ html {
   }
 }
 
-/* Hide coach mobile topbar on desktop */
+/* Hide mobile-only coach elements on desktop */
 .coach-mobile-topbar {
   display: none;
 }
 .coach-hamburger {
+  display: none;
+}
+.coach-drawer {
+  display: none;
+}
+.coach-drawer-overlay {
   display: none;
 }
 
