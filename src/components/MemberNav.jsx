@@ -1,11 +1,12 @@
 import { useNavigate, useLocation } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 const items = [
   { id: 'home',    icon: '⧉', label: 'HOME',      path: '/membre' },
   { id: 'prog',    icon: '◤', label: 'PROGRAMME',  path: '/membre/programme' },
   { id: 'hist',    icon: '◯', label: 'HISTORIQUE', path: '/membre/historique' },
   { id: 'prog2',   icon: '▲', label: 'PROGRÈS',    path: '/membre/progression' },
-  { id: 'profile', icon: '○', label: 'PROFIL',     path: '/membre/profil' },
+  { id: 'logout',  icon: '⎋', label: 'SORTIR',     path: '__logout__' },
 ];
 
 export default function MemberNav() {
@@ -30,8 +31,16 @@ export default function MemberNav() {
     }}>
       {items.map(it => {
         const on = it.id === activeId;
+        const onClick = async () => {
+          if (it.path === '__logout__') {
+            await supabase.auth.signOut();
+            navigate('/login');
+          } else {
+            navigate(it.path);
+          }
+        };
         return (
-          <div key={it.id} onClick={() => navigate(it.path)} style={{
+          <div key={it.id} onClick={onClick} style={{
             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
             fontFamily: 'var(--cst-mono)', fontSize: 8, letterSpacing: '0.12em',
             color: on ? '#fff' : 'rgba(255,255,255,0.5)',

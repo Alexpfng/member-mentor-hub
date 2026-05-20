@@ -1,4 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import { CSTLogo, CSTAvatar } from './Atoms';
 
 const items = [
@@ -56,10 +57,15 @@ export default function CoachSidebar() {
         display: 'flex', alignItems: 'center', gap: 10,
       }}>
         <CSTAvatar initials="LC" size={32} />
-        <div className="cst-col" style={{ minWidth: 0 }}>
+        <div className="cst-col" style={{ minWidth: 0, flex: 1 }}>
           <div style={{ fontSize: 12, fontWeight: 600 }}>Léo Colognesi</div>
           <div className="cst-mono" style={{ fontSize: 9 }}>COACH · ADMIN</div>
         </div>
+        <button onClick={async () => { await supabase.auth.signOut(); navigate('/login'); }}
+          title="Déconnexion"
+          style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)', borderRadius: 6, padding: '4px 8px', fontSize: 10, cursor: 'pointer', fontFamily: 'var(--cst-mono)' }}>
+          ⎋
+        </button>
       </div>
     </aside>
   );

@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { CSTLogo, CSTSectionNum, CSTDuoTitle, CSTAvatar } from '../../components/Atoms';
 
 const hatchOverlay = {
@@ -32,13 +34,10 @@ function Step1({ onNext }) {
         <div className="cst-col" style={{ gap: 14, marginTop: 32 }}>
           {[
             ['01', 'CONSULTE', "Ton programme du jour, semaine par semaine."],
-            ['02', 'LOGGE',    'Charge, reps, RPE — tout est tracé sans friction.'],
+            ['02', 'LOGGE', 'Charge, reps, RPE — tout est tracé sans friction.'],
             ['03', 'PROGRESSE', "Tes records, ton volume, ton adhérence — en clair."],
           ].map(([n, t, d]) => (
-            <div key={n} style={{
-              display: 'flex', gap: 14, padding: '14px 16px',
-              border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10,
-            }}>
+            <div key={n} style={{ display: 'flex', gap: 14, padding: '14px 16px', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10 }}>
               <span className="cst-mono" style={{ fontSize: 10, color: 'var(--cst-mid-green)', flexShrink: 0 }}>★ {n}</span>
               <div className="cst-col" style={{ gap: 2 }}>
                 <span className="cst-display" style={{ fontSize: 16 }}>{t}</span>
@@ -56,21 +55,26 @@ function Step1({ onNext }) {
   );
 }
 
-function Step2({ onNext, onBack }) {
-  const [level, setLevel] = useState('int');
-  const [goal, setGoal] = useState('force');
-
+function Step2({ data, setData, onNext, onBack }) {
+  const [err, setErr] = useState('');
   const levels = [
-    { id: 'deb', label: 'DÉBUTANT',     sub: '0–1 an' },
+    { id: 'deb', label: 'DÉBUTANT', sub: '0–1 an' },
     { id: 'int', label: 'INTERMÉDIAIRE', sub: '1–3 ans' },
-    { id: 'av',  label: 'AVANCÉ',        sub: '3+ ans' },
+    { id: 'av', label: 'AVANCÉ', sub: '3+ ans' },
   ];
   const goals = [
-    { id: 'force', label: 'Prise de force',  icon: '▲' },
-    { id: 'hyp',   label: 'Hypertrophie',    icon: '◉' },
-    { id: 'end',   label: 'Endurance',       icon: '○' },
-    { id: 'mob',   label: 'Mobilité',        icon: '◎' },
+    { id: 'force', label: 'Prise de force', icon: '▲' },
+    { id: 'hyp', label: 'Hypertrophie', icon: '◉' },
+    { id: 'end', label: 'Endurance', icon: '○' },
+    { id: 'mob', label: 'Mobilité', icon: '◎' },
   ];
+
+  function validate() {
+    if (!data.firstName?.trim() || !data.lastName?.trim()) { setErr('Renseigne ton prénom et ton nom.'); return false; }
+    if (!data.level) { setErr('Sélectionne ton niveau.'); return false; }
+    if (!data.goal) { setErr('Sélectionne ton objectif.'); return false; }
+    return true;
+  }
 
   return (
     <div className="cst-screen cst-light" style={{ padding: '20px 24px', position: 'relative' }}>
@@ -85,17 +89,19 @@ function Step2({ onNext, onBack }) {
           <div>
             <label className="cst-label">PRÉNOM · NOM</label>
             <div style={{ display: 'flex', gap: 8 }}>
-              <input className="cst-input cst-input-light" placeholder="Jordan" style={{ flex: 1 }} />
-              <input className="cst-input cst-input-light" placeholder="F." style={{ flex: 1 }} />
+              <input className="cst-input cst-input-light" placeholder="Jordan" style={{ flex: 1 }}
+                value={data.firstName || ''} onChange={e => { setData({ ...data, firstName: e.target.value }); setErr(''); }} />
+              <input className="cst-input cst-input-light" placeholder="Ferrer" style={{ flex: 1 }}
+                value={data.lastName || ''} onChange={e => { setData({ ...data, lastName: e.target.value }); setErr(''); }} />
             </div>
           </div>
           <div>
             <label className="cst-label">NIVEAU</label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
               {levels.map(l => (
-                <div key={l.id} onClick={() => setLevel(l.id)} style={{
-                  border: level === l.id ? '2px solid var(--cst-mid-green)' : '1px solid rgba(0,0,0,0.10)',
-                  background: level === l.id ? 'rgba(45,90,53,0.04)' : '#fff',
+                <div key={l.id} onClick={() => { setData({ ...data, level: l.id }); setErr(''); }} style={{
+                  border: data.level === l.id ? '2px solid var(--cst-mid-green)' : '1px solid rgba(0,0,0,0.10)',
+                  background: data.level === l.id ? 'rgba(45,90,53,0.04)' : '#fff',
                   borderRadius: 10, padding: '10px 8px',
                   display: 'flex', flexDirection: 'column', gap: 4, cursor: 'pointer',
                 }}>
@@ -109,9 +115,9 @@ function Step2({ onNext, onBack }) {
             <label className="cst-label">OBJECTIF PRINCIPAL</label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               {goals.map(g => (
-                <div key={g.id} onClick={() => setGoal(g.id)} style={{
-                  border: goal === g.id ? '2px solid var(--cst-mid-green)' : '1px solid rgba(0,0,0,0.10)',
-                  background: goal === g.id ? 'rgba(45,90,53,0.04)' : '#fff',
+                <div key={g.id} onClick={() => { setData({ ...data, goal: g.id }); setErr(''); }} style={{
+                  border: data.goal === g.id ? '2px solid var(--cst-mid-green)' : '1px solid rgba(0,0,0,0.10)',
+                  background: data.goal === g.id ? 'rgba(45,90,53,0.04)' : '#fff',
                   borderRadius: 10, padding: '14px 14px',
                   display: 'flex', flexDirection: 'column', gap: 6, cursor: 'pointer',
                 }}>
@@ -122,17 +128,24 @@ function Step2({ onNext, onBack }) {
             </div>
           </div>
         </div>
+        {err && <div style={{ marginTop: 12, padding: 10, background: 'rgba(139,35,24,0.08)', border: '1px solid rgba(139,35,24,0.3)', borderRadius: 8, fontSize: 12, color: '#8B2318' }}>{err}</div>}
         <div style={{ marginTop: 'auto', paddingTop: 20, display: 'flex', gap: 10 }}>
           <button className="cst-btn cst-btn-ghost-light" onClick={onBack}>← RETOUR</button>
-          <button className="cst-btn cst-btn-primary" style={{ flex: 1 }} onClick={onNext}>CONTINUER →</button>
+          <button className="cst-btn cst-btn-primary" style={{ flex: 1 }} onClick={() => { if (validate()) onNext(); }}>CONTINUER →</button>
         </div>
       </div>
     </div>
   );
 }
 
-function Step3({ onNext, onBack }) {
-  const [freq, setFreq] = useState(4);
+function Step3({ data, setData, onNext, onBack }) {
+  const [err, setErr] = useState('');
+  function validate() {
+    const w = Number(data.weight); const h = Number(data.height);
+    if (!w || w < 30 || w > 250) { setErr('Poids invalide (30–250 kg).'); return false; }
+    if (!h || h < 120 || h > 230) { setErr('Taille invalide (120–230 cm).'); return false; }
+    return true;
+  }
   return (
     <div className="cst-screen cst-light" style={{ padding: '20px 24px', position: 'relative' }}>
       <div className="cst-hatch-light" style={{ position: 'absolute', inset: 0, opacity: 0.6, pointerEvents: 'none' }} />
@@ -146,24 +159,26 @@ function Step3({ onNext, onBack }) {
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
               <label className="cst-label">POIDS · KG</label>
-              <input className="cst-input cst-input-light" defaultValue="76" />
+              <input className="cst-input cst-input-light" type="number" inputMode="decimal"
+                value={data.weight || ''} onChange={e => { setData({ ...data, weight: e.target.value }); setErr(''); }} />
             </div>
             <div style={{ flex: 1 }}>
               <label className="cst-label">TAILLE · CM</label>
-              <input className="cst-input cst-input-light" defaultValue="180" />
+              <input className="cst-input cst-input-light" type="number" inputMode="numeric"
+                value={data.height || ''} onChange={e => { setData({ ...data, height: e.target.value }); setErr(''); }} />
             </div>
           </div>
 
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
               <label className="cst-label" style={{ marginBottom: 4 }}>FRÉQUENCE / SEMAINE</label>
-              <span className="cst-display" style={{ fontSize: 22, color: 'var(--cst-mid-green)' }}>{freq} <span className="cst-mono" style={{ fontSize: 10 }}>JOURS</span></span>
+              <span className="cst-display" style={{ fontSize: 22, color: 'var(--cst-mid-green)' }}>{data.freq || 4} <span className="cst-mono" style={{ fontSize: 10 }}>JOURS</span></span>
             </div>
-            <input type="range" min="1" max="7" value={freq} onChange={e => setFreq(Number(e.target.value))}
+            <input type="range" min="1" max="7" value={data.freq || 4} onChange={e => setData({ ...data, freq: Number(e.target.value) })}
               style={{ width: '100%', accentColor: 'var(--cst-mid-green)', marginTop: 8 }} />
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-              {[1,2,3,4,5,6,7].map(n => (
-                <span key={n} className="cst-mono" style={{ fontSize: 9, opacity: n === freq ? 1 : 0.4, color: n === freq ? 'var(--cst-mid-green)' : 'inherit' }}>{n}</span>
+              {[1, 2, 3, 4, 5, 6, 7].map(n => (
+                <span key={n} className="cst-mono" style={{ fontSize: 9, opacity: n === (data.freq || 4) ? 1 : 0.4, color: n === (data.freq || 4) ? 'var(--cst-mid-green)' : 'inherit' }}>{n}</span>
               ))}
             </div>
           </div>
@@ -172,33 +187,34 @@ function Step3({ onNext, onBack }) {
             <label className="cst-label">BLESSURES · CONTRE-INDICATIONS</label>
             <textarea className="cst-input cst-input-light" rows="4"
               placeholder="Décris ce qui pourrait limiter l'entraînement…"
+              value={data.injuries || ''} onChange={e => setData({ ...data, injuries: e.target.value })}
               style={{ resize: 'none', fontFamily: 'var(--cst-ui)' }} />
           </div>
         </div>
 
+        {err && <div style={{ marginTop: 12, padding: 10, background: 'rgba(139,35,24,0.08)', border: '1px solid rgba(139,35,24,0.3)', borderRadius: 8, fontSize: 12, color: '#8B2318' }}>{err}</div>}
         <div style={{ marginTop: 'auto', paddingTop: 20, display: 'flex', gap: 10 }}>
           <button className="cst-btn cst-btn-ghost-light" onClick={onBack}>← RETOUR</button>
-          <button className="cst-btn cst-btn-primary" style={{ flex: 1 }} onClick={onNext}>CONTINUER →</button>
+          <button className="cst-btn cst-btn-primary" style={{ flex: 1 }} onClick={() => { if (validate()) onNext(); }}>CONTINUER →</button>
         </div>
       </div>
     </div>
   );
 }
 
-function Step4({ onFinish }) {
-  const hatchOverlay2 = {
-    position: 'absolute', inset: 0, pointerEvents: 'none',
-    backgroundImage: 'repeating-linear-gradient(135deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 11px)',
-  };
+const GOAL_LABELS = { force: 'PRISE DE FORCE', hyp: 'HYPERTROPHIE', end: 'ENDURANCE', mob: 'MOBILITÉ' };
+const LEVEL_LABELS = { deb: 'DÉBUTANT', int: 'INTERMÉDIAIRE', av: 'AVANCÉ' };
+
+function Step4({ data, onFinish, onBack, saving }) {
   const summary = [
-    ['NIVEAU', 'INTERMÉDIAIRE'],
-    ['OBJECTIF', 'PRISE DE FORCE'],
-    ['POIDS', '76 KG'],
-    ['FRÉQUENCE', '4 J / SEM'],
+    ['NIVEAU', LEVEL_LABELS[data.level] || '—'],
+    ['OBJECTIF', GOAL_LABELS[data.goal] || '—'],
+    ['POIDS', data.weight ? `${data.weight} KG` : '—'],
+    ['FRÉQUENCE', `${data.freq || 4} J / SEM`],
   ];
   return (
     <div className="cst-screen cst-hatch" style={{ padding: '20px 24px 28px', position: 'relative' }}>
-      <div style={hatchOverlay2} />
+      <div style={hatchOverlay} />
       <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', height: '100%' }}>
         <Nav step={4} />
         <div className="cst-col" style={{ gap: 12, marginTop: 6 }}>
@@ -225,32 +241,98 @@ function Step4({ onFinish }) {
             </div>
           </div>
           <p style={{ margin: 0, fontSize: 12, lineHeight: 1.55, opacity: 0.8 }}>
-            « Bienvenue Jordan. <span className="cst-italic">Construis un corps fort, peu importe où tu te trouves.</span> On démarre. »
+            « Bienvenue {data.firstName || ''}. <span className="cst-italic">Construis un corps fort, peu importe où tu te trouves.</span> On démarre. »
           </p>
         </div>
-        <div style={{ marginTop: 'auto', paddingTop: 24 }}>
-          <button className="cst-btn cst-btn-primary" style={{ width: '100%' }} onClick={onFinish}>VOIR MON PROGRAMME →</button>
+        <div style={{ marginTop: 'auto', paddingTop: 24, display: 'flex', gap: 10 }}>
+          <button className="cst-btn cst-btn-ghost" onClick={onBack} disabled={saving}>← RETOUR</button>
+          <button className="cst-btn cst-btn-primary" style={{ flex: 1, opacity: saving ? 0.7 : 1 }} disabled={saving} onClick={onFinish}>
+            {saving ? '...' : 'VOIR MON PROGRAMME →'}
+          </button>
         </div>
       </div>
     </div>
   );
 }
 
+const STORAGE_KEY = 'cst_onboarding_draft';
+
 export default function Onboarding() {
   const { step } = useParams();
   const navigate = useNavigate();
   const currentStep = Number(step) || 1;
+  const [saving, setSaving] = useState(false);
+
+  const [data, setData] = useState(() => {
+    try {
+      const raw = typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : null;
+      return raw ? JSON.parse(raw) : { freq: 4, level: 'int', goal: 'force' };
+    } catch { return { freq: 4, level: 'int', goal: 'force' }; }
+  });
+
+  useEffect(() => {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch { /* noop */ }
+  }, [data]);
 
   const next = () => navigate(`/onboarding/${currentStep + 1}`);
   const back = () => currentStep > 1 ? navigate(`/onboarding/${currentStep - 1}`) : navigate('/');
+
+  async function finish() {
+    setSaving(true);
+    try {
+      const { data: userData, error: uerr } = await supabase.auth.getUser();
+      if (uerr || !userData.user) throw new Error('Non connecté.');
+      const uid = userData.user.id;
+
+      // Update profile names
+      await supabase.from('profiles').update({
+        first_name: data.firstName || null,
+        last_name: data.lastName || null,
+      }).eq('id', uid);
+
+      // Upsert member_profiles
+      const payload = {
+        user_id: uid,
+        weight_kg: data.weight ? Number(data.weight) : null,
+        height_cm: data.height ? Number(data.height) : null,
+        level: LEVEL_LABELS[data.level] || null,
+        goal: GOAL_LABELS[data.goal] || null,
+        injuries: data.injuries || null,
+      };
+
+      // Check if row exists
+      const { data: existing } = await supabase
+        .from('member_profiles').select('id').eq('user_id', uid).maybeSingle();
+      if (existing?.id) {
+        await supabase.from('member_profiles').update(payload).eq('id', existing.id);
+      } else {
+        await supabase.from('member_profiles').insert(payload);
+      }
+
+      // Log initial weight
+      if (data.weight) {
+        await supabase.from('weight_logs').insert({
+          member_id: uid,
+          weight_kg: Number(data.weight),
+        });
+      }
+
+      try { localStorage.removeItem(STORAGE_KEY); } catch { /* noop */ }
+      toast.success('Profil enregistré ✓');
+      navigate('/membre');
+    } catch (e) {
+      toast.error(e?.message || 'Erreur lors de l\'enregistrement.');
+      setSaving(false);
+    }
+  }
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--cst-dark-green)' }}>
       <div style={{ width: 390, height: 780, position: 'relative', borderRadius: 16, overflow: 'hidden' }}>
         {currentStep === 1 && <Step1 onNext={next} />}
-        {currentStep === 2 && <Step2 onNext={next} onBack={back} />}
-        {currentStep === 3 && <Step3 onNext={next} onBack={back} />}
-        {currentStep === 4 && <Step4 onFinish={() => navigate('/membre')} />}
+        {currentStep === 2 && <Step2 data={data} setData={setData} onNext={next} onBack={back} />}
+        {currentStep === 3 && <Step3 data={data} setData={setData} onNext={next} onBack={back} />}
+        {currentStep === 4 && <Step4 data={data} onFinish={finish} onBack={back} saving={saving} />}
       </div>
     </div>
   );

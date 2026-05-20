@@ -1,6 +1,97 @@
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate } from '@tanstack/react-router';
+import { useServerFn } from '@tanstack/react-start';
 import CoachSidebar from '../../components/CoachSidebar';
 import { CSTSectionNum, CSTDuoTitle, CSTAvatar, CSTStatus, CSTBandWords, CSTDot } from '../../components/Atoms';
+import { listMembers, inviteMember, listPrograms, assignProgram } from '@/lib/coach.functions';
+
+function InviteModal({ onClose, onDone }) {
+  const inviteFn = useServerFn(inviteMember);
+  const [email, setEmail] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+
+  async function submit(e) {
+    e.preventDefault();
+    setErr('');
+    setLoading(true);
+    try {
+      await inviteFn({
+        data: {
+          email: email.trim().toLowerCase(),
+          first_name: firstName.trim() || undefined,
+          last_name: lastName.trim() || undefined,
+          redirect_to: `${window.location.origin}/reset-password`,
+        },
+      });
+      onDone(email);
+    } catch (ex) {
+      setErr(ex?.message || 'Erreur lors de l\'invitation');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 16 }}>
+      <form onClick={(e) => e.stopPropagation()} onSubmit={submit} className="cst-screen cst-hatch" style={{ width: 420, padding: 28, borderRadius: 14 }}>
+        <h2 className="cst-display" style={{ fontSize: 22, marginBottom: 4 }}>INVITER</h2>
+        <div className="cst-italic" style={{ fontSize: 14, color: 'var(--cst-mid-green)', marginBottom: 18 }}>un nouvel adhérent.</div>
+        <div className="cst-col" style={{ gap: 12 }}>
+          <div>
+            <label className="cst-label">EMAIL</label>
+            <input className="cst-input" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="adherent@email.com" />
+          </div>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <div style={{ flex: 1 }}>
+              <label className="cst-label">PRÉNOM</label>
+              <input className="cst-input" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label className="cst-label">NOM</label>
+              <input className="cst-input" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+            </div>
+          </div>
+          {err && <div style={{ padding: '8px 12px', background: 'rgba(139,35,24,0.15)', border: '1px solid rgba(139,35,24,0.4)', borderRadius: 6, fontSize: 12, color: '#C56A60' }}>{err}</div>}
+          <div className="cst-mono" style={{ fontSize: 10, opacity: 0.6 }}>
+            L'adhérent recevra un email avec un lien pour définir son mot de passe.
+          </div>
+          <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+            <button type="button" onClick={onClose} className="cst-btn cst-btn-ghost-dark" style={{ flex: 1 }}>ANNULER</button>
+            <button type="submit" disabled={loading} className="cst-btn cst-btn-primary" style={{ flex: 1 }}>{loading ? '...' : 'ENVOYER L\'INVITATION →'}</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function AssignSelect({ memberId, programs, currentProgramId, onAssigned }) {
+  const assignFn = useServerFn(assignProgram);
+  const [val, setVal] = useState(currentProgramId || '');
+  const [busy, setBusy] = useState(false);
+  async function handleChange(e) {
+    const pid = e.target.value;
+    setVal(pid);
+    if (!pid) return;
+    setBusy(true);
+    try {
+      await assignFn({ data: { member_id: memberId, program_id: pid } });
+      onAssigned();
+    } catch (ex) {
+      alert(ex?.message || 'Erreur');
+    } finally { setBusy(false); }
+  }
+  return (
+    <select className="cst-input" disabled={busy} value={val} onChange={handleChange} style={{ fontSize: 11, padding: '4px 6px', cursor: 'pointer' }}>
+      <option value="">— Assigner un programme —</option>
+      {programs.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+    </select>
+  );
+}
+
 
 const tableStyle = { width: '100%', borderCollapse: 'collapse', fontSize: 13 };
 const thStyle = {
@@ -26,19 +117,41 @@ const membres = [
 
 export default function CoachDashboard() {
   const navigate = useNavigate();
+  const listMembersFn = useServerFn(listMembers);
+  const listProgramsFn = useServerFn(listPrograms);
+  const [showInvite, setShowInvite] = useState(false);
+  const [inviteOk, setInviteOk] = useState('');
+  const [realMembers, setRealMembers] = useState([]);
+  const [programs, setPrograms] = useState([]);
+
+  async function reload() {
+    try {
+      const [m, p] = await Promise.all([listMembersFn(), listProgramsFn()]);
+      setRealMembers(m.members || []);
+      setPrograms(p.programs || []);
+    } catch {}
+  }
+  useEffect(() => { reload(); }, []);
+
   return (
     <div className="cst-screen" style={{ flexDirection: 'row' }}>
       <CoachSidebar />
+      {showInvite && <InviteModal onClose={() => setShowInvite(false)} onDone={(e) => { setShowInvite(false); setInviteOk(`Invitation envoyée à ${e}`); setTimeout(() => setInviteOk(''), 4000); reload(); }} />}
       <div className="cst-col cst-scroll" style={{ flex: 1, minWidth: 0 }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '24px 32px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
           <CSTSectionNum num={1} label="TABLEAU DE BORD" sub="MAI 2026" />
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <span className="cst-mono">MER. 20 MAI · 09:51</span>
-            <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" onClick={() => navigate('/coach/import')}>IMPORTER EXCEL ▲</button>
-            <button className="cst-btn cst-btn-primary cst-btn-sm" onClick={() => navigate('/coach/builder')}>NOUVEAU PROGRAMME →</button>
+            <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" onClick={() => navigate({ to: '/coach/import' })}>IMPORTER EXCEL ▲</button>
+            <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" onClick={() => setShowInvite(true)}>+ INVITER UN ADHÉRENT</button>
+            <button className="cst-btn cst-btn-primary cst-btn-sm" onClick={() => navigate({ to: '/coach/builder' })}>NOUVEAU PROGRAMME →</button>
           </div>
         </div>
+        {inviteOk && (
+          <div style={{ margin: '12px 32px 0', padding: '10px 14px', background: 'rgba(45,90,53,0.15)', border: '1px solid rgba(45,90,53,0.4)', borderRadius: 8, fontSize: 12, color: '#6EAB76' }}>{inviteOk}</div>
+        )}
+
 
         {/* Welcome */}
         <div style={{ padding: '24px 32px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 32 }}>
@@ -101,53 +214,55 @@ export default function CoachDashboard() {
           </div>
         </div>
 
-        {/* Members table */}
+        {/* Real Members table */}
         <div style={{ padding: '32px 32px 0' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-            <CSTSectionNum num={3} label="MES ADHÉRENTS" sub="12 ACTIFS" />
+            <CSTSectionNum num={3} label="MES ADHÉRENTS" sub={`${realMembers.length} INSCRITS`} />
+            <button className="cst-btn cst-btn-primary cst-btn-sm" onClick={() => setShowInvite(true)}>+ INVITER</button>
           </div>
           <div className="cst-card-dark" style={{ padding: 0, overflow: 'hidden' }}>
             <table style={tableStyle}>
               <thead>
                 <tr>
-                  <th style={{ ...thStyle, width: 220 }}>MEMBRE</th>
-                  <th style={thStyle}>PROGRAMME</th>
-                  <th style={thStyle}>DERNIÈRE SÉANCE</th>
-                  <th style={thStyle}>ADHÉRENCE 30J</th>
-                  <th style={thStyle}>PROCHAINE</th>
+                  <th style={{ ...thStyle, width: 260 }}>MEMBRE</th>
+                  <th style={thStyle}>EMAIL</th>
+                  <th style={thStyle}>PROGRAMME ASSIGNÉ</th>
+                  <th style={thStyle}>INSCRIT LE</th>
                   <th style={thStyle}></th>
                 </tr>
               </thead>
               <tbody>
-                {membres.map((r, i) => (
-                  <tr key={i}>
-                    <td style={tdStyle}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <CSTDot color={r.dot} />
-                        <CSTAvatar initials={r.init} size={28} />
-                        <span style={{ fontWeight: 600 }}>{r.name}</span>
-                      </div>
-                    </td>
-                    <td style={tdStyle}>{r.prog}</td>
-                    <td style={{ ...tdStyle, opacity: 0.7 }}>{r.last}</td>
-                    <td style={tdStyle}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <div style={{ width: 80, height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden' }}>
-                          <div style={{ width: `${r.adh}%`, height: '100%', background: r.adh > 80 ? 'var(--cst-success)' : r.adh > 60 ? 'var(--cst-warning)' : 'var(--cst-danger)' }} />
+                {realMembers.length === 0 && (
+                  <tr><td colSpan={5} style={{ ...tdStyle, textAlign: 'center', padding: '32px 16px', opacity: 0.6 }}>
+                    Aucun adhérent pour l'instant. <span style={{ color: 'var(--cst-mid-green)', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => setShowInvite(true)}>Inviter le premier →</span>
+                  </td></tr>
+                )}
+                {realMembers.map((r) => {
+                  const init = `${(r.first_name?.[0] || r.email?.[0] || '?')}${(r.last_name?.[0] || '')}`.toUpperCase();
+                  const name = [r.first_name, r.last_name].filter(Boolean).join(' ') || r.email;
+                  return (
+                    <tr key={r.id}>
+                      <td style={tdStyle}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <CSTAvatar initials={init} size={28} />
+                          <span style={{ fontWeight: 600 }}>{name}</span>
                         </div>
-                        <span className="cst-mono" style={{ fontSize: 11 }}>{r.adh}%</span>
-                      </div>
-                    </td>
-                    <td style={{ ...tdStyle, opacity: 0.7 }}>{r.next}</td>
-                    <td style={{ ...tdStyle, textAlign: 'right' }}>
-                      <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" style={{ marginRight: 6 }} onClick={() => navigate('/coach/membre')}>VOIR</button>
-                      <button className="cst-btn cst-btn-secondary cst-btn-sm" style={{ color: '#6EAB76', borderColor: 'rgba(110,171,118,0.4)' }}>ENVOYER →</button>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td style={{ ...tdStyle, opacity: 0.7, fontSize: 12 }}>{r.email}</td>
+                      <td style={tdStyle}>
+                        <AssignSelect memberId={r.id} programs={programs} currentProgramId={r.program_id} onAssigned={reload} />
+                      </td>
+                      <td style={{ ...tdStyle, opacity: 0.6, fontSize: 11 }} className="cst-mono">{r.created_at ? new Date(r.created_at).toLocaleDateString('fr-FR') : '—'}</td>
+                      <td style={{ ...tdStyle, textAlign: 'right' }}>
+                        <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" onClick={() => navigate({ to: '/coach/membre' })}>VOIR</button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
+
         </div>
 
         {/* Feed + Alertes */}

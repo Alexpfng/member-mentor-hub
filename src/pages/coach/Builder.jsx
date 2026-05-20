@@ -1,6 +1,9 @@
 import { useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
+import { useServerFn } from '@tanstack/react-start';
 import CoachSidebar from '../../components/CoachSidebar';
 import { CSTSectionNum, CSTDuoTitle, CSTPlaceholder } from '../../components/Atoms';
+import { saveProgram } from '@/lib/coach.functions';
 
 const panelStyle = { background: '#16261A', borderRight: '1px solid rgba(255,255,255,0.06)', padding: 24 };
 const exItem = { border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, padding: '8px 10px', background: '#1F2A22' };
@@ -17,8 +20,41 @@ const days = [
   { d:'JOUR 5', day:'SAMEDI',   label:'CARDIO',  type:'Z2 · 45 MIN', cardio:true },
 ];
 
+const OBJECTIFS = ['Force', 'Hypertrophie', 'Endurance', 'Mobilité'];
+
 export default function Builder() {
+  const navigate = useNavigate();
+  const saveFn = useServerFn(saveProgram);
   const [activeWeek, setActiveWeek] = useState(4);
+  const [name, setName] = useState('Force Fondamentale – Cycle 1');
+  const [duration, setDuration] = useState(8);
+  const [frequency, setFrequency] = useState(4);
+  const [objective, setObjective] = useState('Force');
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState(null);
+
+  async function handleSave() {
+    setMsg(null);
+    if (!name.trim()) { setMsg({ kind: 'err', text: 'Nom requis' }); return; }
+    setSaving(true);
+    try {
+      await saveFn({
+        data: {
+          name: name.trim(),
+          duration_weeks: duration,
+          frequency_per_week: frequency,
+          objective,
+          structure: { days },
+        },
+      });
+      setMsg({ kind: 'ok', text: 'Programme sauvegardé ✓' });
+      setTimeout(() => navigate({ to: '/coach' }), 900);
+    } catch (e) {
+      setMsg({ kind: 'err', text: e?.message || 'Erreur de sauvegarde' });
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <div className="cst-screen" style={{ flexDirection: 'row' }}>
@@ -36,28 +72,35 @@ export default function Builder() {
         <div className="cst-col" style={{ gap: 16 }}>
           <div>
             <label className="cst-label">NOM DU PROGRAMME</label>
-            <input className="cst-input" defaultValue="Force Fondamentale – Cycle 1" />
+            <input className="cst-input" value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
               <label className="cst-label">DURÉE</label>
-              <select className="cst-input" style={{ cursor: 'pointer' }}>
-                <option>8 semaines</option><option>12 semaines</option><option>4 semaines</option>
+              <select className="cst-input" style={{ cursor: 'pointer' }} value={duration} onChange={(e) => setDuration(Number(e.target.value))}>
+                <option value={4}>4 semaines</option>
+                <option value={8}>8 semaines</option>
+                <option value={12}>12 semaines</option>
               </select>
             </div>
             <div style={{ flex: 1 }}>
               <label className="cst-label">FRÉQUENCE</label>
-              <select className="cst-input" style={{ cursor: 'pointer' }}>
-                <option>4 jours / sem.</option><option>3 jours / sem.</option><option>5 jours / sem.</option>
+              <select className="cst-input" style={{ cursor: 'pointer' }} value={frequency} onChange={(e) => setFrequency(Number(e.target.value))}>
+                <option value={3}>3 jours / sem.</option>
+                <option value={4}>4 jours / sem.</option>
+                <option value={5}>5 jours / sem.</option>
               </select>
             </div>
           </div>
           <div>
             <label className="cst-label">OBJECTIF</label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {[['Force',true],['Hypertrophie',false],['Endurance',false],['Mobilité',false]].map(([t,on]) => (
-                <span key={t} className={on ? 'cst-tag' : 'cst-tag cst-tag-dark'} style={{ padding: '6px 12px', cursor: 'pointer' }}>{t}</span>
-              ))}
+              {OBJECTIFS.map((t) => {
+                const on = t === objective;
+                return (
+                  <span key={t} onClick={() => setObjective(t)} className={on ? 'cst-tag' : 'cst-tag cst-tag-dark'} style={{ padding: '6px 12px', cursor: 'pointer' }}>{t}</span>
+                );
+              })}
             </div>
           </div>
           <div style={{ padding: 14, borderRadius: 8, background: 'rgba(45,90,53,0.10)', border: '1px solid rgba(45,90,53,0.3)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -69,9 +112,13 @@ export default function Builder() {
               <div style={{ position: 'absolute', top: 2, right: 2, width: 16, height: 16, borderRadius: '50%', background: '#fff' }} />
             </div>
           </div>
+          {msg && (
+            <div style={{ padding: '8px 12px', borderRadius: 6, fontSize: 12, background: msg.kind === 'ok' ? 'rgba(45,90,53,0.15)' : 'rgba(139,35,24,0.15)', border: msg.kind === 'ok' ? '1px solid rgba(45,90,53,0.4)' : '1px solid rgba(139,35,24,0.4)', color: msg.kind === 'ok' ? '#6EAB76' : '#C56A60' }}>{msg.text}</div>
+          )}
           <div style={{ display: 'flex', gap: 8 }}>
-            <button className="cst-btn cst-btn-primary" style={{ flex: 1 }}>SAUVEGARDER →</button>
+            <button onClick={handleSave} disabled={saving} className="cst-btn cst-btn-primary" style={{ flex: 1 }}>{saving ? '...' : 'SAUVEGARDER →'}</button>
           </div>
+
         </div>
 
         {/* Library */}
