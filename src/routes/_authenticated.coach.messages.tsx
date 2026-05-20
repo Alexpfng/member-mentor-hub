@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import CoachDashboard from "../pages/coach/Dashboard";
+import CoachMessages from "../pages/coach/Messages";
 
 export const Route = createFileRoute("/_authenticated/coach/messages")({
-  component: CoachDashboard,
+  component: CoachMessages,
 });

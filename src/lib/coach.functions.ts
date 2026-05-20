@@ -186,3 +186,150 @@ export const assignProgram = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { assignment: row };
   });
+
+// ─── MESSAGES ────────────────────────────────────────────────────────────────
+
+const sendMsgSchema = z.object({
+  to_user_id: z.string().uuid(),
+  body: z.string().min(1).max(4000),
+  pinned: z.boolean().optional(),
+});
+
+export const sendMessage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => sendMsgSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await supabaseAdmin
+      .from("messages")
+      .insert({
+        from_user_id: context.userId,
+        to_user_id: data.to_user_id,
+        body: data.body,
+        pinned: data.pinned ?? false,
+        read: false,
+      })
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    return { message: row };
+  });
+
+export const listConversations = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await supabaseAdmin
+      .from("messages")
+      .select("from_user_id, to_user_id, body, created_at, read")
+      .or(`from_user_id.eq.${context.userId},to_user_id.eq.${context.userId}`)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+
+    const partnerIds = new Set<string>();
+    (data ?? []).forEach((m) => {
+      if (m.from_user_id !== context.userId) partnerIds.add(m.from_user_id);
+      if (m.to_user_id !== context.userId) partnerIds.add(m.to_user_id);
+    });
+
+    const ids = Array.from(partnerIds);
+    let profiles: any[] = [];
+    if (ids.length > 0) {
+      const { data: p } = await supabaseAdmin
+        .from("profiles")
+        .select("id, first_name, last_name, email")
+        .in("id", ids);
+      profiles = p ?? [];
+    }
+    const profileMap = new Map(profiles.map((p) => [p.id, p]));
+
+    const seen = new Set<string>();
+    const conversations: any[] = [];
+    for (const m of data ?? []) {
+      const partnerId = m.from_user_id === context.userId ? m.to_user_id : m.from_user_id;
+      if (seen.has(partnerId)) continue;
+      seen.add(partnerId);
+      conversations.push({
+        partner: profileMap.get(partnerId) ?? { id: partnerId, first_name: "?", last_name: "", email: "" },
+        last_message: m.body,
+        last_at: m.created_at,
+        unread: !m.read && m.to_user_id === context.userId,
+      });
+    }
+    return { conversations };
+  });
+
+export const listMessages = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ partner_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: msgs, error } = await supabaseAdmin
+      .from("messages")
+      .select("*")
+      .or(
+        `and(from_user_id.eq.${context.userId},to_user_id.eq.${data.partner_id}),and(from_user_id.eq.${data.partner_id},to_user_id.eq.${context.userId})`
+      )
+      .order("created_at", { ascending: true });
+    if (error) throw new Error(error.message);
+    // mark as read
+    await supabaseAdmin
+      .from("messages")
+      .update({ read: true })
+      .eq("to_user_id", context.userId)
+      .eq("from_user_id", data.partner_id)
+      .eq("read", false);
+    return { messages: msgs ?? [] };
+  });
+
+export const pinMessage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ message_id: z.string().uuid(), pinned: z.boolean() }).parse(d))
+  .handler(async ({ data }) => {
+    const { error } = await supabaseAdmin
+      .from("messages")
+      .update({ pinned: data.pinned })
+      .eq("id", data.message_id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+// ─── EXERCISES ────────────────────────────────────────────────────────────────
+
+const exerciseSchema = z.object({
+  id: z.string().uuid().optional(),
+  name: z.string().min(1).max(120),
+  category: z.string().max(40).optional(),
+  color: z.string().max(10).optional(),
+  youtube_url: z.string().max(300).optional().nullable(),
+  notes: z.string().max(1000).optional().nullable(),
+});
+
+export const saveExercise = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => exerciseSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertCoach(context.userId);
+    if (data.id) {
+      const { data: row, error } = await supabaseAdmin
+        .from("exercises").update({ ...data, updated_at: new Date().toISOString() })
+        .eq("id", data.id).select().single();
+      if (error) throw new Error(error.message);
+      return { exercise: row };
+    }
+    const { data: row, error } = await supabaseAdmin
+      .from("exercises")
+      .insert({ ...data, created_by: context.userId })
+      .select().single();
+    if (error) throw new Error(error.message);
+    return { exercise: row };
+  });
+
+export const listExercises = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertCoach(context.userId);
+    const { data, error } = await supabaseAdmin
+      .from("exercises")
+      .select("*")
+      .order("name", { ascending: true });
+    if (error) throw new Error(error.message);
+    return { exercises: data ?? [] };
+  });

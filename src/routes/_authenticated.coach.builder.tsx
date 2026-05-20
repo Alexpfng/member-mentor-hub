@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import Builder from "../pages/coach/Builder";
+import BuilderNew from "../pages/coach/BuilderNew";
 
 export const Route = createFileRoute("/_authenticated/coach/builder")({
-  component: Builder,
+  component: BuilderNew,
 });
