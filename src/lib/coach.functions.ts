@@ -66,7 +66,9 @@ export const listPrograms = createServerFn({ method: "GET" })
     await assertCoach(context.userId);
     const { data, error } = await supabaseAdmin
       .from("programs")
-      .select("id, name, description, duration_weeks, frequency_per_week, objective, level, created_at")
+      .select(
+        "id, name, description, duration_weeks, frequency_per_week, objective, level, created_at",
+      )
       .eq("coach_id", context.userId)
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
@@ -122,13 +124,12 @@ export const listMembers = createServerFn({ method: "GET" })
         first_name: p.first_name,
         last_name: p.last_name,
         created_at: p.created_at,
-        program_name: a ? programsById.get(a.program_id) ?? null : null,
+        program_name: a ? (programsById.get(a.program_id) ?? null) : null,
         program_id: a?.program_id ?? null,
       };
     });
     return { members };
   });
-
 
 const inviteSchema = z.object({
   email: z.string().email().max(255),
@@ -142,16 +143,13 @@ export const inviteMember = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => inviteSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertCoach(context.userId);
-    const { data: result, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(
-      data.email,
-      {
-        redirectTo: data.redirect_to,
-        data: {
-          first_name: data.first_name ?? null,
-          last_name: data.last_name ?? null,
-        },
+    const { data: result, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(data.email, {
+      redirectTo: data.redirect_to,
+      data: {
+        first_name: data.first_name ?? null,
+        last_name: data.last_name ?? null,
       },
-    );
+    });
     if (error) throw new Error(error.message);
     return { user_id: result.user?.id ?? null, email: data.email };
   });
@@ -248,7 +246,12 @@ export const listConversations = createServerFn({ method: "GET" })
       if (seen.has(partnerId)) continue;
       seen.add(partnerId);
       conversations.push({
-        partner: profileMap.get(partnerId) ?? { id: partnerId, first_name: "?", last_name: "", email: "" },
+        partner: profileMap.get(partnerId) ?? {
+          id: partnerId,
+          first_name: "?",
+          last_name: "",
+          email: "",
+        },
         last_message: m.body,
         last_at: m.created_at,
         unread: !m.read && m.to_user_id === context.userId,
@@ -265,7 +268,7 @@ export const listMessages = createServerFn({ method: "GET" })
       .from("messages")
       .select("*")
       .or(
-        `and(from_user_id.eq.${context.userId},to_user_id.eq.${data.partner_id}),and(from_user_id.eq.${data.partner_id},to_user_id.eq.${context.userId})`
+        `and(from_user_id.eq.${context.userId},to_user_id.eq.${data.partner_id}),and(from_user_id.eq.${data.partner_id},to_user_id.eq.${context.userId})`,
       )
       .order("created_at", { ascending: true });
     if (error) throw new Error(error.message);
@@ -281,7 +284,9 @@ export const listMessages = createServerFn({ method: "GET" })
 
 export const pinMessage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ message_id: z.string().uuid(), pinned: z.boolean() }).parse(d))
+  .inputValidator((d: unknown) =>
+    z.object({ message_id: z.string().uuid(), pinned: z.boolean() }).parse(d),
+  )
   .handler(async ({ data }) => {
     const { error } = await supabaseAdmin
       .from("messages")
@@ -309,15 +314,19 @@ export const saveExercise = createServerFn({ method: "POST" })
     await assertCoach(context.userId);
     if (data.id) {
       const { data: row, error } = await supabaseAdmin
-        .from("exercises").update({ ...data, updated_at: new Date().toISOString() })
-        .eq("id", data.id).select().single();
+        .from("exercises")
+        .update({ ...data, updated_at: new Date().toISOString() })
+        .eq("id", data.id)
+        .select()
+        .single();
       if (error) throw new Error(error.message);
       return { exercise: row };
     }
     const { data: row, error } = await supabaseAdmin
       .from("exercises")
       .insert({ ...data, created_by: context.userId })
-      .select().single();
+      .select()
+      .single();
     if (error) throw new Error(error.message);
     return { exercise: row };
   });
@@ -337,10 +346,10 @@ export const listExercises = createServerFn({ method: "GET" })
 // ─── ELEVATION PROXY (server-side → no CORS/rate-limit issues) ───────────────
 
 export const getElevation = createServerFn({ method: "GET" })
-  .validator((d: { locs: string }) => d)
+  .inputValidator((d: unknown) => z.object({ locs: z.string().min(1) }).parse(d))
   .handler(async ({ data }) => {
     const res = await fetch(
-      `https://api.opentopodata.org/v1/srtm30m?locations=${encodeURIComponent(data.locs)}`
+      `https://api.opentopodata.org/v1/srtm30m?locations=${encodeURIComponent(data.locs)}`,
     );
     if (!res.ok) throw new Error(`OpenTopoData ${res.status}`);
     const json = (await res.json()) as { results: Array<{ elevation: number | null }> };
@@ -351,16 +360,24 @@ export const getElevation = createServerFn({ method: "GET" })
 
 export const saveRunningRoute = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator(
-    (d: {
-      name: string;
-      difficulty: string;
-      distance_km: number;
-      dplus_m: number;
-      dminus_m: number;
-      points: Array<{ lat: number; lng: number; ele: number }>;
-      gpx_url?: string;
-    }) => d
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        name: z.string().min(1),
+        difficulty: z.string().min(1),
+        distance_km: z.number(),
+        dplus_m: z.number(),
+        dminus_m: z.number(),
+        points: z.array(
+          z.object({
+            lat: z.number(),
+            lng: z.number(),
+            ele: z.number(),
+          }),
+        ),
+        gpx_url: z.string().url().optional(),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     const { data: row, error } = await supabaseAdmin
@@ -379,6 +396,26 @@ export const saveRunningRoute = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
     return { id: row.id, short_id: row.short_id };
+  });
+
+export const deleteRunningRoute = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertCoach(context.userId);
+    const { error } = await supabaseAdmin
+      .from("running_routes")
+      .delete()
+      .eq("id", data.id)
+      .eq("coach_id", context.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });
 
 export const listRunningRoutes = createServerFn({ method: "GET" })
