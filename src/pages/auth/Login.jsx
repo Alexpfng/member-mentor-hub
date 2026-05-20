@@ -50,6 +50,23 @@ export default function Login() {
     }
   }
 
+  async function handleDemoLogin(demoEmail, demoPassword) {
+    setError(''); setInfo(''); setLoading(true);
+    try {
+      const { data, error: err } = await supabase.auth.signInWithPassword({
+        email: demoEmail,
+        password: demoPassword,
+      });
+      if (err) throw err;
+      const { data: r } = await supabase
+        .from('user_roles').select('role').eq('user_id', data.user.id).maybeSingle();
+      navigate(r?.role === 'coach' ? '/coach' : '/membre');
+    } catch (err) {
+      setError(err?.message || 'Erreur connexion démo.');
+      setLoading(false);
+    }
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     setError(''); setInfo(''); setLoading(true);
@@ -169,7 +186,40 @@ export default function Login() {
             </form>
           </div>
 
-          <div className="cst-col" style={{ gap: 12, alignItems: 'center', paddingTop: 16 }}>
+          {/* Demo accounts */}
+          <div className="cst-col" style={{ gap: 8, paddingTop: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
+              <span className="cst-mono" style={{ fontSize: 8, opacity: 0.4, whiteSpace: 'nowrap' }}>ACCÈS DÉMO</span>
+              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <button type="button" disabled={loading}
+                onClick={() => handleDemoLogin('coach.demo@colosmart.test', 'DemoCoach2026!')}
+                style={{
+                  padding: '10px 0', borderRadius: 8,
+                  background: 'rgba(45,90,53,0.15)', border: '1px solid rgba(45,90,53,0.4)',
+                  color: '#6EAB76', fontSize: 10, fontFamily: 'var(--cst-mono)',
+                  letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer',
+                  opacity: loading ? 0.6 : 1,
+                }}>
+                ⧉ COACH
+              </button>
+              <button type="button" disabled={loading}
+                onClick={() => handleDemoLogin('membre.demo@colosmart.test', 'DemoMembre2026!')}
+                style={{
+                  padding: '10px 0', borderRadius: 8,
+                  background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)',
+                  color: 'rgba(255,255,255,0.55)', fontSize: 10, fontFamily: 'var(--cst-mono)',
+                  letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer',
+                  opacity: loading ? 0.6 : 1,
+                }}>
+                ○ MEMBRE
+              </button>
+            </div>
+          </div>
+
+          <div className="cst-col" style={{ gap: 12, alignItems: 'center', paddingTop: 8 }}>
             <div style={{ width: 32, height: 1, background: 'rgba(255,255,255,0.1)' }} />
             <div className="cst-mono" style={{ fontSize: 8, opacity: 0.4 }}>
               COLOSMARTRAINING™ · VICHY · FR · EST. 2024

@@ -70,13 +70,13 @@ export default function CoachSidebar() {
   return (
     <>
       {/* ── DESKTOP SIDEBAR ── */}
-      <aside className="coach-sidebar-desktop" style={{
+      <aside className="cst-hatch coach-sidebar-desktop" style={{
         width: 240, flex: '0 0 240px',
         background: '#16261A',
         borderRight: '1px solid rgba(255,255,255,0.05)',
         display: 'flex', flexDirection: 'column',
         padding: '24px 16px',
-      }} className="cst-hatch coach-sidebar-desktop">
+      }}>
         <div style={{ padding: '0 8px 24px' }}>
           <CSTLogo />
           <div className="cst-mono" style={{ marginTop: 6, fontSize: 9, opacity: 0.55 }}>L'ESPACE · COACH</div>
