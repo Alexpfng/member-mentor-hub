@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import CoachSidebar from '../../components/CoachSidebar';
 import { supabase } from '@/integrations/supabase/client';
+import { getElevation, saveRunningRoute, listRunningRoutes } from '../../lib/coach.functions';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
@@ -124,10 +125,9 @@ async function fetchOSRMSegment(a: Pt, b: Pt): Promise<{ points: Pt[]; distanceK
   } catch { return { points: [a, b], distanceKm: haversineKm(a, b) }; }
 }
 
-// Fetch elevation from OpenTopoData (max 100 pts per request)
+// Fetch elevation via server-side proxy (bypasses CORS/rate-limit)
 async function fetchElevation(pts: Pt[]): Promise<number[]> {
   if (!pts.length) return [];
-  // Keep max 100 evenly sampled points
   const step = Math.max(1, Math.ceil(pts.length / 98));
   const indices: number[] = [];
   for (let i = 0; i < pts.length; i += step) indices.push(i);
@@ -135,11 +135,7 @@ async function fetchElevation(pts: Pt[]): Promise<number[]> {
   const sampled = indices.map(i => pts[i]);
   try {
     const locs = sampled.map(p => `${p.lat.toFixed(5)},${p.lng.toFixed(5)}`).join('|');
-    const res = await fetch(`https://api.opentopodata.org/v1/srtm30m?locations=${locs}`);
-    const data = await res.json();
-    if (!data.results) throw new Error('no results');
-    const sampledEles: number[] = data.results.map((r: any) => r.elevation ?? 300);
-    // Interpolate back to full length
+    const { elevations: sampledEles } = await getElevation({ data: { locs } });
     const result: number[] = new Array(pts.length);
     for (let i = 0; i < pts.length; i++) {
       const pos = i / step;
@@ -367,7 +363,30 @@ export default function RunningWidget() {
   const [segmentDistances, setSegmentDistances] = useState<number[]>([]);
   const [gpxUrl, setGpxUrl] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [savedOk, setSavedOk] = useState(false);
+  const [dbRoutes, setDbRoutes] = useState<RunRoute[]>([]);
   const eleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Load saved routes from DB on mount
+  useEffect(() => {
+    listRunningRoutes().then(({ routes }) => {
+      setDbRoutes(routes.map((r: any) => ({
+        id: r.id,
+        name: r.name,
+        subtitle: r.description ?? 'Trace enregistrée',
+        distance: Number(r.distance_km ?? 0),
+        dplus: r.dplus_m ?? 0,
+        dminus: r.dminus_m ?? 0,
+        difficulty: (r.difficulty ?? 'intermédiaire') as RunRoute['difficulty'],
+        color: '#2D5A35',
+        center: r.points?.[0] ? [r.points[0].lat, r.points[0].lng] as [number, number] : [46.128, 3.424],
+        zoom: 13,
+        points: r.points ?? [],
+        gpxUrl: r.gpx_url ?? undefined,
+      })));
+    }).catch(() => {});
+  }, []);
 
   // Active points & stats
   const activePoints = mode === 'browse' ? selectedRoute.points : customPoints;
@@ -451,14 +470,62 @@ export default function RunningWidget() {
     setFetchingEle(false);
   }
 
+  // ── Save route to DB ────────────────────────────────────────────────────
+
+  async function handleSaveRoute() {
+    if (customPoints.length < 2 || !routeName.trim()) return;
+    setSaving(true);
+    try {
+      const url = await uploadGPX(routeName, customPoints);
+      const { id } = await saveRunningRoute({
+        data: {
+          name: routeName.trim(),
+          difficulty,
+          distance_km: activeStats.distance,
+          dplus_m: activeStats.dplus,
+          dminus_m: activeStats.dminus,
+          points: customPoints,
+          gpx_url: url ?? undefined,
+        },
+      });
+      setSavedOk(true);
+      // Add to local list and switch to browse mode
+      const newRoute: RunRoute = {
+        id,
+        name: routeName.trim(),
+        subtitle: 'Trace enregistrée',
+        distance: activeStats.distance,
+        dplus: activeStats.dplus,
+        dminus: activeStats.dminus,
+        difficulty,
+        color: '#2D5A35',
+        center: [customPoints[0].lat, customPoints[0].lng],
+        zoom: 13,
+        points: customPoints,
+        gpxUrl: url ?? undefined,
+      };
+      setDbRoutes(prev => [newRoute, ...prev]);
+      setSelectedRoute(newRoute);
+      setMode('browse');
+      resetCreate();
+      setTimeout(() => setSavedOk(false), 3000);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSaving(false);
+    }
+  }
+
   // ── Reset create ────────────────────────────────────────────────────────
 
   function resetCreate() {
     setWaypoints([]);
     setRoutedSegments([]);
+    setSegmentDistances([]);
     setCustomPoints([]);
     setRouteName('');
     setGpxUrl(null);
+    setSavedOk(false);
   }
 
   // ── Share & upload ──────────────────────────────────────────────────────
@@ -520,7 +587,7 @@ export default function RunningWidget() {
             {mode === 'browse' ? (
               <>
                 <div className="cst-mono" style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.14em' }}>PARCOURS ENREGISTRÉS</div>
-                {DEMO_ROUTES.map(r => {
+                {[...dbRoutes, ...DEMO_ROUTES].map(r => {
                   const on = r.id === selectedRoute.id;
                   return (
                     <div key={r.id} onClick={() => setSelectedRoute(r)}
@@ -656,19 +723,27 @@ export default function RunningWidget() {
                 onClick={() => downloadGPXBlob(mode === 'browse' ? selectedRoute.name : (routeName || 'ma-trace'), activePoints)}
                 disabled={activePoints.length < 2}
                 style={{ flex: 1, padding: '13px 0', borderRadius: 10, background: 'rgba(45,90,53,0.15)', border: '1px solid rgba(45,90,53,0.4)', color: '#6EAB76', fontFamily: 'var(--cst-mono)', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer', opacity: activePoints.length < 2 ? 0.4 : 1 }}>
-                ↓ TÉLÉCHARGER GPX
+                ↓ GPX
               </button>
               <button
                 onClick={() => printPDF(mode === 'browse' ? selectedRoute : null, routeName || 'Ma trace', activePoints, activeStats)}
                 disabled={activePoints.length < 2}
                 style={{ flex: 1, padding: '13px 0', borderRadius: 10, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.7)', fontFamily: 'var(--cst-mono)', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer', opacity: activePoints.length < 2 ? 0.4 : 1 }}>
-                ⎙ FICHE PDF
+                ⎙ PDF
               </button>
+              {mode === 'create' && (
+                <button
+                  onClick={handleSaveRoute}
+                  disabled={saving || customPoints.length < 2 || !routeName.trim()}
+                  style={{ flex: 2, padding: '13px 0', borderRadius: 10, background: savedOk ? 'rgba(45,90,53,0.6)' : 'var(--cst-mid-green)', border: 'none', color: '#fff', fontFamily: 'var(--cst-mono)', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer', fontWeight: 700, opacity: (saving || customPoints.length < 2 || !routeName.trim()) ? 0.5 : 1 }}>
+                  {saving ? '⟳ ENREG…' : savedOk ? '✓ ENREGISTRÉ !' : '✓ VALIDER LA TRACE'}
+                </button>
+              )}
               <button
                 onClick={handleShare}
                 disabled={sharing || activePoints.length < 2}
                 style={{ flex: 2, padding: '13px 0', borderRadius: 10, background: '#25D366', border: 'none', color: '#fff', fontFamily: 'var(--cst-mono)', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer', fontWeight: 700, opacity: (sharing || activePoints.length < 2) ? 0.5 : 1 }}>
-                {sharing ? '⟳ ENVOI…' : '↗ PARTAGER SUR WHATSAPP'}
+                {sharing ? '⟳ ENVOI…' : '↗ WHATSAPP'}
               </button>
             </div>
 

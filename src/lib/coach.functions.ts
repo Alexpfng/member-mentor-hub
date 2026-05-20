@@ -333,3 +333,63 @@ export const listExercises = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     return { exercises: data ?? [] };
   });
+
+// ─── ELEVATION PROXY (server-side → no CORS/rate-limit issues) ───────────────
+
+export const getElevation = createServerFn({ method: "GET" })
+  .validator((d: { locs: string }) => d)
+  .handler(async ({ data }) => {
+    const res = await fetch(
+      `https://api.opentopodata.org/v1/srtm30m?locations=${encodeURIComponent(data.locs)}`
+    );
+    if (!res.ok) throw new Error(`OpenTopoData ${res.status}`);
+    const json = (await res.json()) as { results: Array<{ elevation: number | null }> };
+    return { elevations: json.results.map((r) => r.elevation ?? 300) };
+  });
+
+// ─── SAVE RUNNING ROUTE ───────────────────────────────────────────────────────
+
+export const saveRunningRoute = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator(
+    (d: {
+      name: string;
+      difficulty: string;
+      distance_km: number;
+      dplus_m: number;
+      dminus_m: number;
+      points: Array<{ lat: number; lng: number; ele: number }>;
+      gpx_url?: string;
+    }) => d
+  )
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await supabaseAdmin
+      .from("running_routes")
+      .insert({
+        coach_id: context.userId,
+        name: data.name,
+        difficulty: data.difficulty,
+        distance_km: data.distance_km,
+        dplus_m: data.dplus_m,
+        dminus_m: data.dminus_m,
+        points: data.points,
+        gpx_url: data.gpx_url ?? null,
+      })
+      .select("id, short_id")
+      .single();
+    if (error) throw new Error(error.message);
+    return { id: row.id, short_id: row.short_id };
+  });
+
+export const listRunningRoutes = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertCoach(context.userId);
+    const { data, error } = await supabaseAdmin
+      .from("running_routes")
+      .select("*")
+      .eq("coach_id", context.userId)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return { routes: data ?? [] };
+  });
