@@ -111,33 +111,42 @@ function downloadGPXBlob(name: string, points: PtEle[]) {
   a.click();
 }
 
-// Fetch routed path between two points using OSRM (foot profile, follows paths)
-async function fetchOSRMSegment(a: Pt, b: Pt): Promise<Pt[]> {
+// Fetch routed path between two points using OSRM (foot, simplified geometry)
+async function fetchOSRMSegment(a: Pt, b: Pt): Promise<{ points: Pt[]; distanceKm: number }> {
   try {
-    const url = `https://router.project-osrm.org/route/v1/foot/${a.lng},${a.lat};${b.lng},${b.lat}?geometries=geojson&overview=full`;
+    const url = `https://router.project-osrm.org/route/v1/foot/${a.lng},${a.lat};${b.lng},${b.lat}?geometries=geojson&overview=simplified`;
     const res = await fetch(url);
     const data = await res.json();
-    if (data.code !== 'Ok') return [a, b];
-    return (data.routes[0].geometry.coordinates as [number, number][]).map(([lng, lat]) => ({ lat, lng }));
-  } catch { return [a, b]; }
+    if (data.code !== 'Ok') return { points: [a, b], distanceKm: haversineKm(a, b) };
+    const points = (data.routes[0].geometry.coordinates as [number, number][]).map(([lng, lat]) => ({ lat, lng }));
+    const distanceKm = Math.round((data.routes[0].distance / 1000) * 10) / 10;
+    return { points, distanceKm };
+  } catch { return { points: [a, b], distanceKm: haversineKm(a, b) }; }
 }
 
-// Fetch elevation for up to 100 sampled points from OpenTopoData
+// Fetch elevation from OpenTopoData (max 100 pts per request)
 async function fetchElevation(pts: Pt[]): Promise<number[]> {
   if (!pts.length) return [];
-  // Sample to max 100 for API limit
-  const step = Math.max(1, Math.ceil(pts.length / 100));
-  const sampled = pts.filter((_, i) => i % step === 0 || i === pts.length - 1);
+  // Keep max 100 evenly sampled points
+  const step = Math.max(1, Math.ceil(pts.length / 98));
+  const indices: number[] = [];
+  for (let i = 0; i < pts.length; i += step) indices.push(i);
+  if (indices[indices.length - 1] !== pts.length - 1) indices.push(pts.length - 1);
+  const sampled = indices.map(i => pts[i]);
   try {
     const locs = sampled.map(p => `${p.lat.toFixed(5)},${p.lng.toFixed(5)}`).join('|');
     const res = await fetch(`https://api.opentopodata.org/v1/srtm30m?locations=${locs}`);
     const data = await res.json();
-    const sampledEles: number[] = data.results.map((r: any) => r.elevation ?? 250);
-    // Interpolate back to original size
+    if (!data.results) throw new Error('no results');
+    const sampledEles: number[] = data.results.map((r: any) => r.elevation ?? 300);
+    // Interpolate back to full length
     const result: number[] = new Array(pts.length);
     for (let i = 0; i < pts.length; i++) {
-      const si = Math.min(Math.floor(i / step), sampledEles.length - 1);
-      result[i] = sampledEles[si];
+      const pos = i / step;
+      const lo = Math.floor(pos);
+      const hi = Math.min(lo + 1, sampledEles.length - 1);
+      const t = pos - lo;
+      result[i] = Math.round(sampledEles[lo] * (1 - t) + sampledEles[hi] * t);
     }
     return result;
   } catch { return pts.map(() => 300); }
@@ -355,14 +364,18 @@ export default function RunningWidget() {
   const [difficulty, setDifficulty] = useState<'facile'|'intermédiaire'|'difficile'|'expert'>('intermédiaire');
   const [routing, setRouting] = useState(false);
   const [fetchingEle, setFetchingEle] = useState(false);
+  const [segmentDistances, setSegmentDistances] = useState<number[]>([]);
   const [gpxUrl, setGpxUrl] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
+  const eleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Active points & stats
   const activePoints = mode === 'browse' ? selectedRoute.points : customPoints;
+  const osrmDistance = Math.round(segmentDistances.reduce((a, b) => a + b, 0) * 10) / 10;
+  const rawStats = calcStats(customPoints);
   const activeStats = mode === 'browse'
     ? { distance: selectedRoute.distance, dplus: selectedRoute.dplus, dminus: selectedRoute.dminus }
-    : calcStats(customPoints);
+    : { distance: osrmDistance || rawStats.distance, dplus: rawStats.dplus, dminus: rawStats.dminus };
   const profile = buildProfile(activePoints);
 
   // ── Add waypoint (create mode) ───────────────────────────────────────────
@@ -376,12 +389,13 @@ export default function RunningWidget() {
         // Route from previous to new
         setRouting(true);
         const from = prev[prev.length - 1];
-        fetchOSRMSegment(from, newWp).then(seg => {
+        fetchOSRMSegment(from, newWp).then(({ points: seg, distanceKm }) => {
           setRoutedSegments(prev => {
             const next = [...prev, seg];
             setCustomPoints(next.flat().map(p => ({ ...p, ele: 300 })));
             return next;
           });
+          setSegmentDistances(prev => [...prev, distanceKm]);
           setRouting(false);
         });
       }
@@ -400,10 +414,11 @@ export default function RunningWidget() {
         setRouting(true);
         Promise.all(
           next.slice(0, -1).map((wp, si) => fetchOSRMSegment(wp, next[si + 1]))
-        ).then(segs => {
+        ).then(results => {
+          const segs = results.map(r => r.points);
           setRoutedSegments(segs);
-          const flat = segs.flatMap(s => s).map(p => ({ ...p, ele: 300 }));
-          setCustomPoints(flat);
+          setSegmentDistances(results.map(r => r.distanceKm));
+          setCustomPoints(segs.flat().map(p => ({ ...p, ele: 300 })));
           setRouting(false);
         });
       }
@@ -411,10 +426,24 @@ export default function RunningWidget() {
     });
   }, []);
 
-  // ── Fetch elevation ─────────────────────────────────────────────────────
+  // ── Auto-fetch elevation 2s after route stops changing ──────────────────
+
+  useEffect(() => {
+    if (routedSegments.length === 0) return;
+    if (eleTimerRef.current) clearTimeout(eleTimerRef.current);
+    eleTimerRef.current = setTimeout(async () => {
+      setFetchingEle(true);
+      const flat = routedSegments.flat();
+      const eles = await fetchElevation(flat);
+      setCustomPoints(flat.map((p, i) => ({ ...p, ele: eles[i] ?? 300 })));
+      setFetchingEle(false);
+    }, 2000);
+    return () => { if (eleTimerRef.current) clearTimeout(eleTimerRef.current); };
+  }, [routedSegments]);
 
   async function handleFetchElevation() {
     if (routedSegments.length === 0) return;
+    if (eleTimerRef.current) clearTimeout(eleTimerRef.current);
     setFetchingEle(true);
     const flat = routedSegments.flat();
     const eles = await fetchElevation(flat);
