@@ -1,81 +1,198 @@
-import { useNavigate } from 'react-router-dom';
-import MemberNav from '../../components/MemberNav';
-import { CSTLogo, CSTSectionNum, CSTAvatar } from '../../components/Atoms';
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { SUPABASE_ENABLED } from "@/lib/app-mode";
+import MemberNav from "../../components/MemberNav";
+import { CSTLogo, CSTSectionNum, CSTAvatar } from "../../components/Atoms";
+
+const DAYS = ["DIM", "LUN", "MAR", "MER", "JEU", "VEN", "SAM"];
+const today = new Date();
+const todayISO = today.toISOString().slice(0, 10);
+
+function getInitials(firstName, lastName) {
+  return ((firstName?.[0] ?? "") + (lastName?.[0] ?? "")).toUpperCase() || "??";
+}
+
+function getWeekDates() {
+  const day = today.getDay(); // 0=dim
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - ((day + 6) % 7));
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    return d.toISOString().slice(0, 10);
+  });
+}
 
 export default function MemberDashboard() {
   const navigate = useNavigate();
+  const [profile, setProfile] = useState(null);
+  const [weekSessions, setWeekSessions] = useState([]);
+  const [assignment, setAssignment] = useState(null);
+  const [lastPR, setLastPR] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!SUPABASE_ENABLED) { setLoading(false); return; }
+    (async () => {
+      try {
+        const { data: u } = await supabase.auth.getUser();
+        if (!u?.user) { navigate("/login"); return; }
+        const uid = u.user.id;
+
+        const [{ data: prof }, { data: assigns }, { data: sessions }, { data: prs }] = await Promise.all([
+          supabase.from("profiles").select("first_name,last_name").eq("id", uid).maybeSingle(),
+          supabase.from("assignments").select("program_id,programs(name,description)").eq("member_id", uid).eq("active", true).order("created_at", { ascending: false }).limit(1),
+          supabase.from("sessions").select("id,date,status,session_label,duration_minutes").eq("member_id", uid).gte("date", getWeekDates()[0]).lte("date", getWeekDates()[6]).order("date"),
+          supabase.from("personal_records").select("exercise_name,value_kg,achieved_at").eq("member_id", uid).order("achieved_at", { ascending: false }).limit(1),
+        ]);
+
+        setProfile(prof);
+        setAssignment(assigns?.[0] ?? null);
+        setWeekSessions(sessions ?? []);
+        setLastPR(prs?.[0] ?? null);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [navigate]);
+
+  const firstName = profile?.first_name ?? "Athlete";
+  const lastName = profile?.last_name ?? "";
+  const initials = getInitials(firstName, lastName);
+  const programName = assignment?.programs?.name ?? "Aucun programme";
+
+  const weekDates = getWeekDates();
+  const dayLabels = ["LUN", "MAR", "MER", "JEU", "VEN", "SAM", "DIM"];
+
+  const doneSessions = weekSessions.filter((s) => s.status === "completed").length;
+  const adherencePct = weekDates.length ? Math.round((doneSessions / 5) * 100) : 0;
+
+  const todaySession = weekSessions.find((s) => s.date === todayISO);
+  const inProgress = weekSessions.find((s) => s.status === "in_progress");
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--cst-dark-green)", color: "rgba(255,255,255,0.4)", fontFamily: "var(--cst-mono)", fontSize: 11, letterSpacing: "0.18em" }}>
+        CHARGEMENT…
+      </div>
+    );
+  }
+
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#111' }}>
-      <div style={{ width: 390, height: 780, position: 'relative' }}>
-        <div className="cst-screen cst-hatch" style={{ height: '100%' }}>
+    <div style={{ minHeight: "100vh", background: "var(--cst-dark-green)" }}>
+      <div style={{ maxWidth: 480, margin: "0 auto", display: "flex", flexDirection: "column", minHeight: "100vh" }}>
+        <div className="cst-screen cst-hatch" style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+
           {/* Top nav */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '22px 22px 8px' }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "22px 22px 8px" }}>
             <CSTLogo size={11} />
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ position: 'relative', fontSize: 16 }}>
-                🔔
-                <span style={{ position: 'absolute', top: -2, right: -3, width: 6, height: 6, background: 'var(--cst-danger)', borderRadius: '50%' }} />
-              </span>
-              <CSTAvatar initials="JF" size={28} />
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <CSTAvatar initials={initials} size={28} />
             </div>
           </div>
 
-          <div className="cst-scroll" style={{ flex: 1, padding: '0 22px 90px' }}>
+          <div className="cst-scroll" style={{ flex: 1, padding: "0 22px 90px" }}>
+            {/* Header */}
             <div style={{ paddingTop: 14 }}>
-              <CSTSectionNum num={1} label="MER. 20 MAI" sub="SEM 04 · J2 · FORCE" />
+              <CSTSectionNum
+                num={1}
+                label={today.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" }).toUpperCase()}
+                sub={programName.toUpperCase()}
+              />
               <div style={{ marginTop: 14 }}>
-                <h1 className="cst-display" style={{ fontSize: 38, margin: 0 }}>BON MATIN,</h1>
-                <div className="cst-italic" style={{ fontSize: 30, marginTop: -2 }}>Jordan.</div>
+                <h1 className="cst-display" style={{ fontSize: 38, margin: 0 }}>
+                  {today.getHours() < 12 ? "BON MATIN," : today.getHours() < 18 ? "BONNE APRÈS-MIDI," : "BONNE SOIRÉE,"}
+                </h1>
+                <div className="cst-italic" style={{ fontSize: 30, marginTop: -2 }}>{firstName}.</div>
               </div>
             </div>
 
-            {/* Hero session */}
-            <div className="cst-card-dark cst-hatch" style={{ marginTop: 18, padding: 20, borderColor: 'var(--cst-mid-green)', borderWidth: 2 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div className="cst-col" style={{ gap: 2 }}>
-                  <span className="cst-mono" style={{ fontSize: 9, color: 'var(--cst-mid-green)' }}>★ AUJOURD'HUI · 18:00</span>
-                  <div className="cst-display" style={{ fontSize: 22, marginTop: 6 }}>PULL B</div>
-                  <div className="cst-italic" style={{ fontSize: 16, color: 'rgba(255,255,255,0.6)' }}>force · 07 exercices.</div>
-                </div>
-                <div className="cst-col" style={{ alignItems: 'flex-end', gap: 2 }}>
-                  <span className="cst-mono" style={{ fontSize: 9 }}>≈ DURÉE</span>
-                  <span className="cst-display" style={{ fontSize: 18 }}>55–65 MIN</span>
-                </div>
-              </div>
-              <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '14px 0' }} />
-              <div className="cst-col" style={{ gap: 8 }}>
-                {[
-                  ['TRACTIONS PRONATION','4 × 6-10','RPE 8'],
-                  ['ROW BARRE','4 × 8','RPE 8'],
-                  ['FACE PULL','3 × 15','RPE 7'],
-                  ['CURL BARRE','3 × 10','RPE 7'],
-                ].map((e, i) => (
-                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: 13 }}>
-                    <span><span style={{ color: 'var(--cst-mid-green)', marginRight: 8 }}>★</span>{e[0]}</span>
-                    <span className="cst-mono" style={{ fontSize: 10 }}>{e[1]} <span style={{ color: 'var(--cst-mid-green)' }}>@ {e[2]}</span></span>
+            {/* Hero session card */}
+            <div
+              className="cst-card-dark cst-hatch"
+              style={{ marginTop: 18, padding: 20, borderColor: "var(--cst-mid-green)", borderWidth: 2 }}
+            >
+              {inProgress ? (
+                <>
+                  <div className="cst-col" style={{ gap: 2 }}>
+                    <span className="cst-mono" style={{ fontSize: 9, color: "#F5A623" }}>⏱ SÉANCE EN COURS</span>
+                    <div className="cst-display" style={{ fontSize: 22, marginTop: 6 }}>{inProgress.session_label ?? "SÉANCE LIBRE"}</div>
                   </div>
-                ))}
-                <div style={{ fontSize: 11, opacity: 0.5, paddingLeft: 18 }}>· · ·  + 3 exercices</div>
-              </div>
-              <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-                <button className="cst-btn cst-btn-primary" style={{ flex: 1 }} onClick={() => navigate('/membre/logger')}>COMMENCER →</button>
-                <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" onClick={() => navigate('/membre/programme')}>VOIR →</button>
-              </div>
+                  <div style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "14px 0" }} />
+                  <button
+                    className="cst-btn cst-btn-primary"
+                    style={{ width: "100%" }}
+                    onClick={() => navigate(`/membre/seance/${inProgress.id}`)}
+                  >
+                    REPRENDRE →
+                  </button>
+                </>
+              ) : todaySession?.status === "completed" ? (
+                <>
+                  <span className="cst-mono" style={{ fontSize: 9, color: "var(--cst-mid-green)" }}>✓ SÉANCE DU JOUR TERMINÉE</span>
+                  <div className="cst-display" style={{ fontSize: 20, marginTop: 8 }}>{todaySession.session_label ?? "SÉANCE LIBRE"}</div>
+                  <div style={{ fontSize: 12, opacity: 0.55, marginTop: 4 }}>
+                    {todaySession.duration_minutes ? `${todaySession.duration_minutes} min` : "Durée non enregistrée"}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <div className="cst-col" style={{ gap: 2 }}>
+                      <span className="cst-mono" style={{ fontSize: 9, color: "var(--cst-mid-green)" }}>★ AUJOURD'HUI</span>
+                      <div className="cst-display" style={{ fontSize: 22, marginTop: 6 }}>
+                        {assignment ? programName.toUpperCase() : "SÉANCE LIBRE"}
+                      </div>
+                      {assignment?.programs?.description && (
+                        <div className="cst-italic" style={{ fontSize: 14, color: "rgba(255,255,255,0.6)" }}>
+                          {assignment.programs.description}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "14px 0" }} />
+                  <button
+                    className="cst-btn cst-btn-primary"
+                    style={{ width: "100%" }}
+                    onClick={() => navigate("/membre/logger")}
+                  >
+                    COMMENCER →
+                  </button>
+                </>
+              )}
             </div>
 
             {/* Week strip */}
             <div style={{ marginTop: 22 }}>
-              <CSTSectionNum num={2} label="MA SEMAINE" sub="03 / 04 SÉANCES" />
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 6, marginTop: 12 }}>
-                {[['LUN','PUSH A','done'],['MAR','REST','rest'],['MER','PULL B','today'],['JEU','REST','rest'],['VEN','LEGS C','coming'],['SAM','CARDIO','coming'],['DIM','REST','rest']].map(([d,l,s],i) => {
-                  const today = s === 'today', done = s === 'done', rest = s === 'rest';
+              <CSTSectionNum num={2} label="MA SEMAINE" sub={`${doneSessions} / 5 SÉANCES`} />
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 6, marginTop: 12 }}>
+                {weekDates.map((date, i) => {
+                  const sess = weekSessions.find((s) => s.date === date);
+                  const isToday = date === todayISO;
+                  const isDone = sess?.status === "completed";
+                  const isInProgress = sess?.status === "in_progress";
                   return (
-                    <div key={i} style={{ padding: '10px 4px', textAlign: 'center', borderRadius: 8, background: today ? 'var(--cst-mid-green)' : 'rgba(255,255,255,0.03)', border: today ? 'none' : '1px solid rgba(255,255,255,0.06)' }}>
-                      <div className="cst-mono" style={{ fontSize: 8, color: today ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.45)' }}>{d}</div>
-                      <div style={{ marginTop: 6, fontSize: 14, color: today ? '#fff' : done ? 'var(--cst-mid-green)' : rest ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.7)' }}>
-                        {done ? '✓' : today ? '●' : rest ? '·' : '○'}
+                    <div
+                      key={date}
+                      style={{
+                        padding: "10px 4px",
+                        textAlign: "center",
+                        borderRadius: 8,
+                        background: isToday ? "var(--cst-mid-green)" : "rgba(255,255,255,0.03)",
+                        border: isToday ? "none" : "1px solid rgba(255,255,255,0.06)",
+                        cursor: sess ? "pointer" : "default",
+                      }}
+                      onClick={() => sess && navigate(isInProgress ? `/membre/seance/${sess.id}` : "/membre/historique")}
+                    >
+                      <div className="cst-mono" style={{ fontSize: 8, color: isToday ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.45)" }}>
+                        {dayLabels[i]}
                       </div>
-                      <div className="cst-mono" style={{ fontSize: 7, marginTop: 4, color: today ? 'rgba(255,255,255,0.7)' : rest ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.55)' }}>{l}</div>
+                      <div style={{ marginTop: 6, fontSize: 14, color: isToday ? "#fff" : isDone ? "var(--cst-mid-green)" : isInProgress ? "#F5A623" : "rgba(255,255,255,0.5)" }}>
+                        {isDone ? "✓" : isToday ? "●" : isInProgress ? "⏱" : "○"}
+                      </div>
                     </div>
                   );
                 })}
@@ -83,33 +200,54 @@ export default function MemberDashboard() {
             </div>
 
             {/* Stats */}
-            <div style={{ marginTop: 18, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <div style={{ marginTop: 18, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
               <div className="cst-card-dark" style={{ padding: 14 }}>
                 <span className="cst-mono" style={{ fontSize: 9 }}>ADHÉRENCE · SEMAINE</span>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 6 }}>
-                  <span className="cst-display" style={{ fontSize: 28 }}>3<span style={{ opacity: 0.4 }}>/4</span></span>
-                  <span className="cst-mono" style={{ fontSize: 10, color: 'var(--cst-mid-green)' }}>75%</span>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginTop: 6 }}>
+                  <span className="cst-display" style={{ fontSize: 28 }}>
+                    {doneSessions}<span style={{ opacity: 0.4 }}>/5</span>
+                  </span>
+                  <span className="cst-mono" style={{ fontSize: 10, color: "var(--cst-mid-green)" }}>
+                    {adherencePct}%
+                  </span>
                 </div>
               </div>
               <div className="cst-card-dark" style={{ padding: 14 }}>
                 <span className="cst-mono" style={{ fontSize: 9 }}>DERNIER PR</span>
-                <div className="cst-display" style={{ fontSize: 18, marginTop: 6 }}>SQUAT 90KG</div>
-                <span className="cst-mono" style={{ fontSize: 9, opacity: 0.55 }}>IL Y A 3 JOURS</span>
+                {lastPR ? (
+                  <>
+                    <div className="cst-display" style={{ fontSize: 16, marginTop: 6, lineHeight: 1.2 }}>
+                      {lastPR.exercise_name?.toUpperCase() ?? "—"}
+                    </div>
+                    <div className="cst-mono" style={{ fontSize: 10, color: "var(--cst-mid-green)", marginTop: 2 }}>
+                      {lastPR.value_kg}KG
+                    </div>
+                    <span className="cst-mono" style={{ fontSize: 9, opacity: 0.55 }}>
+                      {new Date(lastPR.achieved_at).toLocaleDateString("fr-FR")}
+                    </span>
+                  </>
+                ) : (
+                  <div style={{ fontSize: 12, opacity: 0.45, marginTop: 8 }}>Aucun PR encore</div>
+                )}
               </div>
             </div>
 
-            {/* Coach message */}
-            <div style={{ marginTop: 18, padding: 14, background: 'rgba(45,90,53,0.10)', border: '1px solid rgba(45,90,53,0.3)', borderRadius: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                <CSTAvatar initials="LC" size={28} />
-                <div className="cst-col">
-                  <span style={{ fontSize: 12, fontWeight: 600 }}>Léo Colognesi</span>
-                  <span className="cst-mono" style={{ fontSize: 8 }}>HIER · 21:14 · ÉPINGLÉ ★</span>
-                </div>
-              </div>
-              <p style={{ margin: 0, fontSize: 12, lineHeight: 1.55, opacity: 0.85 }}>
-                « Belle séance Push hier. Sur PULL B aujourd'hui, focus sur la <span className="cst-italic">contraction haute</span> des tractions. Pas besoin d'aller à l'échec — RPE 8 max. »
-              </p>
+            {/* Quick links */}
+            <div style={{ marginTop: 14, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <button
+                className="cst-btn cst-btn-ghost-dark"
+                onClick={() => navigate("/membre/programme")}
+                style={{ fontSize: 11 }}
+              >
+                MON PROGRAMME →
+              </button>
+              <button
+                className="cst-btn cst-btn-ghost-dark"
+                onClick={() => navigate("/membre/historique")}
+                style={{ fontSize: 11 }}
+              >
+                HISTORIQUE →
+              </button>
             </div>
           </div>
 

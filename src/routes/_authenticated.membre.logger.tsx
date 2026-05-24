@@ -21,7 +21,11 @@ function SessionLauncher() {
     (async () => {
       try {
         const { data: u } = await supabase.auth.getUser();
-        if (!u.user) return;
+        if (!u.user) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          navigate({ to: "/login" } as any);
+          return;
+        }
 
         // Resume any in-progress session
         const { data: existing } = await supabase
