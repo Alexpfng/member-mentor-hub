@@ -4,4 +4,14 @@
   "compatibility_date": "2025-09-24",
   "compatibility_flags": ["nodejs_compat"],
   "main": "src/server.ts",
+  "routes": [
+    {
+      "pattern": "colosmartraining.fr",
+      "custom_domain": true
+    },
+    {
+      "pattern": "www.colosmartraining.fr",
+      "custom_domain": true
+    }
+  ]
 }

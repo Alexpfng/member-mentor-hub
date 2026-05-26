@@ -7,6 +7,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 
 import appCss from "../styles.css?url";
 import tokensCss from "../tokens.css?url";
@@ -78,20 +79,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
       { name: "theme-color", content: "#1B2E1F" },
-      { title: "COLOSMARTAPP" },
-      { name: "description", content: "Smart Coach Hub is a React + Vite coaching application for trainers and their clients." },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "COLOSMARTAPP" },
-      { property: "og:description", content: "Smart Coach Hub is a React + Vite coaching application for trainers and their clients." },
+      { title: SITE_NAME },
+      { name: "description", content: SITE_DESCRIPTION },
+      { name: "author", content: SITE_NAME },
+      { property: "og:title", content: SITE_NAME },
+      { property: "og:description", content: SITE_DESCRIPTION },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: SITE_URL },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
-      { name: "twitter:title", content: "COLOSMARTAPP" },
-      { name: "twitter:description", content: "Smart Coach Hub is a React + Vite coaching application for trainers and their clients." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/3833f5e3-d4eb-4d48-ad79-f899d74e79d3/id-preview-874a42e9--b874bc4b-f1bb-4a60-a4d8-9d9571de7494.lovable.app-1779284219925.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/3833f5e3-d4eb-4d48-ad79-f899d74e79d3/id-preview-874a42e9--b874bc4b-f1bb-4a60-a4d8-9d9571de7494.lovable.app-1779284219925.png" },
+      { name: "twitter:title", content: SITE_NAME },
+      { name: "twitter:description", content: SITE_DESCRIPTION },
     ],
     links: [
+      { rel: "canonical", href: SITE_URL },
       { rel: "stylesheet", href: appCss },
       { rel: "stylesheet", href: tokensCss },
       { rel: "stylesheet", href: mobileCss },
@@ -111,7 +111,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="fr">
       <head>
         <HeadContent />
       </head>
