@@ -107,11 +107,12 @@ export default function CoachMessages() {
   // Load messages when partner changes
   const loadMessages = useCallback(async (partnerId: string) => {
     try {
-      const r = await msgsFn({ partner_id: partnerId });
-      setMessages(r.messages);
+      const r = await msgsFn({ data: { partner_id: partnerId } });
+      setMessages(r.messages as Message[]);
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
     } catch {}
   }, [msgsFn]);
+
 
   useEffect(() => {
     if (activePartner) loadMessages(activePartner.id);
