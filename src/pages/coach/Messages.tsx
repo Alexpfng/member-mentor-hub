@@ -124,8 +124,8 @@ export default function CoachMessages() {
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
         const m = payload.new as Message;
         if (
-          (m.from_user_id === currentUserId && m.to_user_id === activePartner.id) ||
-          (m.from_user_id === activePartner.id && m.to_user_id === currentUserId)
+          (m.from_id === currentUserId && m.to_id === activePartner.id) ||
+          (m.from_id === activePartner.id && m.to_id === currentUserId)
         ) {
           setMessages(prev => [...prev, m]);
           setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
@@ -139,19 +139,19 @@ export default function CoachMessages() {
     if (!body.trim() || !activePartner || sending) return;
     setSending(true);
     const optimistic: Message = {
-      id: 'opt-' + Date.now(), from_user_id: currentUserId ?? '', to_user_id: activePartner.id,
+      id: 'opt-' + Date.now(), from_id: currentUserId ?? '', to_id: activePartner.id,
       body: body.trim(), created_at: new Date().toISOString(), read: false, pinned: false,
     };
     setMessages(prev => [...prev, optimistic]);
     setBody('');
     setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
     try {
-      await sendFn({ to_user_id: activePartner.id, body: optimistic.body });
+      await sendFn({ to_id: activePartner.id, body: optimistic.content });
       await loadConversations();
     } catch (e: any) {
       toast.error(e.message ?? 'Erreur envoi');
       setMessages(prev => prev.filter(m => m.id !== optimistic.id));
-      setBody(optimistic.body);
+      setBody(optimistic.content);
     } finally { setSending(false); }
   };
 
@@ -241,7 +241,7 @@ export default function CoachMessages() {
               )}
 
               {messages.map((m, i) => {
-                const isMe = m.from_user_id === currentUserId;
+                const isMe = m.from_id === currentUserId;
                 const showTime = i === 0 || (new Date(m.created_at).getTime() - new Date(messages[i-1].created_at).getTime()) > 5 * 60000;
                 return (
                   <div key={m.id}>
@@ -258,7 +258,7 @@ export default function CoachMessages() {
                         color: '#fff', fontSize: 14, lineHeight: 1.5,
                         wordBreak: 'break-word',
                       }}>
-                        {m.body}
+                        {m.content}
                         {m.pinned && <span style={{ marginLeft: 6, fontSize: 12 }}>📌</span>}
                       </div>
                     </div>
