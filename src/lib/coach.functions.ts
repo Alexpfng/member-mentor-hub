@@ -200,9 +200,9 @@ export const sendMessage = createServerFn({ method: "POST" })
     const { data: row, error } = await supabaseAdmin
       .from("messages")
       .insert({
-        from_user_id: context.userId,
-        to_user_id: data.to_user_id,
-        body: data.body,
+        from_id: context.userId,
+        to_id: data.to_user_id,
+        content: data.body,
         pinned: data.pinned ?? false,
         read: false,
       })
@@ -217,15 +217,15 @@ export const listConversations = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await supabaseAdmin
       .from("messages")
-      .select("from_user_id, to_user_id, body, created_at, read")
-      .or(`from_user_id.eq.${context.userId},to_user_id.eq.${context.userId}`)
+      .select("from_id, to_id, content, created_at, read")
+      .or(`from_id.eq.${context.userId},to_id.eq.${context.userId}`)
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
 
     const partnerIds = new Set<string>();
     (data ?? []).forEach((m) => {
-      if (m.from_user_id !== context.userId) partnerIds.add(m.from_user_id);
-      if (m.to_user_id !== context.userId) partnerIds.add(m.to_user_id);
+      if (m.from_id !== context.userId) partnerIds.add(m.from_id);
+      if (m.to_id !== context.userId) partnerIds.add(m.to_id);
     });
 
     const ids = Array.from(partnerIds);
@@ -242,7 +242,7 @@ export const listConversations = createServerFn({ method: "GET" })
     const seen = new Set<string>();
     const conversations: any[] = [];
     for (const m of data ?? []) {
-      const partnerId = m.from_user_id === context.userId ? m.to_user_id : m.from_user_id;
+      const partnerId = m.from_id === context.userId ? m.to_id : m.from_id;
       if (seen.has(partnerId)) continue;
       seen.add(partnerId);
       conversations.push({
@@ -252,9 +252,9 @@ export const listConversations = createServerFn({ method: "GET" })
           last_name: "",
           email: "",
         },
-        last_message: m.body,
+        last_message: m.content,
         last_at: m.created_at,
-        unread: !m.read && m.to_user_id === context.userId,
+        unread: !m.read && m.to_id === context.userId,
       });
     }
     return { conversations };
@@ -268,7 +268,7 @@ export const listMessages = createServerFn({ method: "GET" })
       .from("messages")
       .select("*")
       .or(
-        `and(from_user_id.eq.${context.userId},to_user_id.eq.${data.partner_id}),and(from_user_id.eq.${data.partner_id},to_user_id.eq.${context.userId})`,
+        `and(from_id.eq.${context.userId},to_id.eq.${data.partner_id}),and(from_id.eq.${data.partner_id},to_id.eq.${context.userId})`,
       )
       .order("created_at", { ascending: true });
     if (error) throw new Error(error.message);
@@ -276,8 +276,8 @@ export const listMessages = createServerFn({ method: "GET" })
     await supabaseAdmin
       .from("messages")
       .update({ read: true })
-      .eq("to_user_id", context.userId)
-      .eq("from_user_id", data.partner_id)
+      .eq("to_id", context.userId)
+      .eq("from_id", data.partner_id)
       .eq("read", false);
     return { messages: msgs ?? [] };
   });
@@ -295,6 +295,7 @@ export const pinMessage = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
 
 // ─── EXERCISES ────────────────────────────────────────────────────────────────
 
