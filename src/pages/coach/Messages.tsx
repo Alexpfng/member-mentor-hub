@@ -23,13 +23,14 @@ interface Conversation {
 
 interface Message {
   id: string;
-  from_user_id: string;
-  to_user_id: string;
-  body: string;
+  from_id: string;
+  to_id: string;
+  content: string;
   created_at: string;
   read: boolean;
   pinned: boolean;
 }
+
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
