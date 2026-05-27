@@ -629,7 +629,7 @@ export default function BuilderNew() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const r = await saveFn({ id: programId, name, duration_weeks: duration, objective, level, description: programNotes, structure: { weeks } });
+      const r = await saveFn({ data: { id: programId, name, duration_weeks: duration, objective, level, description: programNotes, structure: { weeks } } });
       setProgramId(r.program.id);
       toast.success('Programme sauvegardé !');
     } catch (err: any) {
