@@ -411,7 +411,7 @@ function AssignModal({ programId, onClose }: { programId: string; onClose: () =>
     if (!selected.size) return;
     setLoading(true);
     const { assignProgram } = await import('@/lib/coach.functions');
-    await Promise.all(Array.from(selected).map(mid => assignProgram({ member_id: mid, program_id: programId, start_date: startDate })));
+    await Promise.all(Array.from(selected).map(mid => assignProgram({ data: { member_id: mid, program_id: programId, start_date: startDate } })));
     toast.success(`Programme assigné à ${selected.size} membre(s) !`);
     setLoading(false);
     onClose();
@@ -629,7 +629,7 @@ export default function BuilderNew() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const r = await saveFn({ id: programId, name, duration_weeks: duration, objective, level, description: programNotes, structure: { weeks } });
+      const r = await saveFn({ data: { id: programId, name, duration_weeks: duration, objective, level, description: programNotes, structure: { weeks } } });
       setProgramId(r.program.id);
       toast.success('Programme sauvegardé !');
     } catch (err: any) {
