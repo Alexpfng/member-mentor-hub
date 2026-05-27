@@ -313,17 +313,18 @@ export const saveExercise = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => exerciseSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertCoach(context.userId);
+    const db = supabaseAdmin as any;
     if (data.id) {
-      const { data: row, error } = await supabaseAdmin
+      const { data: row, error } = await db
         .from("exercises")
-        .update({ ...data, updated_at: new Date().toISOString() })
+        .update({ ...data })
         .eq("id", data.id)
         .select()
         .single();
       if (error) throw new Error(error.message);
       return { exercise: row };
     }
-    const { data: row, error } = await supabaseAdmin
+    const { data: row, error } = await db
       .from("exercises")
       .insert({ ...data, created_by: context.userId })
       .select()
@@ -336,13 +337,14 @@ export const listExercises = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertCoach(context.userId);
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await (supabaseAdmin as any)
       .from("exercises")
       .select("*")
       .order("name", { ascending: true });
     if (error) throw new Error(error.message);
     return { exercises: data ?? [] };
   });
+
 
 // ─── ELEVATION PROXY (server-side → no CORS/rate-limit issues) ───────────────
 
