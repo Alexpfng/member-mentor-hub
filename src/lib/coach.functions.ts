@@ -383,7 +383,7 @@ export const saveRunningRoute = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { data: row, error } = await supabaseAdmin
+    const { data: row, error } = await (supabaseAdmin as any)
       .from("running_routes")
       .insert({
         coach_id: context.userId,
@@ -412,7 +412,7 @@ export const deleteRunningRoute = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertCoach(context.userId);
-    const { error } = await supabaseAdmin
+    const { error } = await (supabaseAdmin as any)
       .from("running_routes")
       .delete()
       .eq("id", data.id)
@@ -425,7 +425,7 @@ export const listRunningRoutes = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertCoach(context.userId);
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await (supabaseAdmin as any)
       .from("running_routes")
       .select("*")
       .eq("coach_id", context.userId)
@@ -433,3 +433,4 @@ export const listRunningRoutes = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     return { routes: data ?? [] };
   });
+
