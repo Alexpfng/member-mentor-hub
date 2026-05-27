@@ -411,7 +411,7 @@ function AssignModal({ programId, onClose }: { programId: string; onClose: () =>
     if (!selected.size) return;
     setLoading(true);
     const { assignProgram } = await import('@/lib/coach.functions');
-    await Promise.all(Array.from(selected).map(mid => assignProgram({ member_id: mid, program_id: programId, start_date: startDate })));
+    await Promise.all(Array.from(selected).map(mid => assignProgram({ data: { member_id: mid, program_id: programId, start_date: startDate } })));
     toast.success(`Programme assigné à ${selected.size} membre(s) !`);
     setLoading(false);
     onClose();
