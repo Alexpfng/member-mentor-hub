@@ -141,13 +141,14 @@ export default function CoachMessages() {
     setSending(true);
     const optimistic: Message = {
       id: 'opt-' + Date.now(), from_id: currentUserId ?? '', to_id: activePartner.id,
-      body: body.trim(), created_at: new Date().toISOString(), read: false, pinned: false,
+      content: body.trim(), created_at: new Date().toISOString(), read: false, pinned: false,
     };
     setMessages(prev => [...prev, optimistic]);
     setBody('');
     setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
     try {
-      await sendFn({ to_id: activePartner.id, body: optimistic.content });
+      await sendFn({ data: { to_user_id: activePartner.id, body: optimistic.content } });
+
       await loadConversations();
     } catch (e: any) {
       toast.error(e.message ?? 'Erreur envoi');
