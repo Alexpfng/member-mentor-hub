@@ -109,9 +109,11 @@ export type Database = {
       exercises: {
         Row: {
           category: string | null
+          coach_notes: string | null
           color: string | null
           created_at: string | null
           created_by: string | null
+          default_tempo: string | null
           description: string | null
           id: string
           is_global: boolean | null
@@ -124,9 +126,11 @@ export type Database = {
         }
         Insert: {
           category?: string | null
+          coach_notes?: string | null
           color?: string | null
           created_at?: string | null
           created_by?: string | null
+          default_tempo?: string | null
           description?: string | null
           id?: string
           is_global?: boolean | null
@@ -139,9 +143,11 @@ export type Database = {
         }
         Update: {
           category?: string | null
+          coach_notes?: string | null
           color?: string | null
           created_at?: string | null
           created_by?: string | null
+          default_tempo?: string | null
           description?: string | null
           id?: string
           is_global?: boolean | null
