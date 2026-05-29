@@ -152,6 +152,27 @@ export default function CoachDashboard() {
     <div className="cst-screen" style={{ flexDirection: 'row' }}>
       <CoachSidebar />
       {showInvite && <InviteModal onClose={() => setShowInvite(false)} onDone={(e) => { setShowInvite(false); setInviteOk(`Invitation envoyée à ${e}`); setTimeout(() => setInviteOk(''), 4000); reload(); }} />}
+      {showWelcome && (
+        <div onClick={dismissWelcome} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 150, padding: 16 }}>
+          <div onClick={(e) => e.stopPropagation()} className="cst-screen cst-hatch" style={{ width: 480, padding: 32, borderRadius: 14 }}>
+            <h2 className="cst-display" style={{ fontSize: 26, marginBottom: 4 }}>BIENVENUE, LÉO. 👋</h2>
+            <div className="cst-italic" style={{ fontSize: 15, color: 'var(--cst-mid-green)', marginBottom: 16 }}>Ton espace coach est prêt.</div>
+            <p style={{ margin: '0 0 16px', fontSize: 13, opacity: 0.8, lineHeight: 1.6 }}>
+              Teddy Morin est déjà dans ta liste d'adhérents.
+            </p>
+            <div style={{ background: 'rgba(45,90,53,0.12)', border: '1px solid rgba(45,90,53,0.3)', borderRadius: 8, padding: 14, marginBottom: 18, fontSize: 12, lineHeight: 1.8 }}>
+              <div style={{ fontWeight: 600, marginBottom: 6 }}>Pour commencer :</div>
+              <div>1. Crée un programme pour Teddy</div>
+              <div>2. Assigne-le lui</div>
+              <div>3. Envoie-lui un message</div>
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="cst-btn cst-btn-ghost-dark" style={{ flex: '0 0 auto', padding: '0 18px' }} onClick={dismissWelcome}>Fermer</button>
+              <button className="cst-btn cst-btn-primary" style={{ flex: 1 }} onClick={() => { dismissWelcome(); navigate({ to: '/coach/builder' }); }}>CRÉER UN PROGRAMME POUR TEDDY →</button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="cst-col cst-scroll" style={{ flex: 1, minWidth: 0 }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '24px 32px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
