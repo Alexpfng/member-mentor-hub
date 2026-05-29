@@ -24,8 +24,6 @@ export default function Login() {
 
   // If already signed in, route to the right dashboard
   useEffect(() => {
-    if (!SUPABASE_ENABLED) return;
-
     (async () => {
       const { data } = await supabase.auth.getUser();
       if (!data.user) return;
@@ -39,11 +37,6 @@ export default function Login() {
   }, [navigate]);
 
   async function handleForgot() {
-    if (!SUPABASE_ENABLED) {
-      setError("Supabase est désactivé en local. Utilise l'accès démo.");
-      return;
-    }
-
     if (!email.trim()) {
       setError("Entre ton email puis clique sur « Mot de passe oublié ».");
       return;
@@ -64,42 +57,8 @@ export default function Login() {
     }
   }
 
-  async function handleDemoLogin(demoEmail, demoPassword) {
-    if (!SUPABASE_ENABLED) {
-      navigate(demoEmail.includes("coach") ? "/coach" : "/membre");
-      return;
-    }
-
-    setError("");
-    setInfo("");
-    setLoading(true);
-    try {
-      const { data, error: err } = await supabase.auth.signInWithPassword({
-        email: demoEmail,
-        password: demoPassword,
-      });
-      if (err) throw err;
-      const { data: r } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", data.user.id)
-        .maybeSingle();
-      navigate(r?.role === "coach" ? "/coach" : "/membre");
-    } catch (err) {
-      setError(err?.message || "Erreur connexion démo.");
-      setLoading(false);
-    }
-  }
-
   async function handleSubmit(e) {
     e.preventDefault();
-
-    if (!SUPABASE_ENABLED) {
-      setError("");
-      setInfo("Mode démo actif. Utilise les boutons COACH ou MEMBRE ci-dessous.");
-      return;
-    }
-
     setError("");
     setInfo("");
     setLoading(true);
@@ -142,6 +101,7 @@ export default function Login() {
       setLoading(false);
     }
   }
+
 
   return (
     <div
