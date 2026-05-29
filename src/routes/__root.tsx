@@ -110,11 +110,25 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   errorComponent: ErrorComponent,
 });
 
+const themeBootstrapScript = `
+(function(){try{
+  var m = localStorage.getItem('cst-theme') || 'dark';
+  var r = m === 'system'
+    ? (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')
+    : m;
+  var c = document.documentElement.classList;
+  c.toggle('theme-light', r === 'light');
+  c.toggle('theme-dark', r === 'dark');
+  c.toggle('dark', r === 'dark');
+}catch(e){}})();
+`;
+
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr">
       <head>
         <HeadContent />
+        <script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
       </head>
       <body>
         {children}
@@ -123,6 +137,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
     </html>
   );
 }
+
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
