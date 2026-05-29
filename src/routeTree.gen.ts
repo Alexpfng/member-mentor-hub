@@ -29,6 +29,7 @@ import { Route as AuthenticatedCoachImportRouteImport } from './routes/_authenti
 import { Route as AuthenticatedCoachBuilderRouteImport } from './routes/_authenticated.coach.builder'
 import { Route as AuthenticatedMembreSeanceSessionIdRouteImport } from './routes/_authenticated.membre.seance.$sessionId'
 import { Route as AuthenticatedCoachProgrammesIdRouteImport } from './routes/_authenticated.coach.programmes.$id'
+import { Route as AuthenticatedCoachMembreMemberIdRouteImport } from './routes/_authenticated.coach.membre.$memberId'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -143,6 +144,12 @@ const AuthenticatedCoachProgrammesIdRoute =
     path: '/$id',
     getParentRoute: () => AuthenticatedCoachProgrammesRoute,
   } as any)
+const AuthenticatedCoachMembreMemberIdRoute =
+  AuthenticatedCoachMembreMemberIdRouteImport.update({
+    id: '/$memberId',
+    path: '/$memberId',
+    getParentRoute: () => AuthenticatedCoachMembreRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -151,7 +158,7 @@ export interface FileRoutesByFullPath {
   '/onboarding/$step': typeof OnboardingStepRoute
   '/coach/builder': typeof AuthenticatedCoachBuilderRoute
   '/coach/import': typeof AuthenticatedCoachImportRoute
-  '/coach/membre': typeof AuthenticatedCoachMembreRoute
+  '/coach/membre': typeof AuthenticatedCoachMembreRouteWithChildren
   '/coach/messages': typeof AuthenticatedCoachMessagesRoute
   '/coach/programmes': typeof AuthenticatedCoachProgrammesRouteWithChildren
   '/coach/running': typeof AuthenticatedCoachRunningRoute
@@ -162,6 +169,7 @@ export interface FileRoutesByFullPath {
   '/membre/progression': typeof AuthenticatedMembreProgressionRoute
   '/coach/': typeof AuthenticatedCoachIndexRoute
   '/membre/': typeof AuthenticatedMembreIndexRoute
+  '/coach/membre/$memberId': typeof AuthenticatedCoachMembreMemberIdRoute
   '/coach/programmes/$id': typeof AuthenticatedCoachProgrammesIdRoute
   '/membre/seance/$sessionId': typeof AuthenticatedMembreSeanceSessionIdRoute
 }
@@ -172,7 +180,7 @@ export interface FileRoutesByTo {
   '/onboarding/$step': typeof OnboardingStepRoute
   '/coach/builder': typeof AuthenticatedCoachBuilderRoute
   '/coach/import': typeof AuthenticatedCoachImportRoute
-  '/coach/membre': typeof AuthenticatedCoachMembreRoute
+  '/coach/membre': typeof AuthenticatedCoachMembreRouteWithChildren
   '/coach/messages': typeof AuthenticatedCoachMessagesRoute
   '/coach/programmes': typeof AuthenticatedCoachProgrammesRouteWithChildren
   '/coach/running': typeof AuthenticatedCoachRunningRoute
@@ -183,6 +191,7 @@ export interface FileRoutesByTo {
   '/membre/progression': typeof AuthenticatedMembreProgressionRoute
   '/coach': typeof AuthenticatedCoachIndexRoute
   '/membre': typeof AuthenticatedMembreIndexRoute
+  '/coach/membre/$memberId': typeof AuthenticatedCoachMembreMemberIdRoute
   '/coach/programmes/$id': typeof AuthenticatedCoachProgrammesIdRoute
   '/membre/seance/$sessionId': typeof AuthenticatedMembreSeanceSessionIdRoute
 }
@@ -195,7 +204,7 @@ export interface FileRoutesById {
   '/onboarding/$step': typeof OnboardingStepRoute
   '/_authenticated/coach/builder': typeof AuthenticatedCoachBuilderRoute
   '/_authenticated/coach/import': typeof AuthenticatedCoachImportRoute
-  '/_authenticated/coach/membre': typeof AuthenticatedCoachMembreRoute
+  '/_authenticated/coach/membre': typeof AuthenticatedCoachMembreRouteWithChildren
   '/_authenticated/coach/messages': typeof AuthenticatedCoachMessagesRoute
   '/_authenticated/coach/programmes': typeof AuthenticatedCoachProgrammesRouteWithChildren
   '/_authenticated/coach/running': typeof AuthenticatedCoachRunningRoute
@@ -206,6 +215,7 @@ export interface FileRoutesById {
   '/_authenticated/membre/progression': typeof AuthenticatedMembreProgressionRoute
   '/_authenticated/coach/': typeof AuthenticatedCoachIndexRoute
   '/_authenticated/membre/': typeof AuthenticatedMembreIndexRoute
+  '/_authenticated/coach/membre/$memberId': typeof AuthenticatedCoachMembreMemberIdRoute
   '/_authenticated/coach/programmes/$id': typeof AuthenticatedCoachProgrammesIdRoute
   '/_authenticated/membre/seance/$sessionId': typeof AuthenticatedMembreSeanceSessionIdRoute
 }
@@ -229,6 +239,7 @@ export interface FileRouteTypes {
     | '/membre/progression'
     | '/coach/'
     | '/membre/'
+    | '/coach/membre/$memberId'
     | '/coach/programmes/$id'
     | '/membre/seance/$sessionId'
   fileRoutesByTo: FileRoutesByTo
@@ -250,6 +261,7 @@ export interface FileRouteTypes {
     | '/membre/progression'
     | '/coach'
     | '/membre'
+    | '/coach/membre/$memberId'
     | '/coach/programmes/$id'
     | '/membre/seance/$sessionId'
   id:
@@ -272,6 +284,7 @@ export interface FileRouteTypes {
     | '/_authenticated/membre/progression'
     | '/_authenticated/coach/'
     | '/_authenticated/membre/'
+    | '/_authenticated/coach/membre/$memberId'
     | '/_authenticated/coach/programmes/$id'
     | '/_authenticated/membre/seance/$sessionId'
   fileRoutesById: FileRoutesById
@@ -426,8 +439,30 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCoachProgrammesIdRouteImport
       parentRoute: typeof AuthenticatedCoachProgrammesRoute
     }
+    '/_authenticated/coach/membre/$memberId': {
+      id: '/_authenticated/coach/membre/$memberId'
+      path: '/$memberId'
+      fullPath: '/coach/membre/$memberId'
+      preLoaderRoute: typeof AuthenticatedCoachMembreMemberIdRouteImport
+      parentRoute: typeof AuthenticatedCoachMembreRoute
+    }
   }
 }
+
+interface AuthenticatedCoachMembreRouteChildren {
+  AuthenticatedCoachMembreMemberIdRoute: typeof AuthenticatedCoachMembreMemberIdRoute
+}
+
+const AuthenticatedCoachMembreRouteChildren: AuthenticatedCoachMembreRouteChildren =
+  {
+    AuthenticatedCoachMembreMemberIdRoute:
+      AuthenticatedCoachMembreMemberIdRoute,
+  }
+
+const AuthenticatedCoachMembreRouteWithChildren =
+  AuthenticatedCoachMembreRoute._addFileChildren(
+    AuthenticatedCoachMembreRouteChildren,
+  )
 
 interface AuthenticatedCoachProgrammesRouteChildren {
   AuthenticatedCoachProgrammesIdRoute: typeof AuthenticatedCoachProgrammesIdRoute
@@ -446,7 +481,7 @@ const AuthenticatedCoachProgrammesRouteWithChildren =
 interface AuthenticatedRouteChildren {
   AuthenticatedCoachBuilderRoute: typeof AuthenticatedCoachBuilderRoute
   AuthenticatedCoachImportRoute: typeof AuthenticatedCoachImportRoute
-  AuthenticatedCoachMembreRoute: typeof AuthenticatedCoachMembreRoute
+  AuthenticatedCoachMembreRoute: typeof AuthenticatedCoachMembreRouteWithChildren
   AuthenticatedCoachMessagesRoute: typeof AuthenticatedCoachMessagesRoute
   AuthenticatedCoachProgrammesRoute: typeof AuthenticatedCoachProgrammesRouteWithChildren
   AuthenticatedCoachRunningRoute: typeof AuthenticatedCoachRunningRoute
@@ -463,7 +498,7 @@ interface AuthenticatedRouteChildren {
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCoachBuilderRoute: AuthenticatedCoachBuilderRoute,
   AuthenticatedCoachImportRoute: AuthenticatedCoachImportRoute,
-  AuthenticatedCoachMembreRoute: AuthenticatedCoachMembreRoute,
+  AuthenticatedCoachMembreRoute: AuthenticatedCoachMembreRouteWithChildren,
   AuthenticatedCoachMessagesRoute: AuthenticatedCoachMessagesRoute,
   AuthenticatedCoachProgrammesRoute:
     AuthenticatedCoachProgrammesRouteWithChildren,
@@ -493,3 +528,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
