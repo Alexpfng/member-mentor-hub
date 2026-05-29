@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { SUPABASE_ENABLED } from "@/lib/app-mode";
-import { BETA_MODE } from "@/lib/site";
 import { CSTLogo, CSTSectionNum, CSTDuoTitle } from "../../components/Atoms";
 
 const hatchOverlay = {
