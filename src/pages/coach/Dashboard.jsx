@@ -241,7 +241,7 @@ export default function CoachDashboard() {
                       </td>
                       <td style={{ ...tdStyle, opacity: 0.6, fontSize: 11 }} className="cst-mono">{r.created_at ? new Date(r.created_at).toLocaleDateString('fr-FR') : '—'}</td>
                       <td style={{ ...tdStyle, textAlign: 'right' }}>
-                        <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" onClick={() => navigate({ to: '/coach/membre' })}>VOIR</button>
+                        <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" onClick={() => navigate({ to: '/coach/membre/$memberId', params: { memberId: r.id } })}>VOIR</button>
                       </td>
                     </tr>
                   );
