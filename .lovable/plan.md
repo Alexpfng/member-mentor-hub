@@ -1,34 +1,29 @@
+# Nettoyage des doublons d'exercices
 
-# Fiabiliser les emails de mot de passe oublié
+## Constat
+Sur la table `exercises` (non archivés), j'ai trouvé **10 paires de doublons exacts** (même nom, même catégorie). Aucun n'est référencé dans `set_logs` ni `personal_records` → suppression sans risque.
 
-## Diagnostic
-- Le code de l'écran de login appelle bien `resetPasswordForEmail` avec un `redirectTo` valide, et la page `/reset-password` existe.
-- Aucun domaine d'envoi n'est branché sur ce projet → les emails partent via l'expéditeur par défaut Supabase, qui est limité à ~2 mails/heure et atterrit fréquemment en spam.
+| # | Nom | Catégorie |
+|---|---|---|
+| 1 | Adducteurs en position étirée (pieds sur box ou banc) | mobility |
+| 2 | Adducteurs work long range pied sur banc | isolation |
+| 3 | Alternated b-stance Jump over the line | strength |
+| 4 | Alternating Dumbbell Press from Deep Squat | strength |
+| 5 | Arrière d'épaule à la machine | isolation |
+| 6 | Arrière d'épaule unilatéral sur banc allongé | isolation |
+| 7 | Arrière d'épaule unilattéral sur banc | explosive |
+| 8 | Assault bike | other |
+| 9 | Elevations latérales aux haltères | explosive |
+| 10 | Tirage prise large coudes ouverts sur machine | explosive |
+
+## À signaler (pas un doublon, mais suspect)
+- **Ligne 7** : « Arrière d'épaule unila**tt**éral sur banc » contient une faute de frappe (double t). À renommer manuellement après nettoyage si tu veux harmoniser avec la ligne 6 « unilatéral ».
 
 ## Plan
+1. **Migration SQL** : pour chacune des 10 paires, garder l'entrée la plus ancienne (`created_at` min) et supprimer l'autre. Sélection automatique via `ROW_NUMBER() OVER (PARTITION BY lower(trim(name)) ORDER BY created_at)`.
+2. Pas de mise à jour de références nécessaire (set_logs/PRs vides pour ces lignes).
+3. **Vérification post-migration** : relancer la requête de détection, attendu = 0 ligne.
 
-### 1. Choisir / brancher un domaine d'envoi
-Deux options (à choisir avec toi avant de lancer) :
-- **Option A — utiliser `colosmartraining.fr`** (recommandé, cohérent avec ton app).
-  Tu ouvres la boîte de dialogue de setup, tu y ajoutes le domaine, et tu colles 2 enregistrements NS chez ton registrar (ex : `notify.colosmartraining.fr` délégué à Lovable).
-- **Option B — réutiliser `bulbiz.io`** déjà vérifié dans le workspace (les mails partent depuis `notify.bulbiz.io`, ce qui peut être incohérent côté image de marque).
-
-### 2. Mettre en place l'infrastructure d'emails
-- Création des files d'attente, table de log d'envoi, suppressions, tokens unsubscribe.
-- Création du job cron qui draine la queue (priorité haute pour les emails d'auth).
-
-### 3. Scaffolder les templates d'emails d'auth personnalisés
-Génère 6 templates React Email pour :
-- réinitialisation de mot de passe (le cas qui te bloque),
-- confirmation d'inscription, magic link, invitation, changement d'email, ré-authentification.
-- Branding aligné sur l'app (logo CST, couleurs vert sombre, typographies du projet, textes en français).
-
-### 4. Vérifications après mise en service
-- Tester « Mot de passe oublié » avec un email réel.
-- Si DNS encore en propagation : suivi visible dans **Cloud → Emails**.
-- Vérifier le log d'envoi pour confirmer l'état `sent` (et pas `pending`/`dlq`).
-
-## À décider avec toi avant de démarrer
-1. Quel domaine d'envoi : `colosmartraining.fr` (option A) ou `bulbiz.io` (option B) ?
-2. Adresse d'expéditeur souhaitée (ex : `coach@notify.colosmartraining.fr` ou `no-reply@…`) ?
-3. As-tu accès à la zone DNS de `colosmartraining.fr` pour ajouter 2 enregistrements NS ?
+## Question avant exécution
+- OK pour supprimer les 10 doublons en gardant la copie la plus ancienne de chaque paire ?
+- Veux-tu que je corrige aussi la faute « unilattéral » → « unilatéral » dans la foulée ?
