@@ -546,7 +546,7 @@ export const updateMemberProfile = createServerFn({ method: "POST" })
 
     // 1. profiles (first/last name)
     if (data.first_name !== undefined || data.last_name !== undefined) {
-      const patch: Record<string, unknown> = {};
+      const patch: { first_name?: string | null; last_name?: string | null } = {};
       if (data.first_name !== undefined) patch.first_name = data.first_name || null;
       if (data.last_name !== undefined) patch.last_name = data.last_name || null;
       const { error } = await supabaseAdmin
@@ -557,7 +557,7 @@ export const updateMemberProfile = createServerFn({ method: "POST" })
     }
 
     // 2. member_profiles upsert
-    const mpPatch: Record<string, unknown> = {};
+    const mpPatch: { weight_kg?: number | null; height_cm?: number | null; level?: string | null; goal?: string | null; injuries?: string | null } = {};
     if (data.weight_kg !== undefined) mpPatch.weight_kg = data.weight_kg;
     if (data.height_cm !== undefined) mpPatch.height_cm = data.height_cm;
     if (data.level !== undefined) mpPatch.level = data.level || null;
