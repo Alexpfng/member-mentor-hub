@@ -3,7 +3,7 @@ import { useNavigate, useParams } from '@tanstack/react-router';
 import { useServerFn } from '@tanstack/react-start';
 import CoachSidebar from '../../components/CoachSidebar';
 import { CSTSectionNum, CSTAvatar, CSTStatus } from '../../components/Atoms';
-import { getMemberDetail, updateMemberNotes, assignProgram, listPrograms } from '@/lib/coach.functions';
+import { getMemberDetail, updateMemberNotes, updateMemberProfile, assignProgram, listPrograms } from '@/lib/coach.functions';
 
 function daysBetween(a, b) {
   return Math.floor((b.getTime() - a.getTime()) / 86400000);
