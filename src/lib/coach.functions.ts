@@ -524,6 +524,77 @@ export const updateMemberNotes = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const updateMemberProfile = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        member_id: z.string().uuid(),
+        first_name: z.string().trim().max(80).optional().nullable(),
+        last_name: z.string().trim().max(80).optional().nullable(),
+        weight_kg: z.number().min(20).max(400).optional().nullable(),
+        height_cm: z.number().int().min(80).max(260).optional().nullable(),
+        level: z.string().trim().max(40).optional().nullable(),
+        goal: z.string().trim().max(200).optional().nullable(),
+        injuries: z.string().trim().max(2000).optional().nullable(),
+        log_weight: z.boolean().optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertCoach(context.userId);
+
+    // 1. profiles (first/last name)
+    if (data.first_name !== undefined || data.last_name !== undefined) {
+      const patch: { first_name?: string | null; last_name?: string | null } = {};
+      if (data.first_name !== undefined) patch.first_name = data.first_name || null;
+      if (data.last_name !== undefined) patch.last_name = data.last_name || null;
+      const { error } = await supabaseAdmin
+        .from("profiles")
+        .update(patch)
+        .eq("id", data.member_id);
+      if (error) throw new Error(error.message);
+    }
+
+    // 2. member_profiles upsert
+    const mpPatch: { weight_kg?: number | null; height_cm?: number | null; level?: string | null; goal?: string | null; injuries?: string | null } = {};
+    if (data.weight_kg !== undefined) mpPatch.weight_kg = data.weight_kg;
+    if (data.height_cm !== undefined) mpPatch.height_cm = data.height_cm;
+    if (data.level !== undefined) mpPatch.level = data.level || null;
+    if (data.goal !== undefined) mpPatch.goal = data.goal || null;
+    if (data.injuries !== undefined) mpPatch.injuries = data.injuries || null;
+
+    if (Object.keys(mpPatch).length > 0) {
+      const { data: existing } = await supabaseAdmin
+        .from("member_profiles")
+        .select("id")
+        .eq("user_id", data.member_id)
+        .maybeSingle();
+      if (existing) {
+        const { error } = await supabaseAdmin
+          .from("member_profiles")
+          .update(mpPatch)
+          .eq("user_id", data.member_id);
+        if (error) throw new Error(error.message);
+      } else {
+        const { error } = await supabaseAdmin
+          .from("member_profiles")
+          .insert({ user_id: data.member_id, ...mpPatch });
+        if (error) throw new Error(error.message);
+      }
+    }
+
+    // 3. optional weight log
+    if (data.log_weight && data.weight_kg) {
+      const { error } = await supabaseAdmin
+        .from("weight_logs")
+        .insert({ member_id: data.member_id, weight_kg: data.weight_kg });
+      if (error) throw new Error(error.message);
+    }
+
+    return { ok: true };
+  });
+
 
 
 

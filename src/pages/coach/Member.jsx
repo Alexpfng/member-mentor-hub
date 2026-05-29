@@ -3,7 +3,7 @@ import { useNavigate, useParams } from '@tanstack/react-router';
 import { useServerFn } from '@tanstack/react-start';
 import CoachSidebar from '../../components/CoachSidebar';
 import { CSTSectionNum, CSTAvatar, CSTStatus } from '../../components/Atoms';
-import { getMemberDetail, updateMemberNotes, assignProgram, listPrograms } from '@/lib/coach.functions';
+import { getMemberDetail, updateMemberNotes, updateMemberProfile, assignProgram, listPrograms } from '@/lib/coach.functions';
 
 function daysBetween(a, b) {
   return Math.floor((b.getTime() - a.getTime()) / 86400000);
@@ -34,6 +34,7 @@ export default function CoachMember() {
   const navigate = useNavigate();
   const getDetailFn = useServerFn(getMemberDetail);
   const saveNotesFn = useServerFn(updateMemberNotes);
+  const saveProfileFn = useServerFn(updateMemberProfile);
   const listProgramsFn = useServerFn(listPrograms);
   const assignFn = useServerFn(assignProgram);
 
@@ -46,6 +47,10 @@ export default function CoachMember() {
   const [savingNotes, setSavingNotes] = useState(false);
   const [programs, setPrograms] = useState([]);
   const [assignBusy, setAssignBusy] = useState(false);
+  const [form, setForm] = useState(null);
+  const [savingForm, setSavingForm] = useState(false);
+  const [formSaved, setFormSaved] = useState(false);
+  const [logWeight, setLogWeight] = useState(false);
 
   async function reload() {
     setLoading(true);
@@ -54,6 +59,16 @@ export default function CoachMember() {
       const d = await getDetailFn({ data: { member_id: memberId } });
       setData(d);
       setNotes(d.member_profile?.coach_private_notes || '');
+      setForm({
+        first_name: d.profile?.first_name || '',
+        last_name: d.profile?.last_name || '',
+        weight_kg: d.member_profile?.weight_kg ?? '',
+        height_cm: d.member_profile?.height_cm ?? '',
+        level: d.member_profile?.level || '',
+        goal: d.member_profile?.goal || '',
+        injuries: d.member_profile?.injuries || '',
+      });
+      setLogWeight(false);
     } catch (ex) {
       setErr(ex?.message || 'Erreur de chargement');
     } finally {
@@ -78,6 +93,34 @@ export default function CoachMember() {
       alert(ex?.message || 'Erreur');
     } finally {
       setSavingNotes(false);
+    }
+  }
+
+  async function saveForm(e) {
+    e?.preventDefault?.();
+    if (!form) return;
+    setSavingForm(true);
+    setFormSaved(false);
+    try {
+      const payload = {
+        member_id: memberId,
+        first_name: form.first_name?.trim() || null,
+        last_name: form.last_name?.trim() || null,
+        weight_kg: form.weight_kg === '' ? null : Number(form.weight_kg),
+        height_cm: form.height_cm === '' ? null : parseInt(form.height_cm, 10),
+        level: form.level?.trim() || null,
+        goal: form.goal?.trim() || null,
+        injuries: form.injuries?.trim() || null,
+        log_weight: logWeight && form.weight_kg !== '' ? true : false,
+      };
+      await saveProfileFn({ data: payload });
+      setFormSaved(true);
+      setTimeout(() => setFormSaved(false), 2500);
+      await reload();
+    } catch (ex) {
+      alert(ex?.message || 'Erreur');
+    } finally {
+      setSavingForm(false);
     }
   }
 
@@ -375,26 +418,59 @@ export default function CoachMember() {
               </>
             )}
 
-            {activeTab === 3 && (
+            {activeTab === 3 && form && (
               <>
-                <CSTSectionNum num={1} label="PROFIL" sub="INFOS ADHÉRENT" />
-                <div className="cst-card-dark" style={{ padding: 20, marginTop: 14, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                  {[
-                    ['POIDS', data.member_profile?.weight_kg ? `${data.member_profile.weight_kg} kg` : 'Non renseigné'],
-                    ['TAILLE', data.member_profile?.height_cm ? `${data.member_profile.height_cm} cm` : 'Non renseigné'],
-                    ['NIVEAU', data.member_profile?.level || 'Non renseigné'],
-                    ['OBJECTIF', data.member_profile?.goal || 'Non renseigné'],
-                  ].map(([k, v]) => (
-                    <div key={k}>
-                      <div className="cst-mono" style={{ fontSize: 9, opacity: 0.6 }}>{k}</div>
-                      <div style={{ fontSize: 14, marginTop: 4 }}>{v}</div>
-                    </div>
-                  ))}
-                  <div style={{ gridColumn: '1 / -1' }}>
-                    <div className="cst-mono" style={{ fontSize: 9, opacity: 0.6 }}>BLESSURES / NOTES SANTÉ</div>
-                    <div style={{ fontSize: 13, marginTop: 4, whiteSpace: 'pre-wrap' }}>{data.member_profile?.injuries || 'Aucune note'}</div>
+                <CSTSectionNum num={1} label="PROFIL" sub="ÉDITER LES INFOS ADHÉRENT" />
+                <form onSubmit={saveForm} className="cst-card-dark" style={{ padding: 20, marginTop: 14, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                  <div>
+                    <label className="cst-mono" style={{ fontSize: 9, opacity: 0.6 }}>PRÉNOM</label>
+                    <input className="cst-input" style={{ width: '100%', marginTop: 4 }} value={form.first_name} onChange={(e) => setForm({ ...form, first_name: e.target.value })} />
                   </div>
-                </div>
+                  <div>
+                    <label className="cst-mono" style={{ fontSize: 9, opacity: 0.6 }}>NOM</label>
+                    <input className="cst-input" style={{ width: '100%', marginTop: 4 }} value={form.last_name} onChange={(e) => setForm({ ...form, last_name: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className="cst-mono" style={{ fontSize: 9, opacity: 0.6 }}>EMAIL</label>
+                    <input className="cst-input" style={{ width: '100%', marginTop: 4, opacity: 0.6 }} value={data.profile.email || ''} disabled />
+                  </div>
+                  <div>
+                    <label className="cst-mono" style={{ fontSize: 9, opacity: 0.6 }}>NIVEAU</label>
+                    <select className="cst-input" style={{ width: '100%', marginTop: 4 }} value={form.level} onChange={(e) => setForm({ ...form, level: e.target.value })}>
+                      <option value="">— Non renseigné —</option>
+                      <option value="débutant">Débutant</option>
+                      <option value="intermédiaire">Intermédiaire</option>
+                      <option value="avancé">Avancé</option>
+                      <option value="élite">Élite</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="cst-mono" style={{ fontSize: 9, opacity: 0.6 }}>POIDS (KG)</label>
+                    <input type="number" step="0.1" min="20" max="400" className="cst-input" style={{ width: '100%', marginTop: 4 }} value={form.weight_kg} onChange={(e) => setForm({ ...form, weight_kg: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className="cst-mono" style={{ fontSize: 9, opacity: 0.6 }}>TAILLE (CM)</label>
+                    <input type="number" min="80" max="260" className="cst-input" style={{ width: '100%', marginTop: 4 }} value={form.height_cm} onChange={(e) => setForm({ ...form, height_cm: e.target.value })} />
+                  </div>
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <label className="cst-mono" style={{ fontSize: 9, opacity: 0.6 }}>OBJECTIF</label>
+                    <input className="cst-input" style={{ width: '100%', marginTop: 4 }} placeholder="Ex. Préparation combat / Perte de gras / Hypertrophie…" value={form.goal} onChange={(e) => setForm({ ...form, goal: e.target.value })} />
+                  </div>
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <label className="cst-mono" style={{ fontSize: 9, opacity: 0.6 }}>BLESSURES / NOTES SANTÉ</label>
+                    <textarea rows="4" className="cst-input" style={{ width: '100%', marginTop: 4, resize: 'vertical', fontFamily: 'var(--cst-ui)' }} value={form.injuries} onChange={(e) => setForm({ ...form, injuries: e.target.value })} placeholder="Pathologies, contre-indications, points de vigilance…" />
+                  </div>
+                  <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: 10, fontSize: 12 }}>
+                    <input id="logw" type="checkbox" checked={logWeight} onChange={(e) => setLogWeight(e.target.checked)} />
+                    <label htmlFor="logw" style={{ opacity: 0.8 }}>Ajouter le poids saisi à l'historique de pesées</label>
+                  </div>
+                  <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: 12, paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                    <button type="submit" className="cst-btn cst-btn-primary" disabled={savingForm}>
+                      {savingForm ? 'ENREGISTREMENT…' : 'ENREGISTRER LE PROFIL'}
+                    </button>
+                    {formSaved && <span style={{ color: 'var(--cst-success)', fontSize: 12 }}>✓ Profil mis à jour</span>}
+                  </div>
+                </form>
               </>
             )}
 
