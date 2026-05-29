@@ -3,8 +3,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import MemberNav from "../components/MemberNav";
 import { CSTLogo, CSTSectionNum } from "../components/Atoms";
-import { ProgramBlocks, type ProgExercise } from "../components/cst/ProgramBlocks";
-import { ExerciseThread } from "../components/cst/ExerciseThread";
+import { type ProgExercise } from "../components/cst/ProgramBlocks";
+import { LiveSession } from "../components/cst/LiveSession";
 
 export const Route = createFileRoute("/_authenticated/membre/seance/$sessionId")({
   component: SeancePage,
@@ -112,7 +112,7 @@ function SeancePage() {
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#111" }}>
       <div style={{ width: 390, minHeight: 780, position: "relative" }}>
         <div className="cst-screen cst-hatch" style={{ minHeight: "100%", display: "flex", flexDirection: "column" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "22px 22px 8px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "22px 22px 4px" }}>
             <CSTLogo size={11} />
             <button
               onClick={() => navigate({ to: "/membre" })}
@@ -123,38 +123,15 @@ function SeancePage() {
             </button>
           </div>
 
-          <div className="cst-scroll" style={{ flex: 1, padding: "0 22px 110px", display: "flex", flexDirection: "column", gap: 16 }}>
-            <div style={{ paddingTop: 8 }}>
-              <CSTSectionNum num={1} label="SÉANCE EN COURS" sub={session?.session_label ?? undefined} />
-              <h1 className="cst-display" style={{ fontSize: 36, margin: "10px 0 0" }}>
-                {(session?.session_label ?? "PULL B").toUpperCase()}
-              </h1>
-              <div className="cst-italic" style={{ fontSize: 16, opacity: 0.6 }}>
-                {exercises.length} exercices.
-              </div>
-            </div>
-
-            <ProgramBlocks
+          <div style={{ flex: 1, paddingBottom: 80, display: "flex", flexDirection: "column" }}>
+            <LiveSession
+              sessionId={sessionId}
+              userId={userId}
+              sessionLabel={session?.session_label ?? null}
               exercises={exercises}
-              threadSlot={(ex) => (
-                <ExerciseThread
-                  sessionId={sessionId}
-                  exerciseName={ex.name}
-                  userId={userId}
-                  viewerRole="member"
-                />
-              )}
+              onFinish={finishSession}
+              finishing={finishing}
             />
-
-
-            <button
-              onClick={finishSession}
-              disabled={finishing}
-              className="cst-btn cst-btn-primary"
-              style={{ marginTop: 8, width: "100%", padding: "16px 0", fontSize: 14, opacity: finishing ? 0.6 : 1 }}
-            >
-              {finishing ? "ENREGISTREMENT…" : "TERMINER LA SÉANCE ✓"}
-            </button>
           </div>
 
           <MemberNav />
