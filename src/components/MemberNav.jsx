@@ -13,7 +13,7 @@ const items = [
   { id: "profile", icon: "👤", label: "Profil", path: "/membre/profil" },
 ];
 
-export default function MemberNav({ unreadCount: unreadProp }) {
+export default function MemberNav({ unreadCount: unreadProp = undefined } = {}) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const unreadFn = useServerFn(getUnreadCount);
