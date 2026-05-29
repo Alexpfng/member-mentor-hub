@@ -8,6 +8,7 @@ import ThemeToggle from "./ThemeToggle";
 const items = [
   { id: "membres", label: "Membres", icon: "○", path: "/coach", match: (p) => p === "/coach" || p.startsWith("/coach/membre") },
   { id: "programmes", label: "Programmes", icon: "◤", path: "/coach/programmes" },
+  { id: "exercices", label: "Bibliothèque", icon: "❖", path: "/coach/exercices" },
   { id: "import", label: "Import Excel", icon: "◥", path: "/coach/import" },
   { id: "running", label: "Trail & Run", icon: "▲", path: "/coach/running" },
   { id: "messages", label: "Messages", icon: "◌", path: "/coach/messages" },
