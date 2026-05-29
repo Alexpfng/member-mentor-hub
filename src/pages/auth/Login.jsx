@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { SUPABASE_ENABLED } from "@/lib/app-mode";
-import { BETA_MODE } from "@/lib/site";
 import { CSTLogo, CSTSectionNum, CSTDuoTitle } from "../../components/Atoms";
 
 const hatchOverlay = {
@@ -26,8 +24,6 @@ export default function Login() {
 
   // If already signed in, route to the right dashboard
   useEffect(() => {
-    if (!SUPABASE_ENABLED) return;
-
     (async () => {
       const { data } = await supabase.auth.getUser();
       if (!data.user) return;
@@ -41,11 +37,6 @@ export default function Login() {
   }, [navigate]);
 
   async function handleForgot() {
-    if (!SUPABASE_ENABLED) {
-      setError("Supabase est désactivé en local. Utilise l'accès démo.");
-      return;
-    }
-
     if (!email.trim()) {
       setError("Entre ton email puis clique sur « Mot de passe oublié ».");
       return;
@@ -66,42 +57,8 @@ export default function Login() {
     }
   }
 
-  async function handleDemoLogin(demoEmail, demoPassword) {
-    if (!SUPABASE_ENABLED) {
-      navigate(demoEmail.includes("coach") ? "/coach" : "/membre");
-      return;
-    }
-
-    setError("");
-    setInfo("");
-    setLoading(true);
-    try {
-      const { data, error: err } = await supabase.auth.signInWithPassword({
-        email: demoEmail,
-        password: demoPassword,
-      });
-      if (err) throw err;
-      const { data: r } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", data.user.id)
-        .maybeSingle();
-      navigate(r?.role === "coach" ? "/coach" : "/membre");
-    } catch (err) {
-      setError(err?.message || "Erreur connexion démo.");
-      setLoading(false);
-    }
-  }
-
   async function handleSubmit(e) {
     e.preventDefault();
-
-    if (!SUPABASE_ENABLED) {
-      setError("");
-      setInfo("Mode démo actif. Utilise les boutons COACH ou MEMBRE ci-dessous.");
-      return;
-    }
-
     setError("");
     setInfo("");
     setLoading(true);
@@ -144,6 +101,7 @@ export default function Login() {
       setLoading(false);
     }
   }
+
 
   return (
     <div
@@ -285,20 +243,6 @@ export default function Login() {
                   </div>
                 )}
 
-                {!SUPABASE_ENABLED && (
-                  <div
-                    style={{
-                      padding: "10px 14px",
-                      background: "rgba(45,90,53,0.15)",
-                      border: "1px solid rgba(45,90,53,0.4)",
-                      borderRadius: 8,
-                      fontSize: 12,
-                      color: "#6EAB76",
-                    }}
-                  >
-                    Mode démo local actif. Supabase est déconnecté pour éviter de bloquer l'app.
-                  </div>
-                )}
 
                 <button
                   type="submit"
@@ -352,24 +296,6 @@ export default function Login() {
             </form>
           </div>
 
-          {/* Beta tester helper (visible only when BETA_MODE) */}
-          {BETA_MODE && (
-            <div className="cst-col" style={{ gap: 8, paddingTop: 18 }}>
-              <div style={{ borderTop: "1px dashed rgba(255,255,255,0.18)", paddingTop: 12 }}>
-                <div
-                  className="cst-mono"
-                  style={{ fontSize: 9, letterSpacing: "0.16em", opacity: 0.55, marginBottom: 6 }}
-                >
-                  BÊTA PRIVÉE · ACCÈS RÉSERVÉ
-                </div>
-                <div style={{ fontSize: 11, opacity: 0.55, lineHeight: 1.7 }}>
-                  Coach&nbsp;: <span style={{ opacity: 0.85 }}>leocolognesi@gmail.com</span>
-                  <br />
-                  Membre test&nbsp;: <span style={{ opacity: 0.85 }}>morin.td@gmail.com</span>
-                </div>
-              </div>
-            </div>
-          )}
 
           <div className="cst-col" style={{ gap: 12, alignItems: "center", paddingTop: 8 }}>
             <div style={{ width: 32, height: 1, background: "rgba(255,255,255,0.1)" }} />
