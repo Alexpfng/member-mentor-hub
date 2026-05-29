@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { SUPABASE_ENABLED } from "@/lib/app-mode";
+import { BETA_MODE } from "@/lib/site";
 import { CSTLogo, CSTSectionNum, CSTDuoTitle } from "../../components/Atoms";
 
 const hatchOverlay = {
@@ -351,61 +352,24 @@ export default function Login() {
             </form>
           </div>
 
-          {/* Demo accounts */}
-          <div className="cst-col" style={{ gap: 8, paddingTop: 16 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
-              <span
-                className="cst-mono"
-                style={{ fontSize: 8, opacity: 0.4, whiteSpace: "nowrap" }}
-              >
-                ACCÈS DÉMO
-              </span>
-              <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
+          {/* Beta tester helper (visible only when BETA_MODE) */}
+          {BETA_MODE && (
+            <div className="cst-col" style={{ gap: 8, paddingTop: 18 }}>
+              <div style={{ borderTop: "1px dashed rgba(255,255,255,0.18)", paddingTop: 12 }}>
+                <div
+                  className="cst-mono"
+                  style={{ fontSize: 9, letterSpacing: "0.16em", opacity: 0.55, marginBottom: 6 }}
+                >
+                  BÊTA PRIVÉE · ACCÈS RÉSERVÉ
+                </div>
+                <div style={{ fontSize: 11, opacity: 0.55, lineHeight: 1.7 }}>
+                  Coach&nbsp;: <span style={{ opacity: 0.85 }}>leocolognesi@gmail.com</span>
+                  <br />
+                  Membre test&nbsp;: <span style={{ opacity: 0.85 }}>morin.td@gmail.com</span>
+                </div>
+              </div>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-              <button
-                type="button"
-                disabled={loading}
-                onClick={() => handleDemoLogin("coach.demo@colosmart.test", "DemoCoach2026!")}
-                style={{
-                  padding: "10px 0",
-                  borderRadius: 8,
-                  background: "rgba(45,90,53,0.15)",
-                  border: "1px solid rgba(45,90,53,0.4)",
-                  color: "#6EAB76",
-                  fontSize: 10,
-                  fontFamily: "var(--cst-mono)",
-                  letterSpacing: "0.12em",
-                  textTransform: "uppercase",
-                  cursor: "pointer",
-                  opacity: loading ? 0.6 : 1,
-                }}
-              >
-                ⧉ COACH
-              </button>
-              <button
-                type="button"
-                disabled={loading}
-                onClick={() => handleDemoLogin("membre.demo@colosmart.test", "DemoMembre2026!")}
-                style={{
-                  padding: "10px 0",
-                  borderRadius: 8,
-                  background: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  color: "rgba(255,255,255,0.55)",
-                  fontSize: 10,
-                  fontFamily: "var(--cst-mono)",
-                  letterSpacing: "0.12em",
-                  textTransform: "uppercase",
-                  cursor: "pointer",
-                  opacity: loading ? 0.6 : 1,
-                }}
-              >
-                ○ MEMBRE
-              </button>
-            </div>
-          </div>
+          )}
 
           <div className="cst-col" style={{ gap: 12, alignItems: "center", paddingTop: 8 }}>
             <div style={{ width: 32, height: 1, background: "rgba(255,255,255,0.1)" }} />
