@@ -150,7 +150,7 @@ function YouTubeButton({ id, url }: { id?: string | null; url?: string | null })
   );
 }
 
-function ExerciseRow({ ex }: { ex: ProgExercise }) {
+function ExerciseRow({ ex, threadSlot }: { ex: ProgExercise; threadSlot?: (ex: ProgExercise) => React.ReactNode }) {
   return (
     <div
       style={{
@@ -206,11 +206,18 @@ function ExerciseRow({ ex }: { ex: ProgExercise }) {
           {ex.coach_notes}
         </div>
       )}
+      {threadSlot && threadSlot(ex)}
     </div>
   );
 }
 
-export function ProgramBlocks({ exercises }: { exercises: ProgExercise[] }) {
+export function ProgramBlocks({
+  exercises,
+  threadSlot,
+}: {
+  exercises: ProgExercise[];
+  threadSlot?: (ex: ProgExercise) => React.ReactNode;
+}) {
   const blocks = groupBlocks(exercises || []);
   if (blocks.length === 0) {
     return (
@@ -248,7 +255,7 @@ export function ProgramBlocks({ exercises }: { exercises: ProgExercise[] }) {
               </div>
             )}
             {b.exercises.map((ex, j) => (
-              <ExerciseRow key={j} ex={ex} />
+              <ExerciseRow key={j} ex={ex} threadSlot={threadSlot} />
             ))}
           </div>
         );

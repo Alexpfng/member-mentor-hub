@@ -1,98 +1,67 @@
-## Objectif
-
-Permettre à Léo de construire un programme **semaine par semaine**, simplement, depuis l'app : ajouter / modifier / supprimer / réordonner des exercices, dupliquer une semaine, puis **l'envoyer à un coaché** en un clic. Côté Teddy (et autres membres), le programme assigné s'affiche réellement avec toutes les infos (séries, reps, charge, repos, RPE, tempo, notes, vidéo YouTube).
-
-## État actuel
-
-- `programs.structure` (jsonb) supporte déjà `{ weeks: [{ number, days: [{ number, label, exercises:[…] }] }] }` — c'est ce que lit `ProgramDetail` et ce qu'on a déjà rempli pour Teddy.
-- `src/pages/coach/Builder.jsx` est en grande partie **maquette statique** : sélecteur de semaine sans état réel, bibliothèque hardcodée, pas de CRUD d'exo, pas de gestion multi-semaines, save écrase tout avec `{ days }` (pas `weeks`).
-- `src/pages/membre/Programme.jsx` affiche une liste **hardcodée** — il faut le brancher sur le vrai programme assigné.
-- Serveur : `saveProgram`, `getProgram`, `listExercises`, `saveExercise`, `assignProgram`, `listMembers` existent déjà.
+# Vidéos technique & fil de commentaires par exercice
 
 ## Ce qu'on construit
+Après chaque exercice, le coaché peut **filmer ou importer** une vidéo. Coach Léo la regarde côté membre, **commente**, et un **fil de discussion** par exercice permet aux deux d'échanger. La vidéo est liée à l'exercice (séance + nom d'exo).
 
-### 1. Builder coach (réécriture de `src/pages/coach/Builder.jsx` → `.tsx`)
+## 1. Base de données (1 migration)
 
-Route : `/coach/builder` (création) + `/coach/builder/$id` (édition d'un programme existant).
+Table existante `technique_videos` (déjà liée à session + exercise_name + storage_path) → **conservée**. On supprime `coach_feedback` au profit d'un vrai fil.
 
-État local = miroir de `program.structure.weeks` + champs (nom, objectif, niveau, durée, fréquence, description). Sauvegarde via `saveProgram` (avec `id` si édition).
+Nouvelle table `exercise_comments` :
+- `session_id` (uuid) — l'exercice est identifié par session + nom
+- `exercise_name` (text)
+- `video_id` (uuid, nullable) — commentaire attaché à une vidéo précise, sinon commentaire général d'exo
+- `author_id` (uuid)
+- `author_role` (text — `coach` | `member`)
+- `content` (text)
+- `created_at`
 
-UI (une seule page, 3 zones) :
+**RLS** :
+- Membre : SELECT/INSERT sur les commentaires de **ses** séances (via `sessions.member_id = auth.uid()`).
+- Coach : SELECT/INSERT sur **tout** (via `has_role`).
 
-```text
-┌────────── PARAMÈTRES ──────────┬───────────── SEMAINES ─────────────┐
-│ Nom · Objectif · Niveau        │  [S1][S2][S3][S4][S5][S6][S7][S8]+ │
-│ Durée (auto = nb semaines)     │  ▸ Dupliquer S ▸ Vider S ▸ Suppr.  │
-│ Fréquence · Description        ├────────────────────────────────────┤
-│                                │  JOUR 1  [Label ex: Full-body 1]   │
-│ [SAUVEGARDER]                  │   ▸ liste exos (drag pour ordre)   │
-│ [ENVOYER À UN MEMBRE ▾]        │   ▸ [+ Ajouter un exercice]        │
-├──────── BIBLIOTHÈQUE ──────────┤  JOUR 2 … (idem)                   │
-│ Recherche + filtres muscles    │  [+ AJOUTER UN JOUR]               │
-│ Liste exos (clic = ajoute au   │                                    │
-│ jour actif) — boutons "+ Nouv."│                                    │
-└────────────────────────────────┴────────────────────────────────────┘
-```
+Ajout colonne `technique_videos.unread_for_member` (bool) — badge "nouvelle réponse coach".
 
-Actions semaine : ajouter, dupliquer (copie en S+1), vider, supprimer. La durée du programme = nb de semaines (sync auto).
+**Storage** : bucket `technique-videos` (privé, déjà créé). Ajouter politiques :
+- Membre : INSERT + SELECT sur ses fichiers (`{user_id}/...`).
+- Coach : SELECT sur tout. Lecture via URL signée (côté serveur).
 
-Actions jour : ajouter / supprimer / renommer (`label` : Full-body 1, Push A, Mobilité, etc.).
+## 2. Server functions (`src/lib/coach.functions.ts` + nouveau `videos.functions.ts`)
 
-Actions exercice (ligne par exercice) :
-- Champs inline : `series`, `reps`, `charge`, `repos`, `RPE`, `tempo`, `notes`, `youtube_url` (préremplis depuis l'exo de la bibliothèque).
-- Boutons : monter / descendre / dupliquer / supprimer.
-- "Cloner sur toutes les semaines" pour propager.
+- `getExerciseThread({ sessionId, exerciseName })` → vidéos + commentaires triés par date.
+- `postExerciseComment({ sessionId, exerciseName, videoId?, content })` — rôle déduit côté serveur via `has_role`.
+- `getSignedVideoUrl({ storagePath })` — URL signée 1h (clé service via admin server-only).
+- `getCoachReviewQueue()` (coach) — liste des vidéos non encore commentées par le coach, groupées par membre.
+- `markVideoReviewed({ videoId })` — bascule `coach_reviewed = true`.
 
-Ajout d'exercice :
-- Depuis la bibliothèque (clic → push dans le jour actif) ou bouton `+ Nouvel exercice` → mini-modale qui crée l'exo dans la table `exercises` (via `saveExercise`, `is_global=true`, `created_by=coach`) puis l'ajoute.
+## 3. UI Coaché
 
-Envoyer au membre : bouton `ENVOYER →` ouvre une liste des membres (`listMembers`) ; sélection appelle `assignProgram({ member_id, program_id, start_date: aujourd'hui })`. Toast de confirmation.
+**`src/components/cst/session.tsx → ExerciseBlock`** (déjà rendu dans la séance) :
+- Bloc « TECHNIQUE & ÉCHANGES COACH » sous les séries, contenant :
+  - Bouton **🎬 Filmer** (capture caméra, existant) + bouton **📁 Importer** (file picker sans `capture`).
+  - Galerie des vidéos déjà envoyées pour cet exo (vignette + lecteur inline via URL signée).
+  - **Fil de commentaires** : bulles datées avec avatar/rôle, input « écris à Léo… » + bouton envoyer.
+  - Pastille « réponse du coach » si `unread_for_member`.
 
-Sauvegarde automatique : bouton explicite "Sauvegarder" + autosave (debounce 1.5 s) avec indicateur "Enregistré ✓".
+**`src/pages/membre/Logger.jsx`** (actuellement sur MOCK_EXERCISES) : on branche le `ExerciseBlock` réel pour que la fonctionnalité soit accessible dans le vrai parcours de séance.
 
-### 2. Page liste programmes (`/coach/programmes`)
+## 4. UI Coach
 
-- Bouton "+ Nouveau" → `/coach/builder`.
-- Sur chaque carte : ajout d'un bouton "ÉDITER" → `/coach/builder/$id` (les boutons VOIR / DUPLIQUER / ASSIGNER restent).
+**`src/pages/coach/Member.jsx`** — nouvel onglet **« VIDÉOS À CORRIGER »** :
+- Liste chronologique des vidéos du membre (groupées par séance) avec vignette, date, nom d'exo, badge « non revu ».
+- Click → drawer/modal : lecteur vidéo, séries de l'exo en regard, fil complet, input commentaire, bouton « ✓ Marquer comme revu ».
+- Compteur global non-revu dans l'en-tête du membre.
 
-### 3. Page détail (`/coach/programmes/$id`)
+**Dashboard coach** (`src/pages/coach/Dashboard.jsx`) : ajout petit widget « N vidéos à corriger » qui pointe sur la file globale.
 
-Déjà OK en lecture. On ajoute juste un bouton "ÉDITER" en haut → builder.
-
-### 4. Côté membre — `src/pages/membre/Programme.jsx`
-
-Réécrire pour :
-- Appeler un nouveau server fn `getMyAssignedProgram` (renvoie le programme actif assigné au membre courant + `structure.weeks`).
-- Affichage en accordéon par semaine (semaine courante ouverte par défaut, calculée depuis `assignments.start_date`).
-- Pour chaque jour : liste d'exos avec `series · reps · charge · repos · RPE · tempo`, note coach, et **lien YouTube** cliquable (ou aperçu intégré si `youtube_id`).
-- Bouton "Démarrer cette séance" → route existante `/membre/logger?week=X&day=Y` (déjà en place).
-
-### 5. Server functions (ajouts dans `src/lib/coach.functions.ts`)
-
-- `getMyAssignedProgram` (membre) — récupère l'assignment actif + le programme + structure.
-- `deleteProgram` (coach) — supprime un programme (+ assignments orphelins en cascade applicative).
-
-`saveProgram` est déjà compatible : on lui passe `{ id?, name, …, structure: { weeks } }`.
-
-## Détails techniques
-
-- **Drag & drop** : pas de lib lourde — boutons ▲▼ + glisser natif HTML5 si rapide ; sinon on garde ▲▼ uniquement (suffit pour "simple d'utilisation").
-- **Validation Zod** : étendre `programSchema` côté serveur pour accepter le shape `{ weeks: [{ number, days: [{ number, label, exercises:[{name, series, reps, charge, repos, rpe, tempo, notes, youtube_url, youtube_id, exercise_id?}] }] }] }`. On reste permissif (`.passthrough()`).
-- **Pas de migration DB** nécessaire — tout vit dans `programs.structure` (jsonb) et `exercises` (déjà OK).
-- **RLS** : déjà en place (`Coach manages own programs`, `Members view assigned programs`).
-- **Types** : Builder passe en TSX pour profiter des types `Program`/`Week`/`Day`/`Exercise`. Composant partagé : `ProgramBlocks` réutilisé.
+## 5. Hors scope (à signaler avant code)
+- Notifications push/email lors d'une nouvelle vidéo ou réponse (à traiter plus tard).
+- Édition / suppression des commentaires (V2).
+- Annotations dessinées sur la vidéo (V2).
 
 ## Fichiers touchés
+- **Migration** : nouvelle table `exercise_comments`, colonne sur `technique_videos`, policies storage.
+- **Créés** : `src/lib/videos.functions.ts`, `src/components/cst/ExerciseThread.tsx`, `src/components/coach/VideoReviewDrawer.tsx`.
+- **Modifiés** : `src/components/cst/session.tsx`, `src/pages/membre/Logger.jsx`, `src/pages/coach/Member.jsx`, `src/pages/coach/Dashboard.jsx`, `src/lib/coach.functions.ts`.
 
-- Réécrit : `src/pages/coach/Builder.jsx` → `src/pages/coach/Builder.tsx` (vrai éditeur multi-semaines).
-- Modifié : `src/pages/coach/Programmes.tsx` (bouton ÉDITER).
-- Modifié : `src/pages/coach/ProgramDetail.tsx` (bouton ÉDITER).
-- Réécrit : `src/pages/membre/Programme.jsx` (branchement réel).
-- Nouveau route : `src/routes/_authenticated.coach.builder.$id.tsx` (édition).
-- Modifié : `src/lib/coach.functions.ts` (schéma `structure.weeks`, `getMyAssignedProgram`, `deleteProgram`).
-
-## Hors périmètre (à confirmer si tu veux dedans)
-
-- Modèles / templates de séance réutilisables (au-delà de "dupliquer une semaine").
-- Notifications push / e-mail au membre lors d'un nouvel envoi.
-- Édition de la structure depuis le téléphone du membre (lecture seule pour lui).
+Valide le plan pour que je l'implémente.

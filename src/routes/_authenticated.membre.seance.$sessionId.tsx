@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import MemberNav from "../components/MemberNav";
 import { CSTLogo, CSTSectionNum } from "../components/Atoms";
 import { ProgramBlocks, type ProgExercise } from "../components/cst/ProgramBlocks";
+import { ExerciseThread } from "../components/cst/ExerciseThread";
 
 export const Route = createFileRoute("/_authenticated/membre/seance/$sessionId")({
   component: SeancePage,
@@ -133,7 +134,17 @@ function SeancePage() {
               </div>
             </div>
 
-            <ProgramBlocks exercises={exercises} />
+            <ProgramBlocks
+              exercises={exercises}
+              threadSlot={(ex) => (
+                <ExerciseThread
+                  sessionId={sessionId}
+                  exerciseName={ex.name}
+                  userId={userId}
+                  viewerRole="member"
+                />
+              )}
+            />
 
 
             <button
