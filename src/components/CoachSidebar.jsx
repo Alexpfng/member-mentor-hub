@@ -5,7 +5,6 @@ import { SUPABASE_ENABLED } from "@/lib/app-mode";
 import { CSTLogo, CSTAvatar } from "./Atoms";
 
 const items = [
-  { id: "dashboard", label: "Tableau de bord", icon: "⧉", path: "/coach" },
   { id: "membres", label: "Membres", icon: "○", path: "/coach", match: (p) => p === "/coach" || p.startsWith("/coach/membre") },
   { id: "programmes", label: "Programmes", icon: "◤", path: "/coach/programmes" },
   { id: "import", label: "Import Excel", icon: "◥", path: "/coach/import" },
