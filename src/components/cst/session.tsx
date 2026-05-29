@@ -1,6 +1,7 @@
 /* ColosmartTraining — Session live components */
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { ExerciseThread } from "./ExerciseThread";
 import {
   ColorDot,
   ColorTooltip,
