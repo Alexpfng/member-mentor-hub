@@ -287,12 +287,19 @@ export const pinMessage = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) =>
     z.object({ message_id: z.string().uuid(), pinned: z.boolean() }).parse(d),
   )
-  .handler(async ({ data }) => {
-    const { error } = await supabaseAdmin
+  .handler(async ({ data, context }) => {
+    // Ownership check: only the sender or recipient may pin/unpin a message.
+    // supabaseAdmin bypasses RLS, so we must scope the update ourselves.
+    const { data: updated, error } = await supabaseAdmin
       .from("messages")
       .update({ pinned: data.pinned })
-      .eq("id", data.message_id);
+      .eq("id", data.message_id)
+      .or(`from_id.eq.${context.userId},to_id.eq.${context.userId}`)
+      .select("id");
     if (error) throw new Error(error.message);
+    if (!updated || updated.length === 0) {
+      throw new Error("Not allowed to pin this message");
+    }
     return { ok: true };
   });
 
@@ -638,6 +645,7 @@ export const saveRunningRoute = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
+    await assertCoach(context.userId);
     const { data: row, error } = await (supabaseAdmin as any)
       .from("running_routes")
       .insert({

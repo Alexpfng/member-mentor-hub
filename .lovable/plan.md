@@ -1,25 +1,56 @@
-# Diagnostic
+# Plan de correction des failles de sécurité
 
-Le message persiste après republication :
+Trois failles détectées par le scanner. Voici comment je propose de les corriger.
 
-> Missing Supabase environment variable(s): SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY
+## 1. `pinMessage` — n'importe quel utilisateur peut épingler n'importe quel message (warn)
 
-Cela signifie que **le build de production n'a pas reçu les variables Vite** (`VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY`) au moment du déploiement, même si elles sont bien présentes dans le `.env` du sandbox de preview.
+**Fichier :** `src/lib/coach.functions.ts` (lignes 285-297)
 
-Dans Lovable, ce `.env` est **généré et géré automatiquement par l'intégration Lovable Cloud**. Quand le build de prod ne le voit pas, c'est presque toujours parce que l'intégration Cloud doit être rafraîchie côté projet.
+Le handler utilise `supabaseAdmin` (qui bypass RLS) mais ne vérifie pas que l'appelant est participant à la conversation.
 
-Aucun changement de code n'est pertinent ici (le code `client.ts` est correct et auto-généré, et hardcoder les valeurs serait une mauvaise pratique).
+**Correction :** ajouter un filtre `.or('from_id.eq.<uid>,to_id.eq.<uid>')` sur l'update, et utiliser `context.userId` (le middleware `requireSupabaseAuth` le fournit déjà).
 
-# Solution
+## 2. `saveRunningRoute` — un membre peut s'enregistrer comme coach (warn)
 
-1. Ouvrir **Lovable Cloud** dans la barre latérale (Connectors → Lovable Cloud).
-2. Cliquer sur **Refresh** / **Reconnect** sur l'intégration Supabase / Cloud du projet.
-3. Attendre que le sandbox de preview redémarre et que la preview redevienne fonctionnelle (la connexion doit marcher en preview).
-4. **Republier l'app** (bouton Publish en haut à droite).
-5. Forcer un rechargement de `app.colosmartraining.fr` (Cmd+Shift+R) et retester la connexion.
+**Fichier :** `src/lib/coach.functions.ts` (lignes 619-657)
 
-# Si ça ne suffit toujours pas
+Le handler ne vérifie pas le rôle coach côté serveur — seul le routeur frontend bloque l'accès. Comme `supabaseAdmin` bypass RLS, un membre peut appeler la server function directement et créer un parcours en se mettant comme `coach_id`.
 
-- Vérifier dans **Backend → Settings** que les secrets `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` apparaissent bien.
-- Vérifier que le domaine custom `app.colosmartraining.fr` pointe bien vers la même app que `member-mentor-hub.lovable.app` (et non vers un ancien déploiement).
-- En dernier recours : contacter le support Lovable — un refresh forcé côté infra peut être nécessaire.
+**Correction :** ajouter `await assertCoach(context.userId);` au début du handler (même pattern que les autres fonctions coach du fichier).
+
+## 3. Mots de passe en clair dans les migrations (error) — action utilisateur requise
+
+**Fichiers concernés :**
+- `supabase/migrations/20260529125037_*.sql`
+- `supabase/migrations/20260529152555_*.sql`
+
+Ces fichiers contiennent en clair :
+- `ColoSmart2024!` (compte coach)
+- `TeddyBeta2024!` (compte test)
+- `Pierre2026!` (compte de Pierre)
+
+**Pourquoi je ne peux pas tout fixer automatiquement :**
+- Réécrire l'historique git n'est pas possible depuis l'agent : les mots de passe resteront dans les anciens commits même si on nettoie les fichiers maintenant.
+- Ces 3 mots de passe doivent donc être **considérés comme compromis** et **changés**.
+
+**Ce que je vais faire côté code :**
+- Supprimer les blocs de seed contenant ces mots de passe en clair dans les deux migrations (pour ne plus diffuser de nouveaux mots de passe en clair dans les futurs builds/forks). Les migrations resteront idempotentes pour les comptes déjà créés.
+
+**Ce que tu dois faire (manuellement, je te guiderai) :**
+1. Ouvrir Lovable Cloud → Users.
+2. Pour les comptes Coach, Teddy et Pierre : utiliser **« Send password reset »** (ou changer le mot de passe directement) afin de poser de nouveaux mots de passe que tu communiqueras en privé à Pierre et Teddy.
+3. Considérer les anciens mots de passe comme bannis.
+
+Une fois ces deux étapes faites, je marquerai cette finding comme résolue.
+
+# Étapes d'implémentation
+
+1. Éditer `src/lib/coach.functions.ts` :
+   - `pinMessage` : injecter `context` et ajouter le filtre d'ownership.
+   - `saveRunningRoute` : ajouter `await assertCoach(context.userId);`.
+2. Éditer les deux migrations pour retirer les `crypt('<password>', ...)` (remplacés par un commentaire indiquant que les mots de passe sont gérés via l'UI Auth).
+3. Mettre à jour la security memory pour expliquer la posture (pas de seed de mot de passe en clair, role check obligatoire côté serveur sur toutes les fonctions admin).
+4. Marquer les 2 findings de code comme `mark_as_fixed`.
+5. Pour la finding « mots de passe » : la garder ouverte tant que tu n'as pas confirmé la rotation des 3 mots de passe via l'UI.
+
+Pas de migration SQL nécessaire.
