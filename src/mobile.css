@@ -71,8 +71,8 @@ html {
     left: 0;
     right: 0;
     height: 64px;
-    background: #1B2E1F;
-    border-top: 1px solid rgba(255, 255, 255, 0.10);
+    background: var(--cst-bg-elev);
+    border-top: 1px solid var(--cst-hairline);
     justify-content: space-around;
     align-items: center;
     z-index: 100;
@@ -90,12 +90,12 @@ html {
     justify-content: center;
     cursor: pointer;
     position: relative;
-    color: rgba(255, 255, 255, 0.45);
+    color: var(--cst-text-muted);
     transition: color 0.15s;
   }
 
   .bottom-nav-item.active {
-    color: #2D5A35;
+    color: var(--cst-mid-green);
   }
 
   .bottom-nav-item .nav-icon {
@@ -160,13 +160,14 @@ html {
     left: 0;
     bottom: 0;
     width: 280px;
-    background: #1B2E1F;
-    border-right: 1px solid rgba(255,255,255,0.08);
+    background: var(--cst-bg-elev);
+    border-right: 1px solid var(--cst-hairline);
     transform: translateX(-100%);
     transition: transform 0.25s cubic-bezier(0.32, 0.72, 0, 1);
     z-index: 200;
     overflow-y: auto;
     padding-top: env(safe-area-inset-top);
+    color: var(--cst-text);
   }
 
   .coach-drawer.open {
@@ -177,7 +178,7 @@ html {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.5);
+    background: var(--cst-overlay);
     z-index: 199;
     backdrop-filter: blur(2px);
   }
@@ -193,8 +194,8 @@ html {
     gap: 12px;
     padding: 12px 16px;
     padding-top: calc(12px + env(safe-area-inset-top));
-    background: #16261A;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
+    background: var(--cst-bg-elev);
+    border-bottom: 1px solid var(--cst-hairline);
     position: sticky;
     top: 0;
     z-index: 50;
@@ -205,10 +206,12 @@ html {
     font-size: 16px;
     font-weight: 800;
     text-transform: uppercase;
-    color: #fff;
+    color: var(--cst-text);
     letter-spacing: 0.02em;
     flex: 1;
   }
+
+  .coach-mobile-topbar .coach-hamburger { color: var(--cst-text); }
 }
 
 /* Hide mobile-only coach elements on desktop */

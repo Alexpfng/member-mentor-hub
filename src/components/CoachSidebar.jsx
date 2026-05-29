@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { SUPABASE_ENABLED } from "@/lib/app-mode";
 import { CSTLogo, CSTAvatar } from "./Atoms";
+import ThemeToggle from "./ThemeToggle";
 
 const items = [
   { id: "membres", label: "Membres", icon: "○", path: "/coach", match: (p) => p === "/coach" || p.startsWith("/coach/membre") },
@@ -78,36 +79,42 @@ export default function CoachSidebar() {
         marginTop: 16,
         padding: 12,
         borderRadius: 8,
-        background: "rgba(0,0,0,0.25)",
-        border: "1px solid rgba(255,255,255,0.05)",
+        background: "var(--cst-input-bg)",
+        border: "1px solid var(--cst-input-border)",
         display: "flex",
-        alignItems: "center",
+        flexDirection: "column",
         gap: 10,
       }}
     >
-      <CSTAvatar initials="LC" size={32} />
-      <div className="cst-col" style={{ minWidth: 0, flex: 1 }}>
-        <div style={{ fontSize: 12, fontWeight: 600 }}>Léo Colognesi</div>
-        <div className="cst-mono" style={{ fontSize: 9 }}>
-          COACH · ADMIN
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <CSTAvatar initials="LC" size={32} />
+        <div className="cst-col" style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: "var(--cst-text)" }}>Léo Colognesi</div>
+          <div className="cst-mono" style={{ fontSize: 9 }}>
+            COACH · ADMIN
+          </div>
         </div>
+        <button
+          onClick={handleSignOut}
+          title="Déconnexion"
+          aria-label="Déconnexion"
+          style={{
+            background: "transparent",
+            border: "1px solid var(--cst-btn-ghost-border)",
+            color: "var(--cst-text-soft)",
+            borderRadius: 6,
+            padding: "4px 8px",
+            fontSize: 10,
+            cursor: "pointer",
+            fontFamily: "var(--cst-mono)",
+          }}
+        >
+          ⎋
+        </button>
       </div>
-      <button
-        onClick={handleSignOut}
-        title="Déconnexion"
-        style={{
-          background: "transparent",
-          border: "1px solid rgba(255,255,255,0.1)",
-          color: "rgba(255,255,255,0.6)",
-          borderRadius: 6,
-          padding: "4px 8px",
-          fontSize: 10,
-          cursor: "pointer",
-          fontFamily: "var(--cst-mono)",
-        }}
-      >
-        ⎋
-      </button>
+      <div style={{ display: "flex", justifyContent: "flex-start" }}>
+        <ThemeToggle variant="pill" />
+      </div>
     </div>
   );
 
@@ -154,22 +161,26 @@ export default function CoachSidebar() {
           </svg>
         </button>
         <span className="topbar-title">{currentLabel}</span>
-        <button
-          onClick={handleSignOut}
-          style={{
-            background: "transparent",
-            border: "1px solid rgba(255,255,255,0.12)",
-            color: "rgba(255,255,255,0.6)",
-            borderRadius: 6,
-            padding: "6px 10px",
-            fontSize: 10,
-            cursor: "pointer",
-            fontFamily: "var(--cst-mono)",
-            marginLeft: "auto",
-          }}
-        >
-          ⎋
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto" }}>
+          <ThemeToggle variant="icon" />
+          <button
+            onClick={handleSignOut}
+            aria-label="Déconnexion"
+            style={{
+              background: "transparent",
+              border: "1px solid var(--cst-btn-ghost-border)",
+              color: "var(--cst-text-soft)",
+              borderRadius: 6,
+              padding: "6px 10px",
+              fontSize: 10,
+              cursor: "pointer",
+              fontFamily: "var(--cst-mono)",
+              minHeight: 36,
+            }}
+          >
+            ⎋
+          </button>
+        </div>
       </div>
 
       {/* ── MOBILE DRAWER OVERLAY ── */}
