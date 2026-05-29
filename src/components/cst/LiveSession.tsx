@@ -702,6 +702,14 @@ export function LiveSession({
           )}
         </div>
 
+        <CuesActionBar
+          exercise={setStep.exercise}
+          onVideo={() => setShowVideo(setStep.exercise)}
+          onCues={() => setShowCues(setStep.exercise)}
+        />
+
+
+
         {!logging && (
           <button
             onClick={() => setLogging({ weight: "", reps: setStep.exercise.reps ? String(setStep.exercise.reps).match(/\d+/)?.[0] ?? "" : "", rpe: null })}
