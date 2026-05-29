@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, useParams } from "@tanstack/react-router"
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import MemberNav from "../components/MemberNav";
-import { CSTLogo, CSTSectionNum } from "../components/Atoms";
+import { CSTLogo } from "../components/Atoms";
 import { type ProgExercise } from "../components/cst/ProgramBlocks";
 import { LiveSession } from "../components/cst/LiveSession";
 
