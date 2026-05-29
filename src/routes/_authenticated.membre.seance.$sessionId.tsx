@@ -133,15 +133,8 @@ function SeancePage() {
               </div>
             </div>
 
-            {exercises.map((ex, i) => (
-              <ExerciseBlock
-                key={i}
-                index={i}
-                ex={ex}
-                sessionId={sessionId}
-                userId={userId}
-              />
-            ))}
+            <ProgramBlocks exercises={exercises} />
+
 
             <button
               onClick={finishSession}
