@@ -403,7 +403,7 @@ export function ExerciseBlock({
         </div>
       )}
 
-      <TechniqueVideoCapture sessionId={sessionId} exerciseName={ex.name} userId={userId} />
+      <ExerciseThread sessionId={sessionId} exerciseName={ex.name} userId={userId} viewerRole="member" />
 
       <ColorTooltip color={ex.color} open={showColor} onClose={() => setShowColor(false)} />
       <TempoExplainer
