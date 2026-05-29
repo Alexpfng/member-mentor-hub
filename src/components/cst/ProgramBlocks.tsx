@@ -255,7 +255,7 @@ export function ProgramBlocks({
               </div>
             )}
             {b.exercises.map((ex, j) => (
-              <ExerciseRow key={j} ex={ex} />
+              <ExerciseRow key={j} ex={ex} threadSlot={threadSlot} />
             ))}
           </div>
         );
