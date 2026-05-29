@@ -5,8 +5,7 @@ import { SUPABASE_ENABLED } from "@/lib/app-mode";
 import { CSTLogo, CSTAvatar } from "./Atoms";
 
 const items = [
-  { id: "dashboard", label: "Tableau de bord", icon: "⧉", path: "/coach" },
-  { id: "membres", label: "Membres", icon: "○", path: "/coach/membre" },
+  { id: "membres", label: "Membres", icon: "○", path: "/coach", match: (p) => p === "/coach" || p.startsWith("/coach/membre") },
   { id: "programmes", label: "Programmes", icon: "◤", path: "/coach/programmes" },
   { id: "import", label: "Import Excel", icon: "◥", path: "/coach/import" },
   { id: "running", label: "Trail & Run", icon: "▲", path: "/coach/running" },
@@ -70,8 +69,8 @@ export default function CoachSidebar() {
 
   const activeId =
     items.find((it) =>
-      it.path !== "/coach" ? pathname.startsWith(it.path) : pathname === "/coach",
-    )?.id || "dashboard";
+      it.match ? it.match(pathname) : pathname.startsWith(it.path),
+    )?.id || "membres";
 
   const userBlock = (
     <div
