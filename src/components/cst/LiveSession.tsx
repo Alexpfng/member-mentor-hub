@@ -480,7 +480,10 @@ export function LiveSession({
         <RestScreen
           seconds={current.restSeconds}
           nextPreview={current.nextPreview ?? null}
+          currentExercise={current.exercise}
           onDone={goNext}
+          onVideo={() => setShowVideo(current.exercise)}
+          onCues={() => setShowCues(current.exercise)}
         />
         <Overlays />
       </Shell>
