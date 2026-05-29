@@ -161,22 +161,26 @@ export default function CoachSidebar() {
           </svg>
         </button>
         <span className="topbar-title">{currentLabel}</span>
-        <button
-          onClick={handleSignOut}
-          style={{
-            background: "transparent",
-            border: "1px solid rgba(255,255,255,0.12)",
-            color: "rgba(255,255,255,0.6)",
-            borderRadius: 6,
-            padding: "6px 10px",
-            fontSize: 10,
-            cursor: "pointer",
-            fontFamily: "var(--cst-mono)",
-            marginLeft: "auto",
-          }}
-        >
-          ⎋
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto" }}>
+          <ThemeToggle variant="icon" />
+          <button
+            onClick={handleSignOut}
+            aria-label="Déconnexion"
+            style={{
+              background: "transparent",
+              border: "1px solid var(--cst-btn-ghost-border)",
+              color: "var(--cst-text-soft)",
+              borderRadius: 6,
+              padding: "6px 10px",
+              fontSize: 10,
+              cursor: "pointer",
+              fontFamily: "var(--cst-mono)",
+              minHeight: 36,
+            }}
+          >
+            ⎋
+          </button>
+        </div>
       </div>
 
       {/* ── MOBILE DRAWER OVERLAY ── */}
