@@ -16,6 +16,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as OnboardingStepRouteImport } from './routes/onboarding.$step'
 import { Route as AuthenticatedMembreIndexRouteImport } from './routes/_authenticated.membre.index'
 import { Route as AuthenticatedCoachIndexRouteImport } from './routes/_authenticated.coach.index'
+import { Route as ApiPublicSeedBetaRouteImport } from './routes/api.public.seed-beta'
 import { Route as AuthenticatedMembreProgressionRouteImport } from './routes/_authenticated.membre.progression'
 import { Route as AuthenticatedMembreProgrammeRouteImport } from './routes/_authenticated.membre.programme'
 import { Route as AuthenticatedMembreProfilRouteImport } from './routes/_authenticated.membre.profil'
@@ -62,6 +63,11 @@ const AuthenticatedCoachIndexRoute = AuthenticatedCoachIndexRouteImport.update({
   id: '/coach/',
   path: '/coach/',
   getParentRoute: () => AuthenticatedRoute,
+} as any)
+const ApiPublicSeedBetaRoute = ApiPublicSeedBetaRouteImport.update({
+  id: '/api/public/seed-beta',
+  path: '/api/public/seed-beta',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedMembreProgressionRoute =
   AuthenticatedMembreProgressionRouteImport.update({
@@ -145,6 +151,7 @@ export interface FileRoutesByFullPath {
   '/membre/profil': typeof AuthenticatedMembreProfilRoute
   '/membre/programme': typeof AuthenticatedMembreProgrammeRoute
   '/membre/progression': typeof AuthenticatedMembreProgressionRoute
+  '/api/public/seed-beta': typeof ApiPublicSeedBetaRoute
   '/coach/': typeof AuthenticatedCoachIndexRoute
   '/membre/': typeof AuthenticatedMembreIndexRoute
   '/membre/seance/$sessionId': typeof AuthenticatedMembreSeanceSessionIdRoute
@@ -164,6 +171,7 @@ export interface FileRoutesByTo {
   '/membre/profil': typeof AuthenticatedMembreProfilRoute
   '/membre/programme': typeof AuthenticatedMembreProgrammeRoute
   '/membre/progression': typeof AuthenticatedMembreProgressionRoute
+  '/api/public/seed-beta': typeof ApiPublicSeedBetaRoute
   '/coach': typeof AuthenticatedCoachIndexRoute
   '/membre': typeof AuthenticatedMembreIndexRoute
   '/membre/seance/$sessionId': typeof AuthenticatedMembreSeanceSessionIdRoute
@@ -185,6 +193,7 @@ export interface FileRoutesById {
   '/_authenticated/membre/profil': typeof AuthenticatedMembreProfilRoute
   '/_authenticated/membre/programme': typeof AuthenticatedMembreProgrammeRoute
   '/_authenticated/membre/progression': typeof AuthenticatedMembreProgressionRoute
+  '/api/public/seed-beta': typeof ApiPublicSeedBetaRoute
   '/_authenticated/coach/': typeof AuthenticatedCoachIndexRoute
   '/_authenticated/membre/': typeof AuthenticatedMembreIndexRoute
   '/_authenticated/membre/seance/$sessionId': typeof AuthenticatedMembreSeanceSessionIdRoute
@@ -206,6 +215,7 @@ export interface FileRouteTypes {
     | '/membre/profil'
     | '/membre/programme'
     | '/membre/progression'
+    | '/api/public/seed-beta'
     | '/coach/'
     | '/membre/'
     | '/membre/seance/$sessionId'
@@ -225,6 +235,7 @@ export interface FileRouteTypes {
     | '/membre/profil'
     | '/membre/programme'
     | '/membre/progression'
+    | '/api/public/seed-beta'
     | '/coach'
     | '/membre'
     | '/membre/seance/$sessionId'
@@ -245,6 +256,7 @@ export interface FileRouteTypes {
     | '/_authenticated/membre/profil'
     | '/_authenticated/membre/programme'
     | '/_authenticated/membre/progression'
+    | '/api/public/seed-beta'
     | '/_authenticated/coach/'
     | '/_authenticated/membre/'
     | '/_authenticated/membre/seance/$sessionId'
@@ -256,6 +268,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   OnboardingStepRoute: typeof OnboardingStepRoute
+  ApiPublicSeedBetaRoute: typeof ApiPublicSeedBetaRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -308,6 +321,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/coach/'
       preLoaderRoute: typeof AuthenticatedCoachIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/api/public/seed-beta': {
+      id: '/api/public/seed-beta'
+      path: '/api/public/seed-beta'
+      fullPath: '/api/public/seed-beta'
+      preLoaderRoute: typeof ApiPublicSeedBetaRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/membre/progression': {
       id: '/_authenticated/membre/progression'
@@ -432,17 +452,8 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   OnboardingStepRoute: OnboardingStepRoute,
+  ApiPublicSeedBetaRoute: ApiPublicSeedBetaRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

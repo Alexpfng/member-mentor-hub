@@ -2,16 +2,19 @@ import { useState } from "react";
 import { useNavigate, useLocation } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { SUPABASE_ENABLED } from "@/lib/app-mode";
+import { BETA_MODE } from "@/lib/site";
 import { CSTLogo, CSTAvatar } from "./Atoms";
 
-const items = [
-  { id: "dashboard", label: "Tableau de bord", icon: "⧉", path: "/coach" },
-  { id: "membres", label: "Membres", icon: "○", path: "/coach/membre" },
-  { id: "programmes", label: "Programmes", icon: "◤", path: "/coach/builder" },
-  { id: "import", label: "Import Excel", icon: "◥", path: "/coach/import" },
-  { id: "running", label: "Trail & Run", icon: "▲", path: "/coach/running" },
-  { id: "messages", label: "Messages", icon: "◌", path: "/coach/messages" },
+const allItems = [
+  { id: "dashboard", label: "Tableau de bord", icon: "⧉", path: "/coach", beta: true },
+  { id: "membres", label: "Membres", icon: "○", path: "/coach/membre", beta: true },
+  { id: "programmes", label: "Programmes", icon: "◤", path: "/coach/builder", beta: true },
+  { id: "import", label: "Import Excel", icon: "◥", path: "/coach/import", beta: false },
+  { id: "running", label: "Trail & Run", icon: "▲", path: "/coach/running", beta: false },
+  { id: "messages", label: "Messages", icon: "◌", path: "/coach/messages", beta: true },
 ];
+
+const items = BETA_MODE ? allItems.filter((it) => it.beta) : allItems;
 
 function NavItems({ activeId, navigate, onNav }) {
   return (
