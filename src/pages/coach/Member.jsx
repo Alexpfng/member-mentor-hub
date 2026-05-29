@@ -389,6 +389,15 @@ export default function CoachMember() {
 
             {activeTab === 2 && (
               <>
+                <CSTSectionNum num={1} label="VIDÉOS TECHNIQUE" sub="ENVOIS DU COACHÉ" />
+                <div style={{ marginTop: 14 }}>
+                  {coachUid && <VideoReviewPanel memberId={memberId} coachUserId={coachUid} />}
+                </div>
+              </>
+            )}
+
+            {activeTab === 3 && (
+              <>
                 <CSTSectionNum num={1} label="PROGRESSION" sub="EXERCICES CLÉS" />
                 <div className="cst-col" style={{ gap: 10, marginTop: 14 }}>
                   {trends.length === 0 && (
