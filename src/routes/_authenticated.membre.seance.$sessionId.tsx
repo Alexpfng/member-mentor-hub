@@ -134,7 +134,17 @@ function SeancePage() {
               </div>
             </div>
 
-            <ProgramBlocks exercises={exercises} />
+            <ProgramBlocks
+              exercises={exercises}
+              threadSlot={(ex) => (
+                <ExerciseThread
+                  sessionId={sessionId}
+                  exerciseName={ex.name}
+                  userId={userId}
+                  viewerRole="member"
+                />
+              )}
+            />
 
 
             <button
