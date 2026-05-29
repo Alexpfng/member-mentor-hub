@@ -59,6 +59,39 @@ export type Database = {
           },
         ]
       }
+      exercise_comments: {
+        Row: {
+          author_id: string
+          author_role: string
+          content: string
+          created_at: string
+          exercise_name: string
+          id: string
+          session_id: string
+          video_id: string | null
+        }
+        Insert: {
+          author_id: string
+          author_role: string
+          content: string
+          created_at?: string
+          exercise_name: string
+          id?: string
+          session_id: string
+          video_id?: string | null
+        }
+        Update: {
+          author_id?: string
+          author_role?: string
+          content?: string
+          created_at?: string
+          exercise_name?: string
+          id?: string
+          session_id?: string
+          video_id?: string | null
+        }
+        Relationships: []
+      }
       exercise_feedbacks: {
         Row: {
           block_id: string | null
@@ -546,6 +579,7 @@ export type Database = {
           session_id: string | null
           storage_path: string | null
           thumbnail_url: string | null
+          unread_for_member: boolean | null
         }
         Insert: {
           coach_feedback?: string | null
@@ -559,6 +593,7 @@ export type Database = {
           session_id?: string | null
           storage_path?: string | null
           thumbnail_url?: string | null
+          unread_for_member?: boolean | null
         }
         Update: {
           coach_feedback?: string | null
@@ -572,6 +607,7 @@ export type Database = {
           session_id?: string | null
           storage_path?: string | null
           thumbnail_url?: string | null
+          unread_for_member?: boolean | null
         }
         Relationships: [
           {
