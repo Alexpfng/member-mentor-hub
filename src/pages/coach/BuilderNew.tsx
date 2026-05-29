@@ -533,7 +533,7 @@ export default function BuilderNew({ programIdParam }: { programIdParam?: string
   const getFn = useServerFn(getProgram);
   const listExFn = useServerFn(listExercises);
   const saveExFn = useServerFn(saveExercise);
-  const navigate = useNavigate();
+  
 
   // Program meta
   const [name, setName] = useState('Force Fondamentale – Cycle 1');
