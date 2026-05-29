@@ -418,26 +418,59 @@ export default function CoachMember() {
               </>
             )}
 
-            {activeTab === 3 && (
+            {activeTab === 3 && form && (
               <>
-                <CSTSectionNum num={1} label="PROFIL" sub="INFOS ADHÉRENT" />
-                <div className="cst-card-dark" style={{ padding: 20, marginTop: 14, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                  {[
-                    ['POIDS', data.member_profile?.weight_kg ? `${data.member_profile.weight_kg} kg` : 'Non renseigné'],
-                    ['TAILLE', data.member_profile?.height_cm ? `${data.member_profile.height_cm} cm` : 'Non renseigné'],
-                    ['NIVEAU', data.member_profile?.level || 'Non renseigné'],
-                    ['OBJECTIF', data.member_profile?.goal || 'Non renseigné'],
-                  ].map(([k, v]) => (
-                    <div key={k}>
-                      <div className="cst-mono" style={{ fontSize: 9, opacity: 0.6 }}>{k}</div>
-                      <div style={{ fontSize: 14, marginTop: 4 }}>{v}</div>
-                    </div>
-                  ))}
-                  <div style={{ gridColumn: '1 / -1' }}>
-                    <div className="cst-mono" style={{ fontSize: 9, opacity: 0.6 }}>BLESSURES / NOTES SANTÉ</div>
-                    <div style={{ fontSize: 13, marginTop: 4, whiteSpace: 'pre-wrap' }}>{data.member_profile?.injuries || 'Aucune note'}</div>
+                <CSTSectionNum num={1} label="PROFIL" sub="ÉDITER LES INFOS ADHÉRENT" />
+                <form onSubmit={saveForm} className="cst-card-dark" style={{ padding: 20, marginTop: 14, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                  <div>
+                    <label className="cst-mono" style={{ fontSize: 9, opacity: 0.6 }}>PRÉNOM</label>
+                    <input className="cst-input" style={{ width: '100%', marginTop: 4 }} value={form.first_name} onChange={(e) => setForm({ ...form, first_name: e.target.value })} />
                   </div>
-                </div>
+                  <div>
+                    <label className="cst-mono" style={{ fontSize: 9, opacity: 0.6 }}>NOM</label>
+                    <input className="cst-input" style={{ width: '100%', marginTop: 4 }} value={form.last_name} onChange={(e) => setForm({ ...form, last_name: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className="cst-mono" style={{ fontSize: 9, opacity: 0.6 }}>EMAIL</label>
+                    <input className="cst-input" style={{ width: '100%', marginTop: 4, opacity: 0.6 }} value={data.profile.email || ''} disabled />
+                  </div>
+                  <div>
+                    <label className="cst-mono" style={{ fontSize: 9, opacity: 0.6 }}>NIVEAU</label>
+                    <select className="cst-input" style={{ width: '100%', marginTop: 4 }} value={form.level} onChange={(e) => setForm({ ...form, level: e.target.value })}>
+                      <option value="">— Non renseigné —</option>
+                      <option value="débutant">Débutant</option>
+                      <option value="intermédiaire">Intermédiaire</option>
+                      <option value="avancé">Avancé</option>
+                      <option value="élite">Élite</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="cst-mono" style={{ fontSize: 9, opacity: 0.6 }}>POIDS (KG)</label>
+                    <input type="number" step="0.1" min="20" max="400" className="cst-input" style={{ width: '100%', marginTop: 4 }} value={form.weight_kg} onChange={(e) => setForm({ ...form, weight_kg: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className="cst-mono" style={{ fontSize: 9, opacity: 0.6 }}>TAILLE (CM)</label>
+                    <input type="number" min="80" max="260" className="cst-input" style={{ width: '100%', marginTop: 4 }} value={form.height_cm} onChange={(e) => setForm({ ...form, height_cm: e.target.value })} />
+                  </div>
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <label className="cst-mono" style={{ fontSize: 9, opacity: 0.6 }}>OBJECTIF</label>
+                    <input className="cst-input" style={{ width: '100%', marginTop: 4 }} placeholder="Ex. Préparation combat / Perte de gras / Hypertrophie…" value={form.goal} onChange={(e) => setForm({ ...form, goal: e.target.value })} />
+                  </div>
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <label className="cst-mono" style={{ fontSize: 9, opacity: 0.6 }}>BLESSURES / NOTES SANTÉ</label>
+                    <textarea rows="4" className="cst-input" style={{ width: '100%', marginTop: 4, resize: 'vertical', fontFamily: 'var(--cst-ui)' }} value={form.injuries} onChange={(e) => setForm({ ...form, injuries: e.target.value })} placeholder="Pathologies, contre-indications, points de vigilance…" />
+                  </div>
+                  <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: 10, fontSize: 12 }}>
+                    <input id="logw" type="checkbox" checked={logWeight} onChange={(e) => setLogWeight(e.target.checked)} />
+                    <label htmlFor="logw" style={{ opacity: 0.8 }}>Ajouter le poids saisi à l'historique de pesées</label>
+                  </div>
+                  <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: 12, paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                    <button type="submit" className="cst-btn cst-btn-primary" disabled={savingForm}>
+                      {savingForm ? 'ENREGISTREMENT…' : 'ENREGISTRER LE PROFIL'}
+                    </button>
+                    {formSaved && <span style={{ color: 'var(--cst-success)', fontSize: 12 }}>✓ Profil mis à jour</span>}
+                  </div>
+                </form>
               </>
             )}
 
