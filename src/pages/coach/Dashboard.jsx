@@ -4,6 +4,7 @@ import { useServerFn } from '@tanstack/react-start';
 import CoachSidebar from '../../components/CoachSidebar';
 import { CSTSectionNum, CSTDuoTitle, CSTAvatar, CSTBandWords } from '../../components/Atoms';
 import { listMembers, inviteMember, listPrograms, assignProgram } from '@/lib/coach.functions';
+import { seedColosmartData } from '@/lib/seed.functions';
 
 function InviteModal({ onClose, onDone }) {
   const inviteFn = useServerFn(inviteMember);
