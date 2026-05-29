@@ -59,6 +59,16 @@ export default function CoachMember() {
       const d = await getDetailFn({ data: { member_id: memberId } });
       setData(d);
       setNotes(d.member_profile?.coach_private_notes || '');
+      setForm({
+        first_name: d.profile?.first_name || '',
+        last_name: d.profile?.last_name || '',
+        weight_kg: d.member_profile?.weight_kg ?? '',
+        height_cm: d.member_profile?.height_cm ?? '',
+        level: d.member_profile?.level || '',
+        goal: d.member_profile?.goal || '',
+        injuries: d.member_profile?.injuries || '',
+      });
+      setLogWeight(false);
     } catch (ex) {
       setErr(ex?.message || 'Erreur de chargement');
     } finally {
