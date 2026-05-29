@@ -1173,3 +1173,293 @@ function LabeledInput({
     </label>
   );
 }
+
+/* ───────── Cues / Video action bar (used in SET phase) ───────── */
+
+function CuesActionBar({
+  exercise,
+  onVideo,
+  onCues,
+}: {
+  exercise: ProgExercise;
+  onVideo: () => void;
+  onCues: () => void;
+}) {
+  const v = hasVideo(exercise);
+  const c = hasCues(exercise);
+  if (!v && !c) return null;
+  return (
+    <div style={{ display: "flex", gap: 6 }}>
+      {v && (
+        <button onClick={onVideo} className="cst-btn cst-btn-ghost-dark cst-btn-sm" style={{ flex: 1 }}>
+          ▶ DÉMO
+        </button>
+      )}
+      {c && (
+        <button onClick={onCues} className="cst-btn cst-btn-ghost-dark cst-btn-sm" style={{ flex: 1 }}>
+          📋 CONSIGNES
+        </button>
+      )}
+    </div>
+  );
+}
+
+/* ───────── Video modal (YouTube embed) ───────── */
+
+function VideoModal({
+  exercise,
+  onClose,
+}: {
+  exercise: ProgExercise | null;
+  onClose: () => void;
+}) {
+  if (!exercise) return null;
+  const id =
+    exercise.youtube_id ||
+    extractYoutubeId(exercise.youtube_url) ||
+    extractYoutubeId(exercise.youtube_alt_url);
+  const fallbackUrl = exercise.youtube_url || exercise.youtube_alt_url || null;
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.88)",
+        zIndex: 280,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 16,
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: "min(880px, 100%)",
+          display: "flex",
+          flexDirection: "column",
+          gap: 10,
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span className="cst-mono" style={{ fontSize: 10, opacity: 0.75, letterSpacing: "0.2em", color: "#fff" }}>
+            ▶ {exercise.name?.toUpperCase()}
+          </span>
+          <button
+            onClick={onClose}
+            style={{ background: "none", border: 0, color: "#fff", fontSize: 22, cursor: "pointer" }}
+            aria-label="Fermer"
+          >
+            ×
+          </button>
+        </div>
+        <div
+          style={{
+            width: "100%",
+            aspectRatio: "16/9",
+            background: "#000",
+            borderRadius: 8,
+            overflow: "hidden",
+          }}
+        >
+          {id ? (
+            <iframe
+              src={`https://www.youtube.com/embed/${id}?autoplay=1&rel=0`}
+              title={`Démo ${exercise.name}`}
+              allow="autoplay; encrypted-media; fullscreen"
+              allowFullScreen
+              style={{ width: "100%", height: "100%", border: 0 }}
+            />
+          ) : (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+              <a
+                href={fallbackUrl || "#"}
+                target="_blank"
+                rel="noreferrer"
+                className="cst-mono"
+                style={{ color: "#fff", textDecoration: "underline", fontSize: 12 }}
+              >
+                OUVRIR LA VIDÉO ↗
+              </a>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ───────── Cues modal (notes coach, tempo, RPE, couleur) ───────── */
+
+function CuesModal({
+  exercise,
+  onClose,
+  onOpenTempo,
+  onOpenColor,
+  onOpenRpeRef,
+}: {
+  exercise: ProgExercise | null;
+  onClose: () => void;
+  onOpenTempo: (ex: ProgExercise) => void;
+  onOpenColor: (c: ExerciseColor) => void;
+  onOpenRpeRef: () => void;
+}) {
+  if (!exercise) return null;
+  const color = (() => {
+    const v = (exercise.color || "").toLowerCase();
+    if (v === "red" || v === "green" || v === "yellow" || v === "blue") return v as ExerciseColor;
+    return null;
+  })();
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.78)",
+        backdropFilter: "blur(4px)",
+        zIndex: 270,
+        display: "flex",
+        alignItems: "flex-end",
+        justifyContent: "center",
+        padding: 12,
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="cst-hatch"
+        style={{
+          width: "100%",
+          maxWidth: 460,
+          maxHeight: "85vh",
+          overflowY: "auto",
+          background: "#1c2620",
+          border: "1px solid rgba(255,255,255,0.10)",
+          borderRadius: 14,
+          padding: 18,
+          display: "flex",
+          flexDirection: "column",
+          gap: 12,
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h3 className="cst-display" style={{ margin: 0, fontSize: 18 }}>
+            CONSIGNES — {exercise.name?.toUpperCase()}
+          </h3>
+          <button
+            onClick={onClose}
+            style={{ background: "none", border: 0, color: "#fff", fontSize: 18, cursor: "pointer" }}
+            aria-label="Fermer"
+          >
+            ×
+          </button>
+        </div>
+
+        {color && (
+          <button
+            onClick={() => onOpenColor(color)}
+            className="cst-mono"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.12)",
+              borderRadius: 6,
+              padding: "8px 10px",
+              color: "rgba(255,255,255,0.85)",
+              fontSize: 11,
+              cursor: "pointer",
+              textAlign: "left",
+            }}
+          >
+            <ColorDot color={color} size={12} />
+            CODE COULEUR — {color.toUpperCase()} (voir détail)
+          </button>
+        )}
+
+        {exercise.tempo && (
+          <button
+            onClick={() => onOpenTempo(exercise)}
+            className="cst-mono"
+            style={{
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.12)",
+              borderRadius: 6,
+              padding: "8px 10px",
+              color: "rgba(255,255,255,0.85)",
+              fontSize: 11,
+              cursor: "pointer",
+              textAlign: "left",
+            }}
+          >
+            TEMPO — {exercise.tempo} (voir explication)
+          </button>
+        )}
+
+        {(exercise.rpe_target || color) && (
+          <div
+            style={{
+              padding: "10px 12px",
+              background: "rgba(212,165,59,0.10)",
+              border: "1px solid rgba(212,165,59,0.25)",
+              borderRadius: 8,
+              display: "flex",
+              flexDirection: "column",
+              gap: 6,
+            }}
+          >
+            {exercise.rpe_target && (
+              <div className="cst-mono" style={{ fontSize: 11, color: "#fff" }}>
+                <span style={{ opacity: 0.55 }}>RPE CIBLE </span>
+                {exercise.rpe_target}
+              </div>
+            )}
+            {color && <RPEGuidance color={color} />}
+            <button
+              onClick={onOpenRpeRef}
+              className="cst-mono"
+              style={{
+                alignSelf: "flex-start",
+                background: "none",
+                border: "1px solid rgba(255,255,255,0.18)",
+                color: "rgba(255,255,255,0.8)",
+                fontSize: 9,
+                padding: "3px 8px",
+                borderRadius: 4,
+                cursor: "pointer",
+                letterSpacing: "0.12em",
+              }}
+            >
+              ? ÉCHELLE RPE
+            </button>
+          </div>
+        )}
+
+        {exercise.coach_notes && (
+          <div
+            style={{
+              fontSize: 13,
+              lineHeight: 1.55,
+              fontStyle: "italic",
+              background: "rgba(45,90,53,0.12)",
+              borderLeft: "2px solid var(--cst-mid-green)",
+              padding: "10px 12px",
+              borderRadius: 4,
+              color: "rgba(255,255,255,0.92)",
+            }}
+          >
+            « {exercise.coach_notes} »
+          </div>
+        )}
+
+        {hasVideo(exercise) && (
+          <div className="cst-mono" style={{ fontSize: 10, opacity: 0.55, letterSpacing: "0.18em" }}>
+            ASTUCE — bouton ▶ DÉMO pour la vidéo
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
