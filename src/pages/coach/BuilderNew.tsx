@@ -115,6 +115,75 @@ function makeExercise(lib: LibraryExercise): ProgramExercise {
   };
 }
 
+// ─── COLOR MAPPING ────────────────────────────────────────────────────────────
+const EMOJI_TO_NAME: Record<string, string> = { '🔴': 'red', '🟢': 'green', '🟡': 'yellow', '🔵': 'blue' };
+const NAME_TO_EMOJI: Record<string, ExColor> = { red: '🔴', green: '🟢', yellow: '🟡', blue: '🔵' };
+
+// ─── CANONICAL <-> BUILDER MAPPING ───────────────────────────────────────────
+// Canonical shape lives in programs.structure and is read by ProgramBlocks.
+function exToCanonical(ex: ProgramExercise) {
+  return {
+    name: ex.name,
+    color: EMOJI_TO_NAME[ex.color] ?? null,
+    category: ex.category,
+    series: ex.sets,
+    reps: ex.reps,
+    charge: ex.weight,
+    recup: ex.rest,
+    rpe_target: ex.rpe,
+    coach_notes: ex.notes,
+    youtube_url: ex.youtube_url || null,
+    youtube_id: extractYTId(ex.youtube_url || '') || null,
+    superset_with: ex.superset_with ?? null,
+  };
+}
+function canonicalToEx(c: any): ProgramExercise {
+  const name = String(c.name ?? 'Exercice');
+  const cat = (c.category as Category) || 'PUSH';
+  const color = (NAME_TO_EMOJI[String(c.color || '').toLowerCase()] || '🟢') as ExColor;
+  return {
+    uid: uid(),
+    name,
+    category: cat,
+    color,
+    sets: typeof c.series === 'number' ? c.series : Number(c.series) || 3,
+    reps: c.reps != null ? String(c.reps) : '8-12',
+    weight: c.charge != null ? String(c.charge) : '',
+    rest: c.recup != null ? String(c.recup) : '2 min',
+    rpe: typeof c.rpe_target === 'number' ? c.rpe_target : Number(c.rpe_target) || 7,
+    youtube_url: c.youtube_url || (c.youtube_id ? `https://www.youtube.com/watch?v=${c.youtube_id}` : ''),
+    notes: c.coach_notes || '',
+    superset_with: c.superset_with || undefined,
+  };
+}
+function structureToWeeks(structure: any): Week[] {
+  const ws = structure?.weeks;
+  if (!Array.isArray(ws) || ws.length === 0) return [makeWeek()];
+  return ws.map((w: any) => ({
+    id: uid(),
+    days: (Array.isArray(w.days) ? w.days : []).map((d: any) => ({
+      id: uid(),
+      name: String(d.label || d.name || 'JOUR').toUpperCase(),
+      type: (d.type as Day['type']) || 'Entraînement',
+      exercises: (Array.isArray(d.exercises) ? d.exercises : []).map(canonicalToEx),
+    })),
+  }));
+}
+function weeksToStructure(weeks: Week[]) {
+  return {
+    weeks: weeks.map((w, wi) => ({
+      number: wi + 1,
+      days: w.days.map((d, di) => ({
+        number: di + 1,
+        label: d.name,
+        type: d.type,
+        exercises: d.exercises.map(exToCanonical),
+      })),
+    })),
+  };
+}
+
+
 function relativeTime(d: string) {
   const diff = Date.now() - new Date(d).getTime();
   const m = Math.floor(diff / 60000);
