@@ -128,7 +128,6 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <BetaBanner />
       <Outlet />
     </QueryClientProvider>
   );
