@@ -29,6 +29,8 @@ import { Route as AuthenticatedCoachImportRouteImport } from './routes/_authenti
 import { Route as AuthenticatedCoachExercicesRouteImport } from './routes/_authenticated.coach.exercices'
 import { Route as AuthenticatedCoachBuilderRouteImport } from './routes/_authenticated.coach.builder'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
+import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
+import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as AuthenticatedMembreSeanceSessionIdRouteImport } from './routes/_authenticated.membre.seance.$sessionId'
 import { Route as AuthenticatedCoachProgrammesIdRouteImport } from './routes/_authenticated.coach.programmes.$id'
 import { Route as AuthenticatedCoachMembreMemberIdRouteImport } from './routes/_authenticated.coach.membre.$memberId'
@@ -147,6 +149,16 @@ const LovableEmailQueueProcessRoute =
     path: '/lovable/email/queue/process',
     getParentRoute: () => rootRouteImport,
   } as any)
+const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
+  id: '/lovable/email/auth/webhook',
+  path: '/lovable/email/auth/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
+  id: '/lovable/email/auth/preview',
+  path: '/lovable/email/auth/preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedMembreSeanceSessionIdRoute =
   AuthenticatedMembreSeanceSessionIdRouteImport.update({
     id: '/membre/seance/$sessionId',
@@ -195,6 +207,8 @@ export interface FileRoutesByFullPath {
   '/coach/membre/$memberId': typeof AuthenticatedCoachMembreMemberIdRoute
   '/coach/programmes/$id': typeof AuthenticatedCoachProgrammesIdRoute
   '/membre/seance/$sessionId': typeof AuthenticatedMembreSeanceSessionIdRoute
+  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
+  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRoutesByTo {
@@ -220,6 +234,8 @@ export interface FileRoutesByTo {
   '/coach/membre/$memberId': typeof AuthenticatedCoachMembreMemberIdRoute
   '/coach/programmes/$id': typeof AuthenticatedCoachProgrammesIdRoute
   '/membre/seance/$sessionId': typeof AuthenticatedMembreSeanceSessionIdRoute
+  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
+  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRoutesById {
@@ -247,6 +263,8 @@ export interface FileRoutesById {
   '/_authenticated/coach/membre/$memberId': typeof AuthenticatedCoachMembreMemberIdRoute
   '/_authenticated/coach/programmes/$id': typeof AuthenticatedCoachProgrammesIdRoute
   '/_authenticated/membre/seance/$sessionId': typeof AuthenticatedMembreSeanceSessionIdRoute
+  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
+  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRouteTypes {
@@ -274,6 +292,8 @@ export interface FileRouteTypes {
     | '/coach/membre/$memberId'
     | '/coach/programmes/$id'
     | '/membre/seance/$sessionId'
+    | '/lovable/email/auth/preview'
+    | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -299,6 +319,8 @@ export interface FileRouteTypes {
     | '/coach/membre/$memberId'
     | '/coach/programmes/$id'
     | '/membre/seance/$sessionId'
+    | '/lovable/email/auth/preview'
+    | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
   id:
     | '__root__'
@@ -325,6 +347,8 @@ export interface FileRouteTypes {
     | '/_authenticated/coach/membre/$memberId'
     | '/_authenticated/coach/programmes/$id'
     | '/_authenticated/membre/seance/$sessionId'
+    | '/lovable/email/auth/preview'
+    | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
   fileRoutesById: FileRoutesById
 }
@@ -334,6 +358,8 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   OnboardingStepRoute: typeof OnboardingStepRoute
+  LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
+  LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
 
@@ -479,6 +505,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lovable/email/auth/webhook': {
+      id: '/lovable/email/auth/webhook'
+      path: '/lovable/email/auth/webhook'
+      fullPath: '/lovable/email/auth/webhook'
+      preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/auth/preview': {
+      id: '/lovable/email/auth/preview'
+      path: '/lovable/email/auth/preview'
+      fullPath: '/lovable/email/auth/preview'
+      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/membre/seance/$sessionId': {
       id: '/_authenticated/membre/seance/$sessionId'
       path: '/membre/seance/$sessionId'
@@ -588,6 +628,8 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   OnboardingStepRoute: OnboardingStepRoute,
+  LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
+  LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }
 export const routeTree = rootRouteImport
