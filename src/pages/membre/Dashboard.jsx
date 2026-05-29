@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { SUPABASE_ENABLED } from "@/lib/app-mode";
 import MemberNav from "../../components/MemberNav";
 import { CSTLogo, CSTSectionNum, CSTAvatar } from "../../components/Atoms";
+import ThemeToggle from "../../components/ThemeToggle";
+
 
 const DAYS = ["DIM", "LUN", "MAR", "MER", "JEU", "VEN", "SAM"];
 const today = new Date();
