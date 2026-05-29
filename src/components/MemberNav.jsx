@@ -1,4 +1,8 @@
+import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { getUnreadCount } from "@/lib/coach.functions";
+import { supabase } from "@/integrations/supabase/client";
 
 
 const items = [
@@ -9,9 +13,35 @@ const items = [
   { id: "profile", icon: "👤", label: "Profil", path: "/membre/profil" },
 ];
 
-export default function MemberNav({ unreadCount = 0 }) {
+export default function MemberNav({ unreadCount: unreadProp }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const unreadFn = useServerFn(getUnreadCount);
+  const [unread, setUnread] = useState(unreadProp ?? 0);
+
+  useEffect(() => {
+    if (typeof unreadProp === "number") return; // parent controls it
+    let cancelled = false;
+    const refresh = async () => {
+      try {
+        const r = await unreadFn({});
+        if (!cancelled) setUnread(r.count ?? 0);
+      } catch {}
+    };
+    refresh();
+    const interval = setInterval(refresh, 30000);
+    // Refresh when a new message arrives in realtime
+    const ch = supabase.channel("nav-unread")
+      .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, refresh)
+      .subscribe();
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+      supabase.removeChannel(ch);
+    };
+  }, [unreadFn, unreadProp, pathname]);
+
+  const effectiveUnread = typeof unreadProp === "number" ? unreadProp : unread;
 
   const activeId =
     items.find((it) =>
@@ -38,8 +68,8 @@ export default function MemberNav({ unreadCount = 0 }) {
                 {it.icon}
               </span>
               <span className="nav-label">{it.label}</span>
-              {it.id === "msgs" && unreadCount > 0 && (
-                <span className="bottom-nav-badge">{unreadCount > 9 ? "9+" : unreadCount}</span>
+              {it.id === "msgs" && effectiveUnread > 0 && (
+                <span className="bottom-nav-badge">{effectiveUnread > 9 ? "9+" : effectiveUnread}</span>
               )}
             </div>
           );
