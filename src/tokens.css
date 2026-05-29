@@ -1,13 +1,15 @@
-/* ColosmartTraining · L'Espace · Design tokens */
+/* ColosmartTraining · L'Espace · Design tokens (themed) */
 *, *::before, *::after { box-sizing: border-box; }
 
 html, body, #root {
   margin: 0; padding: 0;
   height: 100%;
-  background: #1B2E1F;
+  background: var(--cst-bg);
+  color: var(--cst-text);
   font-family: var(--cst-ui);
 }
 
+/* ---- Brand palette (constant across themes) ---- */
 :root {
   --cst-dark-green:   #1B2E1F;
   --cst-mid-green:    #2D5A35;
@@ -15,21 +17,10 @@ html, body, #root {
   --cst-cream:        #EDE8D8;
   --cst-warm-white:   #F5F2EA;
 
-  --cst-text-white:   #FFFFFF;
-  --cst-text-dark:    #1A1A18;
-  --cst-text-muted:   #6B7B6E;
-  --cst-text-accent:  #2D5A35;
-
   --cst-success: #3A6B42;
   --cst-warning: #B5830A;
   --cst-danger:  #8B2318;
   --cst-info:    #1B4E6B;
-
-  --cst-card-dark:    #243029;
-  --cst-card-light:   #FFFFFF;
-  --cst-border-dark:  rgba(255,255,255,0.10);
-  --cst-border-light: rgba(26,26,24,0.12);
-  --cst-hairline-dark:rgba(255,255,255,0.06);
 
   --cst-display: "Barlow Condensed", "Oswald", "Arial Narrow", sans-serif;
   --cst-serif:   "Playfair Display", "Libre Baskerville", Georgia, serif;
@@ -37,10 +28,83 @@ html, body, #root {
   --cst-mono:    "JetBrains Mono", "Fira Code", ui-monospace, monospace;
 }
 
+/* ---- DEFAULT = DARK (brand) ---- */
+:root,
+html.theme-dark {
+  --cst-bg:                 #1B2E1F;
+  --cst-bg-elev:            #16261A;
+  --cst-text:               #FFFFFF;
+  --cst-text-strong:        #FFFFFF;
+  --cst-text-soft:          rgba(255,255,255,0.72);
+  --cst-text-muted:         #8FA095;
+  --cst-text-accent:        #6EAB76;
+
+  --cst-card-bg:            #243029;
+  --cst-card-border:        rgba(255,255,255,0.10);
+  --cst-hairline:           rgba(255,255,255,0.06);
+
+  --cst-input-bg:           rgba(0,0,0,0.18);
+  --cst-input-border:       rgba(255,255,255,0.12);
+  --cst-input-placeholder:  rgba(255,255,255,0.35);
+
+  --cst-btn-ghost-border:   rgba(255,255,255,0.35);
+  --cst-btn-ghost-color:    #FFFFFF;
+
+  --cst-hatch-color:        rgba(255,255,255,0.035);
+  --cst-overlay:            rgba(0,0,0,0.5);
+
+  --cst-shadow-card:        0 1px 2px rgba(0,0,0,0.25);
+  --cst-tag-bg:             rgba(255,255,255,0.06);
+  --cst-tag-text:           rgba(255,255,255,0.7);
+  --cst-accent-bg:          rgba(45,90,53,0.18);
+}
+
+/* ---- LIGHT ---- */
+html.theme-light {
+  --cst-bg:                 #F5F2EA;
+  --cst-bg-elev:            #EDE8D8;
+  --cst-text:               #1A1A18;
+  --cst-text-strong:        #0E1F12;
+  --cst-text-soft:          rgba(26,26,24,0.72);
+  --cst-text-muted:         #6B7B6E;
+  --cst-text-accent:        #2D5A35;
+
+  --cst-card-bg:            #FFFFFF;
+  --cst-card-border:        rgba(26,26,24,0.12);
+  --cst-hairline:           rgba(26,26,24,0.08);
+
+  --cst-input-bg:           #FFFFFF;
+  --cst-input-border:       rgba(26,26,24,0.14);
+  --cst-input-placeholder:  rgba(26,26,24,0.40);
+
+  --cst-btn-ghost-border:   rgba(26,26,24,0.22);
+  --cst-btn-ghost-color:    #1A1A18;
+
+  --cst-hatch-color:        rgba(0,0,0,0.04);
+  --cst-overlay:            rgba(26,46,31,0.30);
+
+  --cst-shadow-card:        0 1px 3px rgba(0,0,0,0.08);
+  --cst-tag-bg:             rgba(26,26,24,0.06);
+  --cst-tag-text:           rgba(26,26,24,0.68);
+  --cst-accent-bg:          rgba(45,90,53,0.10);
+}
+
+/* Back-compat aliases used by inline styles in pages */
+:root {
+  --cst-text-white:   var(--cst-text);
+  --cst-text-dark:    #1A1A18;
+  --cst-card-dark:    var(--cst-card-bg);
+  --cst-card-light:   #FFFFFF;
+  --cst-border-dark:  var(--cst-card-border);
+  --cst-border-light: rgba(26,26,24,0.12);
+  --cst-hairline-dark: var(--cst-hairline);
+}
+
+/* ---- Hatch (decorative texture) ---- */
 .cst-hatch {
   background-image:
     repeating-linear-gradient(135deg,
-      rgba(255,255,255,0.035) 0 1px,
+      var(--cst-hatch-color) 0 1px,
       transparent 1px 9px);
 }
 .cst-hatch-light {
@@ -53,8 +117,8 @@ html, body, #root {
 /* ---- shared atoms ---- */
 .cst-screen {
   font-family: var(--cst-ui);
-  color: var(--cst-text-white);
-  background: var(--cst-dark-green);
+  color: var(--cst-text);
+  background: var(--cst-bg);
   width: 100%;
   height: 100%;
   overflow: hidden;
@@ -64,7 +128,7 @@ html, body, #root {
 }
 .cst-screen.cst-light {
   background: var(--cst-warm-white);
-  color: var(--cst-text-dark);
+  color: #1A1A18;
 }
 
 .cst-display {
@@ -124,8 +188,13 @@ html, body, #root {
 .cst-btn-primary { background: var(--cst-mid-green); color: #fff; }
 .cst-btn-primary:hover { background: var(--cst-light-green); }
 .cst-btn-secondary { background: transparent; border-color: var(--cst-mid-green); color: var(--cst-mid-green); }
-.cst-btn-ghost-dark { background: transparent; border-color: rgba(255,255,255,0.35); color: #fff; }
-.cst-btn-ghost-light { background: transparent; border-color: rgba(0,0,0,0.18); color: var(--cst-text-dark); }
+.cst-btn-ghost-dark,
+.cst-btn-ghost {
+  background: transparent;
+  border-color: var(--cst-btn-ghost-border);
+  color: var(--cst-btn-ghost-color);
+}
+.cst-btn-ghost-light { background: transparent; border-color: rgba(0,0,0,0.18); color: #1A1A18; }
 .cst-btn-danger { background: transparent; border-color: var(--cst-danger); color: var(--cst-danger); }
 .cst-btn-sm { padding: 8px 16px; font-size: 10px; letter-spacing: 0.12em; }
 
@@ -134,30 +203,33 @@ html, body, #root {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 4px 10px;
   border-radius: 4px;
-  background: rgba(45,90,53,0.18);
-  color: var(--cst-mid-green);
+  background: var(--cst-accent-bg);
+  color: var(--cst-text-accent);
   font-family: var(--cst-mono);
   font-size: 10px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
 }
-.cst-tag-dark { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.7); }
+.cst-tag-dark { background: var(--cst-tag-bg); color: var(--cst-tag-text); }
 .cst-tag-warn { background: rgba(181,131,10,0.18); color: #D4A53B; }
 .cst-tag-success { background: rgba(58,107,66,0.22); color: #6EAB76; }
 .cst-tag-danger { background: rgba(139,35,24,0.18); color: #C56A60; }
 
 /* Cards */
 .cst-card-dark {
-  background: var(--cst-card-dark);
-  border: 1px solid var(--cst-border-dark);
+  background: var(--cst-card-bg);
+  color: var(--cst-text);
+  border: 1px solid var(--cst-card-border);
   border-radius: 12px;
   padding: 24px;
   position: relative;
   overflow: hidden;
+  box-shadow: var(--cst-shadow-card);
 }
 .cst-card-light {
-  background: var(--cst-card-light);
-  border: 1px solid var(--cst-border-light);
+  background: #FFFFFF;
+  color: #1A1A18;
+  border: 1px solid rgba(26,26,24,0.12);
   border-radius: 12px;
   padding: 24px;
 }
@@ -165,22 +237,22 @@ html, body, #root {
 /* Inputs */
 .cst-input {
   width: 100%;
-  background: rgba(0,0,0,0.18);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: var(--cst-input-bg);
+  border: 1px solid var(--cst-input-border);
   border-radius: 8px;
   padding: 12px 16px;
-  color: #fff;
+  color: var(--cst-text);
   font-family: var(--cst-ui);
   font-size: 14px;
   outline: none;
   transition: border-color .15s, box-shadow .15s;
 }
-.cst-input::placeholder { color: rgba(255,255,255,0.35); }
+.cst-input::placeholder { color: var(--cst-input-placeholder); }
 .cst-input:focus { border-color: var(--cst-mid-green); box-shadow: 0 0 0 3px rgba(45,90,53,0.25); }
 .cst-input-light {
   background: #fff;
   border-color: rgba(0,0,0,0.12);
-  color: var(--cst-text-dark);
+  color: #1A1A18;
 }
 .cst-input-light::placeholder { color: rgba(0,0,0,0.35); }
 
@@ -265,21 +337,26 @@ button, [role="button"], a { touch-action: manipulation; }
   }
 }
 
-/* ---- Phone-frame pages: outer dark stage ----
-   React serializes inline styles as kebab-case CSS strings. */
+/* ---- Phone-frame pages: outer stage (themed) ----
+   React serializes inline styles as kebab-case CSS strings.
+   We retarget the legacy "#111" dark stage to the current theme bg
+   so light mode doesn't show a black gutter behind the phone frame. */
+div[style*="background: rgb(17, 17, 17)"],
+div[style*="background: #111"] {
+  background: var(--cst-bg) !important;
+}
 @media (max-width: 768px) {
   div[style*="background: rgb(17, 17, 17)"],
   div[style*="background: #111"] {
     padding: 0 !important;
-    background: var(--cst-dark-green) !important;
     align-items: stretch !important;
   }
 }
 
-/* ---- Phone-frame inner container: 390x780 → fluid ---- */
+/* ---- Phone-frame inner container: 390x780 → fluid (full width on tablet/desktop) ---- */
 div[style*="width: 390px"] {
   width: 100% !important;
-  max-width: 480px !important;
+  max-width: 720px !important;
 }
 div[style*="width: 390px"][style*="height: 780px"],
 div[style*="width: 390px"][style*="min-height: 780px"],
@@ -289,25 +366,17 @@ div[style*="width: 390px"][style*="min-height: 100vh"] {
   min-height: 100dvh !important;
 }
 
-@media (min-width: 769px) {
-  div[style*="width: 390px"] { max-width: 420px !important; }
-  div[style*="width: 390px"][style*="height: 780px"],
-  div[style*="width: 390px"][style*="min-height: 780px"] {
-    min-height: 0 !important;
-    height: min(92vh, 880px) !important;
-    border-radius: 20px !important;
-    overflow: hidden !important;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.4) !important;
-  }
+@media (min-width: 1024px) {
+  div[style*="width: 390px"] { max-width: 880px !important; }
 }
 
-/* Login / reset cards */
+/* Login / reset cards stay phone-sized for focus */
 .cst-screen[style*="width: 390px"] {
   width: 100% !important;
   max-width: 480px !important;
 }
 @media (min-width: 769px) {
-  .cst-screen[style*="width: 390px"] { max-width: 420px !important; }
+  .cst-screen[style*="width: 390px"] { max-width: 440px !important; }
 }
 
 /* Inner .cst-screen fills phone wrapper */
@@ -315,14 +384,13 @@ div[style*="width: 390px"] > .cst-screen {
   min-height: 100vh;
   min-height: 100dvh;
 }
-@media (min-width: 769px) {
-  div[style*="width: 390px"] > .cst-screen {
-    min-height: 0;
-    height: 100%;
-  }
+
+/* Inline page backgrounds bound to legacy hex — retarget to themed bg */
+div[style*="background: var(--cst-dark-green)"] {
+  background: var(--cst-bg) !important;
 }
 
-/* MemberNav bottom bar: iOS safe-area */
+/* MemberNav bottom bar: iOS safe-area (legacy absolute-positioned bar) */
 div[style*="position: absolute"][style*="backdrop-filter"] {
   padding-bottom: calc(22px + env(safe-area-inset-bottom, 0px)) !important;
 }
@@ -338,6 +406,12 @@ div[style*="position: absolute"][style*="backdrop-filter"] {
   }
 }
 
+/* Coach sidebar inline bg → themed */
+aside[style*="width: 240px"] {
+  background: var(--cst-bg-elev) !important;
+  color: var(--cst-text) !important;
+}
+
 /* Coach sidebar → horizontal scrollable top bar < lg */
 @media (max-width: 1023px) {
   aside[style*="width: 240px"] {
@@ -346,7 +420,7 @@ div[style*="position: absolute"][style*="backdrop-filter"] {
     flex-direction: row !important;
     padding: 10px 12px !important;
     border-right: none !important;
-    border-bottom: 1px solid rgba(255,255,255,0.06) !important;
+    border-bottom: 1px solid var(--cst-hairline) !important;
     gap: 8px !important;
     align-items: center !important;
     overflow-x: auto !important;
@@ -358,7 +432,7 @@ div[style*="position: absolute"][style*="backdrop-filter"] {
   aside[style*="width: 240px"] > div:first-child {
     padding: 0 8px 0 0 !important;
     flex: 0 0 auto !important;
-    border-right: 1px solid rgba(255,255,255,0.08);
+    border-right: 1px solid var(--cst-hairline);
   }
   aside[style*="width: 240px"] > div:first-child > div { display: none !important; }
   aside[style*="width: 240px"] > nav {
@@ -457,4 +531,80 @@ div[style*="width: 390px"] .cst-scroll {
 /* Prevent leftover horizontal overflow */
 .cst-screen, .cst-card-dark, .cst-card-light { max-width: 100%; }
 
+/* ===================================================
+   LIGHT MODE — image / overlay polish to ensure no
+   stray dark hex from inline styles in pages crashes
+   the readability. Soft retargeting only.
+   =================================================== */
+html.theme-light .cst-mono { color: var(--cst-text-muted); }
 
+/* Inline-styled dark backgrounds inside pages: keep them dark only
+   in dark mode, soften to neutral surface in light mode. */
+html.theme-light [style*="background: rgba(0, 0, 0, 0.18)"],
+html.theme-light [style*="background: rgba(0,0,0,0.18)"],
+html.theme-light [style*="background: rgba(0, 0, 0, 0.25)"],
+html.theme-light [style*="background: rgba(0,0,0,0.25)"] {
+  background: rgba(26, 46, 31, 0.06) !important;
+}
+
+/* Translucent white backgrounds (used by cards/items in dark mode)
+   become subtle ink-tints in light. */
+html.theme-light [style*="background: rgba(255, 255, 255, 0.03)"],
+html.theme-light [style*="background: rgba(255,255,255,0.03)"],
+html.theme-light [style*="background: rgba(255, 255, 255, 0.05)"],
+html.theme-light [style*="background: rgba(255,255,255,0.05)"],
+html.theme-light [style*="background: rgba(255, 255, 255, 0.06)"],
+html.theme-light [style*="background: rgba(255,255,255,0.06)"],
+html.theme-light [style*="background: rgba(255, 255, 255, 0.08)"],
+html.theme-light [style*="background: rgba(255,255,255,0.08)"] {
+  background: rgba(26, 46, 31, 0.05) !important;
+}
+
+/* Translucent white text → readable ink */
+html.theme-light [style*="color: rgba(255, 255, 255, 0.4"],
+html.theme-light [style*="color: rgba(255,255,255,0.4"],
+html.theme-light [style*="color: rgba(255, 255, 255, 0.45"],
+html.theme-light [style*="color: rgba(255,255,255,0.45"],
+html.theme-light [style*="color: rgba(255, 255, 255, 0.5"],
+html.theme-light [style*="color: rgba(255,255,255,0.5"],
+html.theme-light [style*="color: rgba(255, 255, 255, 0.55"],
+html.theme-light [style*="color: rgba(255,255,255,0.55"],
+html.theme-light [style*="color: rgba(255, 255, 255, 0.6"],
+html.theme-light [style*="color: rgba(255,255,255,0.6"],
+html.theme-light [style*="color: rgba(255, 255, 255, 0.65"],
+html.theme-light [style*="color: rgba(255,255,255,0.65"],
+html.theme-light [style*="color: rgba(255, 255, 255, 0.7"],
+html.theme-light [style*="color: rgba(255,255,255,0.7"] {
+  color: var(--cst-text-soft) !important;
+}
+html.theme-light [style*="color: #fff"],
+html.theme-light [style*="color: white"],
+html.theme-light [style*="color: rgb(255, 255, 255)"] {
+  color: var(--cst-text) !important;
+}
+/* Keep primary green button text white in both themes */
+html.theme-light .cst-btn-primary { color: #fff !important; }
+html.theme-light .cst-avatar { color: #fff !important; }
+
+/* Borders that used translucent white → translucent ink */
+html.theme-light [style*="border: 1px solid rgba(255, 255, 255"],
+html.theme-light [style*="border: 1px solid rgba(255,255,255"],
+html.theme-light [style*="border-top: 1px solid rgba(255, 255, 255"],
+html.theme-light [style*="border-top: 1px solid rgba(255,255,255"],
+html.theme-light [style*="border-bottom: 1px solid rgba(255, 255, 255"],
+html.theme-light [style*="border-bottom: 1px solid rgba(255,255,255"],
+html.theme-light [style*="border-right: 1px solid rgba(255, 255, 255"],
+html.theme-light [style*="border-right: 1px solid rgba(255,255,255"],
+html.theme-light [style*="border-left: 1px solid rgba(255, 255, 255"],
+html.theme-light [style*="border-left: 1px solid rgba(255,255,255"] {
+  border-color: rgba(26, 46, 31, 0.10) !important;
+}
+
+/* Hairline dividers inline — themed */
+html.theme-light [style*="background: rgba(255, 255, 255, 0.08)"][style*="height: 1px"],
+html.theme-light [style*="background: rgba(255,255,255,0.08)"][style*="height: 1px"],
+html.theme-light [style*="background: rgba(255, 255, 255, 0.1)"][style*="height: 1px"] {
+  background: rgba(26, 46, 31, 0.10) !important;
+}
+
+/* Bottom-nav background in light mode handled inline by component */
