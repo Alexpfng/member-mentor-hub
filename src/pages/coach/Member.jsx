@@ -34,6 +34,7 @@ export default function CoachMember() {
   const navigate = useNavigate();
   const getDetailFn = useServerFn(getMemberDetail);
   const saveNotesFn = useServerFn(updateMemberNotes);
+  const saveProfileFn = useServerFn(updateMemberProfile);
   const listProgramsFn = useServerFn(listPrograms);
   const assignFn = useServerFn(assignProgram);
 
@@ -46,6 +47,10 @@ export default function CoachMember() {
   const [savingNotes, setSavingNotes] = useState(false);
   const [programs, setPrograms] = useState([]);
   const [assignBusy, setAssignBusy] = useState(false);
+  const [form, setForm] = useState(null);
+  const [savingForm, setSavingForm] = useState(false);
+  const [formSaved, setFormSaved] = useState(false);
+  const [logWeight, setLogWeight] = useState(false);
 
   async function reload() {
     setLoading(true);
