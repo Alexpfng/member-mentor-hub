@@ -76,6 +76,25 @@ function blockExplain(type?: string | null, isSuperset = false): string | null {
   return null;
 }
 
+function extractYoutubeId(input?: string | null): string | null {
+  if (!input) return null;
+  const s = String(input).trim();
+  if (/^[a-zA-Z0-9_-]{11}$/.test(s)) return s;
+  const m =
+    s.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
+
+function hasVideo(ex?: ProgExercise | null): boolean {
+  if (!ex) return false;
+  return !!(ex.youtube_id || ex.youtube_url || ex.youtube_alt_url);
+}
+
+function hasCues(ex?: ProgExercise | null): boolean {
+  if (!ex) return false;
+  return !!(ex.coach_notes || ex.tempo || ex.rpe_target || ex.color);
+}
+
 /* ───────── Types : steps ───────── */
 
 type Brief = {
