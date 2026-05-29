@@ -631,6 +631,24 @@ export default function BuilderNew({ programIdParam }: { programIdParam?: string
     setActiveWeekIdx(weeks.length);
   };
 
+  const duplicateWeek = (idx: number) => {
+    const src = weeks[idx];
+    if (!src) return;
+    const copy: Week = {
+      id: uid(),
+      days: src.days.map(d => ({ ...d, id: uid(), exercises: d.exercises.map(e => ({ ...e, uid: uid() })) })),
+    };
+    setWeeks(w => [...w.slice(0, idx + 1), copy, ...w.slice(idx + 1)]);
+    setActiveWeekIdx(idx + 1);
+  };
+
+  const deleteWeek = (idx: number) => {
+    if (weeks.length <= 1) return;
+    if (!confirm(`Supprimer la semaine ${idx + 1} ?`)) return;
+    setWeeks(w => w.filter((_, i) => i !== idx));
+    setActiveWeekIdx(i => Math.max(0, Math.min(i, weeks.length - 2)));
+  };
+
   // ─ DnD handlers
   const onDragStart = (e: DragStartEvent) => {
     if (e.active.data.current?.type === 'library') {
@@ -898,17 +916,43 @@ export default function BuilderNew({ programIdParam }: { programIdParam?: string
           </div>
 
           {/* Week tabs */}
-          <div style={{ padding: '10px 20px 0', display: 'flex', gap: 4, borderBottom: '1px solid rgba(255,255,255,0.06)', flexWrap: 'wrap' }}>
-            {weeks.map((w, i) => (
-              <button key={w.id} onClick={() => setActiveWeekIdx(i)} style={{
-                padding: '8px 14px', borderRadius: '6px 6px 0 0', border: '1px solid',
-                borderBottom: 'none',
-                borderColor: activeWeekIdx === i ? 'rgba(45,90,53,0.5)' : 'rgba(255,255,255,0.08)',
-                background: activeWeekIdx === i ? 'rgba(45,90,53,0.15)' : 'transparent',
-                color: activeWeekIdx === i ? '#fff' : 'rgba(255,255,255,0.5)',
-                fontFamily: 'var(--cst-mono)', fontSize: 10, cursor: 'pointer',
-              }}>SEM {i + 1}</button>
-            ))}
+          <div style={{ padding: '10px 20px 0', display: 'flex', gap: 4, borderBottom: '1px solid rgba(255,255,255,0.06)', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+            {weeks.map((w, i) => {
+              const active = activeWeekIdx === i;
+              return (
+                <div key={w.id} style={{
+                  display: 'flex', alignItems: 'center',
+                  borderRadius: '6px 6px 0 0', border: '1px solid',
+                  borderBottom: 'none',
+                  borderColor: active ? 'rgba(45,90,53,0.5)' : 'rgba(255,255,255,0.08)',
+                  background: active ? 'rgba(45,90,53,0.15)' : 'transparent',
+                }}>
+                  <button onClick={() => setActiveWeekIdx(i)} style={{
+                    padding: '8px 10px 8px 14px', border: 'none', background: 'transparent',
+                    color: active ? '#fff' : 'rgba(255,255,255,0.5)',
+                    fontFamily: 'var(--cst-mono)', fontSize: 10, cursor: 'pointer',
+                  }}>SEM {i + 1}</button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); duplicateWeek(i); }}
+                    title="Dupliquer la semaine"
+                    style={{
+                      padding: '4px 6px', border: 'none', background: 'transparent',
+                      color: 'rgba(255,255,255,0.45)', cursor: 'pointer', fontSize: 12,
+                    }}
+                  >⎘</button>
+                  {weeks.length > 1 && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); deleteWeek(i); }}
+                      title="Supprimer la semaine"
+                      style={{
+                        padding: '4px 8px 4px 4px', border: 'none', background: 'transparent',
+                        color: 'rgba(255,120,120,0.55)', cursor: 'pointer', fontSize: 12,
+                      }}
+                    >×</button>
+                  )}
+                </div>
+              );
+            })}
             <button onClick={addWeek} style={{
               padding: '8px 12px', borderRadius: '6px 6px 0 0', border: '1px dashed rgba(255,255,255,0.2)',
               borderBottom: 'none', background: 'transparent', color: 'rgba(255,255,255,0.4)',
