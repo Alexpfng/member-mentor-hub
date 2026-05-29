@@ -240,6 +240,8 @@ export function LiveSession({
   const [showColor, setShowColor] = useState<ExerciseColor>(null);
   const [showTempo, setShowTempo] = useState<{ tempo?: string | null; name?: string } | null>(null);
   const [showRpeRef, setShowRpeRef] = useState(false);
+  const [showVideo, setShowVideo] = useState<ProgExercise | null>(null);
+  const [showCues, setShowCues] = useState<ProgExercise | null>(null);
   const [savedLogs, setSavedLogs] = useState<
     { exo: string; weight: number | null; reps: number | null; rpe: number | null }[]
   >([]);
