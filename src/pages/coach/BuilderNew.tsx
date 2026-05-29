@@ -459,8 +459,12 @@ function AssignModal({ programId, onClose }: { programId: string; onClose: () =>
 
 // ─── MAIN BUILDER ─────────────────────────────────────────────────────────────
 
-export default function BuilderNew() {
+export default function BuilderNew({ programIdParam }: { programIdParam?: string } = {}) {
   const saveFn = useServerFn(saveProgram);
+  const getFn = useServerFn(getProgram);
+  const listExFn = useServerFn(listExercises);
+  const saveExFn = useServerFn(saveExercise);
+  const navigate = useNavigate();
 
   // Program meta
   const [name, setName] = useState('Force Fondamentale – Cycle 1');
@@ -468,11 +472,12 @@ export default function BuilderNew() {
   const [objective, setObjective] = useState('Force');
   const [level, setLevel] = useState('Intermédiaire');
   const [programNotes, setProgramNotes] = useState('');
-  const [programId, setProgramId] = useState<string | undefined>();
+  const [programId, setProgramId] = useState<string | undefined>(programIdParam);
 
   // Structure
   const [weeks, setWeeks] = useState<Week[]>([makeWeek()]);
   const [activeWeekIdx, setActiveWeekIdx] = useState(0);
+
 
   // DnD state
   const [activeLibEx, setActiveLibEx] = useState<LibraryExercise | null>(null);
