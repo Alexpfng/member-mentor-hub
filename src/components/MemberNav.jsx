@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "@tanstack/react-router";
-import ThemeToggle from "./ThemeToggle";
+
 
 const items = [
   { id: "home", icon: "🏠", label: "Accueil", path: "/membre" },
@@ -20,20 +20,8 @@ export default function MemberNav({ unreadCount = 0 }) {
 
   return (
     <>
-      {/* Floating theme toggle — visible on every member screen, top-right.
-          Sits above page content but never overlaps with primary CTAs. */}
-      <div
-        style={{
-          position: "fixed",
-          top: "calc(12px + env(safe-area-inset-top, 0px))",
-          right: 12,
-          zIndex: 90,
-        }}
-      >
-        <ThemeToggle variant="icon" />
-      </div>
-
       <nav className="bottom-nav" role="navigation" aria-label="Navigation principale">
+
         {items.map((it) => {
           const on = it.id === activeId;
           return (

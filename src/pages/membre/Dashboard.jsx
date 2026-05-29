@@ -91,7 +91,9 @@ export default function MemberDashboard() {
             <CSTLogo size={11} />
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <CSTAvatar initials={initials} size={28} />
+              <ThemeToggle variant="icon" />
               <button
+
                 onClick={async () => {
                   await supabase.auth.signOut();
                   navigate("/login");
