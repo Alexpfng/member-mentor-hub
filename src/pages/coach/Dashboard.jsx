@@ -118,6 +118,8 @@ export default function CoachDashboard() {
   const [programs, setPrograms] = useState([]);
   const [firstName, setFirstName] = useState('Coach');
 
+  const seedFn = useServerFn(seedColosmartData);
+
   async function reload() {
     try {
       const [m, p] = await Promise.all([listMembersFn(), listProgramsFn()]);
@@ -126,7 +128,12 @@ export default function CoachDashboard() {
     } catch {}
   }
 
-  useEffect(() => { reload(); }, []);
+  useEffect(() => {
+    (async () => {
+      try { await seedFn(); } catch {}
+      reload();
+    })();
+  }, []);
 
   useEffect(() => {
     (async () => {
