@@ -431,7 +431,7 @@ export default function CoachMember() {
               </>
             )}
 
-            {activeTab === 3 && form && (
+            {activeTab === 4 && form && (
               <>
                 <CSTSectionNum num={1} label="PROFIL" sub="ÉDITER LES INFOS ADHÉRENT" />
                 <form onSubmit={saveForm} className="cst-card-dark" style={{ padding: 20, marginTop: 14, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
