@@ -4,6 +4,8 @@ import { useServerFn } from '@tanstack/react-start';
 import CoachSidebar from '../../components/CoachSidebar';
 import { CSTSectionNum, CSTDuoTitle, CSTAvatar, CSTStatus, CSTBandWords, CSTDot } from '../../components/Atoms';
 import { listMembers, inviteMember, listPrograms, assignProgram } from '@/lib/coach.functions';
+import { BETA_MODE } from '@/lib/site';
+
 
 function InviteModal({ onClose, onDone }) {
   const inviteFn = useServerFn(inviteMember);
@@ -123,6 +125,19 @@ export default function CoachDashboard() {
   const [inviteOk, setInviteOk] = useState('');
   const [realMembers, setRealMembers] = useState([]);
   const [programs, setPrograms] = useState([]);
+  const [showWelcome, setShowWelcome] = useState(false);
+
+  useEffect(() => {
+    if (BETA_MODE && typeof window !== 'undefined') {
+      if (!localStorage.getItem('beta_welcome_seen_coach')) setShowWelcome(true);
+    }
+  }, []);
+
+  function dismissWelcome() {
+    if (typeof window !== 'undefined') localStorage.setItem('beta_welcome_seen_coach', '1');
+    setShowWelcome(false);
+  }
+
 
   async function reload() {
     try {
@@ -143,7 +158,7 @@ export default function CoachDashboard() {
           <CSTSectionNum num={1} label="TABLEAU DE BORD" sub="MAI 2026" />
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <span className="cst-mono">MER. 20 MAI · 09:51</span>
-            <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" onClick={() => navigate({ to: '/coach/import' })}>IMPORTER EXCEL ▲</button>
+            {!BETA_MODE && <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" onClick={() => navigate({ to: '/coach/import' })}>IMPORTER EXCEL ▲</button>}
             <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" onClick={() => setShowInvite(true)}>+ INVITER UN ADHÉRENT</button>
             <button className="cst-btn cst-btn-primary cst-btn-sm" onClick={() => navigate({ to: '/coach/builder' })}>NOUVEAU PROGRAMME →</button>
           </div>
