@@ -1,13 +1,30 @@
-## Problème
+# Diagnostic
 
-Le bouton flottant de bascule jour/nuit (icône soleil, en `position: fixed` en haut à droite) recouvre le bouton `DÉCONNEXION` ajouté dans la barre du haut du dashboard membre.
+L'erreur sur `app.colosmartraining.fr` :
 
-## Correction
+> Missing Supabase environment variable(s): SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY
 
-1. Supprimer le toggle thème flottant de `src/components/MemberNav.jsx` (le bloc `position: fixed` en haut à droite).
-2. Intégrer `ThemeToggle` directement dans la barre du haut du dashboard membre (`src/pages/membre/Dashboard.jsx`), à gauche du bouton `DÉCONNEXION`, dans le même conteneur flex que l'avatar.
-3. Ordre final dans la barre du haut, de gauche à droite : logo CST · (espace) · avatar · toggle thème · DÉCONNEXION — alignés, espacés de 10px, sans chevauchement.
+vient du fait que le **build publié en ligne est ancien** : il a été généré avant que les variables `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` soient présentes (ou avant la dernière mise à jour du client Supabase auto-généré).
 
-## Résultat
+Dans le projet actuel :
+- Le fichier `.env` contient bien `VITE_SUPABASE_URL` et `VITE_SUPABASE_PUBLISHABLE_KEY`.
+- `src/integrations/supabase/client.ts` lit `import.meta.env.VITE_SUPABASE_URL` au build → ces valeurs sont injectées par Vite **au moment de la publication**.
+- En preview ça fonctionne (build récent). En prod, le build affiché date d'avant et n'a pas ces valeurs intégrées → d'où le message d'erreur côté navigateur.
 
-Plus aucun élément flottant ne recouvre la déconnexion, et le bouton thème reste accessible sur toutes les pages membres via la barre du haut.
+# Solution
+
+Aucun changement de code n'est nécessaire. Il suffit de **republier l'app** pour que le nouveau build inclue les variables Vite et que la connexion fonctionne sur `app.colosmartraining.fr`.
+
+Étapes :
+1. Ouvrir le bouton **Publish** en haut à droite de Lovable.
+2. Cliquer sur **Publish** (ou **Update**) pour redéployer la dernière version.
+3. Attendre 1–2 minutes que le déploiement se termine.
+4. Recharger `app.colosmartraining.fr` (avec un rafraîchissement forcé : Cmd+Shift+R) et retenter la connexion de Pierre.
+
+# Si l'erreur persiste après republication
+
+Cela voudrait dire que le build de production n'a pas injecté les variables Vite. Dans ce cas, les pistes seraient :
+- Vérifier que les secrets côté Lovable Cloud sont bien rattachés au projet (visibles dans Backend → Settings).
+- Forcer une régénération du client Supabase en touchant à la config Cloud (ex. ouvrir/fermer les paramètres backend) puis republier.
+
+Mais dans 99 % des cas, une simple republication corrige ce message.
