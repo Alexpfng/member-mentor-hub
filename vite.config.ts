@@ -19,6 +19,10 @@ export default defineConfig({
         // Keep imported repo source untouched — map react-router-dom v6 API
         // surface to a TanStack-backed shim.
         "react-router-dom": path.resolve(__dirname, "src/lib/rrd-shim.tsx"),
+        // Force entities v4.5.0 (required by @react-email/components htmlparser2)
+        "entities/lib/decode.js": path.resolve(__dirname, "node_modules/entities/lib/decode.js"),
+        "entities/lib/encode.js": path.resolve(__dirname, "node_modules/entities/lib/encode.js"),
+        "entities": path.resolve(__dirname, "node_modules/entities"),
       },
     },
   },
