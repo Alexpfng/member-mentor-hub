@@ -135,8 +135,7 @@ export function ExerciseThread({
       {/* Upload row (member only) */}
       {!isCoachView && (
         <div style={{ display: "flex", gap: 8 }}>
-          <UploadBtn icon="🎬" label={uploading ? "ENVOI…" : "FILMER"} capture onFile={uploadFile} disabled={uploading} />
-          <UploadBtn icon="📁" label="IMPORTER" onFile={uploadFile} disabled={uploading} />
+          <UploadBtn icon="🎬" label={uploading ? "ENVOI…" : "FILMER / CHOISIR UNE VIDÉO"} onFile={uploadFile} disabled={uploading} />
         </div>
       )}
       {uploadErr && <div style={{ color: "#C56A60", fontSize: 11 }}>{uploadErr}</div>}
@@ -244,9 +243,9 @@ export function ExerciseThread({
 }
 
 function UploadBtn({
-  icon, label, capture, disabled, onFile,
+  icon, label, disabled, onFile,
 }: {
-  icon: string; label: string; capture?: boolean; disabled?: boolean;
+  icon: string; label: string; disabled?: boolean;
   onFile: (f: File) => void;
 }) {
   const ref = useRef<HTMLInputElement>(null);
@@ -264,7 +263,6 @@ function UploadBtn({
       <input
         ref={ref}
         type="file" accept="video/*"
-        {...(capture ? { capture: "environment" as any } : {})}
         style={{ display: "none" }}
         disabled={disabled}
         onChange={e => { const f = e.target.files?.[0]; if (f) onFile(f); e.currentTarget.value = ""; }}

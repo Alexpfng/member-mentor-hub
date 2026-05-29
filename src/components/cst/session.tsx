@@ -268,9 +268,9 @@ export function TechniqueVideoCapture({
       }}
     >
       <span>🎬</span>
-      <span>{uploading ? "ENVOI…" : "FILMER LA TECHNIQUE"}</span>
+      <span>{uploading ? "ENVOI…" : "FILMER / CHOISIR UNE VIDÉO"}</span>
       <input
-        type="file" accept="video/*" capture="environment"
+        type="file" accept="video/*"
         style={{ display: "none" }}
         onChange={(e) => {
           const f = e.target.files?.[0];
