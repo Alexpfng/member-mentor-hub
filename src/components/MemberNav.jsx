@@ -1,12 +1,15 @@
 import { useNavigate, useLocation } from "@tanstack/react-router";
+import { BETA_MODE } from "@/lib/site";
 
-const items = [
-  { id: "home", icon: "🏠", label: "Accueil", path: "/membre" },
-  { id: "prog", icon: "📋", label: "Programme", path: "/membre/programme" },
-  { id: "hist", icon: "📈", label: "Progrès", path: "/membre/historique" },
-  { id: "msgs", icon: "💬", label: "Messages", path: "/membre/messages" },
-  { id: "profile", icon: "👤", label: "Profil", path: "/membre/profil" },
+const allItems = [
+  { id: "home", icon: "🏠", label: "Accueil", path: "/membre", beta: true },
+  { id: "prog", icon: "📋", label: "Programme", path: "/membre/programme", beta: true },
+  { id: "hist", icon: "📈", label: "Progrès", path: "/membre/historique", beta: false },
+  { id: "msgs", icon: "💬", label: "Messages", path: "/membre/messages", beta: true },
+  { id: "profile", icon: "👤", label: "Profil", path: "/membre/profil", beta: true },
 ];
+
+const items = BETA_MODE ? allItems.filter((it) => it.beta) : allItems;
 
 export default function MemberNav({ unreadCount = 0 }) {
   const navigate = useNavigate();

@@ -8,6 +8,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
+import { BetaBanner } from "@/components/BetaBanner";
 
 import appCss from "../styles.css?url";
 import tokensCss from "../tokens.css?url";
@@ -128,6 +129,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <BetaBanner />
       <Outlet />
     </QueryClientProvider>
   );
