@@ -8,7 +8,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useServerFn } from '@tanstack/react-start';
-import { useNavigate } from '@tanstack/react-router';
+
 import { saveProgram, getProgram, listExercises, saveExercise } from '@/lib/coach.functions';
 import CoachSidebar from '../../components/CoachSidebar';
 import { toast } from 'sonner';
