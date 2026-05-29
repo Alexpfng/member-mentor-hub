@@ -1,28 +1,30 @@
+## Problème
+Actuellement, la démo YouTube et les notes coach n'apparaissent que sur l'écran **BRIEF** (avant de commencer le bloc). Dès qu'on entre en mode SET (logger une série) ou REPOS, le coaché n'a plus accès à la vidéo ni aux consignes — il doit revenir en arrière.
 
-# Permettre de filmer / importer depuis n'importe quel appareil
+## Solution
+Rendre la **démo vidéo + consignes coach** accessibles depuis tous les écrans actifs de la séance via un bouton compact et un lecteur intégré.
 
-Actuellement le bouton **FILMER** force l'appareil photo arrière du téléphone (`capture="environment"`), ce qui :
-- bloque le choix entre caméra avant / arrière sur mobile,
-- ne permet pas du tout d'importer une vidéo existante via ce bouton,
-- sur desktop / iPad sans caméra arrière, n'affiche rien d'utile.
+### 1. `src/components/cst/LiveSession.tsx` — écran SET (logging)
+Ajouter, juste sous le bandeau "SÉRIE x/y", une barre d'actions discrète :
+- Bouton **▶ DÉMO** (si `youtube_id` / `youtube_url` présent) → ouvre overlay lecteur YouTube embed.
+- Bouton **📋 CONSIGNES** (si `coach_notes` ou `tempo` ou `rpe_target` présent) → ouvre overlay listant : tempo + explication, RPE cible, notes coach, code couleur.
 
-## Changements
+### 2. Écran REPOS (`RestScreen`)
+Ajouter sous le chrono les mêmes boutons (▶ DÉMO / 📋 CONSIGNES) pour l'**exercice en cours** ET pour le **next preview** s'il diffère. Le repos est le bon moment pour relire les consignes du prochain mouvement.
 
-1. **`src/components/cst/ExerciseThread.tsx`**
-   - Bouton "🎬 FILMER" : retirer l'attribut `capture` forcé. Garder `accept="video/*"` → l'OS propose alors **Caméra / Photothèque / Fichiers** (iOS, Android, desktop) au lieu d'ouvrir directement la caméra arrière.
-   - Renommer en "🎬 FILMER / CHOISIR" pour bien indiquer les deux possibilités.
-   - Le bouton "📁 IMPORTER" devient redondant → on le supprime pour ne garder qu'une seule action claire.
+### 3. Nouveau composant `VideoModal` (interne au fichier)
+Overlay plein écran (style cohérent avec `Overlays`) avec iframe YouTube embed responsive 16/9 (`https://www.youtube.com/embed/{id}?autoplay=1&rel=0`). Extraction du `youtube_id` depuis `youtube_url` si nécessaire (helper `extractYoutubeId`). Fallback : lien externe si extraction échoue.
 
-2. **`src/components/cst/session.tsx` (`TechniqueVideoCapture`)**
-   - Même changement : retirer `capture="environment"`, mettre à jour le libellé en "🎬 FILMER / CHOISIR UNE VIDÉO".
+### 4. Nouveau composant `CuesModal`
+Overlay regroupant : code couleur (réutiliser `ColorTooltip`), tempo (réutiliser `TempoExplainer` contenu), RPE cible + `RPEGuidance`, notes coach en italique.
 
-3. **`src/components/cst/LiveSession.tsx`** : aucun changement (passe par `ExerciseThread`).
+### 5. État local
+Ajouter `showVideo: ProgExercise | null` et `showCues: ProgExercise | null` dans le composant principal. Branchés dans `<Overlays />`.
 
 ## Hors scope
-
-- Pas de capture vidéo in-app (MediaRecorder) : on s'appuie sur le sélecteur natif du système, déjà universel.
-- Pas de modif du bucket de storage ni des policies.
+- Pas de changement de schéma DB.
+- Pas de changement sur `ExerciseThread` (filmer / commenter) — déjà accessible via bouton existant.
+- Pas de modification du BRIEF (déjà fonctionnel).
 
 ## Fichiers touchés
-
-- **Modifié** : `src/components/cst/ExerciseThread.tsx`, `src/components/cst/session.tsx`
+- **Modifié** : `src/components/cst/LiveSession.tsx`
