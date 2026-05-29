@@ -53,7 +53,7 @@ function SeancePage() {
         .from("sessions").select("*").eq("id", sessionId).maybeSingle();
       setSession(s as SessionRow | null);
 
-      let exos: ExerciseDef[] = [];
+      let exos: ProgExercise[] = [];
       if (s?.program_id) {
         const { data: prog } = await supabase
           .from("programs").select("structure").eq("id", s.program_id).maybeSingle();
