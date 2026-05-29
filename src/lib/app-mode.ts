@@ -1,4 +1,4 @@
-export const SUPABASE_ENABLED = false;
+export const SUPABASE_ENABLED = true;
 
 export type DemoRole = "coach" | "member";
 
