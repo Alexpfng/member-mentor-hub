@@ -82,7 +82,7 @@ export default function Login() {
       } else {
         const { data, error: err } = await supabase.auth.signInWithPassword({
           email: email.trim().toLowerCase(),
-          password,
+          password: password.trim(),
         });
         if (err) throw err;
         const { data: r } = await supabase
