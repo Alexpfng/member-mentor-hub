@@ -959,11 +959,17 @@ export function LiveSession({
 function RestScreen({
   seconds,
   nextPreview,
+  currentExercise,
   onDone,
+  onVideo,
+  onCues,
 }: {
   seconds: number;
   nextPreview: { name: string; setNumber: number; totalSets: number } | null;
+  currentExercise?: ProgExercise;
   onDone: () => void;
+  onVideo?: () => void;
+  onCues?: () => void;
 }) {
   const [remaining, setRemaining] = useState(seconds);
   const [running, setRunning] = useState(true);
