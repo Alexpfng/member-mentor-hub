@@ -296,24 +296,6 @@ export default function Login() {
             </form>
           </div>
 
-          {/* Beta tester helper (visible only when BETA_MODE) */}
-          {BETA_MODE && (
-            <div className="cst-col" style={{ gap: 8, paddingTop: 18 }}>
-              <div style={{ borderTop: "1px dashed rgba(255,255,255,0.18)", paddingTop: 12 }}>
-                <div
-                  className="cst-mono"
-                  style={{ fontSize: 9, letterSpacing: "0.16em", opacity: 0.55, marginBottom: 6 }}
-                >
-                  BÊTA PRIVÉE · ACCÈS RÉSERVÉ
-                </div>
-                <div style={{ fontSize: 11, opacity: 0.55, lineHeight: 1.7 }}>
-                  Coach&nbsp;: <span style={{ opacity: 0.85 }}>leocolognesi@gmail.com</span>
-                  <br />
-                  Membre test&nbsp;: <span style={{ opacity: 0.85 }}>morin.td@gmail.com</span>
-                </div>
-              </div>
-            </div>
-          )}
 
           <div className="cst-col" style={{ gap: 12, alignItems: "center", paddingTop: 8 }}>
             <div style={{ width: 32, height: 1, background: "rgba(255,255,255,0.1)" }} />
