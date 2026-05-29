@@ -4,6 +4,7 @@ import { useServerFn } from '@tanstack/react-start';
 import CoachSidebar from '../../components/CoachSidebar';
 import { CSTSectionNum, CSTDuoTitle, CSTAvatar, CSTBandWords } from '../../components/Atoms';
 import { listMembers, inviteMember, listPrograms, assignProgram } from '@/lib/coach.functions';
+import { seedColosmartData } from '@/lib/seed.functions';
 
 function InviteModal({ onClose, onDone }) {
   const inviteFn = useServerFn(inviteMember);
@@ -117,6 +118,8 @@ export default function CoachDashboard() {
   const [programs, setPrograms] = useState([]);
   const [firstName, setFirstName] = useState('Coach');
 
+  const seedFn = useServerFn(seedColosmartData);
+
   async function reload() {
     try {
       const [m, p] = await Promise.all([listMembersFn(), listProgramsFn()]);
@@ -125,7 +128,12 @@ export default function CoachDashboard() {
     } catch {}
   }
 
-  useEffect(() => { reload(); }, []);
+  useEffect(() => {
+    (async () => {
+      try { await seedFn(); } catch {}
+      reload();
+    })();
+  }, []);
 
   useEffect(() => {
     (async () => {

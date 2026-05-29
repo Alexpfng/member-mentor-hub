@@ -345,6 +345,55 @@ export const listExercises = createServerFn({ method: "GET" })
     return { exercises: data ?? [] };
   });
 
+export const getProgram = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertCoach(context.userId);
+    const { data: row, error } = await supabaseAdmin
+      .from("programs")
+      .select("*")
+      .eq("id", data.id)
+      .eq("coach_id", context.userId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!row) throw new Error("Programme introuvable");
+    return { program: row };
+  });
+
+export const duplicateProgram = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertCoach(context.userId);
+    const { data: src, error: e1 } = await supabaseAdmin
+      .from("programs")
+      .select("*")
+      .eq("id", data.id)
+      .eq("coach_id", context.userId)
+      .maybeSingle();
+    if (e1) throw new Error(e1.message);
+    if (!src) throw new Error("Programme introuvable");
+    const { data: row, error } = await supabaseAdmin
+      .from("programs")
+      .insert({
+        coach_id: context.userId,
+        name: `${src.name} (copie)`,
+        description: src.description,
+        objective: src.objective,
+        duration_weeks: src.duration_weeks,
+        frequency_per_week: src.frequency_per_week,
+        level: src.level,
+        structure: src.structure as never,
+      })
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    return { program: row };
+  });
+
+
+
 
 // ─── ELEVATION PROXY (server-side → no CORS/rate-limit issues) ───────────────
 

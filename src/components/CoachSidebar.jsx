@@ -7,7 +7,7 @@ import { CSTLogo, CSTAvatar } from "./Atoms";
 const items = [
   { id: "dashboard", label: "Tableau de bord", icon: "⧉", path: "/coach" },
   { id: "membres", label: "Membres", icon: "○", path: "/coach/membre" },
-  { id: "programmes", label: "Programmes", icon: "◤", path: "/coach/builder" },
+  { id: "programmes", label: "Programmes", icon: "◤", path: "/coach/programmes" },
   { id: "import", label: "Import Excel", icon: "◥", path: "/coach/import" },
   { id: "running", label: "Trail & Run", icon: "▲", path: "/coach/running" },
   { id: "messages", label: "Messages", icon: "◌", path: "/coach/messages" },

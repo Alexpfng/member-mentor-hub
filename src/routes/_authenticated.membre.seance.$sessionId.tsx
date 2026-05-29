@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import MemberNav from "../components/MemberNav";
 import { CSTLogo, CSTSectionNum } from "../components/Atoms";
-import { ExerciseBlock, type ExerciseDef } from "../components/cst/session";
+import { ProgramBlocks, type ProgExercise } from "../components/cst/ProgramBlocks";
 
 export const Route = createFileRoute("/_authenticated/membre/seance/$sessionId")({
   component: SeancePage,
@@ -24,16 +24,16 @@ type ProgramStructure = {
   weeks?: Array<{
     days?: Array<{
       label?: string;
-      exercises?: ExerciseDef[];
+      exercises?: ProgExercise[];
     }>;
   }>;
 };
 
-const DEFAULT_EXERCISES: ExerciseDef[] = [
-  { name: "Tractions pronation", sets: 4, reps: "6-10", rpe: 8, tempo: "3010", color: "red", starts_at_top: true, rest_seconds: 180 },
-  { name: "Row barre", sets: 4, reps: "8", rpe: 8, tempo: "2011", color: "red", rest_seconds: 150 },
-  { name: "Face pull", sets: 3, reps: "15", rpe: 7, tempo: "2012", color: "blue", rest_seconds: 60 },
-  { name: "Curl barre", sets: 3, reps: "10", rpe: 7, tempo: "3010", color: "green", rest_seconds: 90 },
+const DEFAULT_EXERCISES: ProgExercise[] = [
+  { name: "Tractions pronation", series: 4, reps: "6-10", rpe_target: 8, tempo: "3010", color: "red" },
+  { name: "Row barre", series: 4, reps: "8", rpe_target: 8, tempo: "2011", color: "red" },
+  { name: "Face pull", series: 3, reps: "15", rpe_target: 7, tempo: "2012", color: "blue" },
+  { name: "Curl barre", series: 3, reps: "10", rpe_target: 7, tempo: "3010", color: "green" },
 ];
 
 function SeancePage() {
@@ -41,7 +41,7 @@ function SeancePage() {
   const navigate = useNavigate();
   const [session, setSession] = useState<SessionRow | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
-  const [exercises, setExercises] = useState<ExerciseDef[]>([]);
+  const [exercises, setExercises] = useState<ProgExercise[]>([]);
   const [loading, setLoading] = useState(true);
   const [finishing, setFinishing] = useState(false);
 
@@ -53,7 +53,7 @@ function SeancePage() {
         .from("sessions").select("*").eq("id", sessionId).maybeSingle();
       setSession(s as SessionRow | null);
 
-      let exos: ExerciseDef[] = [];
+      let exos: ProgExercise[] = [];
       if (s?.program_id) {
         const { data: prog } = await supabase
           .from("programs").select("structure").eq("id", s.program_id).maybeSingle();
@@ -133,15 +133,8 @@ function SeancePage() {
               </div>
             </div>
 
-            {exercises.map((ex, i) => (
-              <ExerciseBlock
-                key={i}
-                index={i}
-                ex={ex}
-                sessionId={sessionId}
-                userId={userId}
-              />
-            ))}
+            <ProgramBlocks exercises={exercises} />
+
 
             <button
               onClick={finishSession}

@@ -1,0 +1,4362 @@
+[
+  {
+    "name": "CARS hanches",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/watch?v=Sb5imZbEU7Q&pp=ugMICgJmchABGAE%3D",
+    "youtube_id": "Sb5imZbEU7Q",
+    "default_tempo": "",
+    "sample_notes": "Mobilité des hanches. Lentement, décompose bien. (vidéo)",
+    "count": 179
+  },
+  {
+    "name": "Standing high kicks",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://youtu.be/Qb9RIGCYQTg?t=333",
+    "youtube_id": "Qb9RIGCYQTg",
+    "default_tempo": "",
+    "sample_notes": "Tiens toi pour pour être plus stable, prends ton temps, conscientise mvt",
+    "count": 170
+  },
+  {
+    "name": "CARs coudes",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/watch?v=zl5AuR7RqOE",
+    "youtube_id": "zl5AuR7RqOE",
+    "default_tempo": "",
+    "sample_notes": "Mobilité des coudes, très lent décompose bien. (vidéo)",
+    "count": 127
+  },
+  {
+    "name": "CARS hanches 90/90",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/shorts/7G4dLzBuXUA",
+    "youtube_id": "7G4dLzBuXUA",
+    "default_tempo": "",
+    "sample_notes": "Mobilité des hanches. Lentement, décompose bien. (vidéo)",
+    "count": 120
+  },
+  {
+    "name": "CARs épaules",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/watch?v=7XEjZE4C_Z8",
+    "youtube_id": "7XEjZE4C_Z8",
+    "default_tempo": "très lent",
+    "sample_notes": "Mobilité des épaules. Le plus haut et le plus loin possible",
+    "count": 115
+  },
+  {
+    "name": "CARs thoraciques",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/watch?v=OL98wofsIKU&pp=ygUTY2FycyB0aG9yYWNpYyBzcGluZQ%3D%3D",
+    "youtube_id": "OL98wofsIKU",
+    "default_tempo": "très lent",
+    "sample_notes": "Dissocier étage thoracique de lombaire / cervicale. Placer une balle",
+    "count": 92
+  },
+  {
+    "name": "PAIL / RAILs coude",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/watch?v=Vzm82iQB6y4",
+    "youtube_id": "Vzm82iQB6y4",
+    "default_tempo": "",
+    "sample_notes": "2min stretch au début, 10s iso max dans un sens 10s dans l'autre",
+    "count": 90
+  },
+  {
+    "name": "CARs épaules unilatéral couché",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/watch?v=-tyfLWEQPEM",
+    "youtube_id": "-tyfLWEQPEM",
+    "default_tempo": "très lent",
+    "sample_notes": "Mobilité des épaules. Le plus haut et le plus loin possible",
+    "count": 73
+  },
+  {
+    "name": "Towel wrist rotation",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/watch?v=cLfZXUa8nOc",
+    "youtube_id": "cLfZXUa8nOc",
+    "default_tempo": "",
+    "sample_notes": "Renfo des poignets en rotation, a ne pas négliger ! Pense amplitude",
+    "count": 56
+  },
+  {
+    "name": "Extensions poignets long range",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/watch?v=motI3hjAQs0&pp=ygUVd2FsbCB3cmlzdCBleHRlZW5zaW9u",
+    "youtube_id": "motI3hjAQs0",
+    "default_tempo": "",
+    "sample_notes": "2 sens, main en haut, main en bas, pronation & supination",
+    "count": 56
+  },
+  {
+    "name": "CARs hanches debout",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/watch?v=Sb5imZbEU7Q&pp=ugMICgJmchABGAE%3D",
+    "youtube_id": "Sb5imZbEU7Q",
+    "default_tempo": "très lent",
+    "sample_notes": "Mobilité des hanches. Colle le côté qui ne travaille pas à un support -> stabilité",
+    "count": 56
+  },
+  {
+    "name": "Extensions épaules unilatérales",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/watch?v=DC6xPHLVJLM&pp=ygUSc2hvdWxkZXIgZXh0ZW5zaW9u",
+    "youtube_id": "DC6xPHLVJLM",
+    "default_tempo": "très lent",
+    "sample_notes": "Mobilité des épaules en extension. Le plus haut + pause 2s en haut.",
+    "count": 51
+  },
+  {
+    "name": "Cossack squat",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/watch?v=dhDjKmTX8tU&pp=ygUOY29hc3NhY2sgc3F1YXQ%3D",
+    "youtube_id": "dhDjKmTX8tU",
+    "default_tempo": "",
+    "sample_notes": "Très lent, objectif tout le pied en contact avec le sol + bas sur les appuis",
+    "count": 50
+  },
+  {
+    "name": "CARs épaules unilatérales à genou",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://youtube.com/shorts/X_Rvy8qvpdc?feature=share",
+    "youtube_id": "X_Rvy8qvpdc",
+    "default_tempo": "très lent",
+    "sample_notes": "Mobilité des épaules en extension. Dissocier épaule / cage thoracique",
+    "count": 49
+  },
+  {
+    "name": "Excentrique flexion des avant-bras",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=jBNNSCOSZLM&pp=ygUXZWNjZW50cmljIHdyaXN0IGZsZXhpb24%3D",
+    "youtube_id": "jBNNSCOSZLM",
+    "default_tempo": "très lent",
+    "sample_notes": "Descends le + lentement possible à un bras et t'aide de l'autre pour remonter",
+    "count": 48
+  },
+  {
+    "name": "PAILs / RAILs dorsiflexion de cheville",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/watch?v=tlHKBP-Gm7I&pp=ygUVcGFpbHMgcmFpbHMgY2hldmlsbGVz",
+    "youtube_id": "tlHKBP-Gm7I",
+    "default_tempo": "",
+    "sample_notes": "2min stretch au début, 10s iso max dans un sens 10s dans l'autre",
+    "count": 42
+  },
+  {
+    "name": "CARs épaules couché",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://youtu.be/7XEjZE4C_Z8",
+    "youtube_id": "7XEjZE4C_Z8",
+    "default_tempo": "",
+    "sample_notes": "Mobilité des épaules. Le plus haut et le plus loin possible",
+    "count": 40
+  },
+  {
+    "name": "PAIL / RAILs coude manche à balai",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=Vzm82iQB6y4",
+    "youtube_id": "Vzm82iQB6y4",
+    "default_tempo": "",
+    "sample_notes": "2min stretch au début, 10s iso max dans un sens 10s dans l'autre",
+    "count": 40
+  },
+  {
+    "name": "Towel wrist deviation",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/watch?v=Hv-KA7bbfW8&pp=ygUVdG93ZWwgd3Jpc3QgZGV2aWF0aW9u",
+    "youtube_id": "Hv-KA7bbfW8",
+    "default_tempo": "",
+    "sample_notes": "Renfo des poignets en deviation ulnaire (cubitus)",
+    "count": 40
+  },
+  {
+    "name": "CARS hanches 90/90 poids tendu au dessus tête",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/shorts/gdOUhnZ8iWs",
+    "youtube_id": "gdOUhnZ8iWs",
+    "default_tempo": "",
+    "sample_notes": "Garde les bras tendus pour n'avoir aucune implication du haut du corps",
+    "count": 40
+  },
+  {
+    "name": "Iso horse stance",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/6NVI4kUSy2E",
+    "youtube_id": "6NVI4kUSy2E",
+    "default_tempo": "iso",
+    "sample_notes": "Travail adducteurs, standardise l'écartement de tes jambes pour progresser",
+    "count": 36
+  },
+  {
+    "name": "PAILs / RAILs hip adduction / abduction",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/shorts/pds5GufPhqI",
+    "youtube_id": "pds5GufPhqI",
+    "default_tempo": "",
+    "sample_notes": "En fin d'amplitude, forces à fond 10s en direction du sol puis essaie de lever 10s",
+    "count": 33
+  },
+  {
+    "name": "Leg extension classique en tempo",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=E_pTa-uagpE&pp=ygUSbGVnIGV4dGVuc2lvbiAyLzEg",
+    "youtube_id": "E_pTa-uagpE",
+    "default_tempo": "21X0",
+    "sample_notes": "Respecte bien tempo montée explo pause en haut 2s descente",
+    "count": 32
+  },
+  {
+    "name": "Romanian deadlift (RDL)",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=7j-2w4-P14I",
+    "youtube_id": "7j-2w4-P14I",
+    "default_tempo": "20X0",
+    "sample_notes": "2s excentrique, surélève si trop facile, garde jambes quasi tendues",
+    "count": 32
+  },
+  {
+    "name": "Développé militaire haltères",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=qEwKCR5JCog&pp=ygUWZHVtYmVsbCBzaG91bGRlciBwcmVzcw%3D%3D",
+    "youtube_id": "qEwKCR5JCog",
+    "default_tempo": "classique",
+    "sample_notes": "Focus amplitude maximale + contrôle sur chaque rep",
+    "count": 32
+  },
+  {
+    "name": "Fentes bulgares smith machine pied avant surélevé",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.instagram.com/reel/DAIXPD1g_ZR/",
+    "youtube_id": "",
+    "default_tempo": "2110.0",
+    "sample_notes": "Tu fais tes 2 séries sur la même jambe, donc 4 séries en tout uniquement",
+    "count": 32
+  },
+  {
+    "name": "Copenhagen plank",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/watch?v=MuuoQYZ0pzE",
+    "youtube_id": "MuuoQYZ0pzE",
+    "default_tempo": "iso",
+    "sample_notes": "Travail des adducteurs, rajouter mouvement latéral si facile",
+    "count": 30
+  },
+  {
+    "name": "Extensions triceps overhead unilatéral",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/8fMU2KizXGU",
+    "youtube_id": "8fMU2KizXGU",
+    "default_tempo": "2010.0",
+    "sample_notes": "Descends dans la limite de douleur de ton coude",
+    "count": 28
+  },
+  {
+    "name": "Elevations latérales sur banc incliné (au max)",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/sDOqMsWsm8c",
+    "youtube_id": "sDOqMsWsm8c",
+    "default_tempo": "2110.0",
+    "sample_notes": "1/2 seconde pause en haut, + descente lente",
+    "count": 28
+  },
+  {
+    "name": "Relevés de jambes suspendu",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/watch?v=xX9Hzi7Onnw",
+    "youtube_id": "xX9Hzi7Onnw",
+    "default_tempo": "",
+    "sample_notes": "Engage tes épaules vers l'arrière pour stabiliser lors de la descente",
+    "count": 25
+  },
+  {
+    "name": "Relevés de genoux suspendus",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "",
+    "youtube_id": "",
+    "default_tempo": "lent",
+    "sample_notes": "Enroule bien le bassin, décompose chaque vertèbre. Mvt lent",
+    "count": 24
+  },
+  {
+    "name": "Elevations latérales",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "",
+    "youtube_id": "",
+    "default_tempo": "1/2s en haut",
+    "sample_notes": "Micro-pause en haut, monte les coudes haut",
+    "count": 24
+  },
+  {
+    "name": "Tractions pronation lestées",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=8urE8Z8AMQ4&pp=ygUhc21pdGggbWFjaGluZSBpbmNsaW5lIGJlbmNoIHByZXNz",
+    "youtube_id": "8urE8Z8AMQ4",
+    "default_tempo": "",
+    "sample_notes": "Travail progressif, tu peux commencer dans l'ordre croissant ou décroissant",
+    "count": 24
+  },
+  {
+    "name": "Dips lestées en lourd",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/WPKQFySnWAc",
+    "youtube_id": "WPKQFySnWAc",
+    "default_tempo": "10X0",
+    "sample_notes": "Faire une légère pause en bas, épaule full extension, focus soulever lourd",
+    "count": 24
+  },
+  {
+    "name": "Relevés de genoux suspendu avec poids",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/shorts/8MnB1-MSh90",
+    "youtube_id": "8MnB1-MSh90",
+    "default_tempo": "",
+    "sample_notes": "Reste dans l'amplitude qui travaille, ne reviens pas complètement, (vidéo)",
+    "count": 24
+  },
+  {
+    "name": "CARS rétractions scapulaires",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/watch?v=FPpTDqBzYVw&pp=ygUQaGFuZ2luZyBjYXJzIGZyYw%3D%3D",
+    "youtube_id": "FPpTDqBzYVw",
+    "default_tempo": "",
+    "sample_notes": "Retracte les omoplates, bras tendus, epaules vers l'arrière",
+    "count": 24
+  },
+  {
+    "name": "Développé couché incliné smith machine",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/gQ3afio08V8",
+    "youtube_id": "gQ3afio08V8",
+    "default_tempo": "21X0",
+    "sample_notes": "Contrôle la descente et explose sur la remontée bonne amplitude et charge",
+    "count": 24
+  },
+  {
+    "name": "Tirage horizontal prise large",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=sjJ0z4R3w0M&pp=ygUTd2lkZSBncmlwIHJvdyBjYWJsZQ%3D%3D",
+    "youtube_id": "sjJ0z4R3w0M",
+    "default_tempo": "2110.0",
+    "sample_notes": "Coudes ouverts. Pause à la poitrine, relache épaules au max vers l'avant",
+    "count": 23
+  },
+  {
+    "name": "Curl sur banc incliné",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/RPhFoQv0iCE",
+    "youtube_id": "RPhFoQv0iCE",
+    "default_tempo": "2010.0",
+    "sample_notes": "Amplitude maximale, épaules vers l'arrière, étirement maximal du biceps",
+    "count": 22
+  },
+  {
+    "name": "Neck roll avant et côtés (vidéo 1'30)",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://youtu.be/W_R5W0Apc_U?t=92",
+    "youtube_id": "W_R5W0Apc_U",
+    "default_tempo": "iso",
+    "sample_notes": "Progression : genou + mains au sol, pompes + mains au sol, pompes mains dans le dos",
+    "count": 22
+  },
+  {
+    "name": "PAIL / RAILs coude en pronation",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/watch?v=Vzm82iQB6y4",
+    "youtube_id": "Vzm82iQB6y4",
+    "default_tempo": "",
+    "sample_notes": "2min stretch au début, 10s iso max dans un sens 10s dans l'autre",
+    "count": 22
+  },
+  {
+    "name": "Plyo push-up de part et d'autre d'une bande",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/DeorD1XrrEM",
+    "youtube_id": "DeorD1XrrEM",
+    "default_tempo": "explosif",
+    "sample_notes": "Prends une ligne fixe, objectif tps de contact au sol le + court possible",
+    "count": 21
+  },
+  {
+    "name": "Fentes bulgares",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/uODWo4YqbT8",
+    "youtube_id": "uODWo4YqbT8",
+    "default_tempo": "",
+    "sample_notes": "PAUSE 30s entre les deux jambes si tu le souhaites",
+    "count": 19
+  },
+  {
+    "name": "CARS épaules unilatéral à genou",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://youtube.com/shorts/X_Rvy8qvpdc?feature=share",
+    "youtube_id": "X_Rvy8qvpdc",
+    "default_tempo": "",
+    "sample_notes": "Mobilité des épaules. Le plus haut et le plus loin possible",
+    "count": 19
+  },
+  {
+    "name": "Lunges KB bounds (laisse toi tomber, travail d'amorti)",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.instagram.com/reel/C4vAkLeMmHs/",
+    "youtube_id": "",
+    "default_tempo": "tps contact long",
+    "sample_notes": "Travail de décélération, décélère le + vite possible pour relancer, plein pied",
+    "count": 18
+  },
+  {
+    "name": "CARS hanches quadrupédique",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/watch?v=3HcqUibHeDY",
+    "youtube_id": "3HcqUibHeDY",
+    "default_tempo": "",
+    "sample_notes": "Mobilité des hanches. Lentement, décompose bien. (vidéo)",
+    "count": 17
+  },
+  {
+    "name": "Extensions lombaires",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=9uJr3JixLi4",
+    "youtube_id": "9uJr3JixLi4",
+    "default_tempo": "2110.0",
+    "sample_notes": "Bassin en antéversion, respecter tempo. Fessier contractés",
+    "count": 16
+  },
+  {
+    "name": "Mollets unilatéral surélevés",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/watch?v=lkGZj117m94",
+    "youtube_id": "lkGZj117m94",
+    "default_tempo": "2110.0",
+    "sample_notes": "Pieds nus, amplitude, tempo lent",
+    "count": 16
+  },
+  {
+    "name": "Pendlay row",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://youtu.be/h2_TrXjEr88",
+    "youtube_id": "h2_TrXjEr88",
+    "default_tempo": "explosif",
+    "sample_notes": "Explosivité sans bouger les hanches, buste parallèle au sol.",
+    "count": 16
+  },
+  {
+    "name": "Rowing sur banc incliné",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=BzPuC0X69Kg",
+    "youtube_id": "BzPuC0X69Kg",
+    "default_tempo": "1110.0",
+    "sample_notes": "Pause en haut du mvt, reste en prona tout le temps",
+    "count": 16
+  },
+  {
+    "name": "Arrière d'épaule unilatéral sur banc allongé",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=9PMWtAyfL78",
+    "youtube_id": "9PMWtAyfL78",
+    "default_tempo": "2110.0",
+    "sample_notes": "Mains en pronation tout le long du mouvement, amplitude",
+    "count": 16
+  },
+  {
+    "name": "Développé couché haltères",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/B8JxGOX2t7M",
+    "youtube_id": "B8JxGOX2t7M",
+    "default_tempo": "",
+    "sample_notes": "Rappel pecs pour aller chercher des grosses perfs au couché",
+    "count": 16
+  },
+  {
+    "name": "Leg curl assis en tempo",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/watch?v=Orxowest56U&pp=ygUVbGVnIGN1cmwgdGVzdG9zdGVyb25l",
+    "youtube_id": "Orxowest56U",
+    "default_tempo": "21X0",
+    "sample_notes": "Va échec sur série 1, garde 1RiR(rep in reserve) sur les 2 suivantes",
+    "count": 16
+  },
+  {
+    "name": "Machine à adducteurs",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/watch?v=A5asOtzaTKQ",
+    "youtube_id": "A5asOtzaTKQ",
+    "default_tempo": "2010.0",
+    "sample_notes": "Va à l'échec sur les 2 dernières séries, finis toi les adducteurs, full amplitude",
+    "count": 16
+  },
+  {
+    "name": "Single leg pogo jumps 4 direction",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/watch?v=N84BAPZKnP4&pp=ygUKcG9nbyAxIGxlZw%3D%3D",
+    "youtube_id": "N84BAPZKnP4",
+    "default_tempo": "tps contact court",
+    "sample_notes": "Mains aux hanches, bassin aligné au dessus du genou",
+    "count": 16
+  },
+  {
+    "name": "Développé incliné smith machine",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=8urE8Z8AMQ4&pp=ygUhc21pdGggbWFjaGluZSBpbmNsaW5lIGJlbmNoIHByZXNz",
+    "youtube_id": "8urE8Z8AMQ4",
+    "default_tempo": "21X0",
+    "sample_notes": "Respecter tempo, pause aux clavicules et remontée explosive (banc 45°)",
+    "count": 16
+  },
+  {
+    "name": "Elevations latérales sur banc incliné",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/qpNqQcXMs9c",
+    "youtube_id": "qpNqQcXMs9c",
+    "default_tempo": "2110.0",
+    "sample_notes": "Incline le banc à environ 30 degrés, garde la tension ds épaule tout le long",
+    "count": 16
+  },
+  {
+    "name": "Presse à cuisses full amplitude",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=yZmx_Ac3880&pp=ygUObGVnIHByZXNzIGRlZXA%3D",
+    "youtube_id": "yZmx_Ac3880",
+    "default_tempo": "21X0",
+    "sample_notes": "Pieds assez proches, bas sur la plateforme, descends jusqu'à que talons décollent",
+    "count": 16
+  },
+  {
+    "name": "Leg curl concentrique 2 jbe excentrique 1 jbe",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=0vxmiAxmYsM&pp=ygUjc2VhdGVkIGxlZyBjdXJsIHRlc3Rvc3Rlcm9uZSBuYXRpb24%3D",
+    "youtube_id": "0vxmiAxmYsM",
+    "default_tempo": "21X0",
+    "sample_notes": "Poussée à 2 jambes, pause 1s, descente à 1 jambe contrôlée",
+    "count": 16
+  },
+  {
+    "name": "Back extensions en lourd",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/shorts/x0leCKPvumA",
+    "youtube_id": "x0leCKPvumA",
+    "default_tempo": "2110.0",
+    "sample_notes": "Bassin rétroversé (fixé en avant), fessiers contractés, descendre au plus bas",
+    "count": 16
+  },
+  {
+    "name": "JM press smith machine",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/j0uAD95UYBk",
+    "youtube_id": "j0uAD95UYBk",
+    "default_tempo": "2010.0",
+    "sample_notes": "C'est un mélange entre un développé et une barre au front",
+    "count": 16
+  },
+  {
+    "name": "Single leg pogo jump en forme de croix",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/hn65IF6cVKM",
+    "youtube_id": "hn65IF6cVKM",
+    "default_tempo": "explosif",
+    "sample_notes": "Représente une croix au sol, garde les mains aux hanches, tps contact sol court",
+    "count": 16
+  },
+  {
+    "name": "Tractions supination lestées",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=ylSSCipTaCk&pp=ygUad2VpZ2h0ZWQgc3VwaW5hdGVkIHB1bGwgdXA%3D",
+    "youtube_id": "ylSSCipTaCk",
+    "default_tempo": "",
+    "sample_notes": "Amplitude complète, tu descends coudes tendus et amène barre aux clavicules",
+    "count": 16
+  },
+  {
+    "name": "Bayesian curl à la poulie",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/BaSd7C58L3o",
+    "youtube_id": "BaSd7C58L3o",
+    "default_tempo": "2010.0",
+    "sample_notes": "Avance par rapport à la poulie pour avoir bras en extension, bras en arrière du corps",
+    "count": 16
+  },
+  {
+    "name": "CARS rétractions scapulaires à un bras",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/watch?v=M7Aj7saugrI&pp=ygUYb25lIGFybSBzY2FwdWxhciBwdWxsIHVw",
+    "youtube_id": "M7Aj7saugrI",
+    "default_tempo": "",
+    "sample_notes": "Transfère du poids du corps sur bras tendu puis contrôle de l'amplitude et du mvt",
+    "count": 16
+  },
+  {
+    "name": "Position 90/90 to half kneeling",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/shorts/PL1THhSphY4",
+    "youtube_id": "PL1THhSphY4",
+    "default_tempo": "",
+    "sample_notes": "Monte jambe après l'autre uniquement qd tu sens un étirement intense de l'adducteur",
+    "count": 16
+  },
+  {
+    "name": "Roulade sur l'épaule et cou en position pont",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/watch?v=0HUvtqKuO9Q&pp=ygUkcmluZyB0aG9yYWNpYyBzcGluZSBicmlkZ2Ugcm90YXRpb25z",
+    "youtube_id": "0HUvtqKuO9Q",
+    "default_tempo": "vitesse",
+    "sample_notes": "Roule à la fois sur l'épaule et sur le cou, oriente tes hanches du côté où tu roules",
+    "count": 16
+  },
+  {
+    "name": "Rowing buste penché barre",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/w25tFekISxc",
+    "youtube_id": "w25tFekISxc",
+    "default_tempo": "2110.0",
+    "sample_notes": "Pas lourd donc respect du tempo, buste parallèle au sol",
+    "count": 14
+  },
+  {
+    "name": "Soulevé de terre jambes tendues surélevé",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=k7yWL2YdFAU&pp=ygUWaGlnaCByb21hbmlhbiBkZWFkbGlmdA%3D%3D",
+    "youtube_id": "k7yWL2YdFAU",
+    "default_tempo": "3110.0",
+    "sample_notes": "Léger donc tempo + amplitude. Surélève avec un step ou poids",
+    "count": 14
+  },
+  {
+    "name": "Curl biceps prise marteau",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/8nCxfkRSN4o",
+    "youtube_id": "8nCxfkRSN4o",
+    "default_tempo": "2110.0",
+    "sample_notes": "Donne un peu d'élan avec ton corps, + tempo",
+    "count": 14
+  },
+  {
+    "name": "Smith machine bench press throws",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=FCXfWgcrG4k&pp=ygUgc21pdGggbWFjaGluZSBiZW5jaCBwcmVzcyB0aHJvd3M%3D",
+    "youtube_id": "FCXfWgcrG4k",
+    "default_tempo": "explosif",
+    "sample_notes": "Jette le + haut possible, attention met les sécurités assez haut",
+    "count": 14
+  },
+  {
+    "name": "Iso front split stance",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/shorts/bk2zqmBL6u0",
+    "youtube_id": "bk2zqmBL6u0",
+    "default_tempo": "iso",
+    "sample_notes": "30s recup entre les 2 jambes, standardise et progresse en ouverture",
+    "count": 14
+  },
+  {
+    "name": "Shoulder taps into pull-up",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/shorts/V13jx-8lntI",
+    "youtube_id": "V13jx-8lntI",
+    "default_tempo": "explosif",
+    "sample_notes": "Aussi rapide que tu peux tout en limitant le balancement D/G, rester gaîné",
+    "count": 14
+  },
+  {
+    "name": "Bench plyo push-up",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/DeorD1XrrEM",
+    "youtube_id": "DeorD1XrrEM",
+    "default_tempo": "explosif",
+    "sample_notes": "Repousse toi le + loin possible, marque une pause entre chaque",
+    "count": 14
+  },
+  {
+    "name": "Zercher squat",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/_VpJC4AfvzQ",
+    "youtube_id": "_VpJC4AfvzQ",
+    "default_tempo": "2010.0",
+    "sample_notes": "Focus sur la descente, bien accroupi en bas, pause et montée explosive",
+    "count": 14
+  },
+  {
+    "name": "Cossack gobelet squat",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=Wx5dyhn3p88&pp=ygUQa2IgY29zc2FjayBzcXVhdA%3D%3D",
+    "youtube_id": "Wx5dyhn3p88",
+    "default_tempo": "lent",
+    "sample_notes": "Reste vertical et pousse uniquement avec les jambes, pas de hanches",
+    "count": 14
+  },
+  {
+    "name": "Tractions lestées EMOM3'",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/VGc2UUcIVrA",
+    "youtube_id": "VGc2UUcIVrA",
+    "default_tempo": "explosif",
+    "sample_notes": "Passe le menton au dessus de la barre et descends en amplitude",
+    "count": 13
+  },
+  {
+    "name": "Lateral jumps plyometrics absorption au sol",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://youtu.be/6Ahwy2Yk5qw?t=37",
+    "youtube_id": "6Ahwy2Yk5qw",
+    "default_tempo": "tps contact long",
+    "sample_notes": "Saute le plus loin possible et prends ton temps pour amortir avant de relancer",
+    "count": 13
+  },
+  {
+    "name": "Mouvements ballistiques hanches",
+    "color": null,
+    "category": "other",
+    "youtube_url": "https://www.youtube.com/shorts/so-iEzLac14",
+    "youtube_id": "so-iEzLac14",
+    "default_tempo": "30''",
+    "sample_notes": "",
+    "count": 13
+  },
+  {
+    "name": "Montée de genoux dynamiques",
+    "color": null,
+    "category": "other",
+    "youtube_url": "https://www.youtube.com/watch?v=_koAkJJVT7Y",
+    "youtube_id": "_koAkJJVT7Y",
+    "default_tempo": "",
+    "sample_notes": "",
+    "count": 13
+  },
+  {
+    "name": "Neck roll arrière",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://youtu.be/W_R5W0Apc_U?t=174",
+    "youtube_id": "W_R5W0Apc_U",
+    "default_tempo": "",
+    "sample_notes": "Si facile, enlève les mains du sol , privilégie l'amplitude",
+    "count": 11
+  },
+  {
+    "name": "Single leg romanian deadlift (travail ton amplitude)",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=-StB7VaTWos&pp=ygUOc2luZ2xlIGxlZyByZGw%3D",
+    "youtube_id": "-StB7VaTWos",
+    "default_tempo": "2010.0",
+    "sample_notes": "Ton corps forme un balancier avec les hanches en son centre. Jbe arrière haut",
+    "count": 10
+  },
+  {
+    "name": "Course BASSE INTENSITE",
+    "color": null,
+    "category": "other",
+    "youtube_url": "",
+    "youtube_id": "",
+    "default_tempo": "0.0",
+    "sample_notes": "",
+    "count": 10
+  },
+  {
+    "name": "Neck roll avant et côtés (vidéo 1'30) à faire sur récup",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://youtu.be/W_R5W0Apc_U?t=92",
+    "youtube_id": "W_R5W0Apc_U",
+    "default_tempo": "",
+    "sample_notes": "Tu fais sur les récup des pompes, garde toi 10s récup passive",
+    "count": 10
+  },
+  {
+    "name": "Reverse nordics",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/x6RDnk6gwdI",
+    "youtube_id": "x6RDnk6gwdI",
+    "default_tempo": "2010.0",
+    "sample_notes": "Descends de + en + en bas chaque semaine, bassin fixé vers l'avant (rétroversion)",
+    "count": 9
+  },
+  {
+    "name": "Leg extension concentrique 2 jbe excentrique 1 jbe",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=E_pTa-uagpE&pp=ygUdbGVnIGV4dGVuc2lvbiAyLTF0ZXN0b3N0ZXJvbmU%3D",
+    "youtube_id": "E_pTa-uagpE",
+    "default_tempo": "2110.0",
+    "sample_notes": "Montée à 2 jambes, pause en haut 1s, descente à 1 jambe contrôlée",
+    "count": 9
+  },
+  {
+    "name": "Tractions lestées EMOM2'",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "",
+    "youtube_id": "",
+    "default_tempo": "explosif",
+    "sample_notes": "2 reps par minute sur 10 minute",
+    "count": 8
+  },
+  {
+    "name": "Dips lestées set lourd",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/78krz6AaB9I",
+    "youtube_id": "78krz6AaB9I",
+    "default_tempo": "explosif",
+    "sample_notes": "Volume ici, on cherche la brûlure. RPE<8 sur montée de gamme",
+    "count": 8
+  },
+  {
+    "name": "Développé militaire haltères assis",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "",
+    "youtube_id": "",
+    "default_tempo": "",
+    "sample_notes": "Augmente la charge chaque semaine, au moins sur une série.",
+    "count": 8
+  },
+  {
+    "name": "Curl biceps barre EZ",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/watch?v=ohHJh6M1N0g&pp=ygUUY3VybCBiaWNlcHMgYmFycmUgZXo%3D",
+    "youtube_id": "ohHJh6M1N0g",
+    "default_tempo": "classique",
+    "sample_notes": "Met lourd, envoie de la charge sur celui là",
+    "count": 8
+  },
+  {
+    "name": "Ecartés poulie sur banc incliné (vidéo)",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/watch?v=EXFYIirIs38&pp=ygUfdGVzdG9zdGVyb25lIG5hdGlvbiBjYWJsZSBjaGVzdA%3D%3D",
+    "youtube_id": "EXFYIirIs38",
+    "default_tempo": "2110.0",
+    "sample_notes": "2 séries 12 à 15 ou 10kg, puis série max reps en descendant charge",
+    "count": 8
+  },
+  {
+    "name": "CARs épaules unilatéral debout",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/watch?v=DdrB2Ue-EVc",
+    "youtube_id": "DdrB2Ue-EVc",
+    "default_tempo": "très lent",
+    "sample_notes": "Mobilité des épaules. Le plus haut et le plus loin possible",
+    "count": 8
+  },
+  {
+    "name": "Squat MG 1 rep + ladder 1/2/3",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "",
+    "youtube_id": "",
+    "default_tempo": "classique",
+    "sample_notes": "Rester sous un RPE<8 sur la montée de gamme, noter RPE ladder",
+    "count": 8
+  },
+  {
+    "name": "Curl marteau haltères",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=nvcqKLIJ_ds&pp=ygUfdGVzdG9zdGVyb25lIG5hdGlvbiBoYW1tZXIgY3VybA%3D%3D",
+    "youtube_id": "nvcqKLIJ_ds",
+    "default_tempo": "pause en haut",
+    "sample_notes": "Micro-pause en haut où tu contractes volontairement le biceps",
+    "count": 8
+  },
+  {
+    "name": "Barre au front couché barre EZ",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/watch?v=jUUtHr42ra0",
+    "youtube_id": "jUUtHr42ra0",
+    "default_tempo": "2110.0",
+    "sample_notes": "Tempo lent, 2s descente, pause au front, montée explo",
+    "count": 8
+  },
+  {
+    "name": "Tractions supination EMOM2'",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "",
+    "youtube_id": "",
+    "default_tempo": "explosif",
+    "sample_notes": "RPE<8, si trop dur décharge, amplitude",
+    "count": 8
+  },
+  {
+    "name": "Développé militaire barre (volume)",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=tI8HF6UBduA&pp=ygUidGVzdG9zdGVyb25lIG5hdGlvbiBtaWxpdGFyeSBwcmVzcw%3D%3D",
+    "youtube_id": "tI8HF6UBduA",
+    "default_tempo": "classique",
+    "sample_notes": "Volume sur le militaire, rester en dessous du RPE<8 (amplitude)",
+    "count": 8
+  },
+  {
+    "name": "Extensions triceps à la poulie",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "",
+    "youtube_id": "",
+    "default_tempo": "2110.0",
+    "sample_notes": "Amplitude, pense à longer le câble et contracter triceps en bas du mvt",
+    "count": 8
+  },
+  {
+    "name": "Tirage poitrine poulie haute",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "",
+    "youtube_id": "",
+    "default_tempo": "2110.0",
+    "sample_notes": "Full amplitude, pause à la poitrine, remontée 2s",
+    "count": 8
+  },
+  {
+    "name": "Soulevé de terre MG + ladder 1/2/3",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "",
+    "youtube_id": "",
+    "default_tempo": "",
+    "sample_notes": "Rester sous un RPE<8 sur la montée de gamme, noter RPE ladder",
+    "count": 8
+  },
+  {
+    "name": "Leg curl classique tempo",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "",
+    "youtube_id": "",
+    "default_tempo": "21X0",
+    "sample_notes": "Respecte bien tempo descente explo pause en bas, 2s montée",
+    "count": 8
+  },
+  {
+    "name": "Curl sur banc incliné position étirée",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/watch?v=gLDac6WNujQ",
+    "youtube_id": "gLDac6WNujQ",
+    "default_tempo": "",
+    "sample_notes": "Focus ici sur le biceps en position étirée, amplitude max",
+    "count": 8
+  },
+  {
+    "name": "Extensions overhead triceps à la corde",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/snoE9qAzt08",
+    "youtube_id": "snoE9qAzt08",
+    "default_tempo": "2010.0",
+    "sample_notes": "Focus tempo + amplitude (pas charge). Contrôle le mvt",
+    "count": 8
+  },
+  {
+    "name": "Curl biceps barre EZ (tempo)",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/uvhnpOjDye8",
+    "youtube_id": "uvhnpOjDye8",
+    "default_tempo": "2010.0",
+    "sample_notes": "Focus sur le tempo + contrôle. Pas de contre-mvt pour tricher.",
+    "count": 8
+  },
+  {
+    "name": "Tractions lestées en série",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "",
+    "youtube_id": "",
+    "default_tempo": "explosif",
+    "sample_notes": "Focus technique sur chaque rep, sois explosif",
+    "count": 8
+  },
+  {
+    "name": "Tirage horizontal prise large coudes ouverts",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=YKAeU55CkVk",
+    "youtube_id": "YKAeU55CkVk",
+    "default_tempo": "2110.0",
+    "sample_notes": "On s'en fou de la charge, focus tempo. Relache les epaules a fond",
+    "count": 8
+  },
+  {
+    "name": "Squat MG 1 rep + EMOM1'",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "",
+    "youtube_id": "",
+    "default_tempo": "classique",
+    "sample_notes": "Focus qualité technique ici, toutes les reps doivent se ressembler",
+    "count": 8
+  },
+  {
+    "name": "Leg extension (relevé 2 jambes retenue 1 jambe)",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "",
+    "youtube_id": "",
+    "default_tempo": "21X0",
+    "sample_notes": "Respecte bien tempo montée explo pause en haut 2s descente",
+    "count": 8
+  },
+  {
+    "name": "Développé couché prise serrée",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/watch?v=loYKxW_8EbY",
+    "youtube_id": "loYKxW_8EbY",
+    "default_tempo": "explosif",
+    "sample_notes": "Focus triceps ici on va chercher la brûlure",
+    "count": 8
+  },
+  {
+    "name": "Curl biceps prise marteau bras alternés",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/watch?v=nvcqKLIJ_ds&pp=ygUfdGVzdG9zdGVyb25lIG5hdGlvbiBoYW1tZXIgY3VybA%3D%3D",
+    "youtube_id": "nvcqKLIJ_ds",
+    "default_tempo": "classique",
+    "sample_notes": "Micro-pause en haut où tu contractes volontairement le biceps",
+    "count": 8
+  },
+  {
+    "name": "Dips full amplitude tempo",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=__xviHaET8k&pp=ygUaZGlwcyByYW5nZSBvZiBtb3Rpb24gdGVtcG8%3D",
+    "youtube_id": "__xviHaET8k",
+    "default_tempo": "31X0",
+    "sample_notes": "Focus amplitude + bas possible et contrôle le tempo. Pause 1s en bas",
+    "count": 8
+  },
+  {
+    "name": "Ecartés pecs poulie haute",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/-yJ2L5N204A",
+    "youtube_id": "-yJ2L5N204A",
+    "default_tempo": "2110.0",
+    "sample_notes": "Focus sur l'étirement + pause en milieu",
+    "count": 8
+  },
+  {
+    "name": "Soulevé de terre MG + EMOM1'",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "",
+    "youtube_id": "",
+    "default_tempo": "",
+    "sample_notes": "Focus qualité technique ici, toutes les reps doivent se ressembler",
+    "count": 8
+  },
+  {
+    "name": "Squat pause en série",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=g3kAQyU9BX8",
+    "youtube_id": "g3kAQyU9BX8",
+    "default_tempo": "22X0",
+    "sample_notes": "2s de pause en bas du mouvement + explose après",
+    "count": 8
+  },
+  {
+    "name": "Leg curl (relevé 2 jambes retenue 1 jambe)",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=_7sVQlruVZc",
+    "youtube_id": "_7sVQlruVZc",
+    "default_tempo": "21X0",
+    "sample_notes": "Respecte bien tempo descente explo pause en bas, 2s montée",
+    "count": 8
+  },
+  {
+    "name": "Développé couché barre 8x5 format EMOM",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/7P562roxtSc?feature=share",
+    "youtube_id": "7P562roxtSc",
+    "default_tempo": "classique",
+    "sample_notes": "Format EMOM mais en 5 reps et sur 8 min.",
+    "count": 8
+  },
+  {
+    "name": "Rowing inversé sous barre",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/rEn-M9guDC4",
+    "youtube_id": "rEn-M9guDC4",
+    "default_tempo": "31X0",
+    "sample_notes": "Descente 3s, pause aux pecs 1s, tirage explosif",
+    "count": 8
+  },
+  {
+    "name": "Suitcase deadlift à un bras",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/watch?v=spFfhanSJ6A&pp=ygUZYmFyYmVsbCBzdWl0Y2FzZSBkZWFkbGlmdA%3D%3D",
+    "youtube_id": "spFfhanSJ6A",
+    "default_tempo": "",
+    "sample_notes": "Ne cède pas à la charge et reste gaîné",
+    "count": 8
+  },
+  {
+    "name": "Gobelet squat pieds surélevés + pieds serrés",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=85M0mZSt15w&pp=ygUbZ29iZWxldCBzcXVhdCBuYXJyb3cgc3RhbmNl",
+    "youtube_id": "85M0mZSt15w",
+    "default_tempo": "21X0",
+    "sample_notes": "Respecte tempo, cherche full amplitude + pause en bas",
+    "count": 8
+  },
+  {
+    "name": "Reverse nordics + elastique pour délester",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=-yf6BI9d4Us",
+    "youtube_id": "-yf6BI9d4Us",
+    "default_tempo": "2020.0",
+    "sample_notes": "Descente et remontée lente, focus sur l'amplitude, bassin en avant",
+    "count": 8
+  },
+  {
+    "name": "Ischios serviette",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/watch?v=IxWsh7KWEdA",
+    "youtube_id": "IxWsh7KWEdA",
+    "default_tempo": "3010.0",
+    "sample_notes": "Bassin bien haut, Focus  tempo (3s descente) pas comme sur vidéo",
+    "count": 8
+  },
+  {
+    "name": "Dips 8x5 format EMOM",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=__xviHaET8k&pp=ygUaZGlwcyByYW5nZSBvZiBtb3Rpb24gdGVtcG8%3D",
+    "youtube_id": "__xviHaET8k",
+    "default_tempo": "explosif",
+    "sample_notes": "Sois explosif sur les remontées, descends pas trop bas",
+    "count": 8
+  },
+  {
+    "name": "Tractions pronations lestées pausées",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=trq6rUi5F5M&pp=ygUOcGF1c2VkIHB1bGwgdXA%3D",
+    "youtube_id": "trq6rUi5F5M",
+    "default_tempo": "11X0",
+    "sample_notes": "Tirage explosif + pause avec le menton au dessus barre (1s)",
+    "count": 8
+  },
+  {
+    "name": "Développé couché incliné haltères",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=I2zysDiUjCw&pp=ygUOZGIgY2hlc3QgcHJlc3M%3D",
+    "youtube_id": "I2zysDiUjCw",
+    "default_tempo": "2010.0",
+    "sample_notes": "Descente lente et contrôlée et remontée explosive",
+    "count": 8
+  },
+  {
+    "name": "Elevations \"Y\"",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/0JZsiZKVjVc",
+    "youtube_id": "0JZsiZKVjVc",
+    "default_tempo": "2110.0",
+    "sample_notes": "Pronation ou prise neutre, 1/2s de pause en haut",
+    "count": 8
+  },
+  {
+    "name": "Good morning à la barre",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=YA-h3n9L4YU&pp=ygUUZ29vZCBtb3JuaW5nIGJhcmJlbGw%3D",
+    "youtube_id": "YA-h3n9L4YU",
+    "default_tempo": "2010.0",
+    "sample_notes": "Mouvement de pivot de hanche, envoie les fesses en arrière",
+    "count": 8
+  },
+  {
+    "name": "Isométrie ischios unilatéral",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/pLqnVN15DZU",
+    "youtube_id": "pLqnVN15DZU",
+    "default_tempo": "iso",
+    "sample_notes": "Déchire le sol avec ton talon, bassin bien haut",
+    "count": 8
+  },
+  {
+    "name": "Développé couché séries classiques",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/-PeqIaBLqPg",
+    "youtube_id": "-PeqIaBLqPg",
+    "default_tempo": "",
+    "sample_notes": "On redescend un peu en charge pour retravailler technique",
+    "count": 8
+  },
+  {
+    "name": "Développé militaire smith machine format EMOM",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=OLqZDUUD2b0&pp=ygUcc21pdGggbWFjaGluZSBzaG91bGRlciBwcmVzcw%3D%3D",
+    "youtube_id": "OLqZDUUD2b0",
+    "default_tempo": "2110.0",
+    "sample_notes": "Descends barre aux clavicules, banc incliné comme militaire haltères",
+    "count": 8
+  },
+  {
+    "name": "Tractions pronation séries classiques",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=trq6rUi5F5M&pp=ygUOcGF1c2VkIHB1bGwgdXA%3D",
+    "youtube_id": "trq6rUi5F5M",
+    "default_tempo": "",
+    "sample_notes": "Tirage explosif + pause avec le menton au dessus barre (1/2s)",
+    "count": 8
+  },
+  {
+    "name": "Chest press poulie basse assis",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/NcF_JFHEry0",
+    "youtube_id": "NcF_JFHEry0",
+    "default_tempo": "21X0",
+    "sample_notes": "Va deux fois à l'échec, une série à 15 et une série à 10. Cherche la brûlure",
+    "count": 8
+  },
+  {
+    "name": "Elevations latérales poulie unilatérales",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/WwBNmkwZXHs",
+    "youtube_id": "WwBNmkwZXHs",
+    "default_tempo": "1110.0",
+    "sample_notes": "Monte le coude au niveau de l'épaule voire au dessus, reste droit",
+    "count": 8
+  },
+  {
+    "name": "Curls biceps alternés debout",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/watch?v=HgEWXgqVvqY&pp=ygUcYWx0ZXJuZWQgZHVtYmVsbHMgY3VybCBoZWF2eQ%3D%3D",
+    "youtube_id": "HgEWXgqVvqY",
+    "default_tempo": "classique",
+    "sample_notes": "Envoie jusqu'à l'échec ou presque sur chaque set, utilise l'élan pour + lourd",
+    "count": 8
+  },
+  {
+    "name": "Fentes bulgares à la smith machine (30s recup / jbes)",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=oLi2QcD0B3M&pp=ygUjc21pdGggbWFjaGluZSBidWxnYXJpYW4gc3BsaXQgc3F1YXQ%3D",
+    "youtube_id": "oLi2QcD0B3M",
+    "default_tempo": "20X0",
+    "sample_notes": "Amplitude à fond, ne met pas trop de poids sur jbe arrière, charge la mule",
+    "count": 8
+  },
+  {
+    "name": "Sdt jambes tendues haltères pointes pieds surélevés",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=13FPTAogHhI&pp=ygUodG9lcyBlbGV2YXRlZCBkdW1iYmVsbCByb21hbmlhbiBkZWFkbGlmdA%3D%3D",
+    "youtube_id": "13FPTAogHhI",
+    "default_tempo": "2010.0",
+    "sample_notes": "Focus sur les fesses en arrière et vers le haut, il faut que ca brûle",
+    "count": 8
+  },
+  {
+    "name": "Machine rowing plateforme",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=hSk2GoyFHsM&pp=ygUScGxhdGZvcm0gdC1iYXIgcm93",
+    "youtube_id": "hSk2GoyFHsM",
+    "default_tempo": "2110.0",
+    "sample_notes": "Privilégie forme à charge, relache bien les épaules et tire coude en arrière",
+    "count": 8
+  },
+  {
+    "name": "Chest press à la machine",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://youtu.be/glf8Yt6U_jk?si=boQrJd1r4JlOdkZO",
+    "youtube_id": "glf8Yt6U_jk",
+    "default_tempo": "2010.0",
+    "sample_notes": "Envoie à l'echec sur série 1, puis 1 à 2 RiR sur les 3 suivantes",
+    "count": 8
+  },
+  {
+    "name": "Rowing bûcheron",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/LRTWRK3Fy4o",
+    "youtube_id": "LRTWRK3Fy4o",
+    "default_tempo": "2110.0",
+    "sample_notes": "Etirement maximal en désengageant l'épaule au max vers l'avant",
+    "count": 8
+  },
+  {
+    "name": "Elevations latérales  aux haltères",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/CM8ksSjebcU",
+    "youtube_id": "CM8ksSjebcU",
+    "default_tempo": "1110.0",
+    "sample_notes": "Micro-pause en haut, monte les coudes bien haut",
+    "count": 8
+  },
+  {
+    "name": "Tirage prise large coudes ouverts sur machine",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/MTWrCC1gTuU",
+    "youtube_id": "MTWrCC1gTuU",
+    "default_tempo": "2110.0",
+    "sample_notes": "Choisis une position confortable (debout ou torse posé), prise large",
+    "count": 8
+  },
+  {
+    "name": "Soulevé de terre pause en séries",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=CMqyqiTVVlo&pp=ygUPcGF1c2VkIGRlYWRsaWR0",
+    "youtube_id": "CMqyqiTVVlo",
+    "default_tempo": "pause milieu",
+    "sample_notes": "Pause d'environ 1s juste en dessous du genou",
+    "count": 8
+  },
+  {
+    "name": "Belt squat full rom",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.google.com/search?sca_esv=ae442b666983332b&sca_upv=1&sxsrf=ACQVn0-cF84QBmlvkgLTo48PP9JwHk5VUQ:1712492403181&q=belt+squat&tbm=vid&source=lnms&prmd=ivnbz&sa=X&sqi=2&ved=2ahUKEwjn0_yqi7CFAxXkExAIHdL7D00Q0pQJegQIEBAB&biw=1280&bih=631&dpr=1.5",
+    "youtube_id": "ae442b66698",
+    "default_tempo": "2110.0",
+    "sample_notes": "série progressive jusqu'à trouver une charge convenable en 10 - 8 reps, CHARGE",
+    "count": 8
+  },
+  {
+    "name": "Extensions triceps à la corde unilatéral",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/HY6LVKUAYKo",
+    "youtube_id": "HY6LVKUAYKo",
+    "default_tempo": "2110.0",
+    "sample_notes": "On cherche l'amplitude max et force contraction en bas  du mouvement",
+    "count": 8
+  },
+  {
+    "name": "Curl biceps sur banc incliné",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/watch?v=wSA84j9ZG4c&pp=ygUTaW5jbGluZWQgYmVuY2ggY3VybA%3D%3D",
+    "youtube_id": "wSA84j9ZG4c",
+    "default_tempo": "",
+    "sample_notes": "Epaules et coude en arrière du banc pour étirement complet du biceps",
+    "count": 8
+  },
+  {
+    "name": "Neck bridge  alterné back & front",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/shorts/M0Dg9ncnoao",
+    "youtube_id": "M0Dg9ncnoao",
+    "default_tempo": "iso",
+    "sample_notes": "Chaque min pdt recup, tu alternes un coup en front bridge un coup en back",
+    "count": 8
+  },
+  {
+    "name": "Trap bar deadlift + tirage trapèzes",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/-l3-fCJcNvE",
+    "youtube_id": "-l3-fCJcNvE",
+    "default_tempo": "explosif",
+    "sample_notes": "Poitrine vers l'avant, finis ton extension sur la pointe de pied + trapèzes",
+    "count": 8
+  },
+  {
+    "name": "Box jump jambes arrivée jambes tendues",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/watch?v=1OcLhNqE3dM&pp=ygUWYm94IGp1bXAgc3RyYWlnaHQgbGVncw%3D%3D",
+    "youtube_id": "1OcLhNqE3dM",
+    "default_tempo": "explosif",
+    "sample_notes": "Départ en deadstop càd sans élan. Quand tu es prêt tu fléchis et sautes",
+    "count": 8
+  },
+  {
+    "name": "Explosiv floor press + extension de hanche",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/3LLawmtcpCM",
+    "youtube_id": "3LLawmtcpCM",
+    "default_tempo": "20X0",
+    "sample_notes": "Coordonne ta poussée et ton extension de hanche, descente lente",
+    "count": 8
+  },
+  {
+    "name": "KB grip work",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/shorts/5xmOj6j-elM",
+    "youtube_id": "5xmOj6j-elM",
+    "default_tempo": "",
+    "sample_notes": "Essaie de contrôler sur toute l'amplitude du mvt, montée comme descente",
+    "count": 8
+  },
+  {
+    "name": "Zercher fentes arrière",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=RODQshvNJ2o&pp=ygUTemVyY2hlciByZWFyIGx1bmdlcw%3D%3D",
+    "youtube_id": "RODQshvNJ2o",
+    "default_tempo": "2010.0",
+    "sample_notes": "Genou jambe arrière touche presque sol, dabord 1 jambe puis l'autre",
+    "count": 8
+  },
+  {
+    "name": "Flexion du cou allongé sur banc (3 directions)",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/watch?v=ND-DzNKQHjM&pp=ygUdd2VpZ2h0ZWQgbGF0ZXJhbCBuZWNrIGZsZXhpb24%3D",
+    "youtube_id": "ND-DzNKQHjM",
+    "default_tempo": "2010.0",
+    "sample_notes": "Fais le bench puis ça et prends ta récup passive après. (1')",
+    "count": 8
+  },
+  {
+    "name": "Farmer walk",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://youtu.be/IH3Rt-DgYuw?si=WRH8fqhqUZHh5aee",
+    "youtube_id": "IH3Rt-DgYuw",
+    "default_tempo": "iso",
+    "sample_notes": "Standardise en choisissant une distance sur laquelle tu progresseras",
+    "count": 8
+  },
+  {
+    "name": "PAILs / RAILs coude",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/watch?v=Vzm82iQB6y4",
+    "youtube_id": "Vzm82iQB6y4",
+    "default_tempo": "",
+    "sample_notes": "2min stretch au début, 10s iso max dans un sens 10s dans l'autre",
+    "count": 8
+  },
+  {
+    "name": "Alternating Dumbbell Press from Deep Squat",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=G04JGV1rlLM&pp=ygUdZGVlcCBzcXVhdCB0byBvdmVyaGVhZCBwcmVzcyA%3D",
+    "youtube_id": "G04JGV1rlLM",
+    "default_tempo": "2010.0",
+    "sample_notes": "Viens t'asseoir le plus bas possible, et alterne les développés. Mobilité ++",
+    "count": 8
+  },
+  {
+    "name": "Lateral jumps plyometrics",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/watch?v=Q6KsNgRNhTk&pp=ygUTbGF0ZXJhbCBwbGlvbWV0cmljcw%3D%3D",
+    "youtube_id": "Q6KsNgRNhTk",
+    "default_tempo": "explosif",
+    "sample_notes": "Ton centre de gravité reste au dessus de l'obstacle, le pied fouette le sol",
+    "count": 8
+  },
+  {
+    "name": "Tirages coudes ouverts au TRX",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=xh49S9LoYbo",
+    "youtube_id": "xh49S9LoYbo",
+    "default_tempo": "2020.0",
+    "sample_notes": "Plus pieds sont loins, plus c'est dur. Tu dois t'approcher de l'échec",
+    "count": 8
+  },
+  {
+    "name": "Windmill KB",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/watch?v=SzFNJhGz8YI&t=13s&pp=ygULd2luZG1pbGwga2I%3D",
+    "youtube_id": "SzFNJhGz8YI",
+    "default_tempo": "lent",
+    "sample_notes": "L'épaule doit faire une rotation et la fesse partir vers l'arrière / côté",
+    "count": 8
+  },
+  {
+    "name": "KB swing",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/watch?v=1cVT3ee9mgU&pp=ygUIa2Igc3dpbmc%3D",
+    "youtube_id": "1cVT3ee9mgU",
+    "default_tempo": "explosif",
+    "sample_notes": "Envoie les fesses en arrière trouve ta stabilité, balancier au niveau de hanche",
+    "count": 8
+  },
+  {
+    "name": "Deadlift trap barre tirage trapèze",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=pcScdJaR9nM",
+    "youtube_id": "pcScdJaR9nM",
+    "default_tempo": "explosif",
+    "sample_notes": "Tire fort en trapèzes et monte en pointe de pied, enchaîne direct avec saut",
+    "count": 8
+  },
+  {
+    "name": "Fentes latérales prise gobelet",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=6DMXBtF_Spg&pp=ygUObGF0ZXJhbCBsdW5nZXM%3D",
+    "youtube_id": "6DMXBtF_Spg",
+    "default_tempo": "2010.0",
+    "sample_notes": "Toutes les reps sur le mm côté avant de passer à l'autre, as deep as possible",
+    "count": 8
+  },
+  {
+    "name": "Bench press",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=GnCMg5h0V1U&pp=ygUVYmV0ZXJiaWV2IGJlbmNoIHByZXNz",
+    "youtube_id": "GnCMg5h0V1U",
+    "default_tempo": "explosif",
+    "sample_notes": "Sois le plus explo possible, Coordonne ta poussée avec la poussée des jambes",
+    "count": 8
+  },
+  {
+    "name": "Leg curl assis 2 jambes concentrique 1 jambe exc.",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=0vxmiAxmYsM&pp=ygUjc2VhdGVkIGxlZyBjdXJsIHRlc3Rvc3Rlcm9uZSBuYXRpb24%3D",
+    "youtube_id": "0vxmiAxmYsM",
+    "default_tempo": "2010.0",
+    "sample_notes": "On travaille en full amplitude pour développer la souplesse de tes ischios",
+    "count": 8
+  },
+  {
+    "name": "Adducteurs en position étirée (pieds sur box ou banc)",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.instagram.com/p/C6qEDHiAips/",
+    "youtube_id": "",
+    "default_tempo": "21X0",
+    "sample_notes": "Va le plus loin possible dans l'étirement, tu dois sentir l'étirement de la ribcage",
+    "count": 8
+  },
+  {
+    "name": "Bent press",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/OqGuJLqjOrE",
+    "youtube_id": "OqGuJLqjOrE",
+    "default_tempo": "2010.0",
+    "sample_notes": "Imagine que l'haltère ne bouge pas et que c'est toi qui te baisse sous la charge",
+    "count": 8
+  },
+  {
+    "name": "Plyo touch push-up",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.instagram.com/theassembly___/reel/C7n_scMI-k-/",
+    "youtube_id": "",
+    "default_tempo": "explosif",
+    "sample_notes": "écarte suffisamment les poids pour l'espace de la pompe, tps contact au sol court",
+    "count": 8
+  },
+  {
+    "name": "Sprints de fin d'échauffement",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "",
+    "youtube_id": "",
+    "default_tempo": "",
+    "sample_notes": "Va pas dans le dur c'est de l'échauffement, si 10s c'est trop diminue",
+    "count": 8
+  },
+  {
+    "name": "BLOC 1 : 6min ON (3 rounds)",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "",
+    "youtube_id": "",
+    "default_tempo": "gestion allure",
+    "sample_notes": "Différentes intensités pour accuuler du temps dans le rouge (mental)",
+    "count": 8
+  },
+  {
+    "name": "BLOC 2 : Sprints à 18km/h",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "",
+    "youtube_id": "",
+    "default_tempo": "vitesse",
+    "sample_notes": "Travail de la capacité lactique, ca va tirer dans les jambes + cardio",
+    "count": 8
+  },
+  {
+    "name": "Endurance longue sur vélo (ou course)",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "",
+    "youtube_id": "",
+    "default_tempo": "Améliorer cardio",
+    "sample_notes": "- Ca ne doit pas être dur, cible un RPE4-5 max.",
+    "count": 8
+  },
+  {
+    "name": "Iso horse stance (+ pulses, vidéo)",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/shorts/6NVI4kUSy2E",
+    "youtube_id": "6NVI4kUSy2E",
+    "default_tempo": "iso",
+    "sample_notes": "Tu fais 30s iso pure, +en bas de la position des très légère contractions pdt 30s",
+    "count": 8
+  },
+  {
+    "name": "Squat à la barre EMOM3' (en tempo)",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=7A2elbe1m2A&pp=ygUQYmFjayBzcXVhdCB0ZW1wbw%3D%3D",
+    "youtube_id": "7A2elbe1m2A",
+    "default_tempo": "2110.0",
+    "sample_notes": "Reprise facile avec un tempo lent et contrôlé, et une pause en bas",
+    "count": 8
+  },
+  {
+    "name": "Staggered stance RDL aux haltères",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/GUsVaTXNmpM",
+    "youtube_id": "GUsVaTXNmpM",
+    "default_tempo": "2010.0",
+    "sample_notes": "Hanche arrière légèrement en rotation interne, pousser la fesse loin derrière",
+    "count": 8
+  },
+  {
+    "name": "Elevations latérales aux haltères",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/iK22GwXJji0",
+    "youtube_id": "iK22GwXJji0",
+    "default_tempo": "1110.0",
+    "sample_notes": "Epaule en rota. interne, monte légèrement au dessus de la ligne d'épaule",
+    "count": 8
+  },
+  {
+    "name": "Leg extension concentrique 2 jbes excentrique 1 jbe",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/watch?v=E_pTa-uagpE&pp=ygUdbGVnIGV4dGVuc2lvbiAyLTF0ZXN0b3N0ZXJvbmU%3D",
+    "youtube_id": "E_pTa-uagpE",
+    "default_tempo": "21X0",
+    "sample_notes": "Montée à 2 jambes, pause en haut 1s, descente à 1 jambe contrôlée",
+    "count": 8
+  },
+  {
+    "name": "Leg curl concentrique 2 jbes excentrique 1 jbe",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/watch?v=0vxmiAxmYsM&pp=ygUjc2VhdGVkIGxlZyBjdXJsIHRlc3Rvc3Rlcm9uZSBuYXRpb24%3D",
+    "youtube_id": "0vxmiAxmYsM",
+    "default_tempo": "21X0",
+    "sample_notes": "Poussée à 2 jambes, pause 1s, descente à 1 jambe contrôlée",
+    "count": 8
+  },
+  {
+    "name": "Cercle des omoplates à 4 pattes",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/shorts/uUSE0RsEvzo",
+    "youtube_id": "uUSE0RsEvzo",
+    "default_tempo": "assez rapide",
+    "sample_notes": "Commence sur les genoux, puis quand tu seras à l'aise tu passes en pompe",
+    "count": 8
+  },
+  {
+    "name": "Développé couché EMOM3'",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/_FkbD0FhgVE",
+    "youtube_id": "_FkbD0FhgVE",
+    "default_tempo": "2110.0",
+    "sample_notes": "Reprise facile avec un tempo lent et contrôlé, et une pause en bas",
+    "count": 8
+  },
+  {
+    "name": "Dips lestées en tempo",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/1cARvHTj_R8",
+    "youtube_id": "1cARvHTj_R8",
+    "default_tempo": "31X0",
+    "sample_notes": "Descente extra lente, pause tout en bas, remontée explo. Cherche l'amplitude",
+    "count": 8
+  },
+  {
+    "name": "Elevations latérales poulie buste 1/2 incliné",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.instagram.com/p/DATBhX9AQ4D/",
+    "youtube_id": "",
+    "default_tempo": "1/2s pause en h",
+    "sample_notes": "Pense à monter le coude au niveau de l'épaule, épaule en rotation interne",
+    "count": 8
+  },
+  {
+    "name": "Jefferson curl surélevé + pointes de pied sureleves",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/watch?v=4aav_ptG4dU&pp=ygUXamVmZmVyc29uIGN1cmwgZWxldmF0ZWQ%3D",
+    "youtube_id": "4aav_ptG4dU",
+    "default_tempo": "",
+    "sample_notes": "Décompose en  enroulant chaque vertèbre, dos complètement rond",
+    "count": 8
+  },
+  {
+    "name": "Presse à cuisses unilatérale",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/XrIfYHqPghM",
+    "youtube_id": "XrIfYHqPghM",
+    "default_tempo": "2110.0",
+    "sample_notes": "Pied assez haut, chaîne post., stop l'ampli quand bas du dos s'arrondit",
+    "count": 8
+  },
+  {
+    "name": "Extensions lombaires lourd (regarde vidéo)",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/NhKvlKl8E0M",
+    "youtube_id": "NhKvlKl8E0M",
+    "default_tempo": "2110.0",
+    "sample_notes": "Garde le bassin engagé vers l'avant (rétroversion), fessiers contractés",
+    "count": 8
+  },
+  {
+    "name": "Leg extension en tempo",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/nh7yhZ2P9eA",
+    "youtube_id": "nh7yhZ2P9eA",
+    "default_tempo": "21X0",
+    "sample_notes": "Rapproche toi de l'échec sur toutes les séries, montée explo (x), amplitude",
+    "count": 8
+  },
+  {
+    "name": "Leg curl en tempo",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/watch?v=o2Tma5Cek48&pp=ygUWYWx0ZXJuYXRlZCBiaWNlcHMgY3VybA%3D%3D",
+    "youtube_id": "o2Tma5Cek48",
+    "default_tempo": "21X0",
+    "sample_notes": "Rapproche toi de l'échec sur toutes les séries, montée explo (x), amplitude",
+    "count": 8
+  },
+  {
+    "name": "Rowing haltères buste supporté (met les bandes)",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/5ehAn6l-OqM",
+    "youtube_id": "5ehAn6l-OqM",
+    "default_tempo": "2010.0",
+    "sample_notes": "Focus sur les coudes ouverts bien vers l'arrière + extension thoracique (vidéo)",
+    "count": 8
+  },
+  {
+    "name": "Mobilisation des poignées",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/shorts/KEImekoUaAI",
+    "youtube_id": "KEImekoUaAI",
+    "default_tempo": "",
+    "sample_notes": "Suis la vidéo, une dizaine de rep par exo, ca doit te prendre 5mn de tps total",
+    "count": 8
+  },
+  {
+    "name": "Développé couché barre",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/_FkbD0FhgVE",
+    "youtube_id": "_FkbD0FhgVE",
+    "default_tempo": "",
+    "sample_notes": "Pas forcément de tempo ici, tjs en contrôle mais ajoute de la vitesse",
+    "count": 8
+  },
+  {
+    "name": "Gobelet squat en tempo",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/sFdexKWFtNk",
+    "youtube_id": "sFdexKWFtNk",
+    "default_tempo": "31X0",
+    "sample_notes": "Haltère serré contre le buste, coudes collés au corps, ouvres les hanches en bas",
+    "count": 8
+  },
+  {
+    "name": "Extensions triceps à la corde (poulie haute)",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/xguGXQAvbKk",
+    "youtube_id": "xguGXQAvbKk",
+    "default_tempo": "2110.0",
+    "sample_notes": "Ouvre sur l'extérieur à la fin du mouvement et contraction volontaire",
+    "count": 8
+  },
+  {
+    "name": "Développé militaire à la barre",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/F6RD8fz1Mw4",
+    "youtube_id": "F6RD8fz1Mw4",
+    "default_tempo": "2010.0",
+    "sample_notes": "Ne surcambre pas, bassin en rétro, développe au dessus de la ligne des oreilles",
+    "count": 8
+  },
+  {
+    "name": "Back squat en EMOM4'",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=7A2elbe1m2A&pp=ygUQYmFjayBzcXVhdCB0ZW1wbw%3D%3D",
+    "youtube_id": "7A2elbe1m2A",
+    "default_tempo": "2110.0",
+    "sample_notes": "Pas de tempo, execute tes reps rapidement pour profiter du temps de récup",
+    "count": 8
+  },
+  {
+    "name": "Tirage vertical poulie haute",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/IcE5c6qf4KE",
+    "youtube_id": "IcE5c6qf4KE",
+    "default_tempo": "1110.0",
+    "sample_notes": "Sers toi de l'élan pour tirer plus fort, ouvre bien la cage thoracique",
+    "count": 8
+  },
+  {
+    "name": "Biceps curl prise marteau",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/TWO3etZuH6I",
+    "youtube_id": "TWO3etZuH6I",
+    "default_tempo": "",
+    "sample_notes": "Focus sur les avant-bras ici, alterne un bras puis l'autre, sers toi de l'élan",
+    "count": 8
+  },
+  {
+    "name": "Extensions triceps à la barre EZ",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/vsuqUqnv1Ok",
+    "youtube_id": "vsuqUqnv1Ok",
+    "default_tempo": "1110.0",
+    "sample_notes": "Le bras est fixe, c'est uniquement l'avant bras qui se déplace, viens derrière la tête",
+    "count": 8
+  },
+  {
+    "name": "Développé militaire smith machine",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/E7ngsffMPR0",
+    "youtube_id": "E7ngsffMPR0",
+    "default_tempo": "21X0",
+    "sample_notes": "Banc incliné au maximum, ne surcambre pas le bas du dos, bassin / côte alignés",
+    "count": 8
+  },
+  {
+    "name": "Gobelet squat",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/6KO8PKpzvho",
+    "youtube_id": "6KO8PKpzvho",
+    "default_tempo": "1010.0",
+    "sample_notes": "Oublie tempo, envoie du lourd. Exercice de gainage à partir d'une certaine charge",
+    "count": 8
+  },
+  {
+    "name": "Tractions prise neutre lestées",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/E9vvwfxSZFc",
+    "youtube_id": "E9vvwfxSZFc",
+    "default_tempo": "",
+    "sample_notes": "Reste dans une amplitude dorsaux, va pas tout en haut ni tout en bas",
+    "count": 8
+  },
+  {
+    "name": "Elevations latérales poulie",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.instagram.com/p/DL95lIvIAfF/",
+    "youtube_id": "",
+    "default_tempo": "2110.0",
+    "sample_notes": "Pense à monter le coude au niveau de l'épaule, épaule en rotation interne",
+    "count": 8
+  },
+  {
+    "name": "Hollow hold avec un disque",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/watch?v=ek-bfRfCGDY&pp=ygUTbWVkZWNpbiBiYWxsIGhvbGxvdw%3D%3D",
+    "youtube_id": "ek-bfRfCGDY",
+    "default_tempo": "iso",
+    "sample_notes": "Tends le disque derrière la tête, bras & jambes tendus, départ en boule puis déplie",
+    "count": 8
+  },
+  {
+    "name": "Rowing buste penché smith machine",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/erE6gxCtwKc",
+    "youtube_id": "erE6gxCtwKc",
+    "default_tempo": "2110.0",
+    "sample_notes": "Garde le buste parallèle au sol, pas de mouvement de hanches, tires en dos uniquement",
+    "count": 8
+  },
+  {
+    "name": "Back squat en ladder 1/2/3",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=7A2elbe1m2A&pp=ygUQYmFjayBzcXVhdCB0ZW1wbw%3D%3D",
+    "youtube_id": "7A2elbe1m2A",
+    "default_tempo": "2110.0",
+    "sample_notes": "Pas de tempo, execute tes reps rapidement pour profiter du temps de récup",
+    "count": 8
+  },
+  {
+    "name": "Développé couché smith machine",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/gQ3afio08V8",
+    "youtube_id": "gQ3afio08V8",
+    "default_tempo": "21X0",
+    "sample_notes": "Contrôle la descente et explose sur la remontée bonne amplitude et charge",
+    "count": 8
+  },
+  {
+    "name": "Leg curl classique en tempo",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=o2Tma5Cek48&pp=ygUWYWx0ZXJuYXRlZCBiaWNlcHMgY3VybA%3D%3D",
+    "youtube_id": "o2Tma5Cek48",
+    "default_tempo": "2110.0",
+    "sample_notes": "Rapproche toi de l'échec sur toutes les séries, montée explo (x), amplitude",
+    "count": 8
+  },
+  {
+    "name": "Développé couché prise serrée smith machine",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/h15lqKRpxUQ",
+    "youtube_id": "h15lqKRpxUQ",
+    "default_tempo": "21X0",
+    "sample_notes": "Garde les coudes serrés, le long du corps, respecte un tempo lent et côntrolé",
+    "count": 8
+  },
+  {
+    "name": "Fentes bulgares haltères pied avant surélevé",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=tn9efls7uaQ&pp=ygUnZnJvbnQgbGVnIGRlZmljaXQgYnVsZ2FyaWFuIHNwbGl0IHNxdWF0",
+    "youtube_id": "tn9efls7uaQ",
+    "default_tempo": "2010.0",
+    "sample_notes": "Prends 30s entre les deux jambes pour récupérer, full amplitude",
+    "count": 8
+  },
+  {
+    "name": "Zercher cossack squat",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/nCs0wxQctiM",
+    "youtube_id": "nCs0wxQctiM",
+    "default_tempo": "2010.0",
+    "sample_notes": "Objectif descendre le plus bas possible tout en conservant la poitrine sortie",
+    "count": 8
+  },
+  {
+    "name": "Montée de genoux à la station à dips",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/shorts/DWs4-PmJaC4",
+    "youtube_id": "DWs4-PmJaC4",
+    "default_tempo": "2010.0",
+    "sample_notes": "Tu dois essayer d'emmener les genoux au menton, monte haut le bassin",
+    "count": 8
+  },
+  {
+    "name": "Développé militaire barre libre",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/F6RD8fz1Mw4",
+    "youtube_id": "F6RD8fz1Mw4",
+    "default_tempo": "21X0",
+    "sample_notes": "Ne surcambre pas, bassin en rétro, développe au dessus de la ligne des oreilles",
+    "count": 8
+  },
+  {
+    "name": "RDL haltères",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=xAL7lHwj30E&pp=ygUacm9tYW5pYW4gZGVhZGxpZnQgZHVtYmJlbGw%3D",
+    "youtube_id": "xAL7lHwj30E",
+    "default_tempo": "2010.0",
+    "sample_notes": "Focus envoyer le + possible les fesses en arrière, pousser fort dans les talons",
+    "count": 8
+  },
+  {
+    "name": "Extensions triceps à la corde poulie haute",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/1N0kO5jU7n8",
+    "youtube_id": "1N0kO5jU7n8",
+    "default_tempo": "2110.0",
+    "sample_notes": "Force vers l'extérieur en bas du mouvement pour accentuer la contraction",
+    "count": 8
+  },
+  {
+    "name": "Tractions en endurance EMOM8, une minute sur deux",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/TWO3etZuH6I",
+    "youtube_id": "TWO3etZuH6I",
+    "default_tempo": "",
+    "sample_notes": "Min 1 les tractions, Min 2 les squats",
+    "count": 8
+  },
+  {
+    "name": "Back squat EMOM3, une minute sur deux",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=7A2elbe1m2A&pp=ygUQYmFjayBzcXVhdCB0ZW1wbw%3D%3D",
+    "youtube_id": "7A2elbe1m2A",
+    "default_tempo": "2110.0",
+    "sample_notes": "Min 1 les tractions, Min 2 les squats",
+    "count": 8
+  },
+  {
+    "name": "Adducteurs work long range pied sur banc",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/VeO_ewwF70A",
+    "youtube_id": "VeO_ewwF70A",
+    "default_tempo": "3110.0",
+    "sample_notes": "Tu cherches à incliner la colonne pour faire toucher tes hanches au sol",
+    "count": 8
+  },
+  {
+    "name": "One leg back extension",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/shorts/efumpY60x18",
+    "youtube_id": "efumpY60x18",
+    "default_tempo": "2110.0",
+    "sample_notes": "Bassin rétroversé (en avant), autre jambe sert à stabiliser en poussant coussin",
+    "count": 8
+  },
+  {
+    "name": "Développé décliné smith machine",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/DLp4A14eWBg",
+    "youtube_id": "DLp4A14eWBg",
+    "default_tempo": "21X0",
+    "sample_notes": "Garde les coudes serrés, le long du corps, place un disque sous le banc pr décliner",
+    "count": 8
+  },
+  {
+    "name": "Low lunges jump with core rotation",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/watch?v=urKcmRjnQxQ&pp=ygUibG93IGx1bmdlIGp1bXAgd2l0aCBtZWQgYmFsbCB0d2lzdA%3D%3D",
+    "youtube_id": "urKcmRjnQxQ",
+    "default_tempo": "explosif",
+    "sample_notes": "Ne cherche pas à décoller haut mais à bouger le med-ball + rapidement possible",
+    "count": 8
+  },
+  {
+    "name": "Curl inversé à la barre",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/ahDqj6yPy5M",
+    "youtube_id": "ahDqj6yPy5M",
+    "default_tempo": "2010.0",
+    "sample_notes": "Exercice qui sollicite les muscles de l'épicondyle (coude), charger sans pb dessus",
+    "count": 8
+  },
+  {
+    "name": "Chest flies à la poulie sur banc",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/QDkFWmZqVgk",
+    "youtube_id": "QDkFWmZqVgk",
+    "default_tempo": "2010.0",
+    "sample_notes": "Reste 1s contracté devant en fin de mouvement en contraction volontaire",
+    "count": 8
+  },
+  {
+    "name": "Star plank",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/watch?v=-9toG6869YY&pp=ygUKc3RhciBwbGFuaw%3D%3D",
+    "youtube_id": "-9toG6869YY",
+    "default_tempo": "iso",
+    "sample_notes": "Repousse le sol avec la tranche de ton pied, garde l'autre jambe bien haute",
+    "count": 8
+  },
+  {
+    "name": "Low squat bunny jump",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/popbMnbmIo0",
+    "youtube_id": "popbMnbmIo0",
+    "default_tempo": "",
+    "sample_notes": "6 sauts devant / derrière (1= aller-retour), 6 sur le côté droite / gauche",
+    "count": 8
+  },
+  {
+    "name": "Z-press alternés aux haltères, assis au sol",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/RX6t24H_y2k",
+    "youtube_id": "RX6t24H_y2k",
+    "default_tempo": "2110.0",
+    "sample_notes": "Garde la poitrine sortie, pense à t'autograndir au max, ca doit tirer haut du dos",
+    "count": 8
+  },
+  {
+    "name": "Squat jump départ assis le + haut possible",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/ckOWNYFPHHk",
+    "youtube_id": "ckOWNYFPHHk",
+    "default_tempo": "explosif",
+    "sample_notes": "Focus : Décolle le + haut possible sur chaque rep, replace toi entre chaque rep",
+    "count": 8
+  },
+  {
+    "name": "Fentes cursty pied avant surélevé",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/JQPmfeXSuxo",
+    "youtube_id": "JQPmfeXSuxo",
+    "default_tempo": "20X0",
+    "sample_notes": "Garde le femur de la jambe avant en rotation interne, pied arrière loin derrière",
+    "count": 8
+  },
+  {
+    "name": "Tractions pronation lestées en lourd",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/XUkb6H9ddiQ",
+    "youtube_id": "XUkb6H9ddiQ",
+    "default_tempo": "",
+    "sample_notes": "Focus force sur ce programme",
+    "count": 8
+  },
+  {
+    "name": "Copenhagen plank raises",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/VeO_ewwF70A",
+    "youtube_id": "VeO_ewwF70A",
+    "default_tempo": "2010.0",
+    "sample_notes": "Cale pied sur dossier d'un banc, effectues des montées & descentes en controlant",
+    "count": 8
+  },
+  {
+    "name": "Rowing buste penché sur banc incliné",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/FiQ1X4jaaCY",
+    "youtube_id": "FiQ1X4jaaCY",
+    "default_tempo": "2110.0",
+    "sample_notes": "Trajectoire légèrement circulaire, tire haltères aux hanches. Relâche épaule en avant",
+    "count": 8
+  },
+  {
+    "name": "Obliques au banc à lombaires",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/shorts/KFMVZm0pmrE",
+    "youtube_id": "KFMVZm0pmrE",
+    "default_tempo": "1110.0",
+    "sample_notes": "Mvt nouveau donc contrôle, privilégie amplitude, coussin réglé tt en bas",
+    "count": 8
+  },
+  {
+    "name": "Single leg KB swap",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/shorts/hICGAtZEfNA",
+    "youtube_id": "hICGAtZEfNA",
+    "default_tempo": "",
+    "sample_notes": "Exercice d'équilibre, pas de vitesse, fléchis légèrement le genou",
+    "count": 8
+  },
+  {
+    "name": "Back squat pausé EMOM2'",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/SN6MeVlsTLY",
+    "youtube_id": "SN6MeVlsTLY",
+    "default_tempo": "2210.0",
+    "sample_notes": "Effectue une pause le cul au sol, avant de remonter de manière explosive",
+    "count": 8
+  },
+  {
+    "name": "Ice skater jumps",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/qM5jviFhw9U",
+    "youtube_id": "qM5jviFhw9U",
+    "default_tempo": "explosif",
+    "sample_notes": "Saute le + loin possible en déportant ton centre 2 gravité, absorbe avant de relancer",
+    "count": 8
+  },
+  {
+    "name": "One leg curl (montée & descente)",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/HsNynjAarZA",
+    "youtube_id": "HsNynjAarZA",
+    "default_tempo": "1010.0",
+    "sample_notes": "Amplitude, descente lente (2s) et remontée explosive, recup 30s entre les 2 jbe",
+    "count": 8
+  },
+  {
+    "name": "Fentes bulgares pied avant surélevé avec haltères",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/jibEU-mw1rA",
+    "youtube_id": "jibEU-mw1rA",
+    "default_tempo": "2010.0",
+    "sample_notes": "Tu te tiens d'une main, haltère dans l'autre, recherche de l'amplitude profonde",
+    "count": 8
+  },
+  {
+    "name": "Tractions pronation en endurance",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=0UlwXsQMvKA&pp=ygUQbWF4aW11bSBwdWxsIHVwcw%3D%3D",
+    "youtube_id": "0UlwXsQMvKA",
+    "default_tempo": "2010.0",
+    "sample_notes": "Objectif 20 tractions d'ici la fin du programme, envoie tout première série",
+    "count": 8
+  },
+  {
+    "name": "Fly press aux haltères",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=u7qKtYIgsUY&pp=ygUJZmx5IHByZXNz",
+    "youtube_id": "u7qKtYIgsUY",
+    "default_tempo": "2010.0",
+    "sample_notes": "Mix entre écarté et développé, garde angle du coude fixe, privilégie amplitude",
+    "count": 8
+  },
+  {
+    "name": "Romanian deadlift aux haltères",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=9Ruzgah7L2o&pp=ygULZHVtYmVsbCByZGw%3D",
+    "youtube_id": "9Ruzgah7L2o",
+    "default_tempo": "2010.0",
+    "sample_notes": "Envoie les fesses en arrière, mouvement charnière de hanches",
+    "count": 8
+  },
+  {
+    "name": "V-up",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=7UVgs18Y1P4&pp=ygUEdi11cA%3D%3D",
+    "youtube_id": "7UVgs18Y1P4",
+    "default_tempo": "2010.0",
+    "sample_notes": "Coordonne relevé de jambes avec les épaules, reviens épaules au sol chaque rep",
+    "count": 8
+  },
+  {
+    "name": "Bobine d'andrieux avec barre + élastique",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/shorts/TcJIp8Nanrk",
+    "youtube_id": "TcJIp8Nanrk",
+    "default_tempo": "",
+    "sample_notes": "Sur 2 set, tu enroules à l'échec, càd jusqu'à ce que tu n'aies plus de jus pr rouler",
+    "count": 8
+  },
+  {
+    "name": "Extensions du cou avec disque",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/shorts/XmXCEoGdrxk",
+    "youtube_id": "XmXCEoGdrxk",
+    "default_tempo": "2110.0",
+    "sample_notes": "Priviégie l'amplitude à la charge avec un tempo lent, descente complète",
+    "count": 8
+  },
+  {
+    "name": "Curl marteau alterné aux haltères",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/JbQf3n5olz8",
+    "youtube_id": "JbQf3n5olz8",
+    "default_tempo": "2010.0",
+    "sample_notes": "Tu peux te mettre de \"tricher\" le mouvement à mesure que l'on progresse en charge",
+    "count": 8
+  },
+  {
+    "name": "Elevations laterales haltère unilatérale",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/hKNlhOECex8",
+    "youtube_id": "hKNlhOECex8",
+    "default_tempo": "2010.0",
+    "sample_notes": "Met lourd quitte à légèrement tricher et monte le petit doigt au niveau de l'épaule",
+    "count": 8
+  },
+  {
+    "name": "Landmine rotation",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/watch?v=e5DP6961WEk&pp=ygURbGFuZG1pbmUgcm90YXRpb24%3D",
+    "youtube_id": "e5DP6961WEk",
+    "default_tempo": "21X0",
+    "sample_notes": "Bascule de chaque côté de manière en retenant, avant de relancer en explosif",
+    "count": 8
+  },
+  {
+    "name": "Back squat libre",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/KI-7iLMF2Gs",
+    "youtube_id": "KI-7iLMF2Gs",
+    "default_tempo": "2010.0",
+    "sample_notes": "Plus de pause, on rebondit direct au sol et essayer de chercher lourd",
+    "count": 8
+  },
+  {
+    "name": "Neck side plank",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/watch?v=zX2bOekq-q8&pp=ygUPbmVjayBzaWRlIHBsYW5r",
+    "youtube_id": "zX2bOekq-q8",
+    "default_tempo": "iso",
+    "sample_notes": "Plus tu vas éloigner les pieds, plus tu vas rendre l'exercice difficile",
+    "count": 8
+  },
+  {
+    "name": "Tractions lestées",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/XUkb6H9ddiQ",
+    "youtube_id": "XUkb6H9ddiQ",
+    "default_tempo": "",
+    "sample_notes": "Toujours focus force sur ce programme",
+    "count": 8
+  },
+  {
+    "name": "Farmer walk + 10 shrugs",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/watch?v=gwe-V5RilW4",
+    "youtube_id": "gwe-V5RilW4",
+    "default_tempo": "iso",
+    "sample_notes": "Prends ton temps sur l'aller-retour, tu termines sur 10 shrugs en arrivant",
+    "count": 8
+  },
+  {
+    "name": "Front squat EMOM2'",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=uYumuL_G_V0&pp=ygULZnJvbnQgc3F1YXQ%3D",
+    "youtube_id": "uYumuL_G_V0",
+    "default_tempo": "2110.0",
+    "sample_notes": "Premier avec pause en bas, second sans pause. CONTROLE",
+    "count": 7
+  },
+  {
+    "name": "Oiseaux haltères buste penché",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/watch?v=ZgfYtlRxrlM&pp=ygUYb2lzZWF1eCBoYWx0w6hyZXMgYnVzdGUg",
+    "youtube_id": "ZgfYtlRxrlM",
+    "default_tempo": "",
+    "sample_notes": "Va échec sur série 1, garde 1RiR(rep in reserve) sur les 2 suivantes",
+    "count": 7
+  },
+  {
+    "name": "Tirage inversé pieds surélevés (à la barre)",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=-gI2fDiURuE&pp=ygUaaW52ZXJ0ZWQgcm93IGZlZXQgZWxldmF0ZWQ%3D",
+    "youtube_id": "-gI2fDiURuE",
+    "default_tempo": "21X0",
+    "sample_notes": "Standardise la position, tirage explosif, touche les pecs et exc. contrôlée",
+    "count": 7
+  },
+  {
+    "name": "Pompes claquées",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/M-eCOBEMZ28",
+    "youtube_id": "M-eCOBEMZ28",
+    "default_tempo": "explo",
+    "sample_notes": "Focus : Saute le + haut possible sur chaque rep et temps de contact au sol court",
+    "count": 7
+  },
+  {
+    "name": "One leg lunge + high knee",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/7mi4YZdFYmg",
+    "youtube_id": "7mi4YZdFYmg",
+    "default_tempo": "2110.0",
+    "sample_notes": "Enchaîne les 6 sans temps mort, tps contact au sol court, + haut possible",
+    "count": 7
+  },
+  {
+    "name": "Sprint progressif sur 30m",
+    "color": null,
+    "category": "other",
+    "youtube_url": "https://www.youtube.com/watch?v=mRX-dZQxMvY",
+    "youtube_id": "mRX-dZQxMvY",
+    "default_tempo": "",
+    "sample_notes": "",
+    "count": 7
+  },
+  {
+    "name": "pour bâtir ton cardio)",
+    "color": null,
+    "category": "other",
+    "youtube_url": "",
+    "youtube_id": "",
+    "default_tempo": "",
+    "sample_notes": "",
+    "count": 7
+  },
+  {
+    "name": "BLOC 1 : (4x1000m)",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "",
+    "youtube_id": "",
+    "default_tempo": "gestion allure",
+    "sample_notes": "Ta recup se fait en passive, en marchant, reste constant ds les temps",
+    "count": 7
+  },
+  {
+    "name": "BLOC 2 : (8x50m)",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "",
+    "youtube_id": "",
+    "default_tempo": "vitesse",
+    "sample_notes": "Recup en actif, ici gère ta vitesse pour pas t'épuiser, récup courte",
+    "count": 7
+  },
+  {
+    "name": "Soulevé de terre sumo stance",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/1HLOsYsWV8w",
+    "youtube_id": "1HLOsYsWV8w",
+    "default_tempo": "2010.0",
+    "sample_notes": "La barre longe les tibias, place toi bien proche de la barre, hanches basses",
+    "count": 7
+  },
+  {
+    "name": "Tractions endurance EMOM5'",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/gy1dyxEdCqc",
+    "youtube_id": "gy1dyxEdCqc",
+    "default_tempo": "",
+    "sample_notes": "Focus sur la vitesse d'execution pour avoir un maximum de recup",
+    "count": 7
+  },
+  {
+    "name": "Arrière d'épaule unilattéral sur banc",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/F-lWnJ6VZ2E",
+    "youtube_id": "F-lWnJ6VZ2E",
+    "default_tempo": "2110.0",
+    "sample_notes": "Garde le bras aligné sur l'épaule, l'épaule passe devant le menton en bas",
+    "count": 7
+  },
+  {
+    "name": "Fly press aux haltères sur banc incliné",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=JSDpq14vCZ8&pp=ygUaZmx5IHByZXNzIG9uIGluY2xpbmUgYmVuY2g%3D",
+    "youtube_id": "JSDpq14vCZ8",
+    "default_tempo": "2110.0",
+    "sample_notes": "Abductions du bras pour bosser le pec en étirement, va chercher l'étirement",
+    "count": 7
+  },
+  {
+    "name": "Oiseau haltères assis sur banc",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/IZJGtLwbMYw",
+    "youtube_id": "IZJGtLwbMYw",
+    "default_tempo": "2010.0",
+    "sample_notes": "Drive le coude vers le côté et l'arrière, reste dans la range qui travaille",
+    "count": 7
+  },
+  {
+    "name": "Développé couché MG 1 rep + ladder 1/2/3",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "",
+    "youtube_id": "",
+    "default_tempo": "classique",
+    "sample_notes": "Rester sous un RPE<8 sur la montée de gamme, noter RPE ladder",
+    "count": 6
+  },
+  {
+    "name": "Développé militaire barre 8x5 format EMOM",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=uVDhZalbPAo&pp=ygUMc3RyaWN0IHByZXNz",
+    "youtube_id": "uVDhZalbPAo",
+    "default_tempo": "classique",
+    "sample_notes": "Barre au dessus de la ligne des oreilles, ouverture thoracique (vidéo)",
+    "count": 6
+  },
+  {
+    "name": "Tractions lestées séries classiques",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/VGc2UUcIVrA",
+    "youtube_id": "VGc2UUcIVrA",
+    "default_tempo": "explosif",
+    "sample_notes": "Passe le menton au dessus de la barre, va à l'échec ou presque sur série 1",
+    "count": 6
+  },
+  {
+    "name": "Z-Press haltères",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=k_kXBEjURUA&pp=ygUPZHVtYmVsbCB6LXByZXNz",
+    "youtube_id": "k_kXBEjURUA",
+    "default_tempo": "2010.0",
+    "sample_notes": "Privilégie l'amplitude maximale et l'ouverture thoracique (etirement milieu dos)",
+    "count": 6
+  },
+  {
+    "name": "Rowing haltères sur banc incliné coudes ouverts",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=dU8JAMQikdc&pp=ygUlY2hlc3Qgc3VwcG9ydGVkIHJvdyB3aWRlIGdyaXAgZHVtYmVsbA%3D%3D",
+    "youtube_id": "dU8JAMQikdc",
+    "default_tempo": "2010.0",
+    "sample_notes": "Laisse l'épaule partir complètement en avant pour étirer, coudes ouverts <90°",
+    "count": 6
+  },
+  {
+    "name": "Front squat pause en bas EMOM2'",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=uYumuL_G_V0&pp=ygULZnJvbnQgc3F1YXQ%3D",
+    "youtube_id": "uYumuL_G_V0",
+    "default_tempo": "2210.0",
+    "sample_notes": "Premier avec pause en bas, second sans pause. CONTROLE",
+    "count": 6
+  },
+  {
+    "name": "Alternated b-stance Jump over the line",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=jY5oqGNDvKc&pp=ygUYYWx0ZXJuYXRlZCBiLXN0YW5jZSBqdW1w",
+    "youtube_id": "jY5oqGNDvKc",
+    "default_tempo": "explosif",
+    "sample_notes": "Saute le plus haut possible sur chaque saut (puissance = force x vitesse)",
+    "count": 6
+  },
+  {
+    "name": "Reverse nordics sans assistance",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=x2K8uH7dcqg&pp=ygUTcmV2ZXJzZSBub3JkaWMgY3VybA%3D%3D",
+    "youtube_id": "x2K8uH7dcqg",
+    "default_tempo": "2020.0",
+    "sample_notes": "Descente et remontée lente, dans la limite de ton amplitude possible",
+    "count": 6
+  },
+  {
+    "name": "Développé couché barre pausée aux pecs",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=y9aJlqQvsmQ&pp=ygUbYmVuY2ggcHJlc3Mgc3BlZWQgaW50ZW50aW9u",
+    "youtube_id": "y9aJlqQvsmQ",
+    "default_tempo": "20X0",
+    "sample_notes": "Focus sur la vitesse de remontée, les 3 reps doivent être aussi rapides",
+    "count": 6
+  },
+  {
+    "name": "Plyometrics push-up",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=QcAAKuEgYjw&pp=ygUScGx5b21ldHJpYyBwdXNoLXVw",
+    "youtube_id": "QcAAKuEgYjw",
+    "default_tempo": "explosif",
+    "sample_notes": "Enchaîne direct avec les pompes ou tu sautes le plus haut possible",
+    "count": 6
+  },
+  {
+    "name": "Tractions pronations lestées EMOM2'",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=trq6rUi5F5M&pp=ygUOcGF1c2VkIHB1bGwgdXA%3D",
+    "youtube_id": "trq6rUi5F5M",
+    "default_tempo": "11X0",
+    "sample_notes": "Tirage explosif + pause avec le menton au dessus barre (1s)",
+    "count": 6
+  },
+  {
+    "name": "Développé militaire barre",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=uVDhZalbPAo&pp=ygUMc3RyaWN0IHByZXNz",
+    "youtube_id": "uVDhZalbPAo",
+    "default_tempo": "2010.0",
+    "sample_notes": "Barre au dessus de la ligne des oreilles, echec ou presque série 1",
+    "count": 6
+  },
+  {
+    "name": "Tirage inversé sous barre tempo explosif",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/4tqKMvue3SU",
+    "youtube_id": "4tqKMvue3SU",
+    "default_tempo": "explosif",
+    "sample_notes": "Vitesse de tirage, quand elle se dégrade stopper la série. touche les pecs",
+    "count": 6
+  },
+  {
+    "name": "Dips en séries classiques",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/MTWrCC1gTuU",
+    "youtube_id": "MTWrCC1gTuU",
+    "default_tempo": "classique",
+    "sample_notes": "Dernier exercice, on met lourd mais ne cherche pas l'échec sur celui-là",
+    "count": 6
+  },
+  {
+    "name": "Back squat pausé en bas",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=lqflf3ophJw&pp=ygURYmFjayBwYXVzZWQgc3F1YXQ%3D",
+    "youtube_id": "lqflf3ophJw",
+    "default_tempo": "22X0",
+    "sample_notes": "C'est léger donc focus sur la forme. Amplitude + contrôle de mvt, 2s pause",
+    "count": 6
+  },
+  {
+    "name": "CMJ départ assis sur chaise",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/jS8_qNZ81z8",
+    "youtube_id": "jS8_qNZ81z8",
+    "default_tempo": "explosif",
+    "sample_notes": "Essaie de trouver un pt de repère pour suivre ta progression sur 8 semaines",
+    "count": 6
+  },
+  {
+    "name": "Ischios serviette descente 1 jambe remontée 2",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/TD6Pu1mUVyo",
+    "youtube_id": "TD6Pu1mUVyo",
+    "default_tempo": "2010.0",
+    "sample_notes": "Focus descendre le plus loin possible à une jambe (quasi jambe tendue)",
+    "count": 6
+  },
+  {
+    "name": "Unilateral hamstring bridge",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://youtube.com/shorts/Q7bTFQ9Z__w?feature=share",
+    "youtube_id": "Q7bTFQ9Z__w",
+    "default_tempo": "2010.0",
+    "sample_notes": "Descends bas en amplitude, monte le bassin bien haut, genou ~90°",
+    "count": 6
+  },
+  {
+    "name": "Fentes arrières smith machine, pied avant surélevé",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=zlVzz0s-m1A&pp=ygUuZnJvbnQgZm9vdCBlbGV2YXRlZCBzcGxpdCBzcXVhdCBzbWl0aCBtYWNoaW5lIA%3D%3D",
+    "youtube_id": "zlVzz0s-m1A",
+    "default_tempo": "21X0",
+    "sample_notes": "Place un step pour surélever, genou arr. qui touche sol sur chaque rep (standard)",
+    "count": 6
+  },
+  {
+    "name": "Développé incliné haltères explosif",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=M2EmR9uk2Q0",
+    "youtube_id": "M2EmR9uk2Q0",
+    "default_tempo": "21X0",
+    "sample_notes": "Coordonne ta poussée avec la poussée des jambes, descente lente, explosif",
+    "count": 6
+  },
+  {
+    "name": "Smith machine bench press",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/t7Cvf2fiMYc",
+    "youtube_id": "t7Cvf2fiMYc",
+    "default_tempo": "explosif",
+    "sample_notes": "Mouvement explosif comme en séance 1, décharge immédiatement après",
+    "count": 6
+  },
+  {
+    "name": "Wide neck press",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=n2QYvIMlsBQ&pp=ygUPd2lkZSBuZWNrIHByZXNz",
+    "youtube_id": "n2QYvIMlsBQ",
+    "default_tempo": "2010.0",
+    "sample_notes": "Privilégie l'amplitude, bassin engagé vers l'avant aligné avec cage thoracique",
+    "count": 6
+  },
+  {
+    "name": "Tractions EMOM4'",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=trq6rUi5F5M&pp=ygUOcGF1c2VkIHB1bGwgdXA%3D",
+    "youtube_id": "trq6rUi5F5M",
+    "default_tempo": "classique",
+    "sample_notes": "Un peu de travail d'endurance sur le dos",
+    "count": 6
+  },
+  {
+    "name": "One leg RDL haltères",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=dUkZ1fThccI&pp=ygUeb25lIGxlZyByZGwgYXNzaXN0ZWQgYmFjayBmb290",
+    "youtube_id": "dUkZ1fThccI",
+    "default_tempo": "2110.0",
+    "sample_notes": "Pied avant loin du mur, touche avec tes fesses le mur, pas trop de poids jbe arrière",
+    "count": 6
+  },
+  {
+    "name": "Neck roll arrière (sur la recup du EMOM)",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://youtu.be/W_R5W0Apc_U?t=174",
+    "youtube_id": "W_R5W0Apc_U",
+    "default_tempo": "",
+    "sample_notes": "Passe sans les mains, beaucoup d'amplitude",
+    "count": 6
+  },
+  {
+    "name": "Kettle-bell swing aux haltères en EMOM (sur 5min)",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/8H2LpBjdUi0",
+    "youtube_id": "8H2LpBjdUi0",
+    "default_tempo": "explo",
+    "sample_notes": "Ecarte un peu plus les jambes que sur un travail au ktl-bell, sinon même mvt",
+    "count": 6
+  },
+  {
+    "name": "Entraînement zone 2 -> endurance fondamentale",
+    "color": null,
+    "category": "other",
+    "youtube_url": "",
+    "youtube_id": "",
+    "default_tempo": "",
+    "sample_notes": "",
+    "count": 6
+  },
+  {
+    "name": "Se vider la tête",
+    "color": null,
+    "category": "other",
+    "youtube_url": "",
+    "youtube_id": "",
+    "default_tempo": "",
+    "sample_notes": "",
+    "count": 6
+  },
+  {
+    "name": "Lateral jumps par dessus un obstabcle (+ haut)",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/h_0y84OZ7j4",
+    "youtube_id": "h_0y84OZ7j4",
+    "default_tempo": "explosif",
+    "sample_notes": "Place un bâton comme en vidéo, temps de contact au sol court, hauteur d'un banc",
+    "count": 6
+  },
+  {
+    "name": "Flexions du cou avec disque",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/shorts/nKXZJGGL4kY",
+    "youtube_id": "nKXZJGGL4kY",
+    "default_tempo": "2110.0",
+    "sample_notes": "Priviégie l'amplitude à la charge avec un tempo lent, descente complète",
+    "count": 6
+  },
+  {
+    "name": "Fentes bulgares tenu à un support",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=I1Ee3M6SDgQ&pp=ygUfc3VwcG9ydGVkIGJ1bGdhcmlhbiBzcGxpdCBzcXVhdA%3D%3D",
+    "youtube_id": "I1Ee3M6SDgQ",
+    "default_tempo": "",
+    "sample_notes": "PAUSE 30s entre les deux jambes, plus ca devient dur plus tu te délestes",
+    "count": 5
+  },
+  {
+    "name": "Tractions pronations lestées EMOM3'",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=trq6rUi5F5M&pp=ygUOcGF1c2VkIHB1bGwgdXA%3D",
+    "youtube_id": "trq6rUi5F5M",
+    "default_tempo": "11X0",
+    "sample_notes": "Tirage explosif + pause avec le menton au dessus barre (1s)",
+    "count": 5
+  },
+  {
+    "name": "EMOM3' Box squat",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/2lVP7PBn-Uk",
+    "youtube_id": "2lVP7PBn-Uk",
+    "default_tempo": "21X0",
+    "sample_notes": "Ne te laisse pas applatir par la charge, reste gaîné et contrôle la descente",
+    "count": 5
+  },
+  {
+    "name": "Tractions ladder 4/6/8",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=trq6rUi5F5M&pp=ygUOcGF1c2VkIHB1bGwgdXA%3D",
+    "youtube_id": "trq6rUi5F5M",
+    "default_tempo": "classique",
+    "sample_notes": "Min 1 : 4 reps, Min 2 : 6 reps, Min 3 : 8 reps, Min 4 : 4 reps...",
+    "count": 5
+  },
+  {
+    "name": "Depth Triple CMJ (depuis un banc)",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/ovJQ7hGfEhU",
+    "youtube_id": "ovJQ7hGfEhU",
+    "default_tempo": "explosif",
+    "sample_notes": "Garde les mains aux hanches, tps de contact réduit au sol",
+    "count": 5
+  },
+  {
+    "name": "GHD extensions sur table",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://youtube.com/shorts/bQnTtk4mHoQ?feature=share",
+    "youtube_id": "bQnTtk4mHoQ",
+    "default_tempo": "21X0",
+    "sample_notes": "Monte les pieds le plus haut possible, mouvement explosif, sers les fesses",
+    "count": 5
+  },
+  {
+    "name": "Tractions chaise romaine (EMOM sur 5min)",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/hpSaHSPLsu8",
+    "youtube_id": "hpSaHSPLsu8",
+    "default_tempo": "1110.0",
+    "sample_notes": "Je me rends pas compte de ton niveau actuel, si trop facile augmente nbr de rep",
+    "count": 5
+  },
+  {
+    "name": "Iso horse stance oscillation",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/shorts/CD40RnMHwYM",
+    "youtube_id": "CD40RnMHwYM",
+    "default_tempo": "2110.0",
+    "sample_notes": "Descends bien bas avec les jambes bien ecacrtés, on étire à fond les adduc",
+    "count": 5
+  },
+  {
+    "name": "Relevés de jambes suspendu avec haltères",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/shorts/8MnB1-MSh90",
+    "youtube_id": "8MnB1-MSh90",
+    "default_tempo": "",
+    "sample_notes": "Met une haltère entre les pieds, comme en vidéo",
+    "count": 5
+  },
+  {
+    "name": "Dips lesté en tempo",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/9wHqh9RyDZc",
+    "youtube_id": "9wHqh9RyDZc",
+    "default_tempo": "42X0",
+    "sample_notes": "Descente basse avec un angle coude>90°, descente lente montée explo",
+    "count": 5
+  },
+  {
+    "name": "Tractions endurance en EMOM7' (5min)",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/TWO3etZuH6I",
+    "youtube_id": "TWO3etZuH6I",
+    "default_tempo": "",
+    "sample_notes": "7 reps / min, toutes les min, sur 5min",
+    "count": 5
+  },
+  {
+    "name": "Skater squat (sans te tenir)",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/XQyUlYxTGuM",
+    "youtube_id": "XQyUlYxTGuM",
+    "default_tempo": "21X0",
+    "sample_notes": "Tu n'as plus le droit de te tenir, genou jbe arrière touche sol chaque rep",
+    "count": 5
+  },
+  {
+    "name": "Développé couché MG + EMOM1'",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "",
+    "youtube_id": "",
+    "default_tempo": "classique",
+    "sample_notes": "Focus qualité technique ici, on doit rester sous un RPE<7,8",
+    "count": 4
+  },
+  {
+    "name": "Développé couché MG + EMOM1/2'",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "",
+    "youtube_id": "",
+    "default_tempo": "classique",
+    "sample_notes": "Min 1 : 1 rep, min 2 : 2reps, min 3 : 1rep, min 4 : 2 reps...",
+    "count": 4
+  },
+  {
+    "name": "Tirage bûcheron haltères",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/Nb7-rwWfyxE",
+    "youtube_id": "Nb7-rwWfyxE",
+    "default_tempo": "2010.0",
+    "sample_notes": "Laisse l'épaule partir complètement en avant pour étirer",
+    "count": 4
+  },
+  {
+    "name": "Back squat 9x5 format EMOM",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=QmZAiBqPvZw&pp=ygUKYmFjayBzcXVhdA%3D%3D",
+    "youtube_id": "QmZAiBqPvZw",
+    "default_tempo": "2110.0",
+    "sample_notes": "Déchire le sol avec ton talon, bassin bien haut",
+    "count": 4
+  },
+  {
+    "name": "Tirage bûcheron haltères + bande (vidéo)",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=4emrk_nq4VA&pp=ygUSZHVtYmVsbCByb3cgKyBiYW5k",
+    "youtube_id": "4emrk_nq4VA",
+    "default_tempo": "2010.0",
+    "sample_notes": "Laisse l'épaule partir complètement en avant pour étirer",
+    "count": 4
+  },
+  {
+    "name": "Fentes bulgares tenu à un support (TEMPO)",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=I1Ee3M6SDgQ&pp=ygUfc3VwcG9ydGVkIGJ1bGdhcmlhbiBzcGxpdCBzcXVhdA%3D%3D",
+    "youtube_id": "I1Ee3M6SDgQ",
+    "default_tempo": "30X0",
+    "sample_notes": "PAUSE 30s entre les deux jambes, plus ca devient dur plus tu te délestes",
+    "count": 4
+  },
+  {
+    "name": "Obliques à la barre",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/shorts/xXmW9qs9mqU",
+    "youtube_id": "xXmW9qs9mqU",
+    "default_tempo": "",
+    "sample_notes": "Plus la barre est longue, plus c'est dur pour (aussi travail de grip)",
+    "count": 4
+  },
+  {
+    "name": "Obliques à la barre (vraie barre)",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/shorts/xXmW9qs9mqU",
+    "youtube_id": "xXmW9qs9mqU",
+    "default_tempo": "",
+    "sample_notes": "Plus la barre est longue, plus c'est dur pour (aussi travail de grip)",
+    "count": 4
+  },
+  {
+    "name": "Soulevé de terre MG 2 rep + EMOM4'",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=1ZXobu7JvvE&pp=ygUIZGVhZGxpZnQ%3D",
+    "youtube_id": "1ZXobu7JvvE",
+    "default_tempo": "",
+    "sample_notes": "Monter a 130 sur la MG noter RPE ici :",
+    "count": 4
+  },
+  {
+    "name": "Lunges KB bounds",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.instagram.com/reel/C4vAkLeMmHs/",
+    "youtube_id": "",
+    "default_tempo": "tps contact court",
+    "sample_notes": "Travail de décélération, décélère le + vite possible pour relancer, plein pied",
+    "count": 4
+  },
+  {
+    "name": "Single leg romanian deadlift",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=-StB7VaTWos&pp=ygUOc2luZ2xlIGxlZyByZGw%3D",
+    "youtube_id": "-StB7VaTWos",
+    "default_tempo": "2010.0",
+    "sample_notes": "Ton corps forme un balancier avec les hanches en son centre. Jbe arrière haut",
+    "count": 4
+  },
+  {
+    "name": "Reverse row explosif",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/4tqKMvue3SU",
+    "youtube_id": "4tqKMvue3SU",
+    "default_tempo": "iso",
+    "sample_notes": "Vitesse de tirage, quand elle se dégrade stopper la série. touche les pecs",
+    "count": 4
+  },
+  {
+    "name": "Cossack zercher squat",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/As7LCfArX7o",
+    "youtube_id": "As7LCfArX7o",
+    "default_tempo": "lent",
+    "sample_notes": "Travaille sur ton amplitude la plus profonde possible, tt le pied reste au sol",
+    "count": 4
+  },
+  {
+    "name": "Reverse row explosif (place pieds + loins)",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/4tqKMvue3SU",
+    "youtube_id": "4tqKMvue3SU",
+    "default_tempo": "iso",
+    "sample_notes": "Vitesse de tirage, quand elle se dégrade stopper la série. touche les pecs",
+    "count": 4
+  },
+  {
+    "name": "Cossack zercher squat ( - lourd, + amplitude)",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/As7LCfArX7o",
+    "youtube_id": "As7LCfArX7o",
+    "default_tempo": "lent",
+    "sample_notes": "Reste vertical et pousse uniquement avec les jambes, pas de hanches",
+    "count": 4
+  },
+  {
+    "name": "Reverse row unliatéral (à la barre)",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/LpvviRkcA4o",
+    "youtube_id": "LpvviRkcA4o",
+    "default_tempo": "21X0",
+    "sample_notes": "Garde les jambes tendues pour avoir une position standardisée, rotation",
+    "count": 4
+  },
+  {
+    "name": "Smith machine bench press throws un bras",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/watch?v=5Pi66qmX_pw&pp=ygUic21pdGggbWFjaGluZSBiZW5jaCBwcmVzcyBleHBsb3Npdg%3D%3D",
+    "youtube_id": "5Pi66qmX_pw",
+    "default_tempo": "explosif",
+    "sample_notes": "Jette à un bras puis réceptionne à deux, fais 6 reps sur un bras puis change",
+    "count": 4
+  },
+  {
+    "name": "Tirage Y au TRX (explosif)",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/OsdJlvqllco",
+    "youtube_id": "OsdJlvqllco",
+    "default_tempo": "explosif",
+    "sample_notes": "Tire le plus haut et le plus fort possible et reviens complètement bras tendus",
+    "count": 4
+  },
+  {
+    "name": "EMOM5' KB swing",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/watch?v=1cVT3ee9mgU&pp=ygUIa2Igc3dpbmc%3D",
+    "youtube_id": "1cVT3ee9mgU",
+    "default_tempo": "explosif",
+    "sample_notes": "Fort sur l'extension de hanche, très explosif, pas trop de flexion de genou",
+    "count": 4
+  },
+  {
+    "name": "Seated box jump",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/Ogats4wEMlU",
+    "youtube_id": "Ogats4wEMlU",
+    "default_tempo": "explosif",
+    "sample_notes": "Garde les mains aux hanches, tps de contact réduit au sol, le + haut possible",
+    "count": 4
+  },
+  {
+    "name": "Smith machine bench press throws à deux bras",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/Fi0ef_SxzqQ",
+    "youtube_id": "Fi0ef_SxzqQ",
+    "default_tempo": "explosif",
+    "sample_notes": "Dès que t'es prêt, descente rapide + relancée explosive",
+    "count": 4
+  },
+  {
+    "name": "Neck roll arrière avec passage sur l'épaule",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://youtube.com/shorts/maXWwGJTQfo?si=CIbZLY2rzTqPLJBc",
+    "youtube_id": "maXWwGJTQfo",
+    "default_tempo": "",
+    "sample_notes": "Place le poids (centre de masse) sur le cou et l'épaule, décharge les hanches",
+    "count": 4
+  },
+  {
+    "name": "Tirage sous table",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/k4F3ze51pt8",
+    "youtube_id": "k4F3ze51pt8",
+    "default_tempo": "2110.0",
+    "sample_notes": "Surélève également tes pieds, le but c d'être parallèle voire en dévers sous la table",
+    "count": 4
+  },
+  {
+    "name": "Tractions supination en EMOM (sur 5min)",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=nMngQ4nxUU0&pp=ygURc3VwaW5hdGVkIHB1bGwgdXA%3D",
+    "youtube_id": "nMngQ4nxUU0",
+    "default_tempo": "1110.0",
+    "sample_notes": "8 reps / min, sur 5min",
+    "count": 4
+  },
+  {
+    "name": "Tractions pronation pdc en ladder4/5/7",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=un6HKZo2Mhs&pp=ygUQcHJvbmF0ZWQgcHVsbCB1cA%3D%3D",
+    "youtube_id": "un6HKZo2Mhs",
+    "default_tempo": "",
+    "sample_notes": "Focus sur une descente lente et contrôlée, amplitude complète en bas",
+    "count": 4
+  },
+  {
+    "name": "Ring face-pull + rotation externe",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/watch?v=poOoksRwe0c&pp=ygUicmluZyBmYWNlIHB1bGwgKyBleHRlcm5hbCByb3RhdGlvbg%3D%3D",
+    "youtube_id": "poOoksRwe0c",
+    "default_tempo": "2010.0",
+    "sample_notes": "Drive le coude vers le haut et l'arrière, reste dans la range qui travaille",
+    "count": 4
+  },
+  {
+    "name": "Elevations en T",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/m_w36N3vfjA",
+    "youtube_id": "m_w36N3vfjA",
+    "default_tempo": "2010.0",
+    "sample_notes": "Ouvre sur l'extérieur en gardant les bras tendus, relâche épaules en avant",
+    "count": 4
+  },
+  {
+    "name": "Elevations en T (règle les sangles + bas)",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/m_w36N3vfjA",
+    "youtube_id": "m_w36N3vfjA",
+    "default_tempo": "2010.0",
+    "sample_notes": "Ouvre sur l'extérieur en gardant les bras tendus, relâche épaules en avant",
+    "count": 4
+  },
+  {
+    "name": "Landmine row serviette",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/O7_ipP4rOxw",
+    "youtube_id": "O7_ipP4rOxw",
+    "default_tempo": "2010.0",
+    "sample_notes": "Garde buste parallèle au sol, attention au tempo et relâche épaules en bas",
+    "count": 4
+  },
+  {
+    "name": "Landmine meadows row",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/uexTkvxwMGM",
+    "youtube_id": "uexTkvxwMGM",
+    "default_tempo": "2010.0",
+    "sample_notes": "Garde buste parallèle au sol, l'angle du coude est relativement ouvert",
+    "count": 4
+  },
+  {
+    "name": "Back squat 10x5 format EMOM",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=QmZAiBqPvZw&pp=ygUKYmFjayBzcXVhdA%3D%3D",
+    "youtube_id": "QmZAiBqPvZw",
+    "default_tempo": "2110.0",
+    "sample_notes": "C'est léger donc focus sur la forme. Amplitude + contrôle de mvt",
+    "count": 3
+  },
+  {
+    "name": "Développé couché barre format EMOM",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/rEn-M9guDC4",
+    "youtube_id": "rEn-M9guDC4",
+    "default_tempo": "21X0",
+    "sample_notes": "Descente lente, pause aux pecs 1s, poussée explosive",
+    "count": 3
+  },
+  {
+    "name": "Obliques avec haltères",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=WmRc2MWx5WE&pp=ygULb2JsaXF1ZXMga2I%3D",
+    "youtube_id": "WmRc2MWx5WE",
+    "default_tempo": "1110.0",
+    "sample_notes": "Objectif descends le plus bas possible et tiens poids un peu écarté du corps",
+    "count": 3
+  },
+  {
+    "name": "Soulevé de terre jambes tendues haltères",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/watch?v=TAHxI5M6zNw&pp=ygUodG9lcyBlbGV2YXRlZCBkdW1iYmVsbCByb21hbmlhbiBkZWFkbGlmdA%3D%3D",
+    "youtube_id": "TAHxI5M6zNw",
+    "default_tempo": "3010.0",
+    "sample_notes": "Surélève tes pointes de pied et envoies les fesses au maximum vers l'arrière",
+    "count": 3
+  },
+  {
+    "name": "Développé couché barre format EMOM (pause 1ere rep)",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/rEn-M9guDC4",
+    "youtube_id": "rEn-M9guDC4",
+    "default_tempo": "21X0",
+    "sample_notes": "Descente lente, pause aux pecs 2s, poussée explosive",
+    "count": 3
+  },
+  {
+    "name": "Obliques avec barre",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/xXmW9qs9mqU",
+    "youtube_id": "xXmW9qs9mqU",
+    "default_tempo": "1110.0",
+    "sample_notes": "Plus la barre est longue, plus c'est dur pour (aussi travail de grip)",
+    "count": 3
+  },
+  {
+    "name": "Sdt jambes tendues haltères pointes pieds surélevées",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/watch?v=TAHxI5M6zNw&pp=ygUodG9lcyBlbGV2YXRlZCBkdW1iYmVsbCByb21hbmlhbiBkZWFkbGlmdA%3D%3D",
+    "youtube_id": "TAHxI5M6zNw",
+    "default_tempo": "3010.0",
+    "sample_notes": "Surélève tes pointes de pied et envoies les fesses au maximum vers l'arrière",
+    "count": 3
+  },
+  {
+    "name": "Tractions EMOM3'",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=trq6rUi5F5M&pp=ygUOcGF1c2VkIHB1bGwgdXA%3D",
+    "youtube_id": "trq6rUi5F5M",
+    "default_tempo": "classique",
+    "sample_notes": "Tirage explosif + passer le menton au dessus de la barre (pas de pause)",
+    "count": 3
+  },
+  {
+    "name": "Trap bar deadlift + extensions",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/-l3-fCJcNvE",
+    "youtube_id": "-l3-fCJcNvE",
+    "default_tempo": "explosif",
+    "sample_notes": "Poitrine vers l'avant, finis ton extension sur la pointe de pied + trapèzes",
+    "count": 3
+  },
+  {
+    "name": "Trap bar deadlift jump",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/watch?v=-n2p5mQxYTw",
+    "youtube_id": "-n2p5mQxYTw",
+    "default_tempo": "explosif",
+    "sample_notes": "Dès que tu as fini, tu décharges 25/côté et tu fais tes sauts le + haut possible",
+    "count": 3
+  },
+  {
+    "name": "TRX Y Row",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://youtu.be/-jD3ZC08KsI?t=33",
+    "youtube_id": "-jD3ZC08KsI",
+    "default_tempo": "2020.0",
+    "sample_notes": "Plus pieds sont loins, plus c'est dur. Tu dois t'approcher de l'échec",
+    "count": 3
+  },
+  {
+    "name": "Half kneeling windmill KB",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/shorts/IMDS-k9ozvM",
+    "youtube_id": "IMDS-k9ozvM",
+    "default_tempo": "lent",
+    "sample_notes": "L'épaule doit faire une rotation et la fesse partir vers l'arrière / côté",
+    "count": 3
+  },
+  {
+    "name": "KB snatch EMOM4' (4/min/côté)",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/watch?v=Pm-b2XFeABA&pp=ygUJa2Igc25hdGNo",
+    "youtube_id": "Pm-b2XFeABA",
+    "default_tempo": "explosif",
+    "sample_notes": "Tire haut, puis déplie le bras, mouvement explosif, composante cardio",
+    "count": 3
+  },
+  {
+    "name": "Tirage d'épaulé",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=pcScdJaR9nM",
+    "youtube_id": "pcScdJaR9nM",
+    "default_tempo": "explosif",
+    "sample_notes": "Tire fort en trapèzes et monte en pointe de pied",
+    "count": 3
+  },
+  {
+    "name": "Arrière d'épaule à la machine",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/pE-lCoxehsg",
+    "youtube_id": "pE-lCoxehsg",
+    "default_tempo": "1110.0",
+    "sample_notes": "Ne reviens pas complètement vers l'avant pr garder en tension les épaules",
+    "count": 3
+  },
+  {
+    "name": "Half kneeling windmill haltères",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/shorts/IMDS-k9ozvM",
+    "youtube_id": "IMDS-k9ozvM",
+    "default_tempo": "lent",
+    "sample_notes": "L'épaule doit faire une rotation et la fesse partir vers l'arrière / côté",
+    "count": 3
+  },
+  {
+    "name": "Haltères snatch EMOM4' (4/min/côté)",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/watch?v=Pm-b2XFeABA&pp=ygUJa2Igc25hdGNo",
+    "youtube_id": "Pm-b2XFeABA",
+    "default_tempo": "explosif",
+    "sample_notes": "Tire haut, puis déplie le bras, mouvement explosif, composante cardio",
+    "count": 3
+  },
+  {
+    "name": "Tirage Y au TRX (augmente la longueur du TRX)",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/OsdJlvqllco",
+    "youtube_id": "OsdJlvqllco",
+    "default_tempo": "explosif",
+    "sample_notes": "Tire le plus haut et le plus fort possible et reviens complètement bras tendus",
+    "count": 3
+  },
+  {
+    "name": "Tractions sur porte",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/hpSaHSPLsu8",
+    "youtube_id": "hpSaHSPLsu8",
+    "default_tempo": "1110.0",
+    "sample_notes": "Stratégie : être + rapide possible pour avoir récup longue car 2mvts ds le mm EMOM",
+    "count": 3
+  },
+  {
+    "name": "EMOM5' Single leg pogo jump (sur 5min)",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/hn65IF6cVKM",
+    "youtube_id": "hn65IF6cVKM",
+    "default_tempo": "21X0",
+    "sample_notes": "Représente une croix au sol, garde les mains aux hanches, tps contact sol court",
+    "count": 3
+  },
+  {
+    "name": "EMOM6' Développé couché (sur 5min)",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/MV1FW7UQKfA",
+    "youtube_id": "MV1FW7UQKfA",
+    "default_tempo": "21X0",
+    "sample_notes": "Respecte bien tempo, focus sur la phase explosive (montée)",
+    "count": 3
+  },
+  {
+    "name": "Ischios serviette deux jambes",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/hDZFKJT6nvM",
+    "youtube_id": "hDZFKJT6nvM",
+    "default_tempo": "",
+    "sample_notes": "Focus sur descendre le plus bas possible, petite pause en bas, bassin rétro",
+    "count": 3
+  },
+  {
+    "name": "Tractions chaise romaine",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/hpSaHSPLsu8",
+    "youtube_id": "hpSaHSPLsu8",
+    "default_tempo": "1110.0",
+    "sample_notes": "Fais ton max de reps sur 2 séries, essaie de te battre chaque semaine (note nombre)",
+    "count": 3
+  },
+  {
+    "name": "Ischios marchés",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=gRqYP8gmW80&pp=ygUUaGVlbCB3YWxrIGhhbXN0cmluZ3M%3D",
+    "youtube_id": "gRqYP8gmW80",
+    "default_tempo": "",
+    "sample_notes": "Focus sur descendre le plus bas possible, petite pause en bas, bassin rétro",
+    "count": 3
+  },
+  {
+    "name": "Dips pdc en endurance (sur 5min)",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/xuet8l4V1vE",
+    "youtube_id": "xuet8l4V1vE",
+    "default_tempo": "1110.0",
+    "sample_notes": "Attention à la forme, on veut pas se blesser avant le combat, pas trop d'amplitude",
+    "count": 3
+  },
+  {
+    "name": "Développé couché en EMOM (sur 5min)",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/MV1FW7UQKfA",
+    "youtube_id": "MV1FW7UQKfA",
+    "default_tempo": "21X0",
+    "sample_notes": "Respecte bien tempo, focus sur la phase explosive (montée)",
+    "count": 3
+  },
+  {
+    "name": "Course Fartlek",
+    "color": null,
+    "category": "other",
+    "youtube_url": "",
+    "youtube_id": "",
+    "default_tempo": "Alterne",
+    "sample_notes": "",
+    "count": 3
+  },
+  {
+    "name": "Varier les allures au feeling, accélération, déccélération",
+    "color": null,
+    "category": "other",
+    "youtube_url": "",
+    "youtube_id": "",
+    "default_tempo": "",
+    "sample_notes": "",
+    "count": 3
+  },
+  {
+    "name": "Travail de fractionné très léger",
+    "color": null,
+    "category": "other",
+    "youtube_url": "",
+    "youtube_id": "",
+    "default_tempo": "~6:30/km",
+    "sample_notes": "",
+    "count": 3
+  },
+  {
+    "name": "One leg jump high knee",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/7mi4YZdFYmg",
+    "youtube_id": "7mi4YZdFYmg",
+    "default_tempo": "explo",
+    "sample_notes": "Enchaîne les 6 sans temps mort, tps contact au sol court, + haut possible",
+    "count": 3
+  },
+  {
+    "name": "Lateral box plyo push-up",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/p16wLZM0ybo",
+    "youtube_id": "p16wLZM0ybo",
+    "default_tempo": "explo",
+    "sample_notes": "Tu fais 2 séries par côté (4 séries en tout), décolle le plus haut possible",
+    "count": 3
+  },
+  {
+    "name": "Drop & catch développé couché",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/82vn3GmoAlk",
+    "youtube_id": "82vn3GmoAlk",
+    "default_tempo": "explo",
+    "sample_notes": "Tu ne dois pas lancer, mais laisser tomber la barre pour la rattraper le + vite",
+    "count": 3
+  },
+  {
+    "name": "Vélo BASSE INTENSITE",
+    "color": null,
+    "category": "other",
+    "youtube_url": "",
+    "youtube_id": "",
+    "default_tempo": "80 RPM",
+    "sample_notes": "",
+    "count": 3
+  },
+  {
+    "name": "Vélo en échauffement",
+    "color": null,
+    "category": "other",
+    "youtube_url": "",
+    "youtube_id": "",
+    "default_tempo": "Varier",
+    "sample_notes": "",
+    "count": 3
+  },
+  {
+    "name": "Assault bike",
+    "color": null,
+    "category": "other",
+    "youtube_url": "",
+    "youtube_id": "",
+    "default_tempo": "10'' à bloc",
+    "sample_notes": "",
+    "count": 3
+  },
+  {
+    "name": "Améliorer le cardio en limitant l'impact sur le pied",
+    "color": null,
+    "category": "other",
+    "youtube_url": "",
+    "youtube_id": "",
+    "default_tempo": "",
+    "sample_notes": "",
+    "count": 3
+  },
+  {
+    "name": "Travail de fractionné dur",
+    "color": null,
+    "category": "other",
+    "youtube_url": "",
+    "youtube_id": "",
+    "default_tempo": "intensité",
+    "sample_notes": "",
+    "count": 3
+  },
+  {
+    "name": "Dips poids du corps en tempo",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/9wHqh9RyDZc",
+    "youtube_id": "9wHqh9RyDZc",
+    "default_tempo": "42X0",
+    "sample_notes": "Descente basse avec un angle coude>90°, descente lente montée explo",
+    "count": 3
+  },
+  {
+    "name": "Elevations Y (règle + bas les anneaux)",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/TQ_Bmgd4vQA",
+    "youtube_id": "TQ_Bmgd4vQA",
+    "default_tempo": "2010.0",
+    "sample_notes": "Engage avec l'arrière d'épaule, garde les bras tendus, marque une pause en haut",
+    "count": 3
+  },
+  {
+    "name": "Skater squat (assisté ou non)",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/WFm3HAal5TM",
+    "youtube_id": "WFm3HAal5TM",
+    "default_tempo": "21X0",
+    "sample_notes": "Commence en te tenant pour trouver tes marques, lâche dès que possible",
+    "count": 3
+  },
+  {
+    "name": "Développé couché MG 3 rep + EMOM2'",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "",
+    "youtube_id": "",
+    "default_tempo": "classique",
+    "sample_notes": "Rester sous un RPE<8 sur la montée de gamme, noter RPE ladder",
+    "count": 2
+  },
+  {
+    "name": "Fentes bulgares tenu à un support surélevé",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=8kKc3-2NAdM&pp=ygUeZWxldmF0ZWQgYnVsZ2FyaWFuIHNwbGl0IHNxdWF0",
+    "youtube_id": "8kKc3-2NAdM",
+    "default_tempo": "30X0",
+    "sample_notes": "On ajoute de l'amplitude en surélevant pied avant (vidéo)",
+    "count": 2
+  },
+  {
+    "name": "Soulevé de terre MG 1 rep + EMOM2'",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=1ZXobu7JvvE&pp=ygUIZGVhZGxpZnQ%3D",
+    "youtube_id": "1ZXobu7JvvE",
+    "default_tempo": "",
+    "sample_notes": "Monter a 135 sur la MG noter RPE ici :",
+    "count": 2
+  },
+  {
+    "name": "Soulevé de terre MG 2 rep + EMOM2'",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=1ZXobu7JvvE&pp=ygUIZGVhZGxpZnQ%3D",
+    "youtube_id": "1ZXobu7JvvE",
+    "default_tempo": "",
+    "sample_notes": "Monter a 130 sur la MG noter RPE ici :",
+    "count": 2
+  },
+  {
+    "name": "Tractions pronations lestées 8x5",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=trq6rUi5F5M&pp=ygUOcGF1c2VkIHB1bGwgdXA%3D",
+    "youtube_id": "trq6rUi5F5M",
+    "default_tempo": "11X0",
+    "sample_notes": "Tirage explosif + pause avec le menton au dessus barre (1s)",
+    "count": 2
+  },
+  {
+    "name": "EMOM2' Box squat",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/2lVP7PBn-Uk",
+    "youtube_id": "2lVP7PBn-Uk",
+    "default_tempo": "21X0",
+    "sample_notes": "Ne te laisse pas applatir par la charge, reste gaîné et contrôle la descente",
+    "count": 2
+  },
+  {
+    "name": "Reverse row unliatéral",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=aoe2srzmUyA&pp=ygUcb25lIGFybSByZXZlcnNlIGV4cGxvc2l2IHJvdw%3D%3D",
+    "youtube_id": "aoe2srzmUyA",
+    "default_tempo": "21X0",
+    "sample_notes": "Même set-up qu'en vidéo, pec opposé qui touche pour standardiser",
+    "count": 2
+  },
+  {
+    "name": "Depth Triple CMJ",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/ovJQ7hGfEhU",
+    "youtube_id": "ovJQ7hGfEhU",
+    "default_tempo": "explosif",
+    "sample_notes": "Garde les mains aux hanches, tps de contact réduit au sol",
+    "count": 2
+  },
+  {
+    "name": "Tractions EMOM5'",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=trq6rUi5F5M&pp=ygUOcGF1c2VkIHB1bGwgdXA%3D",
+    "youtube_id": "trq6rUi5F5M",
+    "default_tempo": "classique",
+    "sample_notes": "Un peu de travail d'endurance sur le dos",
+    "count": 2
+  },
+  {
+    "name": "Montée graduelle sur tapis de course",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "",
+    "youtube_id": "",
+    "default_tempo": "",
+    "sample_notes": "5 min d'échauffement en variant les allures graduellement",
+    "count": 2
+  },
+  {
+    "name": "EMOM6' KB swing",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/watch?v=1cVT3ee9mgU&pp=ygUIa2Igc3dpbmc%3D",
+    "youtube_id": "1cVT3ee9mgU",
+    "default_tempo": "explosif",
+    "sample_notes": "Fort sur l'extension de hanche, très explosif, pas trop de flexion de genou",
+    "count": 2
+  },
+  {
+    "name": "Squat profond assisté en se tenant",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/shorts/WNrBE8Z-GL8",
+    "youtube_id": "WNrBE8Z-GL8",
+    "default_tempo": "",
+    "sample_notes": "Tiens toi pour descendre plus bas et balance toi un peu de chaque côté",
+    "count": 2
+  },
+  {
+    "name": "EMOM3' Pistol squat en s'asseyant",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=RbEOQEYvjcw&pp=ygUXcGlzdG9sIHNxdWF0IHdpdGggc3Rvb2w%3D",
+    "youtube_id": "RbEOQEYvjcw",
+    "default_tempo": "21X0",
+    "sample_notes": "Standardise en trouvant un support assez bas, ne t'asseois pas complètement",
+    "count": 2
+  },
+  {
+    "name": "Ischios serviette descente 1 jbe montée 2 jbe",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/TD6Pu1mUVyo",
+    "youtube_id": "TD6Pu1mUVyo",
+    "default_tempo": "2010.0",
+    "sample_notes": "Focus descendre le plus loin possible à une jambe, quasi jbe tendue, retro bassin",
+    "count": 2
+  },
+  {
+    "name": "EMOM5' Single leg pogo jump (forme de croix)",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/hn65IF6cVKM",
+    "youtube_id": "hn65IF6cVKM",
+    "default_tempo": "21X0",
+    "sample_notes": "Représente une croix au sol, garde les mains aux hanches, tps contact sol court",
+    "count": 2
+  },
+  {
+    "name": "Pike push-up EMOM4'",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/2-yCx001XdA",
+    "youtube_id": "2-yCx001XdA",
+    "default_tempo": "2110.0",
+    "sample_notes": "Essaie d'être + verticale sur le haut du corps, rapproche au max épaules bassin",
+    "count": 2
+  },
+  {
+    "name": "EMOM10' Pompes (progresse au fil des sem.)",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/QSwBgMUaoHM",
+    "youtube_id": "QSwBgMUaoHM",
+    "default_tempo": "11X0",
+    "sample_notes": "Standardise en fixant des pt repères pour les pieds, mains, et fais toucher poitrine",
+    "count": 2
+  },
+  {
+    "name": "Ischios serviette deux jambes simultanées",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/hDZFKJT6nvM",
+    "youtube_id": "hDZFKJT6nvM",
+    "default_tempo": "2110.0",
+    "sample_notes": "Focus sur descendre le plus bas possible, petite pause en bas, bassin rétro",
+    "count": 2
+  },
+  {
+    "name": "Gainage position \"hollow\"",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/watch?v=4xRpGgttca8&pp=ygUKaG9sbG93IGFicw%3D%3D",
+    "youtube_id": "4xRpGgttca8",
+    "default_tempo": "iso",
+    "sample_notes": "Imagine de l'eau au niveau du nombril qui doit rester, épaules touchent pas le sol",
+    "count": 2
+  },
+  {
+    "name": "Iso horse stance (descendre plus bas que d'hab)",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/shorts/CD40RnMHwYM",
+    "youtube_id": "CD40RnMHwYM",
+    "default_tempo": "2110.0",
+    "sample_notes": "Petit à petit descendre pour venir chercher le grand écart latéral, rajoute oscillation",
+    "count": 2
+  },
+  {
+    "name": "Ischios serviette à deux jambes",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/hDZFKJT6nvM",
+    "youtube_id": "hDZFKJT6nvM",
+    "default_tempo": "",
+    "sample_notes": "Focus descendre le plus loin possible à une jambe, quasi jbe tendue, retro bassin",
+    "count": 2
+  },
+  {
+    "name": "EMOM4' Pistol squat en s'asseyant (sur 5min)",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=RbEOQEYvjcw&pp=ygUXcGlzdG9sIHNxdWF0IHdpdGggc3Rvb2w%3D",
+    "youtube_id": "RbEOQEYvjcw",
+    "default_tempo": "21X0",
+    "sample_notes": "Standardise en trouvant un support assez bas, ne t'asseois pas complètement",
+    "count": 2
+  },
+  {
+    "name": "EMOM6' Single leg pogo jump (sur 5min)",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/hn65IF6cVKM",
+    "youtube_id": "hn65IF6cVKM",
+    "default_tempo": "21X0",
+    "sample_notes": "Représente une croix au sol, garde les mains aux hanches, tps contact sol court",
+    "count": 2
+  },
+  {
+    "name": "EMOM7' Développé couché (sur 5min)",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/MV1FW7UQKfA",
+    "youtube_id": "MV1FW7UQKfA",
+    "default_tempo": "21X0",
+    "sample_notes": "Respecte bien tempo, focus sur la phase explosive (montée)",
+    "count": 2
+  },
+  {
+    "name": "Ischios serviette deux jambes (ou marchés comme S1)",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/hDZFKJT6nvM",
+    "youtube_id": "hDZFKJT6nvM",
+    "default_tempo": "",
+    "sample_notes": "Focus sur descendre le plus bas possible, petite pause en bas, bassin rétro",
+    "count": 2
+  },
+  {
+    "name": "EMOM10' Fentes sautées alternées  (sur 5min)",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/OvtLGMhr_P0",
+    "youtube_id": "OvtLGMhr_P0",
+    "default_tempo": "explo",
+    "sample_notes": "Saute le plus haut possible sur chaque saut, temps de contact au sol long",
+    "count": 2
+  },
+  {
+    "name": "Tractions supination lestées en EMOM (sur 5min)",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=nMngQ4nxUU0&pp=ygURc3VwaW5hdGVkIHB1bGwgdXA%3D",
+    "youtube_id": "nMngQ4nxUU0",
+    "default_tempo": "1110.0",
+    "sample_notes": "Objectif full amplitude + travail des biceps pour maintenir la masse",
+    "count": 2
+  },
+  {
+    "name": "Pistol squat complet en EMOM (sans te tenir) (sur 5min)",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/5R3wjhmjhgU",
+    "youtube_id": "5R3wjhmjhgU",
+    "default_tempo": "2110.0",
+    "sample_notes": "Teste pour voir si ta mobilité s'est améliorée, si pas possible repasse avec appui",
+    "count": 2
+  },
+  {
+    "name": "EMOM6' Tractions lestées (+2) (sur 5min)",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/EJbXkKn3Mi4",
+    "youtube_id": "EJbXkKn3Mi4",
+    "default_tempo": "1110.0",
+    "sample_notes": "Explication : Min 1,2 : 7 reps, Min 3,4,5 : 6 reps. +1 rep / sem.",
+    "count": 2
+  },
+  {
+    "name": "EMOM6' Tractions lestées (+3) (sur 5min)",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/EJbXkKn3Mi4",
+    "youtube_id": "EJbXkKn3Mi4",
+    "default_tempo": "1110.0",
+    "sample_notes": "Explication : Min 1,2,3 : 7 reps, Min 4,5 : 6 reps. +1 rep / sem.",
+    "count": 2
+  },
+  {
+    "name": "Tractions pronation pdc en ladder 5/6/7",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=un6HKZo2Mhs&pp=ygUQcHJvbmF0ZWQgcHVsbCB1cA%3D%3D",
+    "youtube_id": "un6HKZo2Mhs",
+    "default_tempo": "",
+    "sample_notes": "Focus sur une descente lente et contrôlée, amplitude complète en bas",
+    "count": 2
+  },
+  {
+    "name": "Tractions endurance en EMOM6/7' (5min)",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/TWO3etZuH6I",
+    "youtube_id": "TWO3etZuH6I",
+    "default_tempo": "",
+    "sample_notes": "6/7 reps / min, toutes les min, sur 5min",
+    "count": 2
+  },
+  {
+    "name": "Lateral jumps par dessus un obstabcle",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/h_0y84OZ7j4",
+    "youtube_id": "h_0y84OZ7j4",
+    "default_tempo": "explosif",
+    "sample_notes": "Place un bâton comme en vidéo, temps de contact au sol court, hauteur d'un banc",
+    "count": 2
+  },
+  {
+    "name": "Flexions du cou côté droit avec disque",
+    "color": "blue",
+    "category": "mobility",
+    "youtube_url": "https://www.youtube.com/shorts/nKXZJGGL4kY",
+    "youtube_id": "nKXZJGGL4kY",
+    "default_tempo": "2110.0",
+    "sample_notes": "Priviégie l'amplitude à la charge avec un tempo lent, descente complète",
+    "count": 2
+  },
+  {
+    "name": "Front squat EMOM3'",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=uYumuL_G_V0&pp=ygULZnJvbnQgc3F1YXQ%3D",
+    "youtube_id": "uYumuL_G_V0",
+    "default_tempo": "2110.0",
+    "sample_notes": "C'est léger donc focus sur la forme. Amplitude + contrôle de mvt",
+    "count": 1
+  },
+  {
+    "name": "Back squat 8x5 format EMOM",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=QmZAiBqPvZw&pp=ygUKYmFjayBzcXVhdA%3D%3D",
+    "youtube_id": "QmZAiBqPvZw",
+    "default_tempo": "2110.0",
+    "sample_notes": "C'est léger donc focus sur la forme. Amplitude + contrôle de mvt",
+    "count": 1
+  },
+  {
+    "name": "Tractions lestées EMOM2/3'",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/VGc2UUcIVrA",
+    "youtube_id": "VGc2UUcIVrA",
+    "default_tempo": "explosif",
+    "sample_notes": "Passe le menton au dessus de la barre et descends en amplitude",
+    "count": 1
+  },
+  {
+    "name": "Oiseaux haltères sur banc incliné",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/OhD2n-JPeb8",
+    "youtube_id": "OhD2n-JPeb8",
+    "default_tempo": "",
+    "sample_notes": "Va échec sur série 1, garde 1RiR(rep in reserve) sur les 2 suivantes",
+    "count": 1
+  },
+  {
+    "name": "Tractions pronations lestées EMOM4'",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=trq6rUi5F5M&pp=ygUOcGF1c2VkIHB1bGwgdXA%3D",
+    "youtube_id": "trq6rUi5F5M",
+    "default_tempo": "11X0",
+    "sample_notes": "Tirage explosif + pause avec le menton au dessus barre (1s)",
+    "count": 1
+  },
+  {
+    "name": "Explosiv push-up délestées",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/watch?v=TOxnt40xoIs&pp=ygUWcGx5byBwdXNoIHVwIHdpdGggYmFuZA%3D%3D",
+    "youtube_id": "TOxnt40xoIs",
+    "default_tempo": "explosif",
+    "sample_notes": "Intention : saute le + haut possible (tps de contact au sol relativement long)",
+    "count": 1
+  },
+  {
+    "name": "EMOM1' Box squat",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/2lVP7PBn-Uk",
+    "youtube_id": "2lVP7PBn-Uk",
+    "default_tempo": "21X0",
+    "sample_notes": "Ne te laisse pas applatir par la charge, reste gaîné et contrôle la descente",
+    "count": 1
+  },
+  {
+    "name": "EMOM8' KB swing",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/watch?v=1cVT3ee9mgU&pp=ygUIa2Igc3dpbmc%3D",
+    "youtube_id": "1cVT3ee9mgU",
+    "default_tempo": "explosif",
+    "sample_notes": "Fort sur l'extension de hanche, très explosif, pas trop de flexion de genou",
+    "count": 1
+  },
+  {
+    "name": "Lateral jumps plyometrics absorption (+ loin)",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://youtu.be/6Ahwy2Yk5qw?t=37",
+    "youtube_id": "6Ahwy2Yk5qw",
+    "default_tempo": "tps contact long",
+    "sample_notes": "Saute le plus loin possible et prends ton temps pour amortir avant de relancer",
+    "count": 1
+  },
+  {
+    "name": "Tirage inversé pieds surélevés (baisser niveau barre)",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=-gI2fDiURuE&pp=ygUaaW52ZXJ0ZWQgcm93IGZlZXQgZWxldmF0ZWQ%3D",
+    "youtube_id": "-gI2fDiURuE",
+    "default_tempo": "21X0",
+    "sample_notes": "Standardise la position, tirage explosif, touche les pecs et exc. contrôlée",
+    "count": 1
+  },
+  {
+    "name": "Tirage Y au TRX (remplace par oiseaux si pas TRX)",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/OsdJlvqllco",
+    "youtube_id": "OsdJlvqllco",
+    "default_tempo": "explosif",
+    "sample_notes": "Tire le plus haut et le plus fort possible et reviens complètement bras tendus",
+    "count": 1
+  },
+  {
+    "name": "EMOM9' KB swing",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/watch?v=1cVT3ee9mgU&pp=ygUIa2Igc3dpbmc%3D",
+    "youtube_id": "1cVT3ee9mgU",
+    "default_tempo": "explosif",
+    "sample_notes": "Fort sur l'extension de hanche, très explosif, pas trop de flexion de genou",
+    "count": 1
+  },
+  {
+    "name": "Extensions triceps sous la table",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=YhJBHg44uw0",
+    "youtube_id": "YhJBHg44uw0",
+    "default_tempo": "iso",
+    "sample_notes": "Plus le support va être bas plus ca va être compliqué, imite le mvt \"barre au front\"",
+    "count": 1
+  },
+  {
+    "name": "EMOM4' Pistol squat en s'asseyant",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=RbEOQEYvjcw&pp=ygUXcGlzdG9sIHNxdWF0IHdpdGggc3Rvb2w%3D",
+    "youtube_id": "RbEOQEYvjcw",
+    "default_tempo": "21X0",
+    "sample_notes": "Standardise en trouvant un support assez bas, ne t'asseois pas complètement",
+    "count": 1
+  },
+  {
+    "name": "EMOM3' Pistol squat en s'asseyant (sur 5min)",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=RbEOQEYvjcw&pp=ygUXcGlzdG9sIHNxdWF0IHdpdGggc3Rvb2w%3D",
+    "youtube_id": "RbEOQEYvjcw",
+    "default_tempo": "21X0",
+    "sample_notes": "Standardise en trouvant un support assez bas, ne t'asseois pas complètement",
+    "count": 1
+  },
+  {
+    "name": "EMOM3/4' Pistol squat en s'asseyant (sur 5min)",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=RbEOQEYvjcw&pp=ygUXcGlzdG9sIHNxdWF0IHdpdGggc3Rvb2w%3D",
+    "youtube_id": "RbEOQEYvjcw",
+    "default_tempo": "21X0",
+    "sample_notes": "Min 1 : 3 reps, Min 2 : 4 reps, Min 3 : 3 reps, Min 4 : 4 reps, Min 5 : 3 reps...",
+    "count": 1
+  },
+  {
+    "name": "Tractions chaise romaine (NOTE TES MAX)",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/hpSaHSPLsu8",
+    "youtube_id": "hpSaHSPLsu8",
+    "default_tempo": "1110.0",
+    "sample_notes": "Note moi tes maxs ici :",
+    "count": 1
+  },
+  {
+    "name": "Tractions lestées en EMOM (sur 5min)",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/EJbXkKn3Mi4",
+    "youtube_id": "EJbXkKn3Mi4",
+    "default_tempo": "1110.0",
+    "sample_notes": "Place l'haltère entre les jambes, passe le menton sur chaque rep",
+    "count": 1
+  },
+  {
+    "name": "Pistol squat complet en EMOM (sur 5min)",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/5R3wjhmjhgU",
+    "youtube_id": "5R3wjhmjhgU",
+    "default_tempo": "2110.0",
+    "sample_notes": "Teste pour voir si ta mobilité s'est améliorée, si pas possible repasse avec appui",
+    "count": 1
+  },
+  {
+    "name": "EMOM6' Tractions lestées (+1) (sur 5min)",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/EJbXkKn3Mi4",
+    "youtube_id": "EJbXkKn3Mi4",
+    "default_tempo": "1110.0",
+    "sample_notes": "Explication : Min 1 : 7 reps, Min 2,3,4,5 : 6 reps. +1 rep / sem.",
+    "count": 1
+  },
+  {
+    "name": "EMOM10' Gobelet squat prise front squat (sur 5min)",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/shorts/cm4jBH5rTyE",
+    "youtube_id": "cm4jBH5rTyE",
+    "default_tempo": "2110.0",
+    "sample_notes": "Sors la poitrine vers l'avant, les coudes bien haut, marque pause en bas",
+    "count": 1
+  },
+  {
+    "name": "Tractions endurance EMOM6'",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/gy1dyxEdCqc",
+    "youtube_id": "gy1dyxEdCqc",
+    "default_tempo": "",
+    "sample_notes": "Focus sur la vitesse d'execution pour avoir un maximum de recup",
+    "count": 1
+  },
+  {
+    "name": "Oiseaux poulie cable crossover",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/watch?v=jAnkS4u8mN0&pp=ygUTcmVhciBkZWx0IGNhYmxlIGZseQ%3D%3D",
+    "youtube_id": "jAnkS4u8mN0",
+    "default_tempo": "2110.0",
+    "sample_notes": "Bras quasi tendus, va à  l'echec épaules en rota. interne",
+    "count": 1
+  },
+  {
+    "name": "Soulevé de terre classique",
+    "color": "red",
+    "category": "strength",
+    "youtube_url": "https://www.youtube.com/watch?v=D8BLpg8fPV8&pp=ygURZGVhZHN0b3AgZGVhZGxpZnTSBwkJzQkBhyohjO8%3D",
+    "youtube_id": "D8BLpg8fPV8",
+    "default_tempo": "2010.0",
+    "sample_notes": "Replace toi bien entre chaque rep, la barre frôle les tibias",
+    "count": 1
+  },
+  {
+    "name": "Tractions pronation pdc en ladder4/5/6",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=un6HKZo2Mhs&pp=ygUQcHJvbmF0ZWQgcHVsbCB1cA%3D%3D",
+    "youtube_id": "un6HKZo2Mhs",
+    "default_tempo": "",
+    "sample_notes": "Focus sur une descente lente et contrôlée, amplitude complète en bas",
+    "count": 1
+  },
+  {
+    "name": "Chest flies à la poulie basse",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=e_8HLu59-to&pp=ygUTbG93IGNhYmxlIGNoZXN0IGZseQ%3D%3D",
+    "youtube_id": "e_8HLu59-to",
+    "default_tempo": "2110.0",
+    "sample_notes": "Etirement maximal, 1s pause en haut, contracte volontairement les pecs",
+    "count": 1
+  },
+  {
+    "name": "Reverse peck deck (arrière épaule)",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/-TKqxK7-ehc",
+    "youtube_id": "-TKqxK7-ehc",
+    "default_tempo": "2010.0",
+    "sample_notes": "Ne reviens pas complètement pour garder de la tension sur zone qui travaille",
+    "count": 1
+  },
+  {
+    "name": "Tractions pronation pdc en ladder4/6/7",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/watch?v=un6HKZo2Mhs&pp=ygUQcHJvbmF0ZWQgcHVsbCB1cA%3D%3D",
+    "youtube_id": "un6HKZo2Mhs",
+    "default_tempo": "",
+    "sample_notes": "Focus sur une descente lente et contrôlée, amplitude complète en bas",
+    "count": 1
+  },
+  {
+    "name": "Tractions endurance en EMOM6' (5min)",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/TWO3etZuH6I",
+    "youtube_id": "TWO3etZuH6I",
+    "default_tempo": "",
+    "sample_notes": "6 reps / min, toutes les min, sur 5min",
+    "count": 1
+  },
+  {
+    "name": "Elevations Y",
+    "color": "yellow",
+    "category": "explosive",
+    "youtube_url": "https://www.youtube.com/shorts/TQ_Bmgd4vQA",
+    "youtube_id": "TQ_Bmgd4vQA",
+    "default_tempo": "2010.0",
+    "sample_notes": "Engage avec l'arrière d'épaule, garde les bras tendus, marque une pause en haut",
+    "count": 1
+  },
+  {
+    "name": "Tirage machine wide grip en bilatéral",
+    "color": "green",
+    "category": "isolation",
+    "youtube_url": "https://www.youtube.com/shorts/3xb_KqBGv2Q",
+    "youtube_id": "3xb_KqBGv2Q",
+    "default_tempo": "2010.0",
+    "sample_notes": "Relâche à fond les épaules en avant, focus sur la contraction en haut",
+    "count": 1
+  }
+]
