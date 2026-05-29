@@ -492,6 +492,51 @@ export type Database = {
           },
         ]
       }
+      running_routes: {
+        Row: {
+          coach_id: string
+          created_at: string
+          difficulty: string | null
+          distance_km: number | null
+          dminus_m: number | null
+          dplus_m: number | null
+          gpx_url: string | null
+          id: string
+          name: string
+          points: Json
+          short_id: string
+          updated_at: string
+        }
+        Insert: {
+          coach_id: string
+          created_at?: string
+          difficulty?: string | null
+          distance_km?: number | null
+          dminus_m?: number | null
+          dplus_m?: number | null
+          gpx_url?: string | null
+          id?: string
+          name: string
+          points?: Json
+          short_id?: string
+          updated_at?: string
+        }
+        Update: {
+          coach_id?: string
+          created_at?: string
+          difficulty?: string | null
+          distance_km?: number | null
+          dminus_m?: number | null
+          dplus_m?: number | null
+          gpx_url?: string | null
+          id?: string
+          name?: string
+          points?: Json
+          short_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sessions: {
         Row: {
           average_rpe: number | null
