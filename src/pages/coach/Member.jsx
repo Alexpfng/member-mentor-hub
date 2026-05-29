@@ -139,7 +139,9 @@ export default function CoachMember() {
     }
   }
 
-  const tabs = ['Programme actuel', 'Historique', 'Progression', 'Profil', 'Messages'];
+  const tabs = ['Programme actuel', 'Historique', 'Vidéos', 'Progression', 'Profil', 'Messages'];
+  const [coachUid, setCoachUid] = useState(null);
+  useEffect(() => { supabase.auth.getUser().then(({ data }) => setCoachUid(data.user?.id ?? null)); }, []);
 
   // Computed derived values
   const fullName = useMemo(() => {
