@@ -88,7 +88,7 @@ export const seedColosmartData = createServerFn({ method: "POST" })
       }));
       for (let i = 0; i < rows.length; i += 4) {
         const chunk = rows.slice(i, i + 4);
-        const { error } = await supabaseAdmin.from("programs").insert(chunk);
+        const { error } = await supabaseAdmin.from("programs").insert(chunk as never);
         if (error) throw new Error(`programs insert failed: ${error.message}`);
         programsInserted += chunk.length;
       }
