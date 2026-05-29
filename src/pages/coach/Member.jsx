@@ -96,6 +96,34 @@ export default function CoachMember() {
     }
   }
 
+  async function saveForm(e) {
+    e?.preventDefault?.();
+    if (!form) return;
+    setSavingForm(true);
+    setFormSaved(false);
+    try {
+      const payload = {
+        member_id: memberId,
+        first_name: form.first_name?.trim() || null,
+        last_name: form.last_name?.trim() || null,
+        weight_kg: form.weight_kg === '' ? null : Number(form.weight_kg),
+        height_cm: form.height_cm === '' ? null : parseInt(form.height_cm, 10),
+        level: form.level?.trim() || null,
+        goal: form.goal?.trim() || null,
+        injuries: form.injuries?.trim() || null,
+        log_weight: logWeight && form.weight_kg !== '' ? true : false,
+      };
+      await saveProfileFn({ data: payload });
+      setFormSaved(true);
+      setTimeout(() => setFormSaved(false), 2500);
+      await reload();
+    } catch (ex) {
+      alert(ex?.message || 'Erreur');
+    } finally {
+      setSavingForm(false);
+    }
+  }
+
   async function handleAssign(programId) {
     if (!programId) return;
     setAssignBusy(true);
