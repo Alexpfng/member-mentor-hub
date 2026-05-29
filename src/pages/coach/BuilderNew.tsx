@@ -705,21 +705,84 @@ export default function BuilderNew({ programIdParam }: { programIdParam?: string
   const handleSave = async () => {
     setSaving(true);
     try {
-      const r = await saveFn({ data: { id: programId, name, duration_weeks: duration, objective, level, description: programNotes, structure: { weeks } } });
+      const r = await saveFn({ data: {
+        id: programId,
+        name,
+        duration_weeks: weeks.length || duration,
+        frequency_per_week: weeks[0]?.days.filter(d => d.type !== 'Repos').length || null,
+        objective,
+        level,
+        description: programNotes,
+        structure: weeksToStructure(weeks),
+      } });
       setProgramId(r.program.id);
-      toast.success('Programme sauvegardé !');
+      toast.success('Programme sauvegardé ✓');
     } catch (err: any) {
       toast.error(err.message ?? 'Erreur lors de la sauvegarde');
     } finally { setSaving(false); }
   };
 
-  // ─ Create exercise
-  const handleCreateExercise = () => {
-    const ex: LibraryExercise = { id: uid(), name: newExName || libSearch, category: newExCat, color: newExColor, youtube_url: newExYT || undefined };
-    setLibExercises(l => [...l, ex]);
-    setCreatingEx(false); setNewExName(''); setNewExYT('');
-    toast.success(`Exercice "${ex.name}" créé !`);
+  // ─ Hydrate from DB if editing
+  useEffect(() => {
+    if (!programIdParam) return;
+    (async () => {
+      try {
+        const r = await getFn({ data: { id: programIdParam } });
+        const p: any = r.program;
+        setName(p.name || '');
+        setDuration(p.duration_weeks || 8);
+        setObjective(p.objective || 'Force');
+        setLevel(p.level || 'Intermédiaire');
+        setProgramNotes(p.description || '');
+        const ws = structureToWeeks(p.structure);
+        setWeeks(ws);
+        setActiveWeekIdx(0);
+      } catch (e: any) {
+        toast.error(e?.message || 'Impossible de charger le programme');
+      }
+    })();
+  }, [programIdParam]);
+
+  // ─ Load DB exercise library
+  useEffect(() => {
+    (async () => {
+      try {
+        const r: any = await listExFn();
+        const dbExs: LibraryExercise[] = (r.exercises || []).map((e: any) => ({
+          id: e.id,
+          name: e.name,
+          category: (String(e.category || 'PUSH').toUpperCase() as Category),
+          color: (NAME_TO_EMOJI[String(e.color || '').toLowerCase()] || '🟢') as ExColor,
+          youtube_url: e.youtube_url || undefined,
+        }));
+        if (dbExs.length > 0) setLibExercises(dbExs);
+      } catch { /* fallback to BASE_LIBRARY */ }
+    })();
+  }, []);
+
+  // ─ Create exercise (persists to DB)
+  const handleCreateExercise = async () => {
+    const finalName = (newExName || libSearch).trim();
+    if (!finalName) { toast.error('Nom requis'); return; }
+    try {
+      const r: any = await saveExFn({ data: {
+        name: finalName,
+        category: newExCat,
+        color: EMOJI_TO_NAME[newExColor] || 'green',
+        youtube_url: newExYT || null,
+      } });
+      const created = r.exercise;
+      const ex: LibraryExercise = {
+        id: created.id, name: created.name, category: newExCat, color: newExColor, youtube_url: created.youtube_url || undefined,
+      };
+      setLibExercises(l => [...l, ex]);
+      setCreatingEx(false); setNewExName(''); setNewExYT(''); setLibSearch('');
+      toast.success(`Exercice "${ex.name}" créé`);
+    } catch (e: any) {
+      toast.error(e?.message || 'Erreur création exercice');
+    }
   };
+
 
   // ─ Keyboard shortcuts
   useEffect(() => {
