@@ -243,20 +243,6 @@ export default function Login() {
                   </div>
                 )}
 
-                {!SUPABASE_ENABLED && (
-                  <div
-                    style={{
-                      padding: "10px 14px",
-                      background: "rgba(45,90,53,0.15)",
-                      border: "1px solid rgba(45,90,53,0.4)",
-                      borderRadius: 8,
-                      fontSize: 12,
-                      color: "#6EAB76",
-                    }}
-                  >
-                    Mode démo local actif. Supabase est déconnecté pour éviter de bloquer l'app.
-                  </div>
-                )}
 
                 <button
                   type="submit"
