@@ -8,9 +8,11 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useServerFn } from '@tanstack/react-start';
-import { saveProgram } from '@/lib/coach.functions';
+
+import { saveProgram, getProgram, listExercises, saveExercise } from '@/lib/coach.functions';
 import CoachSidebar from '../../components/CoachSidebar';
 import { toast } from 'sonner';
+
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
@@ -112,6 +114,75 @@ function makeExercise(lib: LibraryExercise): ProgramExercise {
     youtube_url: lib.youtube_url ?? '', notes: '',
   };
 }
+
+// ─── COLOR MAPPING ────────────────────────────────────────────────────────────
+const EMOJI_TO_NAME: Record<string, string> = { '🔴': 'red', '🟢': 'green', '🟡': 'yellow', '🔵': 'blue' };
+const NAME_TO_EMOJI: Record<string, ExColor> = { red: '🔴', green: '🟢', yellow: '🟡', blue: '🔵' };
+
+// ─── CANONICAL <-> BUILDER MAPPING ───────────────────────────────────────────
+// Canonical shape lives in programs.structure and is read by ProgramBlocks.
+function exToCanonical(ex: ProgramExercise) {
+  return {
+    name: ex.name,
+    color: EMOJI_TO_NAME[ex.color] ?? null,
+    category: ex.category,
+    series: ex.sets,
+    reps: ex.reps,
+    charge: ex.weight,
+    recup: ex.rest,
+    rpe_target: ex.rpe,
+    coach_notes: ex.notes,
+    youtube_url: ex.youtube_url || null,
+    youtube_id: extractYTId(ex.youtube_url || '') || null,
+    superset_with: ex.superset_with ?? null,
+  };
+}
+function canonicalToEx(c: any): ProgramExercise {
+  const name = String(c.name ?? 'Exercice');
+  const cat = (c.category as Category) || 'PUSH';
+  const color = (NAME_TO_EMOJI[String(c.color || '').toLowerCase()] || '🟢') as ExColor;
+  return {
+    uid: uid(),
+    name,
+    category: cat,
+    color,
+    sets: typeof c.series === 'number' ? c.series : Number(c.series) || 3,
+    reps: c.reps != null ? String(c.reps) : '8-12',
+    weight: c.charge != null ? String(c.charge) : '',
+    rest: c.recup != null ? String(c.recup) : '2 min',
+    rpe: typeof c.rpe_target === 'number' ? c.rpe_target : Number(c.rpe_target) || 7,
+    youtube_url: c.youtube_url || (c.youtube_id ? `https://www.youtube.com/watch?v=${c.youtube_id}` : ''),
+    notes: c.coach_notes || '',
+    superset_with: c.superset_with || undefined,
+  };
+}
+function structureToWeeks(structure: any): Week[] {
+  const ws = structure?.weeks;
+  if (!Array.isArray(ws) || ws.length === 0) return [makeWeek()];
+  return ws.map((w: any) => ({
+    id: uid(),
+    days: (Array.isArray(w.days) ? w.days : []).map((d: any) => ({
+      id: uid(),
+      name: String(d.label || d.name || 'JOUR').toUpperCase(),
+      type: (d.type as Day['type']) || 'Entraînement',
+      exercises: (Array.isArray(d.exercises) ? d.exercises : []).map(canonicalToEx),
+    })),
+  }));
+}
+function weeksToStructure(weeks: Week[]) {
+  return {
+    weeks: weeks.map((w, wi) => ({
+      number: wi + 1,
+      days: w.days.map((d, di) => ({
+        number: di + 1,
+        label: d.name,
+        type: d.type,
+        exercises: d.exercises.map(exToCanonical),
+      })),
+    })),
+  };
+}
+
 
 function relativeTime(d: string) {
   const diff = Date.now() - new Date(d).getTime();
@@ -457,8 +528,12 @@ function AssignModal({ programId, onClose }: { programId: string; onClose: () =>
 
 // ─── MAIN BUILDER ─────────────────────────────────────────────────────────────
 
-export default function BuilderNew() {
+export default function BuilderNew({ programIdParam }: { programIdParam?: string } = {}) {
   const saveFn = useServerFn(saveProgram);
+  const getFn = useServerFn(getProgram);
+  const listExFn = useServerFn(listExercises);
+  const saveExFn = useServerFn(saveExercise);
+  
 
   // Program meta
   const [name, setName] = useState('Force Fondamentale – Cycle 1');
@@ -466,11 +541,12 @@ export default function BuilderNew() {
   const [objective, setObjective] = useState('Force');
   const [level, setLevel] = useState('Intermédiaire');
   const [programNotes, setProgramNotes] = useState('');
-  const [programId, setProgramId] = useState<string | undefined>();
+  const [programId, setProgramId] = useState<string | undefined>(programIdParam);
 
   // Structure
   const [weeks, setWeeks] = useState<Week[]>([makeWeek()]);
   const [activeWeekIdx, setActiveWeekIdx] = useState(0);
+
 
   // DnD state
   const [activeLibEx, setActiveLibEx] = useState<LibraryExercise | null>(null);
@@ -629,21 +705,84 @@ export default function BuilderNew() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const r = await saveFn({ data: { id: programId, name, duration_weeks: duration, objective, level, description: programNotes, structure: { weeks } } });
+      const r = await saveFn({ data: {
+        id: programId,
+        name,
+        duration_weeks: weeks.length || duration,
+        frequency_per_week: weeks[0]?.days.filter(d => d.type !== 'Repos').length || null,
+        objective,
+        level,
+        description: programNotes,
+        structure: weeksToStructure(weeks),
+      } });
       setProgramId(r.program.id);
-      toast.success('Programme sauvegardé !');
+      toast.success('Programme sauvegardé ✓');
     } catch (err: any) {
       toast.error(err.message ?? 'Erreur lors de la sauvegarde');
     } finally { setSaving(false); }
   };
 
-  // ─ Create exercise
-  const handleCreateExercise = () => {
-    const ex: LibraryExercise = { id: uid(), name: newExName || libSearch, category: newExCat, color: newExColor, youtube_url: newExYT || undefined };
-    setLibExercises(l => [...l, ex]);
-    setCreatingEx(false); setNewExName(''); setNewExYT('');
-    toast.success(`Exercice "${ex.name}" créé !`);
+  // ─ Hydrate from DB if editing
+  useEffect(() => {
+    if (!programIdParam) return;
+    (async () => {
+      try {
+        const r = await getFn({ data: { id: programIdParam } });
+        const p: any = r.program;
+        setName(p.name || '');
+        setDuration(p.duration_weeks || 8);
+        setObjective(p.objective || 'Force');
+        setLevel(p.level || 'Intermédiaire');
+        setProgramNotes(p.description || '');
+        const ws = structureToWeeks(p.structure);
+        setWeeks(ws);
+        setActiveWeekIdx(0);
+      } catch (e: any) {
+        toast.error(e?.message || 'Impossible de charger le programme');
+      }
+    })();
+  }, [programIdParam]);
+
+  // ─ Load DB exercise library
+  useEffect(() => {
+    (async () => {
+      try {
+        const r: any = await listExFn();
+        const dbExs: LibraryExercise[] = (r.exercises || []).map((e: any) => ({
+          id: e.id,
+          name: e.name,
+          category: (String(e.category || 'PUSH').toUpperCase() as Category),
+          color: (NAME_TO_EMOJI[String(e.color || '').toLowerCase()] || '🟢') as ExColor,
+          youtube_url: e.youtube_url || undefined,
+        }));
+        if (dbExs.length > 0) setLibExercises(dbExs);
+      } catch { /* fallback to BASE_LIBRARY */ }
+    })();
+  }, []);
+
+  // ─ Create exercise (persists to DB)
+  const handleCreateExercise = async () => {
+    const finalName = (newExName || libSearch).trim();
+    if (!finalName) { toast.error('Nom requis'); return; }
+    try {
+      const r: any = await saveExFn({ data: {
+        name: finalName,
+        category: newExCat,
+        color: EMOJI_TO_NAME[newExColor] || 'green',
+        youtube_url: newExYT || null,
+      } });
+      const created = r.exercise;
+      const ex: LibraryExercise = {
+        id: created.id, name: created.name, category: newExCat, color: newExColor, youtube_url: created.youtube_url || undefined,
+      };
+      setLibExercises(l => [...l, ex]);
+      setCreatingEx(false); setNewExName(''); setNewExYT(''); setLibSearch('');
+      toast.success(`Exercice "${ex.name}" créé`);
+    } catch (e: any) {
+      toast.error(e?.message || 'Erreur création exercice');
+    }
   };
+
 
   // ─ Keyboard shortcuts
   useEffect(() => {

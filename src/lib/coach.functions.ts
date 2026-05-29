@@ -689,3 +689,42 @@ export const listRunningRoutes = createServerFn({ method: "GET" })
     return { routes: data ?? [] };
   });
 
+
+// ─── PROGRAM FOR CURRENT MEMBER ───────────────────────────────────────────────
+
+export const getMyAssignedProgram = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: assignment } = await supabaseAdmin
+      .from("assignments")
+      .select("id, program_id, start_date, end_date, active")
+      .eq("member_id", context.userId)
+      .eq("active", true)
+      .order("start_date", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!assignment) return { assignment: null, program: null };
+    const { data: program } = await supabaseAdmin
+      .from("programs")
+      .select(
+        "id, name, description, duration_weeks, frequency_per_week, objective, level, structure",
+      )
+      .eq("id", assignment.program_id)
+      .maybeSingle();
+    return { assignment, program: program ?? null };
+  });
+
+export const deleteProgram = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertCoach(context.userId);
+    await supabaseAdmin.from("assignments").delete().eq("program_id", data.id);
+    const { error } = await supabaseAdmin
+      .from("programs")
+      .delete()
+      .eq("id", data.id)
+      .eq("coach_id", context.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });

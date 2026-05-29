@@ -267,6 +267,12 @@ export default function ProgrammesPage() {
                   </button>
                   <button
                     className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+                    onClick={() => navigate({ to: "/coach/builder/$id", params: { id: p.id } })}
+                  >
+                    ÉDITER
+                  </button>
+                  <button
+                    className="cst-btn cst-btn-ghost-dark cst-btn-sm"
                     onClick={() => handleDuplicate(p)}
                   >
                     DUPLIQUER
@@ -279,6 +285,7 @@ export default function ProgrammesPage() {
                     ASSIGNER →
                   </button>
                 </div>
+
               </div>
             );
           })}

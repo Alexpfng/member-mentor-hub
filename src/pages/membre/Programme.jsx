@@ -1,22 +1,51 @@
+import { useEffect, useState } from 'react';
+import { useServerFn } from '@tanstack/react-start';
+import { useNavigate } from '@tanstack/react-router';
 import MemberNav from '../../components/MemberNav';
-import { CSTSectionNum, CSTDuoTitle, CSTStatus } from '../../components/Atoms';
+import { CSTSectionNum, CSTDuoTitle } from '../../components/Atoms';
+import { getMyAssignedProgram } from '@/lib/coach.functions';
+import { ProgramBlocks } from '../../components/cst/ProgramBlocks';
 
-const weeks = [
-  { n:'01', t:'INTRODUCTION',  s:'done',   open:false },
-  { n:'02', t:'CHARGE +5%',   s:'done',   open:false },
-  { n:'03', t:'CHARGE +5%',   s:'done',   open:false },
-  { n:'04', t:'CHARGE +5%',   s:'active', open:true  },
-  { n:'05', t:'CHARGE +5%',   s:'coming', open:false },
-  { n:'06', t:'DÉLOAD -40%',  s:'coming', open:false },
-  { n:'07', t:'PEAK',         s:'coming', open:false },
-  { n:'08', t:'TEST 1RM',     s:'coming', open:false },
-];
+function diffDays(a, b) {
+  return Math.floor((a.getTime() - b.getTime()) / 86400000);
+}
 
 export default function MemberProgramme() {
+  const navigate = useNavigate();
+  const fn = useServerFn(getMyAssignedProgram);
+  const [data, setData] = useState(null);
+  const [openWeek, setOpenWeek] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await fn();
+        setData(r);
+        const start = r.assignment?.start_date ? new Date(r.assignment.start_date) : null;
+        if (start) {
+          const d = diffDays(new Date(), start);
+          const w = Math.max(0, Math.floor(d / 7));
+          setOpenWeek(w);
+        } else {
+          setOpenWeek(0);
+        }
+      } catch (e) {
+        // noop
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const program = data?.program;
+  const weeks = program?.structure?.weeks || [];
+  const startDate = data?.assignment?.start_date ? new Date(data.assignment.start_date) : null;
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#111' }}>
-      <div style={{ width: 390, height: 780, position: 'relative' }}>
-        <div className="cst-screen cst-hatch" style={{ height: '100%' }}>
+      <div style={{ width: 390, minHeight: 780, position: 'relative' }}>
+        <div className="cst-screen cst-hatch" style={{ minHeight: 780 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 22px 8px' }}>
             <span style={{ fontSize: 18, opacity: 0.7 }}>←</span>
             <span className="cst-mono" style={{ color: '#fff' }}>MON PROGRAMME</span>
@@ -24,50 +53,81 @@ export default function MemberProgramme() {
           </div>
 
           <div className="cst-scroll" style={{ flex: 1, padding: '0 22px 90px' }}>
-            <CSTSectionNum num={1} label="PROGRAMME" sub="FORCE FONDAMENTALE" />
-            <CSTDuoTitle top="FORCE" bottom="fondamentale." size={36} />
-            <div className="cst-mono" style={{ fontSize: 9, marginTop: 8 }}>8 SEMAINES · DÉMARRÉ LE 12 MAI 2026</div>
+            {loading && (
+              <div style={{ padding: 24, opacity: 0.6, fontSize: 13 }}>Chargement…</div>
+            )}
 
-            <div style={{ marginTop: 18, marginBottom: 22 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
-                <span className="cst-mono" style={{ color: '#fff' }}>SEMAINE 04 / 08</span>
-                <span className="cst-display" style={{ fontSize: 16, color: 'var(--cst-mid-green)' }}>50%</span>
+            {!loading && !program && (
+              <div className="cst-card-dark cst-hatch" style={{ padding: 22, marginTop: 24, textAlign: 'center' }}>
+                <div className="cst-display" style={{ fontSize: 20, marginBottom: 6 }}>AUCUN PROGRAMME</div>
+                <p style={{ margin: 0, fontSize: 13, opacity: 0.7 }}>
+                  Ton coach ne t'a pas encore assigné de programme. Reviens plus tard.
+                </p>
               </div>
-              <div style={{ height: 6, background: 'rgba(255,255,255,0.06)', borderRadius: 3, overflow: 'hidden' }}>
-                <div style={{ width: '50%', height: '100%', background: 'var(--cst-mid-green)' }} />
-              </div>
-            </div>
+            )}
 
-            <div className="cst-col" style={{ gap: 8 }}>
-              {weeks.map((w, i) => (
-                <div key={i} className="cst-card-dark" style={{ padding: 0, overflow: 'hidden' }}>
-                  <div style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12, background: w.open ? 'rgba(45,90,53,0.10)' : 'transparent', borderBottom: w.open ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
-                    <span style={{ opacity: 0.5 }}>{w.open ? '▼' : '▶'}</span>
-                    <div className="cst-col" style={{ flex: 1, gap: 2 }}>
-                      <span className="cst-mono" style={{ fontSize: 9 }}>SEMAINE {w.n}</span>
-                      <span className="cst-display" style={{ fontSize: 15 }}>{w.t}</span>
-                    </div>
-                    <CSTStatus kind={w.s} />
-                  </div>
-                  {w.open && (
-                    <div className="cst-col" style={{ padding: '6px 16px 14px', gap: 0 }}>
-                      {[
-                        ['J1 · PUSH A',       '✓ Complété il y a 2j',  'done'],
-                        ["J2 · PULL B",       "● Aujourd'hui",          'active'],
-                        ['J3 · REST',         '—',                       'rest'],
-                        ['J4 · LEGS C',       'Vendredi 22/05',          'coming'],
-                        ['J5 · REST + CARDIO','Samedi 23/05',            'coming'],
-                      ].map((d, di) => (
-                        <div key={di} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 12, borderBottom: di < 4 ? '1px solid rgba(255,255,255,0.04)' : 'none', color: d[2] === 'active' ? '#fff' : d[2] === 'rest' ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.75)' }}>
-                          <span style={{ fontWeight: d[2] === 'active' ? 600 : 400 }}>{d[0]}</span>
-                          <span className="cst-mono" style={{ fontSize: 9, color: d[2] === 'active' ? 'var(--cst-mid-green)' : 'inherit' }}>{d[1]}</span>
-                        </div>
-                      ))}
-                    </div>
+            {!loading && program && (
+              <>
+                <CSTSectionNum num={1} label="PROGRAMME" sub={(program.objective || 'TRAINING').toUpperCase()} />
+                <CSTDuoTitle top={program.name.split(' ')[0]?.toUpperCase() || 'PROGRAMME'} bottom={program.name.split(' ').slice(1).join(' ').toLowerCase() || ''} size={32} />
+                <div className="cst-mono" style={{ fontSize: 9, marginTop: 8 }}>
+                  {weeks.length} SEMAINES{startDate ? ` · DÉMARRÉ LE ${startDate.toLocaleDateString('fr-FR')}` : ''}
+                </div>
+
+                <div className="cst-col" style={{ gap: 8, marginTop: 18 }}>
+                  {weeks.map((w, i) => {
+                    const isOpen = openWeek === i;
+                    return (
+                      <div key={i} className="cst-card-dark" style={{ padding: 0, overflow: 'hidden' }}>
+                        <button
+                          onClick={() => setOpenWeek(isOpen ? null : i)}
+                          style={{ all: 'unset', cursor: 'pointer', width: '100%', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12, background: isOpen ? 'rgba(45,90,53,0.10)' : 'transparent', borderBottom: isOpen ? '1px solid rgba(255,255,255,0.06)' : 'none' }}
+                        >
+                          <span style={{ opacity: 0.5 }}>{isOpen ? '▼' : '▶'}</span>
+                          <div className="cst-col" style={{ flex: 1, gap: 2 }}>
+                            <span className="cst-mono" style={{ fontSize: 9 }}>SEMAINE {String(w.number ?? i + 1).padStart(2, '0')}</span>
+                            <span className="cst-display" style={{ fontSize: 15 }}>{(w.days || []).length} SÉANCE{(w.days || []).length > 1 ? 'S' : ''}</span>
+                          </div>
+                        </button>
+                        {isOpen && (
+                          <div className="cst-col" style={{ padding: '10px 14px 14px', gap: 14 }}>
+                            {(w.days || []).map((d, di) => (
+                              <div key={di} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: 10 }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
+                                  <span className="cst-display" style={{ fontSize: 13 }}>
+                                    J{d.number ?? di + 1} · {(d.label || 'Séance').toUpperCase()}
+                                  </span>
+                                  {d.type !== 'Repos' && (d.exercises?.length ?? 0) > 0 && (
+                                    <button
+                                      className="cst-btn cst-btn-primary cst-btn-sm"
+                                      onClick={() => navigate({ to: '/membre/logger' })}
+                                      style={{ fontSize: 9, padding: '4px 8px' }}
+                                    >
+                                      DÉMARRER →
+                                    </button>
+                                  )}
+                                </div>
+                                {d.type === 'Repos' ? (
+                                  <div className="cst-mono" style={{ fontSize: 10, opacity: 0.5, padding: '8px 0' }}>RÉCUPÉRATION</div>
+                                ) : (
+                                  <ProgramBlocks exercises={d.exercises || []} />
+                                )}
+                              </div>
+                            ))}
+                            {(w.days || []).length === 0 && (
+                              <div style={{ opacity: 0.5, fontSize: 12 }}>Aucune séance.</div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                  {weeks.length === 0 && (
+                    <div style={{ opacity: 0.5, fontSize: 13 }}>Le programme est encore vide.</div>
                   )}
                 </div>
-              ))}
-            </div>
+              </>
+            )}
           </div>
           <MemberNav />
         </div>
