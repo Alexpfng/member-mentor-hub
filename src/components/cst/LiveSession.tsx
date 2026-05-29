@@ -856,6 +856,23 @@ export function LiveSession({
           name={showTempo?.name}
         />
         <RPEReferenceSheet open={showRpeRef} onClose={() => setShowRpeRef(false)} />
+        <VideoModal exercise={showVideo} onClose={() => setShowVideo(null)} />
+        <CuesModal
+          exercise={showCues}
+          onClose={() => setShowCues(null)}
+          onOpenTempo={(ex) => {
+            setShowCues(null);
+            setShowTempo({ tempo: ex.tempo, name: ex.name });
+          }}
+          onOpenColor={(c) => {
+            setShowCues(null);
+            setShowColor(c);
+          }}
+          onOpenRpeRef={() => {
+            setShowCues(null);
+            setShowRpeRef(true);
+          }}
+        />
         {showOverview && (
           <div
             onClick={() => setShowOverview(false)}
