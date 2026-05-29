@@ -393,6 +393,141 @@ export const duplicateProgram = createServerFn({ method: "POST" })
   });
 
 
+// ─── MEMBER DETAIL ────────────────────────────────────────────────────────────
+
+export const getMemberDetail = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ member_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertCoach(context.userId);
+    const memberId = data.member_id;
+
+    const [
+      { data: profile },
+      { data: memberProfile },
+      { data: assignment },
+      { data: sessions },
+      { data: weightLogs },
+      { count: unreadCount },
+    ] = await Promise.all([
+      supabaseAdmin
+        .from("profiles")
+        .select("id, email, first_name, last_name, avatar_url, created_at")
+        .eq("id", memberId)
+        .maybeSingle(),
+      supabaseAdmin
+        .from("member_profiles")
+        .select("weight_kg, height_cm, level, goal, injuries, coach_private_notes")
+        .eq("user_id", memberId)
+        .maybeSingle(),
+      supabaseAdmin
+        .from("assignments")
+        .select("id, program_id, start_date, end_date, active")
+        .eq("member_id", memberId)
+        .eq("active", true)
+        .order("start_date", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabaseAdmin
+        .from("sessions")
+        .select(
+          "id, date, status, session_label, week_number, day_number, duration_minutes, average_rpe, started_at, ended_at",
+        )
+        .eq("member_id", memberId)
+        .order("date", { ascending: false })
+        .limit(30),
+      supabaseAdmin
+        .from("weight_logs")
+        .select("date, weight_kg")
+        .eq("member_id", memberId)
+        .order("date", { ascending: false })
+        .limit(30),
+      supabaseAdmin
+        .from("messages")
+        .select("*", { count: "exact", head: true })
+        .eq("from_id", memberId)
+        .eq("to_id", context.userId)
+        .eq("read", false),
+    ]);
+
+    if (!profile) throw new Error("Adhérent introuvable");
+
+    const sessionIds = (sessions ?? []).map((s) => s.id);
+    let setLogs: any[] = [];
+    if (sessionIds.length > 0) {
+      const { data: sl } = await supabaseAdmin
+        .from("set_logs")
+        .select("exercise_name, weight_kg, reps, logged_at, session_id")
+        .in("session_id", sessionIds)
+        .order("logged_at", { ascending: false })
+        .limit(200);
+      setLogs = sl ?? [];
+    }
+
+    let program: any = null;
+    if (assignment?.program_id) {
+      const { data: p } = await supabaseAdmin
+        .from("programs")
+        .select(
+          "id, name, description, duration_weeks, frequency_per_week, objective, level, structure",
+        )
+        .eq("id", assignment.program_id)
+        .maybeSingle();
+      program = p;
+    }
+
+    const lastWeight = (weightLogs ?? [])[0]?.weight_kg ?? memberProfile?.weight_kg ?? null;
+
+    return {
+      profile,
+      member_profile: memberProfile ?? null,
+      assignment: assignment ?? null,
+      program,
+      sessions: sessions ?? [],
+      set_logs: setLogs,
+      weight_logs: weightLogs ?? [],
+      unread_messages_count: unreadCount ?? 0,
+      last_weight_kg: lastWeight,
+    };
+  });
+
+export const updateMemberNotes = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        member_id: z.string().uuid(),
+        coach_private_notes: z.string().max(5000),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertCoach(context.userId);
+    const { data: existing } = await supabaseAdmin
+      .from("member_profiles")
+      .select("id")
+      .eq("user_id", data.member_id)
+      .maybeSingle();
+
+    if (existing) {
+      const { error } = await supabaseAdmin
+        .from("member_profiles")
+        .update({ coach_private_notes: data.coach_private_notes })
+        .eq("user_id", data.member_id);
+      if (error) throw new Error(error.message);
+    } else {
+      const { error } = await supabaseAdmin
+        .from("member_profiles")
+        .insert({ user_id: data.member_id, coach_private_notes: data.coach_private_notes });
+      if (error) throw new Error(error.message);
+    }
+    return { ok: true };
+  });
+
+
+
+
+
 
 
 // ─── ELEVATION PROXY (server-side → no CORS/rate-limit issues) ───────────────
