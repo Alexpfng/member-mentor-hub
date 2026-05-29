@@ -303,6 +303,38 @@ export const pinMessage = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const getMyCoach = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const { data: roleRow, error: roleErr } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "coach")
+      .limit(1)
+      .maybeSingle();
+    if (roleErr) throw new Error(roleErr.message);
+    if (!roleRow) return { coach: null };
+    const { data: profile, error: pErr } = await supabaseAdmin
+      .from("profiles")
+      .select("id, first_name, last_name, email")
+      .eq("id", roleRow.user_id)
+      .maybeSingle();
+    if (pErr) throw new Error(pErr.message);
+    return { coach: profile ?? { id: roleRow.user_id, first_name: "Coach", last_name: "", email: "" } };
+  });
+
+export const getUnreadCount = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { count, error } = await supabaseAdmin
+      .from("messages")
+      .select("id", { count: "exact", head: true })
+      .eq("to_id", context.userId)
+      .eq("read", false);
+    if (error) throw new Error(error.message);
+    return { count: count ?? 0 };
+  });
+
 
 // ─── EXERCISES ────────────────────────────────────────────────────────────────
 
