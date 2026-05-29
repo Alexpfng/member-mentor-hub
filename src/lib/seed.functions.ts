@@ -84,7 +84,7 @@ export const seedColosmartData = createServerFn({ method: "POST" })
         duration_weeks: p.duration_weeks ?? null,
         frequency_per_week: p.weeks?.[0]?.days?.length ?? null,
         level: "intermediate",
-        structure: { weeks: p.weeks ?? [] },
+        structure: { weeks: p.weeks ?? [] } as unknown as Record<string, unknown>,
       }));
       for (let i = 0; i < rows.length; i += 4) {
         const chunk = rows.slice(i, i + 4);
