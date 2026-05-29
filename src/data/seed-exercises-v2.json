@@ -1,0 +1,5122 @@
+[
+ {
+  "id": "cars-hanches",
+  "nom": "CARS hanches",
+  "categorie": "isolation",
+  "muscle_group": "mobilité",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "très lent",
+  "youtube_url": "https://www.youtube.com/watch?v=Sb5imZbEU7Q&pp=ugMICgJmchABGAE%3D",
+  "consignes": "Garde le côté controlatéral collé au mur pour isoler la hanche qui travaille"
+ },
+ {
+  "id": "cars-hanches-90-90",
+  "nom": "CARS hanches 90/90",
+  "categorie": "isolation",
+  "muscle_group": "mobilité",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "explosif",
+  "youtube_url": "https://youtu.be/m51AZSXMvEA",
+  "consignes": "Le genou qui ne travaille pas reste au sol jusqu'à que la douleur soit trop intense"
+ },
+ {
+  "id": "pat-step-up",
+  "nom": "Pat step up",
+  "categorie": "isolation",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "3010",
+  "youtube_url": "https://www.youtube.com/shorts/phuXCVCN0sg",
+  "consignes": "Progresse en amplitude chaque semaine, + en + haut"
+ },
+ {
+  "id": "pistol-squat-sur-chaise-emom3",
+  "nom": "Pistol squat sur chaise EMOM3'",
+  "categorie": "epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "3010",
+  "youtube_url": "https://www.youtube.com/shorts/t8ezeFZS_ek",
+  "consignes": "Contrôle la descente 3s jusqu'à que tes fesses touchent la chaise, remontée explo"
+ },
+ {
+  "id": "fentes-bulgares-pieds-avant-et-arri-re-sur-lev",
+  "nom": "Fentes bulgares pieds avant et arrière surélevé",
+  "categorie": "semi_epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/watch?v=tn9efls7uaQ&pp=ygUnZnJvbnQgbGVnIGRlZmljaXQgYnVsZ2FyaWFuIHNwbGl0IHNxdWF0",
+  "consignes": "Le genou arrière passe sous la ligne du pied avant, trajectoire légèrement vers l'arrière"
+ },
+ {
+  "id": "tractions-sur-porte",
+  "nom": "Tractions sur porte",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/shorts/Az70yYsWPTc",
+  "consignes": "Pars avec bras en full extension, tirage explo, menton au dessus, et contrôle desc."
+ },
+ {
+  "id": "ischios-serviette-serviette-en-tempo",
+  "nom": "Ischios serviette serviette en tempo",
+  "categorie": "semi_epuisant",
+  "muscle_group": "ischio_jambiers",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/hDZFKJT6nvM",
+  "consignes": "Garde bien le bassin en rétroversion, enfonce ton talon dans le sol le + fort possible"
+ },
+ {
+  "id": "pompes-avec-pause-en-haut-2s",
+  "nom": "Pompes avec pause en haut 2s",
+  "categorie": "semi_epuisant",
+  "muscle_group": "pectoraux",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2s pause",
+  "youtube_url": "https://www.youtube.com/watch?v=yFQGVCmY-NU&pp=ygUUcGF1c2UgYXQgdG9wIHB1c2gtdXDSBwkJsgkBhyohjO8%3D",
+  "consignes": "2s entre haut entre chaque rep, poitrine qui touche le sol à chaque rep"
+ },
+ {
+  "id": "skater-squat-emom3",
+  "nom": "Skater squat EMOM3'",
+  "categorie": "epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/watch?v=kRnLZadW5Q0&pp=ygUWc2thdGVyIHNxdWF0IHZhcmlhdGlvbg%3D%3D",
+  "consignes": "Drive le genou arrière vers le bas et l'arrière, touche sol puis remonte (coussin au sol)"
+ },
+ {
+  "id": "reverse-hyper-sur-table",
+  "nom": "Reverse hyper sur table",
+  "categorie": "isolation",
+  "muscle_group": "fessiers",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "explosif",
+  "youtube_url": "https://youtube.com/shorts/bQnTtk4mHoQ?feature=share",
+  "consignes": "Monte les fesses le + haut possible et reviens bas, place un coussin sous tes hanches"
+ },
+ {
+  "id": "hollow-hold-gainage-invers",
+  "nom": "Hollow hold (gainage inversé)",
+  "categorie": "isolation",
+  "muscle_group": "abdos_gainage",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "iso",
+  "youtube_url": "https://www.youtube.com/watch?v=4xRpGgttca8&pp=ygUKaG9sbG93IGFicw%3D%3D",
+  "consignes": "Imagine de l'eau au niveau du nombril qui doit rester, épaules touchent pas le sol"
+ },
+ {
+  "id": "tirage-invers-sous-table",
+  "nom": "Tirage inversé sous table",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poulie",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/watch?v=NeaONUgPfWk&pp=ygUaZmVldCBlbGV2YXRlZCBpbnZlcnRlZCByb3c%3D",
+  "consignes": "Touche poitrine pr que chaque rep soit identique, bras extension complète en bas"
+ },
+ {
+  "id": "calf-raises-lunges-pied-avant-sur-lev",
+  "nom": "Calf raises lunges pied avant surélevé",
+  "categorie": "semi_epuisant",
+  "muscle_group": "mollets",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2220",
+  "youtube_url": "https://www.youtube.com/shorts/as9kw_V6Gdc",
+  "consignes": "En haut, force à fond dans le gros orteil, en bas, talon descend sous la ligne du pied"
+ },
+ {
+  "id": "tibial-raises-dos-au-mur",
+  "nom": "Tibial raises dos au mur",
+  "categorie": "semi_epuisant",
+  "muscle_group": "mollets",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2220",
+  "youtube_url": "https://www.youtube.com/shorts/pQcvW08rnAk",
+  "consignes": "Veille à bien respecter un tempo lent pour intensifier le travail, pause en haut"
+ },
+ {
+  "id": "alternated-split-hops-temps-contact-au-sol-court",
+  "nom": "Alternated split hops (temps contact au sol court)",
+  "categorie": "isolation",
+  "muscle_group": "pliométrie",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "explosif",
+  "youtube_url": "https://www.youtube.com/shorts/mZPC0xJOHX4",
+  "consignes": "Ne descends pas trop sur la fente c'est pas important, réactivité de cheville"
+ },
+ {
+  "id": "single-leg-pogo-jump-en-forme-de-croix",
+  "nom": "Single leg pogo jump en forme de croix",
+  "categorie": "isolation",
+  "muscle_group": "pliométrie",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "explosif",
+  "youtube_url": "https://www.youtube.com/shorts/hn65IF6cVKM",
+  "consignes": "Représente une croix au sol, garde les mains aux hanches, tps contact sol court"
+ },
+ {
+  "id": "low-ceiling-lunge-jump",
+  "nom": "Low ceiling lunge jump",
+  "categorie": "isolation",
+  "muscle_group": "pliométrie",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "explosif",
+  "youtube_url": "https://www.youtube.com/shorts/5j6gqdzuLn8",
+  "consignes": "Temps de contact au sol long, absorbe les forces avec ta jambe avant"
+ },
+ {
+  "id": "pompes-classiques",
+  "nom": "Pompes classiques",
+  "categorie": "semi_epuisant",
+  "muscle_group": "pectoraux",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/shorts/QSwBgMUaoHM",
+  "consignes": "Standardise en fixant des pt repères pour les pieds, mains, et fais toucher poitrine"
+ },
+ {
+  "id": "one-leg-glute-bridge-sur-lev-pied-sur-chaise",
+  "nom": "One leg glute bridge surélevé pied sur chaise",
+  "categorie": "semi_epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/watch?v=T3qf6s9jZ6k&pp=ygUXb25lIGxlZyBoaXAgdHJ1c3QgY2hhaXI%3D",
+  "consignes": "Monte le bassin le plus haut possible, enfonce le atalon fort dans la chaise"
+ },
+ {
+  "id": "reverse-nordics",
+  "nom": "Reverse nordics",
+  "categorie": "semi_epuisant",
+  "muscle_group": "ischio_jambiers",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/x6RDnk6gwdI",
+  "consignes": "Descends de + en + en bas chaque semaine, bassin fixé vers l'avant (rétroversion)"
+ },
+ {
+  "id": "fentes-avant-pointe-de-pied-sur-lev-e-isom-trie",
+  "nom": "Fentes avant pointe de pied surélevée isométrie",
+  "categorie": "isolation",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "iso",
+  "youtube_url": "https://youtu.be/WIEZb8wve2A",
+  "consignes": "Un exercice mental, tu dois lutter,  genou arrière proche du sol, genou avant 90°"
+ },
+ {
+  "id": "lundi",
+  "nom": "LUNDI",
+  "categorie": "non_classe",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "142 BPM",
+  "youtube_url": "",
+  "consignes": ""
+ },
+ {
+  "id": "mardi",
+  "nom": "MARDI",
+  "categorie": "non_classe",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "145 BPM",
+  "youtube_url": "",
+  "consignes": ""
+ },
+ {
+  "id": "vendredi",
+  "nom": "VENDREDI",
+  "categorie": "non_classe",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "145 BPM",
+  "youtube_url": "",
+  "consignes": ""
+ },
+ {
+  "id": "echauffement-travail-de-pied",
+  "nom": "Echauffement & travail de pied",
+  "categorie": "prevention",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "",
+  "consignes": "30s entre chaque exo (voir encadré dédié), objectif -> pas de blessure"
+ },
+ {
+  "id": "bloc-1-4x400m",
+  "nom": "BLOC 1 : (4x400m)",
+  "categorie": "epuisant",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "gestion allure",
+  "youtube_url": "",
+  "consignes": "Ta recup se fait en passive, en marchant"
+ },
+ {
+  "id": "bloc-2-8x50m",
+  "nom": "BLOC 2 : (8x50m)",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "vitesse",
+  "youtube_url": "",
+  "consignes": "Recup en actif, ici gère ta vitesse pour pas t'épuiser, récup courte"
+ },
+ {
+  "id": "pistol-squat-sur-chaise-emom4",
+  "nom": "Pistol squat sur chaise EMOM4'",
+  "categorie": "epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "3010",
+  "youtube_url": "https://www.youtube.com/shorts/t8ezeFZS_ek",
+  "consignes": "Contrôle la descente 3s jusqu'à que tes fesses touchent la chaise, remontée explo"
+ },
+ {
+  "id": "mercredi",
+  "nom": "MERCREDI",
+  "categorie": "non_classe",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "143 BPM",
+  "youtube_url": "",
+  "consignes": ""
+ },
+ {
+  "id": "dimanche",
+  "nom": "DIMANCHE",
+  "categorie": "non_classe",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "143 BPM",
+  "youtube_url": "",
+  "consignes": ""
+ },
+ {
+  "id": "pistol-squat-sur-chaise-emom5",
+  "nom": "Pistol squat sur chaise EMOM5'",
+  "categorie": "epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "3010",
+  "youtube_url": "https://www.youtube.com/shorts/t8ezeFZS_ek",
+  "consignes": "Contrôle la descente 3s jusqu'à que tes fesses touchent la chaise, remontée explo"
+ },
+ {
+  "id": "tibial-raises-dos-au-mur-met-d-angle",
+  "nom": "Tibial raises dos au mur (met + d'angle)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "mollets",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2220",
+  "youtube_url": "https://www.youtube.com/shorts/pQcvW08rnAk",
+  "consignes": "Veille à bien respecter un tempo lent pour intensifier le travail, pause en haut"
+ },
+ {
+  "id": "jeudi",
+  "nom": "JEUDI",
+  "categorie": "non_classe",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "158 BPM",
+  "youtube_url": "",
+  "consignes": ""
+ },
+ {
+  "id": "pistol-squat-complet-en-tenant-emom4",
+  "nom": "Pistol squat complet en tenant EMOM4'",
+  "categorie": "epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "3010",
+  "youtube_url": "https://www.youtube.com/shorts/t8ezeFZS_ek",
+  "consignes": "Contrôle la descente 3s jusqu'à que tes fesses touchent la chaise, remontée explo"
+ },
+ {
+  "id": "pompes-tempo",
+  "nom": "Pompes tempo",
+  "categorie": "semi_epuisant",
+  "muscle_group": "pectoraux",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "31X0",
+  "youtube_url": "https://www.youtube.com/shorts/LyerbGAE3OQ",
+  "consignes": "3s de descente, 1s pause en bas, remontée explosive"
+ },
+ {
+  "id": "alternated-split-hops-haut-possible",
+  "nom": "Alternated split hops (+ haut possible)",
+  "categorie": "isolation",
+  "muscle_group": "pliométrie",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "explosif",
+  "youtube_url": "https://www.youtube.com/shorts/mZPC0xJOHX4",
+  "consignes": "Ne descends pas trop sur la fente c'est pas important, réactivité de cheville"
+ },
+ {
+  "id": "pistol-squat-complet-en-tenant-emom5",
+  "nom": "Pistol squat complet en tenant EMOM5'",
+  "categorie": "epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "3010",
+  "youtube_url": "https://www.youtube.com/shorts/t8ezeFZS_ek",
+  "consignes": "Contrôle la descente 3s jusqu'à que tes fesses touchent la chaise, remontée explo"
+ },
+ {
+  "id": "cars-paules-unilat-ral-couch",
+  "nom": "CARs épaules unilatéral couché",
+  "categorie": "isolation",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "très lent",
+  "youtube_url": "https://www.youtube.com/watch?v=-tyfLWEQPEM",
+  "consignes": "Mobilité des épaules. Le plus haut et le plus loin possible"
+ },
+ {
+  "id": "cars-paules",
+  "nom": "CARs épaules",
+  "categorie": "isolation",
+  "muscle_group": "épaules",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "très lent",
+  "youtube_url": "https://www.youtube.com/watch?v=7XEjZE4C_Z8",
+  "consignes": "Mobilité des épaules. Le plus haut et le plus loin possible"
+ },
+ {
+  "id": "hanging-scapular-cars",
+  "nom": "Hanging scapular CARS",
+  "categorie": "isolation",
+  "muscle_group": "abdos_gainage",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "",
+  "youtube_url": "https://www.youtube.com/watch?v=FPpTDqBzYVw&pp=ygUQaGFuZ2luZyBjYXJzIGZyYw%3D%3D",
+  "consignes": "Retracte les omoplates, bras tendus, epaules vers l'arrière"
+ },
+ {
+  "id": "curl-biceps-inclin-sur-banc",
+  "nom": "Curl biceps incliné sur banc",
+  "categorie": "isolation",
+  "muscle_group": "biceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "1110",
+  "youtube_url": "https://www.youtube.com/shorts/IgBxFssZbUY",
+  "consignes": "Epaules complètement en extension vers l'arrière, coudes tendus en bas"
+ },
+ {
+  "id": "d-velopp-inclin-la-smith-machine",
+  "nom": "Développé incliné à la smith machine",
+  "categorie": "epuisant",
+  "muscle_group": "cardio",
+  "equipement": "machine",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/watch?v=8urE8Z8AMQ4&pp=ygUhc21pdGggbWFjaGluZSBpbmNsaW5lIGJlbmNoIHByZXNz",
+  "consignes": "Respecter tempo, pause aux clavicules et remontée explosive (banc 45°)"
+ },
+ {
+  "id": "chest-press-la-machine-horizontale",
+  "nom": "Chest press à la machine (horizontale)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "autre",
+  "equipement": "machine",
+  "tempo_defaut": "1110",
+  "youtube_url": "https://www.youtube.com/shorts/relql3kwCi8",
+  "consignes": "La tu pousses comme un gogole sur celui là, pas de tempo, mvt horizontal"
+ },
+ {
+  "id": "d-velopp-militaire-halt-re-assis",
+  "nom": "Développé militaire haltère assis",
+  "categorie": "semi_epuisant",
+  "muscle_group": "épaules",
+  "equipement": "haltères",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/watch?v=Q12jNrCddVE",
+  "consignes": "Les côtes alignées avec le bassin, pas de surlordose lombaire (cambrure)"
+ },
+ {
+  "id": "tractions-supinations-en-s-rie",
+  "nom": "Tractions supinations en série",
+  "categorie": "isolation",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/watch?v=YW64kHMTuPs&pp=ygUUdHJhY3Rpb25zIHN1cGluYXRpb24%3D",
+  "consignes": "Objectif gros bibis, cette fois full ampli mais ne remonte pas trop haut"
+ },
+ {
+  "id": "rowing-buste-pench-la-barre-pronation",
+  "nom": "Rowing buste penché à la barre pronation",
+  "categorie": "epuisant",
+  "muscle_group": "dos",
+  "equipement": "barre",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/watch?v=mTQ_qg37MJk&pp=ygUXc3VwaW5hdGVkIGJlbnQgb3ZlciByb3c%3D",
+  "consignes": "Pas de rebond des ischios, buste prallèle au sol focus sur la contraction"
+ },
+ {
+  "id": "tractions-pronations-lest-es-emom2",
+  "nom": "Tractions pronations lestées EMOM2'",
+  "categorie": "epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/shorts/60BmRjqUlPc",
+  "consignes": "Focus sur la forme, descente lente bien propre jusqu'en bas"
+ },
+ {
+  "id": "rowing-halt-res-buste-support-vid-o",
+  "nom": "Rowing haltères buste supporté (vidéo)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "haltères",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/5ehAn6l-OqM",
+  "consignes": "Focus sur les coudes ouverts bien vers l'arrière + extension thoracique (vidéo)"
+ },
+ {
+  "id": "tirage-vertical-poulie-haute",
+  "nom": "Tirage vertical poulie haute",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poulie",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/Oym1hWK8ILs",
+  "consignes": "Concentre toi sur la forme, poitrine sortie, utilise l'élan pour tirer plus lourd"
+ },
+ {
+  "id": "katana-extensions-unilat-ral",
+  "nom": "Katana extensions unilatéral",
+  "categorie": "isolation",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "classique",
+  "youtube_url": "https://www.youtube.com/watch?v=bJ9bm-aJ7No&pp=ygUodW5pbGF0ZXJhbCBrYXRhbmEgYXJtIHN1cG9ydGVkIGV4dGVuc2lvbg%3D%3D",
+  "consignes": "Drive bien le coude au dessus de la tête et pas sur le côté"
+ },
+ {
+  "id": "oiseaux-poulie-cable-crossover",
+  "nom": "Oiseaux poulie cable crossover",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "poulie",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/watch?v=jAnkS4u8mN0&pp=ygUTcmVhciBkZWx0IGNhYmxlIGZseQ%3D%3D",
+  "consignes": "Bras quasi tendus, va à  l'echec épaules en rota. interne"
+ },
+ {
+  "id": "cars-hanches-quadrup-dique",
+  "nom": "CARS hanches quadrupédique",
+  "categorie": "isolation",
+  "muscle_group": "mobilité",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "",
+  "youtube_url": "https://www.youtube.com/watch?v=3HcqUibHeDY",
+  "consignes": "Mobilité des hanches. Lentement, décompose bien. (vidéo)"
+ },
+ {
+  "id": "jefferson-curl-sur-lev-pointes-de-pied-sureleves",
+  "nom": "Jefferson curl surélevé + pointes de pied sureleves",
+  "categorie": "isolation",
+  "muscle_group": "mollets",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "",
+  "youtube_url": "https://www.youtube.com/watch?v=4aav_ptG4dU&pp=ygUXamVmZmVyc29uIGN1cmwgZWxldmF0ZWQ%3D",
+  "consignes": "Décompose en  enroulant chaque vertèbre, dos complètement rond"
+ },
+ {
+  "id": "cossack-squat-pdc",
+  "nom": "Cossack squat pdc",
+  "categorie": "isolation",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "",
+  "youtube_url": "https://www.youtube.com/watch?v=dhDjKmTX8tU&pp=ygUOY29zc2FjayBzcXVhdCA%3D",
+  "consignes": "Essaie de t'accoupir complètement, talon en contact avec le sol"
+ },
+ {
+  "id": "rdl-la-barre",
+  "nom": "RDL à la barre",
+  "categorie": "epuisant",
+  "muscle_group": "autre",
+  "equipement": "barre",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/a96Aw4AxbMI",
+  "consignes": "Envoyer les fesses en arrière, descends mi-tibia pas plus, filme toi"
+ },
+ {
+  "id": "presse-cuisses-placement-des-pieds-haut",
+  "nom": "Presse à cuisses placement des pieds haut",
+  "categorie": "semi_epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "machine",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/XrIfYHqPghM",
+  "consignes": "Focus chaîne post., stop l'ampli quand tu sens le bas du dos s'arrondir"
+ },
+ {
+  "id": "extensions-lombaires-lourd-regarde-vid-o",
+  "nom": "Extensions lombaires lourd (regarde vidéo)",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/NhKvlKl8E0M",
+  "consignes": "Garde le bassin engagé vers l'avant (rétroversion), fessiers contractés"
+ },
+ {
+  "id": "leg-extension-en-tempo-1-0rir",
+  "nom": "Leg extension en tempo (1 - 0RiR)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "machine",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/shorts/nh7yhZ2P9eA",
+  "consignes": "Rapproche toi de l'échec sur toutes les séries, montée explo (x), amplitude"
+ },
+ {
+  "id": "leg-curl-en-tempo-1-0rir",
+  "nom": "Leg curl en tempo (1 - 0RiR)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "ischio_jambiers",
+  "equipement": "machine",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/watch?v=o2Tma5Cek48&pp=ygUWYWx0ZXJuYXRlZCBiaWNlcHMgY3VybA%3D%3D",
+  "consignes": "Rapproche toi de l'échec sur toutes les séries, montée explo (x), amplitude"
+ },
+ {
+  "id": "curl-debout-aux-halt-res",
+  "nom": "Curl debout aux haltères",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "haltères",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/shorts/skOUFuHzIBA",
+  "consignes": "Bourrines comme un gros porc, force rota. externe en haut"
+ },
+ {
+  "id": "d-velopp-couch-inclin-halt-res",
+  "nom": "Développé couché incliné haltères",
+  "categorie": "epuisant",
+  "muscle_group": "pectoraux",
+  "equipement": "haltères",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/3rS4I1HKyig",
+  "consignes": "Incline le banc à 15° environ, amplitude max, trajectoire convergente"
+ },
+ {
+  "id": "chest-press-inclin-la-machine",
+  "nom": "Chest press incliné à la machine",
+  "categorie": "semi_epuisant",
+  "muscle_group": "autre",
+  "equipement": "machine",
+  "tempo_defaut": "1110",
+  "youtube_url": "https://www.youtube.com/shorts/relql3kwCi8",
+  "consignes": "Machine en incliné pour le haut de pecs"
+ },
+ {
+  "id": "chest-fly-poulie-basse",
+  "nom": "Chest fly poulie basse",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "poulie",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/watch?v=e_8HLu59-to&pp=ygUTbG93IGNhYmxlIGNoZXN0IGZseQ%3D%3D",
+  "consignes": "Etirement maximal, 1s pause en haut, contracte volontairement les pecs"
+ },
+ {
+  "id": "elevations-lat-rales-la-machine",
+  "nom": "Elevations latérales à la machine",
+  "categorie": "isolation",
+  "muscle_group": "dos",
+  "equipement": "machine",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/shorts/tugyPvy5zVk",
+  "consignes": "Reste 1/2s en haut, sinon pas de consigne tu charges comme une mule"
+ },
+ {
+  "id": "rowing-plateforme-1-2-rir",
+  "nom": "Rowing plateforme (1 - 2 RiR)",
+  "categorie": "epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/watch?v=hSk2GoyFHsM&pp=ygUScGxhdGZvcm0gdC1iYXIgcm93",
+  "consignes": "Relache bien les épaules vers l'avant et tire coude en arrière, serre omoplates"
+ },
+ {
+  "id": "tractions-pronation-emom5-sur-5min",
+  "nom": "Tractions pronation (EMOM5' sur 5min)",
+  "categorie": "epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "classique",
+  "youtube_url": "https://www.youtube.com/shorts/VGc2UUcIVrA",
+  "consignes": "EMOM7' sur 5min, focus sur la vitesse plus que la technique"
+ },
+ {
+  "id": "rowing-b-cheron-met-les-bandes",
+  "nom": "Rowing bûcheron (met les bandes)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "élastique",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/gw3z148hJiU",
+  "consignes": "Tu fais tes 2 séries sur le même côté, donc 4 séries en tout uniquement"
+ },
+ {
+  "id": "shrugs-smith-machine-derri-re-avec-bandes",
+  "nom": "Shrugs smith machine derrière avec bandes",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "élastique",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/watch?v=keNpoJVJCNk&pp=ygUkYmVoaW5kIHRoZSBiYWNrIHNsaXRoIG1hY2hpbmUgc2h1cmdz",
+  "consignes": "Si la machine est prise, fais aux haltères à 42kg"
+ },
+ {
+  "id": "crunch-la-poulie-haute",
+  "nom": "Crunch à la poulie haute",
+  "categorie": "isolation",
+  "muscle_group": "abdos_gainage",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/shorts/vAu7qJCcIp8",
+  "consignes": "Tu dois étirer au max vers le haut et garder le bassin fixé en avant (rétroversion)"
+ },
+ {
+  "id": "tractions-pronation-emom6-sur-5min",
+  "nom": "Tractions pronation (EMOM6' sur 5min)",
+  "categorie": "epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "classique",
+  "youtube_url": "https://www.youtube.com/shorts/VGc2UUcIVrA",
+  "consignes": "EMOM7' sur 5min, focus sur la vitesse plus que la technique"
+ },
+ {
+  "id": "tractions-pronation-emom6-sur-6min",
+  "nom": "Tractions pronation (EMOM6' sur 6min)",
+  "categorie": "epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "classique",
+  "youtube_url": "https://www.youtube.com/shorts/VGc2UUcIVrA",
+  "consignes": "Rajoute une rep sur la min 1&2"
+ },
+ {
+  "id": "tractions-pronations-lest-es-emom3",
+  "nom": "Tractions pronations lestées EMOM3'",
+  "categorie": "epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/shorts/60BmRjqUlPc",
+  "consignes": "Focus sur la forme, descente lente bien propre jusqu'en bas"
+ },
+ {
+  "id": "tractions-pronation-emom6-sur-7min",
+  "nom": "Tractions pronation (EMOM6' sur 7min)",
+  "categorie": "epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "classique",
+  "youtube_url": "https://www.youtube.com/shorts/VGc2UUcIVrA",
+  "consignes": "6 reps par minute sur 7min de travail au total"
+ },
+ {
+  "id": "cars-paules-unilat-rales-genou",
+  "nom": "CARs épaules unilatérales à genou",
+  "categorie": "isolation",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "très lent",
+  "youtube_url": "https://youtube.com/shorts/X_Rvy8qvpdc?feature=share",
+  "consignes": "Mobilité des épaules en extension. Dissocier épaule / cage thoracique"
+ },
+ {
+  "id": "squat-profond",
+  "nom": "Squat profond",
+  "categorie": "isolation",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "",
+  "youtube_url": "https://www.youtube.com/shorts/WNrBE8Z-GL8",
+  "consignes": "Tiens toi pour descendre plus bas et balance toi un peu de chaque côté"
+ },
+ {
+  "id": "emom8-pompes-classiques",
+  "nom": "EMOM8' Pompes classiques",
+  "categorie": "epuisant",
+  "muscle_group": "pectoraux",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "11X0",
+  "youtube_url": "https://www.youtube.com/shorts/QSwBgMUaoHM",
+  "consignes": "Standardise en fixant des pt repères pour les pieds, mains, et fais toucher poitrine"
+ },
+ {
+  "id": "tirage-sous-table-emom5",
+  "nom": "Tirage sous table EMOM5'",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poulie",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/watch?v=FKKZRwBJDxE",
+  "consignes": "Il te faut un point de repère : touche la poitrine, ou menton ou nez... pour valider"
+ },
+ {
+  "id": "gainage-type-hollow",
+  "nom": "Gainage type \"hollow\"",
+  "categorie": "isolation",
+  "muscle_group": "abdos_gainage",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "iso",
+  "youtube_url": "https://www.youtube.com/watch?v=4xRpGgttca8&pp=ygUKaG9sbG93IGFicw%3D%3D",
+  "consignes": "Imagine de l'eau au niveau du nombril qui doit rester, épaules touchent pas le sol"
+ },
+ {
+  "id": "emom3-pistol-squat-en-s-asseyant",
+  "nom": "EMOM3' Pistol squat en s'asseyant",
+  "categorie": "epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/watch?v=RbEOQEYvjcw&pp=ygUXcGlzdG9sIHNxdWF0IHdpdGggc3Rvb2w%3D",
+  "consignes": "Standardise en trouvant un support assez bas, ne t'affaisse pas, touche et remonte"
+ },
+ {
+  "id": "fentes-bulgares-en-d-ficit",
+  "nom": "Fentes bulgares en déficit",
+  "categorie": "semi_epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://youtube.com/shorts/eudX_lhqNEc?feature=share",
+  "consignes": "Objectif amplitude maximale (étirement), tiens toi un peu pour t'équilibrer"
+ },
+ {
+  "id": "ischios-serviette-descente-loin-possible",
+  "nom": "Ischios serviette (descente + loin possible)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "ischio_jambiers",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/hDZFKJT6nvM",
+  "consignes": "Garde bien le bassin en rétroversion, descends le plus bas possible"
+ },
+ {
+  "id": "tirage-sous-table-emom4",
+  "nom": "Tirage sous table EMOM4'",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poulie",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/watch?v=FKKZRwBJDxE",
+  "consignes": "Il te faut un point de repère : touche la poitrine, ou menton ou nez... pour valider"
+ },
+ {
+  "id": "squats-saut-s-le-haut-possible",
+  "nom": "Squats sautés le + haut possible",
+  "categorie": "semi_epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "explosif",
+  "youtube_url": "https://www.youtube.com/shorts/NPLBLuREraQ",
+  "consignes": "Focus sauter le + haut possible, temps contact au sol long, replace toi entre les reps"
+ },
+ {
+  "id": "mobilisation-en-deep-squat",
+  "nom": "Mobilisation en deep squat",
+  "categorie": "isolation",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "",
+  "youtube_url": "https://www.youtube.com/shorts/C86OsA-ijAg",
+  "consignes": "Succède différents mouvements (thoracique, cheville...) base toi sur la vidéo"
+ },
+ {
+  "id": "fentes-bulgares-smith-machine-pied-avant-sur-lev",
+  "nom": "Fentes bulgares smith machine pied avant surélevé",
+  "categorie": "epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "machine",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/eRQK5RaiZ4g",
+  "consignes": "Tu fais tes 2 séries sur la même jambe, donc 4 séries en tout uniquement"
+ },
+ {
+  "id": "curl-biceps-barre-ez",
+  "nom": "Curl biceps barre EZ",
+  "categorie": "isolation",
+  "muscle_group": "biceps",
+  "equipement": "barre",
+  "tempo_defaut": "1110",
+  "youtube_url": "https://www.youtube.com/watch?v=i4ZYFny69bA",
+  "consignes": "Envoie la purée, c'est le moment de rattraper ce pt faible"
+ },
+ {
+  "id": "hack-squat-full-amplitude-quadz",
+  "nom": "Hack squat full amplitude quadz",
+  "categorie": "semi_epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "machine",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/xU4cuTffVZc",
+  "consignes": "Surélève talons avec deux poids 2,5kg, garde les pieds alignés sous la barre"
+ },
+ {
+  "id": "romanian-deadlift-la-barre",
+  "nom": "Romanian deadlift à la barre",
+  "categorie": "semi_epuisant",
+  "muscle_group": "autre",
+  "equipement": "barre",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/a96Aw4AxbMI",
+  "consignes": "Envoyer les fesses en arrière, descends mi-tibia pas plus, filme toi"
+ },
+ {
+  "id": "leg-extension-concentrique-2-jbes-excentrique-1-jbe",
+  "nom": "Leg extension concentrique 2 jbes excentrique 1 jbe",
+  "categorie": "isolation",
+  "muscle_group": "quadriceps",
+  "equipement": "machine",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/watch?v=E_pTa-uagpE&pp=ygUdbGVnIGV4dGVuc2lvbiAyLTF0ZXN0b3N0ZXJvbmU%3D",
+  "consignes": "Montée à 2 jambes, pause en haut 1s, descente à 1 jambe contrôlée"
+ },
+ {
+  "id": "leg-curl-concentrique-2-jbes-excentrique-1-jbe",
+  "nom": "Leg curl concentrique 2 jbes excentrique 1 jbe",
+  "categorie": "isolation",
+  "muscle_group": "ischio_jambiers",
+  "equipement": "machine",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/watch?v=0vxmiAxmYsM&pp=ygUjc2VhdGVkIGxlZyBjdXJsIHRlc3Rvc3Rlcm9uZSBuYXRpb24%3D",
+  "consignes": "Poussée à 2 jambes, pause 1s, descente à 1 jambe contrôlée"
+ },
+ {
+  "id": "machine-adducteurs",
+  "nom": "Machine à adducteurs",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "machine",
+  "tempo_defaut": "2220",
+  "youtube_url": "https://www.youtube.com/shorts/eYA6y_ZnrDQ",
+  "consignes": "Pour un gros intérieur des cuisses, full amplitude, echec sur les 2 sets"
+ },
+ {
+  "id": "curl-pupitre-en-unilat-ral",
+  "nom": "Curl pupitre en unilatéral",
+  "categorie": "isolation",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "1110",
+  "youtube_url": "https://www.youtube.com/shorts/HJvFGv71C1E",
+  "consignes": "Tu fais tes 2 séries sur le même bras, donc 4 séries en tout uniquement"
+ },
+ {
+  "id": "fly-press-aux-halt-res-sur-banc-inclin",
+  "nom": "Fly press aux haltères sur banc incliné",
+  "categorie": "semi_epuisant",
+  "muscle_group": "autre",
+  "equipement": "haltères",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/watch?v=JSDpq14vCZ8&pp=ygUaZmx5IHByZXNzIG9uIGluY2xpbmUgYmVuY2g%3D",
+  "consignes": "Abductions du bras pour bosser le pec en étirement, va chercher l'étirement"
+ },
+ {
+  "id": "rowing-halt-res-buste-support-met-les-bandes",
+  "nom": "Rowing haltères buste supporté (met les bandes)",
+  "categorie": "epuisant",
+  "muscle_group": "dos",
+  "equipement": "haltères",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/5ehAn6l-OqM",
+  "consignes": "Focus sur les coudes ouverts bien vers l'arrière + extension thoracique (vidéo)"
+ },
+ {
+  "id": "tractions-prise-neutres-lest-es-emom5",
+  "nom": "Tractions prise neutres lestées EMOM5'",
+  "categorie": "epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/shorts/9aGZwOzRGrc",
+  "consignes": "Focus sur la forme, descente lente bien propre jusqu'en bas"
+ },
+ {
+  "id": "tirage-unilat-ral-la-poulie-haute",
+  "nom": "Tirage unilatéral à la poulie haute",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poulie",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/1dB1DLDo4iQ",
+  "consignes": "Tire l'épaule bien en avant comme d'hab, focus étirement dorsaux"
+ },
+ {
+  "id": "tirage-invers",
+  "nom": "Tirage inversé",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poulie",
+  "tempo_defaut": "20X0",
+  "youtube_url": "https://www.youtube.com/watch?v=KOaCM1HMwU0&pp=ygUMaW52ZXJ0ZWQgcm93",
+  "consignes": "Tu dois avoir un pt de repère fixe, poitrine qui touche la barre par exemple"
+ },
+ {
+  "id": "elevations-lat-rales-poulie-buste-1-2-inclin",
+  "nom": "Elevations latérales poulie buste 1/2 incliné",
+  "categorie": "isolation",
+  "muscle_group": "dos",
+  "equipement": "poulie",
+  "tempo_defaut": "1110",
+  "youtube_url": "https://www.youtube.com/shorts/WwBNmkwZXHs",
+  "consignes": "Fais toutes tes séries sur un bras puis passe à l'autre (4 séries en tout)"
+ },
+ {
+  "id": "soulev-de-terre-prise-half-snatch",
+  "nom": "Soulevé de terre prise half-snatch",
+  "categorie": "epuisant",
+  "muscle_group": "fessiers",
+  "equipement": "barre",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/watch?v=EG10lRviIYQ&pp=ygUZaGFsZiBzbmF0Y2ggZ3JpcCBkZWFkbGlmdA%3D%3D",
+  "consignes": "Envoyer les fesses en arrière, prise large, pas de rebond au sol"
+ },
+ {
+  "id": "presse-cuisses-unilat-rale",
+  "nom": "Presse à cuisses unilatérale",
+  "categorie": "epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "machine",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/XrIfYHqPghM",
+  "consignes": "Pied assez haut, chaîne post., stop l'ampli quand bas du dos s'arrondit"
+ },
+ {
+  "id": "leg-extension-en-tempo",
+  "nom": "Leg extension en tempo",
+  "categorie": "semi_epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "machine",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/shorts/nh7yhZ2P9eA",
+  "consignes": "Rapproche toi de l'échec sur toutes les séries, montée explo (x), amplitude"
+ },
+ {
+  "id": "leg-curl-en-tempo",
+  "nom": "Leg curl en tempo",
+  "categorie": "semi_epuisant",
+  "muscle_group": "ischio_jambiers",
+  "equipement": "machine",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/watch?v=o2Tma5Cek48&pp=ygUWYWx0ZXJuYXRlZCBiaWNlcHMgY3VybA%3D%3D",
+  "consignes": "Rapproche toi de l'échec sur toutes les séries, montée explo (x), amplitude"
+ },
+ {
+  "id": "tirage-horizontal-prise-large-coudes-ouverts",
+  "nom": "Tirage horizontal prise large coudes ouverts",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poulie",
+  "tempo_defaut": "1110",
+  "youtube_url": "https://www.youtube.com/watch?v=sjJ0z4R3w0M&pp=ygUTd2lkZSBncmlwIHJvdyBjYWJsZQ%3D%3D",
+  "consignes": "Coudes ouverts. Pause à la poitrine, relache épaules au max vers l'avant"
+ },
+ {
+  "id": "rotations-du-buste-agenouill-la-poulie",
+  "nom": "Rotations du buste agenouillé à la poulie",
+  "categorie": "isolation",
+  "muscle_group": "mobilité",
+  "equipement": "poulie",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/watch?v=db4_x6rpji8&pp=ygUhaGFsZiBrbmVlbGluZyBjb3JlIHJvdGF0aW9uIGNhYmxl0gcJCYYJAYcqIYzv",
+  "consignes": "C'est le thorax qui bouge par rapport au bassin qui doit rester fixe"
+ },
+ {
+  "id": "curl-biceps-prise-marteau",
+  "nom": "Curl biceps prise marteau",
+  "categorie": "isolation",
+  "muscle_group": "biceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "1110",
+  "youtube_url": "https://www.youtube.com/shorts/XtruE8T-19Q",
+  "consignes": "Envoie la purée, ca devrait être - traumatisant que la barre EZ"
+ },
+ {
+  "id": "tractions-prise-neutres-emom5",
+  "nom": "Tractions prise neutres EMOM5'",
+  "categorie": "epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/shorts/9aGZwOzRGrc",
+  "consignes": "Focus sur la forme, descente lente bien propre jusqu'en bas"
+ },
+ {
+  "id": "tirage-invers-pieds-sur-lev-s",
+  "nom": "Tirage inversé pieds surélevés",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poulie",
+  "tempo_defaut": "20X0",
+  "youtube_url": "https://www.youtube.com/watch?v=KOaCM1HMwU0&pp=ygUMaW52ZXJ0ZWQgcm93",
+  "consignes": "Tu dois avoir un pt de repère fixe, poitrine qui touche la barre par exemple"
+ },
+ {
+  "id": "crunch-la-poulie-haute-nouveau-set-up",
+  "nom": "Crunch à la poulie haute nouveau set-up",
+  "categorie": "isolation",
+  "muscle_group": "abdos_gainage",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "",
+  "consignes": "Fixe pied, surélève le bassin et enroule chaque vertèbre"
+ },
+ {
+  "id": "rotations-du-buste-agenouill-la-poulie-nv-setup",
+  "nom": "Rotations du buste agenouillé à la poulie (nv setup)",
+  "categorie": "isolation",
+  "muscle_group": "mobilité",
+  "equipement": "poulie",
+  "tempo_defaut": "2110",
+  "youtube_url": "",
+  "consignes": "C'est le thorax qui bouge par rapport au bassin qui doit rester fixe"
+ },
+ {
+  "id": "romanian-deadlift-la-smith-pieds-sur-lev-es",
+  "nom": "Romanian deadlift à la smith pieds surélevées",
+  "categorie": "epuisant",
+  "muscle_group": "autre",
+  "equipement": "machine",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/pNklHzXov8g",
+  "consignes": "Surélève toi avec une pile de disque ou un step, focus cul vers l'arrière"
+ },
+ {
+  "id": "hack-squat-full-ampli",
+  "nom": "Hack squat full ampli",
+  "categorie": "semi_epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "machine",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/watch?v=QpwRbl3E_LE&pp=ygUgaGFjayBzcXVhdCBxdWFkIGZvY3VzIGZ1bGwgZGVwdGg%3D",
+  "consignes": "Laisse tes genoux partir en av., talons qui décollent, position pieds : tt en bas"
+ },
+ {
+  "id": "squat-la-smith-machine-talons-sur-lev-s",
+  "nom": "Squat à la smith machine talons surélevés",
+  "categorie": "semi_epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "machine",
+  "tempo_defaut": "30X0",
+  "youtube_url": "https://www.youtube.com/shorts/xU4cuTffVZc",
+  "consignes": "Surélève talons avec deux poids 2,5kg, garde les pieds alignés sous la barre"
+ },
+ {
+  "id": "tractions-lest-es-prise-neutre",
+  "nom": "Tractions lestées prise neutre",
+  "categorie": "epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "1110",
+  "youtube_url": "https://www.youtube.com/shorts/E9vvwfxSZFc",
+  "consignes": "Reste dans une amplitude dorsaux, va pas tout en haut ni tout en bas"
+ },
+ {
+  "id": "tirage-unilat-ral-dorsaux-de-profil",
+  "nom": "Tirage unilatéral dorsaux de profil",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poulie",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/watch?v=9G5CH9cLXt8&pp=ygUaY3Jvc3MgYm9keSBsYXQgcHVsbCBhcm91bmQ%3D",
+  "consignes": "Le bassin doit être le plus fixe possible pour mettre l'emphase en dorsaux"
+ },
+ {
+  "id": "chest-press-inclin-e-la-machine-convergente",
+  "nom": "Chest press inclinée à la machine (convergente)",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "machine",
+  "tempo_defaut": "1110",
+  "youtube_url": "https://www.youtube.com/shorts/o0Ud3RU59hw",
+  "consignes": "Pousse à l'échec, focus sur le haut de pecs ici"
+ },
+ {
+  "id": "bayesian-curl-poulie-lvl10",
+  "nom": "Bayesian curl poulie lvl10",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "poulie",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/BaSd7C58L3o",
+  "consignes": "Avance toi par rapport à la poulie pour avoir le bras en extension"
+ },
+ {
+  "id": "staggered-stance-rdl",
+  "nom": "Staggered stance rdl",
+  "categorie": "semi_epuisant",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/gw3z148hJiU",
+  "consignes": "Pied d'appui doit recevoir le - de poids possible, légère rota. int. hanche avant"
+ },
+ {
+  "id": "extensions-lombaires-lourd-bassin-en-r-tro",
+  "nom": "Extensions lombaires lourd (bassin en rétro)",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/NhKvlKl8E0M",
+  "consignes": "Garde le bassin engagé vers l'avant (rétroversion), fessiers contractés"
+ },
+ {
+  "id": "d-velopp-d-clin-la-smith-machine",
+  "nom": "Développé décliné à la smith machine",
+  "categorie": "epuisant",
+  "muscle_group": "cardio",
+  "equipement": "machine",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/shorts/SZ-NLcQqLq8",
+  "consignes": "Si ton banc ne se décline pas, surélève pied avec un disque (vidéo)"
+ },
+ {
+  "id": "fly-press-sur-banc-inclin",
+  "nom": "Fly press sur banc incliné",
+  "categorie": "semi_epuisant",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/watch?v=JSDpq14vCZ8&pp=ygUaZmx5IHByZXNzIG9uIGluY2xpbmUgYmVuY2g%3D",
+  "consignes": "Abductions du bras pour bosser le pec en étirement, va chercher l'étirement"
+ },
+ {
+  "id": "rowing-buste-support-sur-machine",
+  "nom": "Rowing buste supporté sur machine",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "machine",
+  "tempo_defaut": "20X0",
+  "youtube_url": "https://www.youtube.com/watch?v=KOaCM1HMwU0&pp=ygUMaW52ZXJ0ZWQgcm93",
+  "consignes": "Tu dois avoir un pt de repère fixe, poitrine qui touche la barre par exemple"
+ },
+ {
+  "id": "peck-deck",
+  "nom": "Peck deck",
+  "categorie": "isolation",
+  "muscle_group": "pectoraux",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/g3T7LsEeDWQ",
+  "consignes": "Reste 1s contracté devant en fin de mouvement en contraction volontaire"
+ },
+ {
+  "id": "pendlay-row",
+  "nom": "Pendlay row",
+  "categorie": "epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/shorts/tYxEGi7ir4I",
+  "consignes": "Tes hanches restent parallèles au sol, pas d'accoup tu tires qu'en dos"
+ },
+ {
+  "id": "chest-press-inclin-e-unilat-ral-convergente",
+  "nom": "Chest press inclinée unilatéral (convergente)",
+  "categorie": "isolation",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "1110",
+  "youtube_url": "https://www.youtube.com/watch?v=6wCtXrn_8Rg&pp=ygUmdW5pbGF0ZXJhbCBpbmNsaW5lIGNoZXN0IHByZXNzIG1hY2hpbmU%3D",
+  "consignes": "Incline toi très légèrement de côté pour avoir de l'amplitude sur l'étirement du pec"
+ },
+ {
+  "id": "rowing-buste-support-unilat-ral",
+  "nom": "Rowing buste supporté unilatéral",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "20X0",
+  "youtube_url": "https://www.youtube.com/shorts/aRSBFIb95VM",
+  "consignes": "Tu dois avoir un pt de repère fixe, poitrine qui touche la barre par exemple"
+ },
+ {
+  "id": "soulev-de-terre-sumo",
+  "nom": "Soulevé de terre sumo",
+  "categorie": "epuisant",
+  "muscle_group": "fessiers",
+  "equipement": "barre",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/e7oLkRlT2CQ",
+  "consignes": "Marque bien la pause à chaque rep, prends le temps de replacer ton cul bas"
+ },
+ {
+  "id": "gobelet-squat",
+  "nom": "Gobelet squat",
+  "categorie": "semi_epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/RC5XZ3Bto0k",
+  "consignes": "Full amplitude, poitrine sortie vers l'avant, contrôle la descente"
+ },
+ {
+  "id": "tractions-sur-porte-si-rien-sous-la-main",
+  "nom": "Tractions (sur porte si rien sous la main)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "4100",
+  "youtube_url": "https://www.youtube.com/shorts/hpSaHSPLsu8",
+  "consignes": "Pas de focus spécial ici, vitesse pour gagner du temps de récup"
+ },
+ {
+  "id": "hollow-gainage-invers",
+  "nom": "Hollow (gainage inversé)",
+  "categorie": "isolation",
+  "muscle_group": "abdos_gainage",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "iso",
+  "youtube_url": "https://www.youtube.com/watch?v=4xRpGgttca8&pp=ygUKaG9sbG93IGFicw%3D%3D",
+  "consignes": "Imagine de l'eau au niveau du nombril qui ne doit pas tomber"
+ },
+ {
+  "id": "jefferson-curl-to-deep-squat-with-kb",
+  "nom": "Jefferson curl to deep squat with KB",
+  "categorie": "isolation",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "",
+  "youtube_url": "https://www.youtube.com/shorts/ELWl4ndT5jI",
+  "consignes": "Colonne complètement fléchit, bascule en deep squat et ouvre les hanches"
+ },
+ {
+  "id": "presse-cuisse-horizontale-wide-stance",
+  "nom": "Presse à cuisse horizontale wide stance",
+  "categorie": "epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "machine",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/kMP8Ws8Zbnw",
+  "consignes": "Place les pieds en haut et larges sur la plateforme (focus fessiers, adduct.)"
+ },
+ {
+  "id": "prayer-curl-en-unilat-ral",
+  "nom": "Prayer curl en unilatéral",
+  "categorie": "isolation",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/Mg0NnlF5NZQ",
+  "consignes": "Utilise le même banc que pour les fentes pour avoir un set-up pratique"
+ },
+ {
+  "id": "romanian-deadlift-smith-machine-prise-large",
+  "nom": "Romanian deadlift smith machine prise large",
+  "categorie": "epuisant",
+  "muscle_group": "autre",
+  "equipement": "machine",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/jYZV6BVtQIM",
+  "consignes": "Prise : petit doigt sur les marques de la barre, fesses au max en arr."
+ },
+ {
+  "id": "machine-adducteurs-pause-en-haut",
+  "nom": "Machine à adducteurs pause en haut",
+  "categorie": "semi_epuisant",
+  "muscle_group": "autre",
+  "equipement": "machine",
+  "tempo_defaut": "2220",
+  "youtube_url": "https://www.youtube.com/shorts/eYA6y_ZnrDQ",
+  "consignes": "Pour un gros intérieur des cuisses, full amplitude, echec sur les 2 sets"
+ },
+ {
+  "id": "fentes-bulgares-pied-avant-sur-lev-avec-halt-res",
+  "nom": "Fentes bulgares pied avant surélevé avec haltères",
+  "categorie": "semi_epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "haltères",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/watch?v=tn9efls7uaQ&pp=ygUnZnJvbnQgbGVnIGRlZmljaXQgYnVsZ2FyaWFuIHNwbGl0IHNxdWF0",
+  "consignes": "Prends 30s entre les deux jambes pour récupérer, full amplitude"
+ },
+ {
+  "id": "rowing-buste-pench-smith-machine",
+  "nom": "Rowing buste penché smith machine",
+  "categorie": "epuisant",
+  "muscle_group": "dos",
+  "equipement": "machine",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/E09mUzpfifA",
+  "consignes": "Relâche bien les épaules en avant et tire en dorsaux au nombril"
+ },
+ {
+  "id": "d-velopp-couch-la-smith-machine",
+  "nom": "Développé couché à la smith machine",
+  "categorie": "semi_epuisant",
+  "muscle_group": "pectoraux",
+  "equipement": "barre",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/BxgbeUCd8S4",
+  "consignes": "Cherche un tempo parfait avec un étirement maximal"
+ },
+ {
+  "id": "tirage-unilat-ral-la-poulie-haute-sur-banc-inclin",
+  "nom": "Tirage unilatéral à la poulie haute sur banc incliné",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poulie",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/NQ8p10Du1aE",
+  "consignes": "Incline toi du côté opposé pour accentuer l'étirement du dorsau qui travaille"
+ },
+ {
+  "id": "tractions-pronation-lest-es",
+  "nom": "Tractions pronation lestées",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/watch?v=JSDpq14vCZ8&pp=ygUaZmx5IHByZXNzIG9uIGluY2xpbmUgYmVuY2g%3D",
+  "consignes": "Abductions du bras pour bosser le pec en étirement, va chercher l'étirement"
+ },
+ {
+  "id": "fly-press-aux-halt-res",
+  "nom": "Fly press aux haltères",
+  "categorie": "semi_epuisant",
+  "muscle_group": "autre",
+  "equipement": "haltères",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/FVyVvApcyZY",
+  "consignes": "Cherche l'abduction du bras tout en mettant lourd"
+ },
+ {
+  "id": "presse-cuisse-lin-aire-en-unilat-ral",
+  "nom": "Presse à cuisse linéaire en unilatéral",
+  "categorie": "epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "machine",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/XrIfYHqPghM",
+  "consignes": "Pied assez haut, chaîne post., stop l'ampli quand bas du dos s'arrondit"
+ },
+ {
+  "id": "one-leg-rdl-smith-machine",
+  "nom": "One leg RDL smith machine",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "machine",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/Naj3le1UcGc",
+  "consignes": "On privilégie l'étirement à la charge sur cet exo, envoie haut la jbe arrière"
+ },
+ {
+  "id": "d-velopp-inclin-smith-machine",
+  "nom": "Développé incliné smith machine",
+  "categorie": "epuisant",
+  "muscle_group": "cardio",
+  "equipement": "machine",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/watch?v=8urE8Z8AMQ4&pp=ygUhc21pdGggbWFjaGluZSBpbmNsaW5lIGJlbmNoIHByZXNz",
+  "consignes": "Respecter tempo, pause aux clavicules et remontée explosive (banc 43°)"
+ },
+ {
+  "id": "tirage-machine-wide-grip-en-bilat-ral",
+  "nom": "Tirage machine wide grip en bilatéral",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poulie",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/3xb_KqBGv2Q",
+  "consignes": "Relâche à fond les épaules en avant, focus sur la contraction en haut"
+ },
+ {
+  "id": "elevations-lat-rales-classiques",
+  "nom": "Elevations latérales classiques",
+  "categorie": "isolation",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "1110",
+  "youtube_url": "https://www.youtube.com/shorts/67aqcWUYw2I",
+  "consignes": "Pense à lever le petit doigt au niveau de l'épaule, rota. externe de l'épaule"
+ },
+ {
+  "id": "dips-poids-du-corps-tempo-full-ampli",
+  "nom": "Dips poids du corps tempo full ampli",
+  "categorie": "semi_epuisant",
+  "muscle_group": "triceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "41X0",
+  "youtube_url": "https://www.youtube.com/shorts/9wHqh9RyDZc",
+  "consignes": "Descends bas avec un angle coude>90°, descente lente montée explo"
+ },
+ {
+  "id": "cable-flies-sur-banc-inclin",
+  "nom": "Cable flies sur banc incliné",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "poulie",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/QDkFWmZqVgk",
+  "consignes": "Reste 1s contracté devant en fin de mouvement en contraction volontaire"
+ },
+ {
+  "id": "tractions-supination-lest-es",
+  "nom": "Tractions supination lestées",
+  "categorie": "isolation",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/shorts/RxM160TCgtI",
+  "consignes": "Full amplitude, on veut un mix entre dorsaux et biceps"
+ },
+ {
+  "id": "deep-squat-smith-machine",
+  "nom": "Deep squat smith machine",
+  "categorie": "epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "machine",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/shorts/Y44LG96Sfz0",
+  "consignes": "Privilégie l'amplitude à la charge, ouvre bien les hanches en bas"
+ },
+ {
+  "id": "elevations-lat-rales-machine",
+  "nom": "Elevations latérales machine",
+  "categorie": "isolation",
+  "muscle_group": "dos",
+  "equipement": "machine",
+  "tempo_defaut": "1110",
+  "youtube_url": "https://www.youtube.com/shorts/67aqcWUYw2I",
+  "consignes": "Pense à lever le petit doigt au niveau de l'épaule, rota. externe de l'épaule"
+ },
+ {
+  "id": "obliques-au-banc-lombaires",
+  "nom": "Obliques au banc à lombaires",
+  "categorie": "semi_epuisant",
+  "muscle_group": "abdos_gainage",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "3110",
+  "youtube_url": "https://www.youtube.com/shorts/THNS23KEW4M",
+  "consignes": "Tempo lent, contrôlé, descends maximum de ton amplitude en inclinaison"
+ },
+ {
+  "id": "tirage-unilat-ral-dorsaux-de-profil-met-un-banc",
+  "nom": "Tirage unilatéral dorsaux de profil (met un banc)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poulie",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/watch?v=9G5CH9cLXt8&pp=ygUaY3Jvc3MgYm9keSBsYXQgcHVsbCBhcm91bmQ%3D",
+  "consignes": "Le bassin doit être le plus fixe possible pour mettre l'emphase en dorsaux"
+ },
+ {
+  "id": "hack-squat-sissy-variation",
+  "nom": "Hack squat sissy variation",
+  "categorie": "epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "machine",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/Id4Uf0hDXok",
+  "consignes": "Place pieds en haut tout en bas, assez serrés, envoie genoux en avant pied"
+ },
+ {
+  "id": "crunch-poulie-sur-swiss-ball",
+  "nom": "Crunch poulie sur swiss ball",
+  "categorie": "isolation",
+  "muscle_group": "abdos_gainage",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/watch?v=yOC5F_wNYvo&pp=ygUXY3J1bmNoIHN3aXNzIGJhbGwgY2FibGXSBwkJTwoBhyohjO8%3D",
+  "consignes": "Place bien swiss ball au niveau du milieu du dos, si t'es trop bas pas d'equilibre"
+ },
+ {
+  "id": "ghd-nordic-curl-delest-avec-les-mains",
+  "nom": "GHD nordic curl delesté avec les mains",
+  "categorie": "isolation",
+  "muscle_group": "ischio_jambiers",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/VlEFXUkQGH4",
+  "consignes": "Retiens au maximum la descente puis sers toi de tes mains pr remonter"
+ },
+ {
+  "id": "tractions-prise-neutre-lest-es-en-tempo",
+  "nom": "Tractions prise neutre lestées en tempo",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/8tpEhng19z8",
+  "consignes": "Garde bien les épaules en protraction, arrondis bien le haut du dos"
+ },
+ {
+  "id": "mouvements-ballistiques-hanches",
+  "nom": "Mouvements ballistiques hanches",
+  "categorie": "non_classe",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/shorts/so-iEzLac14",
+  "consignes": ""
+ },
+ {
+  "id": "mont-e-de-genoux-dynamiques",
+  "nom": "Montée de genoux dynamiques",
+  "categorie": "non_classe",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "",
+  "youtube_url": "https://www.youtube.com/watch?v=_koAkJJVT7Y",
+  "consignes": ""
+ },
+ {
+  "id": "sprint-progressif-sur-30m",
+  "nom": "Sprint progressif sur 30m",
+  "categorie": "non_classe",
+  "muscle_group": "cardio",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "à bloc",
+  "youtube_url": "https://www.youtube.com/watch?v=mRX-dZQxMvY",
+  "consignes": ""
+ },
+ {
+  "id": "course-fartlek",
+  "nom": "Course Fartlek",
+  "categorie": "non_classe",
+  "muscle_group": "cardio",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "Alterne",
+  "youtube_url": "",
+  "consignes": ""
+ },
+ {
+  "id": "objectifs",
+  "nom": "OBJECTIFS :",
+  "categorie": "non_classe",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "~4:30/km",
+  "youtube_url": "",
+  "consignes": ""
+ },
+ {
+  "id": "crunch-poulie-dos-la-poulie",
+  "nom": "Crunch poulie dos à la poulie",
+  "categorie": "isolation",
+  "muscle_group": "abdos_gainage",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/DSICFu5iEFE",
+  "consignes": "Place bien swiss ball au niveau du milieu du dos, si t'es trop bas pas d'equilibre"
+ },
+ {
+  "id": "nordic-curl-delest-avec-les-mains",
+  "nom": "Nordic curl delesté avec les mains",
+  "categorie": "isolation",
+  "muscle_group": "ischio_jambiers",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/GzxNzNRy9T0",
+  "consignes": "Retiens au maximum la descente puis sers toi de tes mains pr remonter"
+ },
+ {
+  "id": "course-basse-intensite",
+  "nom": "Course BASSE INTENSITE",
+  "categorie": "non_classe",
+  "muscle_group": "cardio",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "~7:00/km",
+  "youtube_url": "",
+  "consignes": ""
+ },
+ {
+  "id": "tractions-pronation-en-tempo",
+  "nom": "Tractions pronation en tempo",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "3010",
+  "youtube_url": "https://www.youtube.com/watch?v=MNgrQG6Dsos&pp=ygUWcHJvbmF0ZWQgcHVsbCB1cCB0ZW1wb9IHCQmRCgGHKiGM7w%3D%3D",
+  "consignes": "Retiens descente à fond, pas de pause en haut ni en bas"
+ },
+ {
+  "id": "floor-press-prise-neutre-halt-res",
+  "nom": "Floor press prise neutre haltères",
+  "categorie": "semi_epuisant",
+  "muscle_group": "autre",
+  "equipement": "haltères",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/watch?v=rs05AtccEhg&pp=ygUhbmV1dHJhbCBncmlwIGR1bWJiZWxsIGZsb29yIHByZXNz",
+  "consignes": "Fais différents tests pour le set-up, on veut 0 douleurs sinon on laisse tomber"
+ },
+ {
+  "id": "d-velopp-militaire-halt-res",
+  "nom": "Développé militaire haltères",
+  "categorie": "isolation",
+  "muscle_group": "épaules",
+  "equipement": "haltères",
+  "tempo_defaut": "1110",
+  "youtube_url": "https://www.youtube.com/shorts/HQu6wkHu3Z8",
+  "consignes": "Tu vois si ca te fait mal ou pas, et tu limites en amplitude si jamais"
+ },
+ {
+  "id": "romanian-deadlift-la-smith",
+  "nom": "Romanian deadlift à la smith",
+  "categorie": "epuisant",
+  "muscle_group": "autre",
+  "equipement": "machine",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/g5u75sgpn04",
+  "consignes": "Envoie les fesses en arrière, garde bien les dorsaux proactifs, longe les tibias"
+ },
+ {
+  "id": "d-velopp-militaire-barre",
+  "nom": "Développé militaire barre",
+  "categorie": "epuisant",
+  "muscle_group": "épaules",
+  "equipement": "barre",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/Lc6HEFyFhwU",
+  "consignes": "Là aussi tu testes, moindre douleur tu laisses tomber"
+ },
+ {
+  "id": "curl-biceps-prise-marteau-altern-s",
+  "nom": "Curl biceps prise marteau alternés",
+  "categorie": "isolation",
+  "muscle_group": "biceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/lmIo_gVE8T4",
+  "consignes": "Normalement ca devrait pas être douloureux, si ca l'est on cherchera un autre"
+ },
+ {
+  "id": "tractions-pronation-prise-neutre-en-tempo",
+  "nom": "Tractions pronation prise neutre en tempo",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "3010",
+  "youtube_url": "https://www.youtube.com/watch?v=MNgrQG6Dsos&pp=ygUWcHJvbmF0ZWQgcHVsbCB1cCB0ZW1wb9IHCQmRCgGHKiGM7w%3D%3D",
+  "consignes": "Retiens descente à fond, pas de pause en haut ni en bas"
+ },
+ {
+  "id": "chest-press-prise-neutre",
+  "nom": "Chest press prise neutre",
+  "categorie": "semi_epuisant",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2120",
+  "youtube_url": "https://www.youtube.com/watch?v=LkhS6iyuiR4&pp=ygUgbmV1dHJhbCBncmlwIGNoZXN0IHByZXNzIG1hY2hpbmU%3D",
+  "consignes": "Fais différents tests pour le set-up, on veut 0 douleurs sinon on laisse tomber"
+ },
+ {
+  "id": "d-velopp-militaire-smith",
+  "nom": "Développé militaire Smith",
+  "categorie": "isolation",
+  "muscle_group": "épaules",
+  "equipement": "barre",
+  "tempo_defaut": "2120",
+  "youtube_url": "https://www.youtube.com/shorts/HQu6wkHu3Z8",
+  "consignes": "Tu vois si ca te fait mal ou pas, et tu limites en amplitude si jamais"
+ },
+ {
+  "id": "chest-press-machine-prise-neutre",
+  "nom": "Chest press machine prise neutre",
+  "categorie": "semi_epuisant",
+  "muscle_group": "autre",
+  "equipement": "machine",
+  "tempo_defaut": "2120",
+  "youtube_url": "https://www.youtube.com/watch?v=LkhS6iyuiR4&pp=ygUgbmV1dHJhbCBncmlwIGNoZXN0IHByZXNzIG1hY2hpbmU%3D",
+  "consignes": "Fais différents tests pour le set-up, on veut 0 douleurs sinon on laisse tomber"
+ },
+ {
+  "id": "cars-hanches-position-90-90",
+  "nom": "CARS hanches position 90/90",
+  "categorie": "isolation",
+  "muscle_group": "mobilité",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "",
+  "youtube_url": "https://www.youtube.com/watch?v=m51AZSXMvEA&pp=ygUZcm90YXRpb25hbCBoaXAgY2FycyA5MC85MA%3D%3D",
+  "consignes": "Le genou qui ne travaille pas reste au sol jusqu'à que la douleur soit trop intense"
+ },
+ {
+  "id": "tibial-raises",
+  "nom": "Tibial raises",
+  "categorie": "isolation",
+  "muscle_group": "mollets",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "3110",
+  "youtube_url": "https://www.youtube.com/shorts/pQcvW08rnAk",
+  "consignes": "Veille à bien respecter un tempo lent pour intensifier le travail, pause en haut"
+ },
+ {
+  "id": "d-velopp-militaire-smith-machine",
+  "nom": "Développé militaire smith machine",
+  "categorie": "epuisant",
+  "muscle_group": "épaules",
+  "equipement": "barre",
+  "tempo_defaut": "2120",
+  "youtube_url": "https://www.youtube.com/shorts/HQu6wkHu3Z8",
+  "consignes": "Tu vois si ca te fait mal ou pas, et tu limites en amplitude si jamais"
+ },
+ {
+  "id": "lateral-step-up",
+  "nom": "Lateral step-up",
+  "categorie": "semi_epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "3010",
+  "youtube_url": "https://www.youtube.com/shorts/Vr7G2yzb9f4",
+  "consignes": "Descente très lente, stabilité & contrôle genou, tiens toi avec une main au début"
+ },
+ {
+  "id": "rdl-smith-machine",
+  "nom": "RDL smith machine",
+  "categorie": "epuisant",
+  "muscle_group": "autre",
+  "equipement": "machine",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/g5u75sgpn04",
+  "consignes": "Envoie les fesses en arrière, garde bien les dorsaux proactifs, longe les tibias"
+ },
+ {
+  "id": "obliques-la-station-landmine",
+  "nom": "Obliques à la station landmine",
+  "categorie": "semi_epuisant",
+  "muscle_group": "abdos_gainage",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "3110",
+  "youtube_url": "https://www.youtube.com/shorts/THNS23KEW4M",
+  "consignes": "Tempo lent, contrôlé, descends maximum de ton amplitude en inclinaison"
+ },
+ {
+  "id": "calf-raises-au-hack-squat",
+  "nom": "Calf raises au hack squat",
+  "categorie": "isolation",
+  "muscle_group": "quadriceps",
+  "equipement": "machine",
+  "tempo_defaut": "très lent",
+  "youtube_url": "https://www.youtube.com/watch?v=ChyN0-KLapo&pp=ygUVaGFjayBzcXVhdCBjYWxmIHJhaXNl0gcJCYcKAYcqIYzv",
+  "consignes": "Le talon passe sous la ligne de la marche, force ds le pouce en position haute"
+ },
+ {
+  "id": "poliquin-step-up",
+  "nom": "Poliquin step-up",
+  "categorie": "isolation",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "3110",
+  "youtube_url": "https://www.youtube.com/shorts/toTT_ToPTgA",
+  "consignes": "Descente très lente, stabilité & contrôle genou, talon surélevé avec un disque"
+ },
+ {
+  "id": "calf-raise-lunges-genou-fl-chi",
+  "nom": "Calf raise lunges genou fléchi",
+  "categorie": "isolation",
+  "muscle_group": "mollets",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/qWk08MRFcHw",
+  "consignes": "En haut, force à fond dans le gros orteil, en bas, talon descend sous la ligne du pied"
+ },
+ {
+  "id": "reverse-nordics-avec-bande-lastique",
+  "nom": "Reverse nordics avec bande élastique",
+  "categorie": "isolation",
+  "muscle_group": "ischio_jambiers",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/8AB6OFzD2GE",
+  "consignes": "Descends aussi profond que possible, bassin fixé vers l'avant en rétroversion"
+ },
+ {
+  "id": "skater-squat",
+  "nom": "Skater squat",
+  "categorie": "epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/watch?v=a9lx_T0f7yc&pp=ygUMc2thdGVyIHNxdWF0",
+  "consignes": "Ralentis descente, genou jambe arrière touche sol, tiens toi au début si besoin"
+ },
+ {
+  "id": "leg-curl-assis-en-tempo",
+  "nom": "Leg curl assis en tempo",
+  "categorie": "isolation",
+  "muscle_group": "ischio_jambiers",
+  "equipement": "machine",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/watch?v=o2Tma5Cek48&pp=ygUWYWx0ZXJuYXRlZCBiaWNlcHMgY3VybA%3D%3D",
+  "consignes": "Rapproche toi de l'échec sur toutes les séries, montée explo (x), amplitude"
+ },
+ {
+  "id": "tractions-supination-en-tempo",
+  "nom": "Tractions supination en tempo",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "3110",
+  "youtube_url": "https://www.youtube.com/shorts/L7k_AhBw6uE",
+  "consignes": "Retiens descente à fond, pas de pause en haut ni en bas"
+ },
+ {
+  "id": "copenhagen-plank-raises",
+  "nom": "Copenhagen plank raises",
+  "categorie": "isolation",
+  "muscle_group": "abdos_gainage",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/VeO_ewwF70A",
+  "consignes": "Cale pied sur dossier d'un banc, effectues des montées & descentes en controlant"
+ },
+ {
+  "id": "star-plank",
+  "nom": "Star plank",
+  "categorie": "isolation",
+  "muscle_group": "abdos_gainage",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "iso",
+  "youtube_url": "https://www.youtube.com/watch?v=-9toG6869YY&pp=ygUKc3RhciBwbGFuaw%3D%3D",
+  "consignes": "Repousse le sol avec la tranche de ton pied, garde l'autre jambe bien haute"
+ },
+ {
+  "id": "rotation-tibiale-en-position-agenouill-e",
+  "nom": "Rotation tibiale en position agenouillée",
+  "categorie": "isolation",
+  "muscle_group": "mollets",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "très lent",
+  "youtube_url": "https://www.youtube.com/watch?v=2FYUi4M2idw",
+  "consignes": "Cherche a forcer à fond vers le haut, + tu mets d'intention + c'est efficace"
+ },
+ {
+  "id": "squat-position-profonde-mobilisations-vid-o",
+  "nom": "Squat position profonde + mobilisations (vidéo)",
+  "categorie": "non_classe",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "lent",
+  "youtube_url": "https://www.youtube.com/watch?v=lbozu0DPcYI",
+  "consignes": ""
+ },
+ {
+  "id": "cars-colonne-thoracique",
+  "nom": "CARs colonne thoracique",
+  "categorie": "non_classe",
+  "muscle_group": "mobilité",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "très lent",
+  "youtube_url": "https://www.youtube.com/watch?v=OL98wofsIKU",
+  "consignes": ""
+ },
+ {
+  "id": "cars-colonne-lombaire",
+  "nom": "CARs colonne lombaire",
+  "categorie": "non_classe",
+  "muscle_group": "mobilité",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "très lent",
+  "youtube_url": "https://www.youtube.com/watch?v=-lEojoV_idY",
+  "consignes": ""
+ },
+ {
+  "id": "cossack-squat",
+  "nom": "Cossack squat",
+  "categorie": "isolation",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "très lent",
+  "youtube_url": "https://www.youtube.com/watch?v=dhDjKmTX8tU&pp=ygUOY29hc3NhY2sgc3F1YXQ%3D",
+  "consignes": "Très lent, objectif tout le pied en contact avec le sol + bas sur les appuis"
+ },
+ {
+  "id": "half-jefferson-curl-avec-pack-d-eau",
+  "nom": "Half Jefferson curl avec pack d'eau",
+  "categorie": "non_classe",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/Luxd_sEZUqU",
+  "consignes": ""
+ },
+ {
+  "id": "couch-stretch",
+  "nom": "Couch stretch",
+  "categorie": "non_classe",
+  "muscle_group": "mobilité",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "iso",
+  "youtube_url": "https://www.youtube.com/watch?v=Fg-lwNBzVV8&pp=ygUNY291Y2ggc3RyZXRjaA%3D%3D",
+  "consignes": ""
+ },
+ {
+  "id": "trail-en-fartlek",
+  "nom": "Trail en fartlek",
+  "categorie": "non_classe",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "",
+  "consignes": ""
+ },
+ {
+  "id": "chest-press-pronation",
+  "nom": "Chest press pronation",
+  "categorie": "semi_epuisant",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2120",
+  "youtube_url": "https://www.youtube.com/watch?v=LkhS6iyuiR4&pp=ygUgbmV1dHJhbCBncmlwIGNoZXN0IHByZXNzIG1hY2hpbmU%3D",
+  "consignes": "Tempo ultra lent et contrôlé, on veut pas de douleur à l'épaule"
+ },
+ {
+  "id": "half-jefferson-curl-avec-halt-re",
+  "nom": "Half Jefferson curl avec haltère",
+  "categorie": "non_classe",
+  "muscle_group": "autre",
+  "equipement": "haltères",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/Luxd_sEZUqU",
+  "consignes": ""
+ },
+ {
+  "id": "tibial-raises-en-position-flexion-lombaire",
+  "nom": "Tibial raises en position flexion lombaire",
+  "categorie": "isolation",
+  "muscle_group": "mollets",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "3110",
+  "youtube_url": "https://www.youtube.com/shorts/n8dNUmMM-jU",
+  "consignes": "On étire toute la chaîne post., sans poids pour le moment et on chargera"
+ },
+ {
+  "id": "skater-squat-essaie-de-ne-pas-te-tenir-cette-sem",
+  "nom": "Skater squat (essaie de ne pas te tenir cette sem.)",
+  "categorie": "epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/watch?v=a9lx_T0f7yc&pp=ygUMc2thdGVyIHNxdWF0",
+  "consignes": "Ralentis descente, genou jambe arrière touche sol, tiens toi au début si besoin"
+ },
+ {
+  "id": "tractions-supination-lest",
+  "nom": "Tractions supination lesté",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/L7k_AhBw6uE",
+  "consignes": "Plus de tempo, on recommence à charger comme l'épaule va mieux"
+ },
+ {
+  "id": "everseurs-du-pied-l-lastique",
+  "nom": "Everseurs du pied à lélastique",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "élastique",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/watch?v=QFgPY6oJWcA&pp=ygUSYmFuZCBldmVyc2lvbiBmZWV0",
+  "consignes": "La force de traction doit venir de l'arrière en oblique, monte pied vers le haut & côté"
+ },
+ {
+  "id": "tibial-raises-met-d-angle",
+  "nom": "Tibial raises (met + d'angle)",
+  "categorie": "isolation",
+  "muscle_group": "mollets",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "3110",
+  "youtube_url": "https://www.youtube.com/shorts/pQcvW08rnAk",
+  "consignes": "Veille à bien respecter un tempo lent pour intensifier le travail, pause en haut"
+ },
+ {
+  "id": "single-leg-isometric-tendon-d-achille",
+  "nom": "Single leg isometric tendon d'achille",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "iso",
+  "youtube_url": "https://www.youtube.com/shorts/7Udb4E3Uks8",
+  "consignes": "Force dans le gros orteil le + fort possible comme si tu voulais décoller vers le haut"
+ },
+ {
+  "id": "foot-circle",
+  "nom": "Foot circle",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "iso",
+  "youtube_url": "https://www.youtube.com/watch?v=BNhSatWoq5o&pp=ygUUZm9vdCBjaXJjbGUgamIgbW9yaW7SBwkJ2QoBhyohjO8%3D",
+  "consignes": "Ton talon doit plus ou moins toujours rester en contact avec le point au sol"
+ },
+ {
+  "id": "wall-assisted-sissy-squat-knee-prep",
+  "nom": "Wall assisted sissy squat (knee prep)",
+  "categorie": "isolation",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "vitesse",
+  "youtube_url": "https://www.youtube.com/shorts/tvUXg9qD604",
+  "consignes": "Envoie les genoux vers l'avant et vers le sol, décolle jusqu'à être en pointe de pied"
+ },
+ {
+  "id": "bloc-b-6x3min-de-course-en-c-te",
+  "nom": "BLOC B : 6x3min de course en côte",
+  "categorie": "non_classe",
+  "muscle_group": "cardio",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "~ 7:00 / km",
+  "youtube_url": "",
+  "consignes": ""
+ },
+ {
+  "id": "bloc-c-4x30s-c-te-raide-ou-bloc",
+  "nom": "BLOC C. 4x30s côte raide ou à bloc",
+  "categorie": "non_classe",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "~5:00/km",
+  "youtube_url": "",
+  "consignes": ""
+ },
+ {
+  "id": "bloc-b-7x3min-de-course-en-c-te",
+  "nom": "BLOC B : 7x3min de course en côte",
+  "categorie": "non_classe",
+  "muscle_group": "cardio",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "~ 7:00 / km",
+  "youtube_url": "",
+  "consignes": ""
+ },
+ {
+  "id": "bloc-c-4x35s-c-te-raide-ou-bloc",
+  "nom": "BLOC C. 4x35s côte raide ou à bloc",
+  "categorie": "non_classe",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "~5:00/km",
+  "youtube_url": "",
+  "consignes": ""
+ },
+ {
+  "id": "tractions-pronation-emom5",
+  "nom": "Tractions pronation EMOM5'",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/watch?v=MNgrQG6Dsos&pp=ygUWcHJvbmF0ZWQgcHVsbCB1cCB0ZW1wb9IHCQmRCgGHKiGM7w%3D%3D",
+  "consignes": "Travail d'endurance sur ce programme"
+ },
+ {
+  "id": "elevations-du-sol-aire-avec-poids",
+  "nom": "Elevations du soléaire avec poids",
+  "categorie": "isolation",
+  "muscle_group": "épaules",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/zCCJuBBH2G4",
+  "consignes": "Plan incliné dans l'idéal mais consigne N°1 c'est charger"
+ },
+ {
+  "id": "d-velopp-inclin-aux-halt-res",
+  "nom": "Développé incliné aux haltères",
+  "categorie": "epuisant",
+  "muscle_group": "cardio",
+  "equipement": "haltères",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/5orOHJL2qS4",
+  "consignes": "Attention de limiter dans l'amplitude douloureuse, on commence léger"
+ },
+ {
+  "id": "rdl-aux-halt-res",
+  "nom": "RDL aux haltères",
+  "categorie": "semi_epuisant",
+  "muscle_group": "autre",
+  "equipement": "haltères",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/cjRSNsvqpd8",
+  "consignes": "Envoie les fesses en arrière, garde bien les dorsaux proactifs, longe les tibias"
+ },
+ {
+  "id": "sissy-squat-en-t-assistant-d-une-main",
+  "nom": "Sissy squat en t'assistant d'une main",
+  "categorie": "semi_epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/hclu5RS93TQ",
+  "consignes": "Descends en amenant genoux en avant de la pte de pied, hanches engagées"
+ },
+ {
+  "id": "calf-raises-la-presse",
+  "nom": "Calf raises à la presse",
+  "categorie": "isolation",
+  "muscle_group": "quadriceps",
+  "equipement": "machine",
+  "tempo_defaut": "3110",
+  "youtube_url": "https://www.youtube.com/shorts/-pktcXXJo7A",
+  "consignes": "Le talon passe sous la ligne de la marche, force ds le pouce en position haute"
+ },
+ {
+  "id": "fentes-bulgares-pied-avant-sur-lev-smith-machine",
+  "nom": "Fentes bulgares pied avant surélevé smith machine",
+  "categorie": "epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "machine",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/NHeUeZj-2FY",
+  "consignes": "Prends 30s entre les deux jambes pour récupérer, genou arrière frôle le sol"
+ },
+ {
+  "id": "iso-overcoming-calf-raises",
+  "nom": "Iso overcoming calf raises",
+  "categorie": "isolation",
+  "muscle_group": "mollets",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "ISO MAX",
+  "youtube_url": "https://www.youtube.com/shorts/9M-Is5IpaBQ",
+  "consignes": "Forte de toute tes forces contre une force inbougeable, met toi au rack à squat"
+ },
+ {
+  "id": "abdos-sur-la-machine-tirage-vertical",
+  "nom": "Abdos sur la machine à tirage vertical",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poulie",
+  "tempo_defaut": "3110",
+  "youtube_url": "",
+  "consignes": "Nouveau set-on fire mon gars go passer pour le gars bizarre de la salle"
+ },
+ {
+  "id": "reverse-nordics-sans-lastique",
+  "nom": "Reverse nordics sans élastique",
+  "categorie": "isolation",
+  "muscle_group": "ischio_jambiers",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/watch?v=x2K8uH7dcqg&pp=ygUPcmV2ZXJzZSBub3JkaWNz0gcJCdMKAYcqIYzv",
+  "consignes": "Descends aussi profond que possible, bassin fixé vers l'avant en rétroversion"
+ },
+ {
+  "id": "elevations-lat-rales-poulie",
+  "nom": "Elevations latérales poulie",
+  "categorie": "isolation",
+  "muscle_group": "dos",
+  "equipement": "poulie",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/xrBcuPNTxLg",
+  "consignes": "Relâche à fond les épaules en avant, focus sur la contraction en haut"
+ },
+ {
+  "id": "squat-cycliste-en-emom3",
+  "nom": "Squat cycliste en EMOM3'",
+  "categorie": "epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/PR0sKrDuQEY",
+  "consignes": "Surélève les talons pour envoyer les genoux en avant de la pointe de pied"
+ },
+ {
+  "id": "leg-curl-excentrique-1-jbe-con-2",
+  "nom": "Leg curl excentrique à 1 jbe con. à 2",
+  "categorie": "isolation",
+  "muscle_group": "ischio_jambiers",
+  "equipement": "machine",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/watch?v=0vxmiAxmYsM&pp=ygUjc2VhdGVkIGxlZyBjdXJsIHRlc3Rvc3Rlcm9uZSBuYXRpb24%3D",
+  "consignes": "Poussée à 2 jambes, pause 1s, descente à 1 jambe contrôlée"
+ },
+ {
+  "id": "tirage-vertical-poulie-haute-prise-serr-e",
+  "nom": "Tirage vertical poulie haute prise serrée",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poulie",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/8Ny9mj2uQ4k",
+  "consignes": "Un peu de bodybuilding ça te manquait je le sais"
+ },
+ {
+  "id": "bent-knee-calf-raises",
+  "nom": "Bent knee calf raises",
+  "categorie": "isolation",
+  "muscle_group": "mollets",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/sTYPyZGuIKM",
+  "consignes": "Genou fléchi pour recruter le soléaire, buste penché sur l'avant, tiens d'une main"
+ },
+ {
+  "id": "bayesian-curl-la-poulie",
+  "nom": "Bayesian curl à la poulie",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "poulie",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/BaSd7C58L3o",
+  "consignes": "Avance toi par rapport à la poulie pour avoir le bras en extension"
+ },
+ {
+  "id": "extensions-triceps-la-corde",
+  "nom": "Extensions triceps à la corde",
+  "categorie": "isolation",
+  "muscle_group": "triceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/4NWWB0f0vzQ",
+  "consignes": "Force une légère rotation externe en bas du mouvement"
+ },
+ {
+  "id": "etirement-du-sol-aire",
+  "nom": "Etirement du soléaire",
+  "categorie": "non_classe",
+  "muscle_group": "mobilité",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "très lent",
+  "youtube_url": "https://www.youtube.com/shorts/WEaWErVF-r4",
+  "consignes": ""
+ },
+ {
+  "id": "bloc-b-4x6min-de-course-en-c-te",
+  "nom": "BLOC B : 4x6min de course en côte",
+  "categorie": "non_classe",
+  "muscle_group": "cardio",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "~ 7:10 / km",
+  "youtube_url": "",
+  "consignes": ""
+ },
+ {
+  "id": "bloc-c-pyramidal-sur-8-reps",
+  "nom": "BLOC C. PYRAMIDAL sur 8 reps",
+  "categorie": "non_classe",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "Progressif",
+  "youtube_url": "",
+  "consignes": ""
+ },
+ {
+  "id": "objectif",
+  "nom": "OBJECTIF :",
+  "categorie": "non_classe",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "jusqu'à 4",
+  "youtube_url": "",
+  "consignes": "- Si possible, respire uniquement par le nez (inspi comme expi)."
+ },
+ {
+  "id": "travail-de-puissance-sur-les-cuisses",
+  "nom": "travail de puissance sur les cuisses",
+  "categorie": "non_classe",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "puis dégressif",
+  "youtube_url": "",
+  "consignes": ""
+ },
+ {
+  "id": "cars-hanches-debout",
+  "nom": "CARS hanches debout",
+  "categorie": "isolation",
+  "muscle_group": "mobilité",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "très lent",
+  "youtube_url": "https://www.youtube.com/watch?v=Sb5imZbEU7Q&pp=ugMICgJmchABGAE%3D",
+  "consignes": "Garde le côté controlatéral collé au mur pour isoler la hanche qui travaille"
+ },
+ {
+  "id": "single-leg-pogo-jump-forme-de-croix",
+  "nom": "Single leg pogo jump (forme de croix)",
+  "categorie": "isolation",
+  "muscle_group": "pliométrie",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "explosif",
+  "youtube_url": "https://www.youtube.com/shorts/hn65IF6cVKM",
+  "consignes": "Représente une croix au sol, garde les mains aux hanches, tps contact sol court"
+ },
+ {
+  "id": "pat-step-up-isom-trie",
+  "nom": "Pat step up isométrie",
+  "categorie": "isolation",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "iso",
+  "youtube_url": "https://www.youtube.com/shorts/phuXCVCN0sg",
+  "consignes": "Tu te mets au point le + bas de la position, et tu tiens"
+ },
+ {
+  "id": "excentrique-step-up-emom4",
+  "nom": "Excentrique step-up EMOM4'",
+  "categorie": "epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "3010",
+  "youtube_url": "https://www.youtube.com/watch?v=SZXOPRVP1Oc&pp=ygUXZWNjZW50cmljIHN0ZXAgdXAgY2hhaXI%3D",
+  "consignes": "Contrôle la descente 3s, puis remonte sans rebond. Tu peux te tenir pr équilibre"
+ },
+ {
+  "id": "fentes-bulgares-sur-canap-pied-avant-sur-lev",
+  "nom": "Fentes bulgares sur canapé pied avant surélevé",
+  "categorie": "semi_epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/shorts/NmIAejkMoVQ",
+  "consignes": "Objectif amplitude maximale (étirement), viens t'asseoir sur la jambe arrière"
+ },
+ {
+  "id": "pompes-en-tempo",
+  "nom": "Pompes en tempo",
+  "categorie": "epuisant",
+  "muscle_group": "pectoraux",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/shorts/QSwBgMUaoHM",
+  "consignes": "Standardise en fixant des pt repères pour les pieds, mains, et fais toucher poitrine"
+ },
+ {
+  "id": "emom4-sissy-squat-assist-surface-glissante",
+  "nom": "EMOM4' Sissy squat assisté surface glissante",
+  "categorie": "epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "",
+  "consignes": "~2 pieds d'écart avec mur, descends en amenant genoux en avant de la pte de pied"
+ },
+ {
+  "id": "bodyweight-knee-extension-envoi-genoux-loin",
+  "nom": "Bodyweight knee extension (envoi genoux + loin)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "vitesse",
+  "youtube_url": "https://www.youtube.com/shorts/tvUXg9qD604",
+  "consignes": "Envoie les genoux vers l'avant et vers le sol, décolle jusqu'à être en pointe de pied"
+ },
+ {
+  "id": "tirage-invers-sous-table-ou-entre-deux-chaises",
+  "nom": "Tirage inversé sous table (ou entre deux chaises)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/KOc-Wmts2CM",
+  "consignes": "Touche poitrine pour que chaque rep soit identique, bras extension complète en bas"
+ },
+ {
+  "id": "calf-raises-lunges",
+  "nom": "Calf raises lunges",
+  "categorie": "semi_epuisant",
+  "muscle_group": "mollets",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "3110",
+  "youtube_url": "https://www.youtube.com/shorts/c6RhJCJW2Ls",
+  "consignes": "En haut, force à fond dans le gros orteil, en bas, talon descend sous la ligne du pied"
+ },
+ {
+  "id": "pompes-sur-lev-es-entre-deux-chaises",
+  "nom": "Pompes surélevées entre deux chaises",
+  "categorie": "semi_epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/watch?v=0D0dxLpRSp8",
+  "consignes": "Descends le + bas possible en contrôlant la descente, remontée puissante"
+ },
+ {
+  "id": "cable-crunch-la-poulie-haute",
+  "nom": "Cable crunch à la poulie haute",
+  "categorie": "isolation",
+  "muscle_group": "abdos_gainage",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/dkGwcfo9zto",
+  "consignes": "Bassin fixe, déroule lentement, et pense à rapprocher nombril vers le pubis"
+ },
+ {
+  "id": "v-lo-basse-intensit",
+  "nom": "Vélo basse intensité",
+  "categorie": "non_classe",
+  "muscle_group": "cardio",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "45-60min",
+  "youtube_url": "",
+  "consignes": ""
+ },
+ {
+  "id": "stairmaster-haute-intensit",
+  "nom": "Stairmaster haute intensité",
+  "categorie": "non_classe",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2min lent",
+  "youtube_url": "",
+  "consignes": ""
+ },
+ {
+  "id": "extensions-paules-unilat-rales",
+  "nom": "Extensions épaules unilatérales",
+  "categorie": "isolation",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "très lent",
+  "youtube_url": "https://www.youtube.com/shorts/X_Rvy8qvpdc",
+  "consignes": "Mobilité des épaules en extension. Le plus haut + pause 2s en haut."
+ },
+ {
+  "id": "d-velopp-couch-mg-1-reps-12x3-format-emom",
+  "nom": "Développé couché MG 1 reps + 12x3 format EMOM",
+  "categorie": "epuisant",
+  "muscle_group": "pectoraux",
+  "equipement": "barre",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/shorts/-PeqIaBLqPg",
+  "consignes": "Monte à 90 sur la MG puis loin de l'échec sur le 12x3"
+ },
+ {
+  "id": "tractions-lest-es-emom1-max-au-pdc",
+  "nom": "Tractions lestées EMOM1' + max au PDC",
+  "categorie": "epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "explosif + pause",
+  "youtube_url": "https://www.youtube.com/shorts/VGc2UUcIVrA",
+  "consignes": "EMOM lourd  tirage bien explosif + micro-pause en haut. Note ton max :"
+ },
+ {
+  "id": "tirage-horizontal-prise-large",
+  "nom": "Tirage horizontal prise large",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poulie",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/watch?v=sjJ0z4R3w0M&pp=ygUTd2lkZSBncmlwIHJvdyBjYWJsZQ%3D%3D",
+  "consignes": "Coudes ouverts. Pause à la poitrine, relache épaules au max"
+ },
+ {
+  "id": "elevations-lat-rales-poulie-unilat-rales",
+  "nom": "Elevations latérales poulie unilatérales",
+  "categorie": "isolation",
+  "muscle_group": "dos",
+  "equipement": "poulie",
+  "tempo_defaut": "1110",
+  "youtube_url": "https://www.youtube.com/shorts/WwBNmkwZXHs",
+  "consignes": "Travail lourd, garde bien 1/2s pause en haut + full amplitude"
+ },
+ {
+  "id": "tirage-menton-prise-large-au-niveau-des-traits",
+  "nom": "Tirage menton prise large (au niveau des traits)",
+  "categorie": "isolation",
+  "muscle_group": "dos",
+  "equipement": "poulie",
+  "tempo_defaut": "explosif",
+  "youtube_url": "https://www.youtube.com/watch?v=SW8SRE0ayXY&pp=ygUWd2Fpc3Qgc25hdGNoIGhpZ2ggcHVsbA%3D%3D",
+  "consignes": "Tire les coudes haut et en arrière comme quand tu démarres tronçonneuse"
+ },
+ {
+  "id": "squat-mg-en-2-reps-emom3",
+  "nom": "Squat MG en 2 reps + EMOM3'",
+  "categorie": "epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/shorts/EzvnMZuxGWw",
+  "consignes": "Sur l'EMOM chaque rep doit se ressembler et casser la parallèle, TECHNIQUE"
+ },
+ {
+  "id": "romanian-deadlift-rdl",
+  "nom": "Romanian deadlift (RDL)",
+  "categorie": "epuisant",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "20X0",
+  "youtube_url": "https://www.youtube.com/shorts/nkdgPN131BQ",
+  "consignes": "Focus sur envoyer les fesses en arrièrre et hanches vers le haut"
+ },
+ {
+  "id": "presse-cuisses-full-amplitude",
+  "nom": "Presse à cuisses full amplitude",
+  "categorie": "semi_epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "machine",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/shorts/1m1y0wwhNfw",
+  "consignes": "Descend jusqu'a ce que tes talons décollent du support, pieds largeur hanche"
+ },
+ {
+  "id": "extensions-triceps-overhead-la-corde",
+  "nom": "Extensions triceps overhead à la corde",
+  "categorie": "semi_epuisant",
+  "muscle_group": "épaules",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/snoE9qAzt08",
+  "consignes": "Approche toi de l'échec mais garde 1rep en reserve sur chaque set"
+ },
+ {
+  "id": "leg-extension-classique-tempo",
+  "nom": "Leg extension classique tempo",
+  "categorie": "isolation",
+  "muscle_group": "quadriceps",
+  "equipement": "machine",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/watch?v=zGDDjXJoDOQ",
+  "consignes": "Concentrique explosive, excentrique contrôlée (2s), pause en haut (1s)"
+ },
+ {
+  "id": "elevations-frontales",
+  "nom": "Elevations frontales",
+  "categorie": "isolation",
+  "muscle_group": "épaules",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "1110",
+  "youtube_url": "https://www.youtube.com/watch?v=svvYvZF7jq0&pp=ygUNZnJvbnRhbCByYWlzZQ%3D%3D",
+  "consignes": "1/2s pause en haut, mains position neutre, tu peux aller à l'échec"
+ },
+ {
+  "id": "curl-biceps-altern-s-debout",
+  "nom": "Curl biceps alternés debout",
+  "categorie": "isolation",
+  "muscle_group": "biceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/watch?v=o2Tma5Cek48&pp=ygUWYWx0ZXJuYXRlZCBiaWNlcHMgY3VybA%3D%3D",
+  "consignes": "Utilise l'élan pour charger plus lourd, echec sur les 2 séries"
+ },
+ {
+  "id": "obliques-la-barre",
+  "nom": "Obliques à la barre",
+  "categorie": "isolation",
+  "muscle_group": "abdos_gainage",
+  "equipement": "barre",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/shorts/xXmW9qs9mqU",
+  "consignes": "Plus la barre est longue, plus c'est dur pour (aussi travail de grip)"
+ },
+ {
+  "id": "d-velopp-couch-prise-serr-e",
+  "nom": "Développé couché prise serrée",
+  "categorie": "epuisant",
+  "muscle_group": "pectoraux",
+  "equipement": "barre",
+  "tempo_defaut": "1110",
+  "youtube_url": "https://www.youtube.com/watch?v=DzA2xZhDGeo&pp=ygUWY2xvc2UgZ3JpcCBiZW5jaCBwcmVzcw%3D%3D",
+  "consignes": "Focus sur les triceps ici mais même positiennement qu'un DC classique"
+ },
+ {
+  "id": "machine-rowing-plateforme",
+  "nom": "Machine rowing plateforme",
+  "categorie": "epuisant",
+  "muscle_group": "dos",
+  "equipement": "machine",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/watch?v=hSk2GoyFHsM&pp=ygUScGxhdGZvcm0gdC1iYXIgcm93",
+  "consignes": "Privilégie forme à charge, relache bien les épaules et tire coude en arrière"
+ },
+ {
+  "id": "rowing-invers-sour-la-barre",
+  "nom": "Rowing inversé sour la barre",
+  "categorie": "isolation",
+  "muscle_group": "dos",
+  "equipement": "barre",
+  "tempo_defaut": "explosif",
+  "youtube_url": "https://www.youtube.com/shorts/4tqKMvue3SU",
+  "consignes": "Tracte toi sous barre, fais toucher poitrine. Si tu eloignes les pieds, plus dur"
+ },
+ {
+  "id": "chest-press-poulie-basse-assis",
+  "nom": "Chest press poulie basse assis",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "poulie",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/NcF_JFHEry0",
+  "consignes": "Va deux fois à l'échec, une série à 15 et une série à 10. Cherche la brûlure"
+ },
+ {
+  "id": "fentes-bulgares-d-l-st-es-avec-une-main",
+  "nom": "Fentes bulgares déléstées avec une main",
+  "categorie": "epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/watch?v=I1Ee3M6SDgQ&pp=ygUfc3VwcG9ydGVkIGJ1bGdhcmlhbiBzcGxpdCBzcXVhdA%3D%3D",
+  "consignes": "PAUSE 30s entre les deux jambes, plus ca devient dur plus tu te délestes"
+ },
+ {
+  "id": "leg-curl-classique-en-tempo",
+  "nom": "Leg curl classique en tempo",
+  "categorie": "semi_epuisant",
+  "muscle_group": "ischio_jambiers",
+  "equipement": "machine",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/HeNjxoJhyow",
+  "consignes": "concentrique explosive, excentrique contrôlée (2s), pause en haut (1s)"
+ },
+ {
+  "id": "extensions-lombaires",
+  "nom": "Extensions lombaires",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/watch?v=9uJr3JixLi4",
+  "consignes": "Bassin en antéversion, respecter tempo. Fessier contractés"
+ },
+ {
+  "id": "shrugs-barre-guid-e",
+  "nom": "Shrugs barre guidée",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "barre",
+  "tempo_defaut": "1110",
+  "youtube_url": "https://www.youtube.com/shorts/7QhGuZ7mcEg",
+  "consignes": "Monte les trapèzes bien haut et tiens une bonne senconde en haut, echec"
+ },
+ {
+  "id": "cars-controled-articular-rotation-corps-entier",
+  "nom": "CARs (Controled Articular Rotation) corps entier",
+  "categorie": "non_classe",
+  "muscle_group": "mobilité",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "",
+  "youtube_url": "",
+  "consignes": ""
+ },
+ {
+  "id": "cars-cervicales",
+  "nom": "CARs cervicales",
+  "categorie": "non_classe",
+  "muscle_group": "mobilité",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "très lent",
+  "youtube_url": "https://www.youtube.com/watch?v=hT95z8UqCvg",
+  "consignes": ""
+ },
+ {
+  "id": "cars-genoux",
+  "nom": "CARs genoux",
+  "categorie": "non_classe",
+  "muscle_group": "mobilité",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "très lent",
+  "youtube_url": "https://www.youtube.com/watch?v=uLphTq2K8ng",
+  "consignes": ""
+ },
+ {
+  "id": "cars-chevilles",
+  "nom": "CARs chevilles",
+  "categorie": "non_classe",
+  "muscle_group": "mobilité",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "très lent",
+  "youtube_url": "https://www.youtube.com/watch?v=vIDJiMShg4o",
+  "consignes": ""
+ },
+ {
+  "id": "pails-rails-rotation-interne-de-hanche",
+  "nom": "PAILs / RAILs rotation interne de hanche",
+  "categorie": "non_classe",
+  "muscle_group": "mobilité",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/watch?v=sBTeoOjtZOg",
+  "consignes": ""
+ },
+ {
+  "id": "pails-rails-extension-de-hanche",
+  "nom": "PAILs / RAILs extension de hanche",
+  "categorie": "non_classe",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/watch?v=J_TLBbDZcCU",
+  "consignes": ""
+ },
+ {
+  "id": "jefferson-curl-avec-charge",
+  "nom": "Jefferson curl avec charge",
+  "categorie": "non_classe",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "3020",
+  "youtube_url": "https://www.youtube.com/watch?v=PybioLaXSt8",
+  "consignes": ""
+ },
+ {
+  "id": "romanian-deadlift-rdl-pointes-pieds-sur-lev-s",
+  "nom": "Romanian deadlift (RDL) pointes pieds surélevés",
+  "categorie": "epuisant",
+  "muscle_group": "mollets",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "20X0",
+  "youtube_url": "https://www.youtube.com/watch?v=13FPTAogHhI&pp=ygUodG9lcyBlbGV2YXRlZCBkdW1iYmVsbCByb21hbmlhbiBkZWFkbGlmdA%3D%3D",
+  "consignes": "Hanches hautes et arrière. Disque sous tes pointes de pied"
+ },
+ {
+  "id": "d-velopp-couch-mg-1-rep-10x4-format-emom",
+  "nom": "Développé couché MG 1 rep + 10x4 format EMOM",
+  "categorie": "epuisant",
+  "muscle_group": "pectoraux",
+  "equipement": "barre",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/shorts/-PeqIaBLqPg",
+  "consignes": "Monte à 90 sur la MG puis loin de l'échec sur le 12x3"
+ },
+ {
+  "id": "d-velopp-couch-mg-2-rep-10x4-format-emom",
+  "nom": "Développé couché MG 2 rep + 10x4 format EMOM",
+  "categorie": "epuisant",
+  "muscle_group": "pectoraux",
+  "equipement": "barre",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/shorts/-PeqIaBLqPg",
+  "consignes": "Monte à 90 sur la MG puis loin de l'échec sur le 12x3"
+ },
+ {
+  "id": "tractions-lest-es-emom2-max-au-pdc",
+  "nom": "Tractions lestées EMOM2' + max au PDC",
+  "categorie": "epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "explosif + pause",
+  "youtube_url": "https://www.youtube.com/shorts/VGc2UUcIVrA",
+  "consignes": "EMOM lourd  tirage explosif + micro-pause en haut. Note ton max :"
+ },
+ {
+  "id": "low-lunge-to-half-split",
+  "nom": "Low lunge to half split",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "",
+  "youtube_url": "https://www.youtube.com/watch?v=q_fL02hdATU&pp=ygUXbG93IGx1bmdlIHRvIGhhbGYgc3BsaXQ%3D",
+  "consignes": "Ca doit être dur, ce n'est pas un étrirement passif. Met de l'intention"
+ },
+ {
+  "id": "side-kneeling-hip-opener",
+  "nom": "Side kneeling hip opener",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "",
+  "youtube_url": "https://www.youtube.com/shorts/DLg3E7y1ov0",
+  "consignes": "Buste droit, essaie d'éloigner tes genoux dans des directions opposées"
+ },
+ {
+  "id": "hack-squat-full-amplitude-1-2-rir",
+  "nom": "Hack squat full amplitude (1-2 RiR)",
+  "categorie": "epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "machine",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/watch?v=rYgNArpwE7E&pp=ygUVaGFjayBzcXVhdCBmdWxsIGRlcHRo",
+  "consignes": "Descends jusqu'à ce que tu sois presque en pte de pied. Amplitude > charge"
+ },
+ {
+  "id": "leg-extension-en-tempo-1-0rir-2",
+  "nom": "Leg extension  en tempo (1 - 0RiR)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "machine",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/shorts/nh7yhZ2P9eA",
+  "consignes": "Rapproche toi de l'échec sur toutes les séries, montée explo (x), amplitude"
+ },
+ {
+  "id": "leg-curl-en-tempo-1-0-rir",
+  "nom": "Leg curl en tempo (1 - 0 RiR)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "ischio_jambiers",
+  "equipement": "machine",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/watch?v=o2Tma5Cek48&pp=ygUWYWx0ZXJuYXRlZCBiaWNlcHMgY3VybA%3D%3D",
+  "consignes": "Rapproche toi de l'échec sur toutes les séries, montée explo (x), amplitude"
+ },
+ {
+  "id": "extensions-mollets-debout-unilat-ral-au-hack-squat",
+  "nom": "Extensions mollets debout unilatéral au hack squat",
+  "categorie": "isolation",
+  "muscle_group": "quadriceps",
+  "equipement": "machine",
+  "tempo_defaut": "2220",
+  "youtube_url": "https://www.youtube.com/watch?v=tmlIrd-6qOI&pp=ygUadW5pbGF0ZXJhbCBjYWxmIGhhY2sgc3F1YXQ%3D",
+  "consignes": "Fais toutes tes séries sur la même jambe puis change. Respecte tempo lent"
+ },
+ {
+  "id": "d-velopp-inclin-la-smith-machine-1-2rir",
+  "nom": "Développé incliné à la smith machine (1-2RiR)",
+  "categorie": "epuisant",
+  "muscle_group": "cardio",
+  "equipement": "machine",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/watch?v=8urE8Z8AMQ4&pp=ygUhc21pdGggbWFjaGluZSBpbmNsaW5lIGJlbmNoIHByZXNz",
+  "consignes": "Respecter tempo, pause aux clavicules et remontée explosive"
+ },
+ {
+  "id": "rowing-buste-pench-smith-machine-1-2rir",
+  "nom": "Rowing buste penché smith machine (1-2RiR)",
+  "categorie": "epuisant",
+  "muscle_group": "dos",
+  "equipement": "machine",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/qivPkcDI0s0",
+  "consignes": "Mélange soulevé de terre/ rowing, va chercher loin les épaules vers le bas"
+ },
+ {
+  "id": "d-velopp-couch-halt-res-1-0-rir",
+  "nom": "Développé couché haltères (1 - 0 RiR)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "pectoraux",
+  "equipement": "haltères",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/5k7JUfq2bdc",
+  "consignes": "Trajectoire convergente et amplitude maximale en étirement"
+ },
+ {
+  "id": "tirage-vertical-poulie-haute-1-0-rir",
+  "nom": "Tirage vertical poulie haute (1 - 0 RiR)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poulie",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/IcE5c6qf4KE",
+  "consignes": "Contrôle bien le mvt, descente lente et tirage jusqu'aux clavicules"
+ },
+ {
+  "id": "crunchs-la-poulie-haute-1-0-rir",
+  "nom": "Crunchs à la poulie haute ( 1 - 0 RiR)",
+  "categorie": "isolation",
+  "muscle_group": "abdos_gainage",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/watch?v=_z8OvPOl4yc",
+  "consignes": "Chercher à étirer les abdos en venant arrondir au maximum la colonne au max"
+ },
+ {
+  "id": "elevations-lat-rales-halt-res-0-rir",
+  "nom": "Elevations latérales haltères (0 RiR)",
+  "categorie": "isolation",
+  "muscle_group": "dos",
+  "equipement": "haltères",
+  "tempo_defaut": "1/2s en haut",
+  "youtube_url": "https://www.youtube.com/shorts/67aqcWUYw2I",
+  "consignes": "Retiens 1/2s en haut sur chaque rep pour brûler les épaules"
+ },
+ {
+  "id": "romanian-deadlift-garde-1-2-rir-set",
+  "nom": "Romanian deadlift (Garde 1-2 RiR/set)",
+  "categorie": "epuisant",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "20X0",
+  "youtube_url": "https://www.youtube.com/shorts/nkdgPN131BQ",
+  "consignes": "Repousse sol avec talons, met en tension les dorsaux, fesses vers le haut"
+ },
+ {
+  "id": "leg-press-full-amplitude-1-2rir-set",
+  "nom": "Leg press full amplitude (1-2RiR / set)",
+  "categorie": "epuisant",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "20X0",
+  "youtube_url": "https://www.youtube.com/watch?v=yZmx_Ac3880&pp=ygUYbGVnIHByZXNzIGZ1bGwgYW1wbGl0dWRl",
+  "consignes": "Amplitude à fond jusqu'à ce que les talons décollent"
+ },
+ {
+  "id": "leg-curl-en-tempo-1-0rir-2",
+  "nom": "Leg curl  en tempo (1 - 0RiR)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "ischio_jambiers",
+  "equipement": "machine",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/watch?v=o2Tma5Cek48&pp=ygUWYWx0ZXJuYXRlZCBiaWNlcHMgY3VybA%3D%3D",
+  "consignes": "Rapproche toi de l'échec sur toutes les séries, montée explo (x), amplitude"
+ },
+ {
+  "id": "extensions-lombaires-pas-de-rir",
+  "nom": "Extensions lombaires (pas de RiR)",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/shorts/7-KnNTi8lmg",
+  "consignes": "Privilégie l'amplitude, garde le bassin engagé vers l'avant (rétroversion)"
+ },
+ {
+  "id": "d-velopp-militaire-assis-smith-machine-1-0-rir",
+  "nom": "Développé militaire assis smith machine (1 - 0 RiR)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "épaules",
+  "equipement": "barre",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/watch?v=OLqZDUUD2b0&pp=ygUjc21pdGggbWFjaGluZSBzZWF0ZWQgbWlsaXRhcnkgcHJlc3M%3D",
+  "consignes": "Banc incliné presque à fond, tu descends jusqu'aux clavicules et remonte"
+ },
+ {
+  "id": "tractions-pronations-lest-es-1-0-rir",
+  "nom": "Tractions pronations lestées (1 - 0 RiR)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/shorts/60BmRjqUlPc",
+  "consignes": "Focus sur la forme, descente lente bien propre jusqu'en bas"
+ },
+ {
+  "id": "chest-fly-poulie-basse-0-rir",
+  "nom": "Chest fly poulie basse (0 RiR)",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "poulie",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/watch?v=e_8HLu59-to&pp=ygUTbG93IGNhYmxlIGNoZXN0IGZseQ%3D%3D",
+  "consignes": "Etirement maximal, 1s pause en haut, contracte volontairement les pecs"
+ },
+ {
+  "id": "arri-re-d-paule-machine-unilat-ral-0-rir",
+  "nom": "Arrière d'épaule machine unilatéral (0 RiR)",
+  "categorie": "isolation",
+  "muscle_group": "dos",
+  "equipement": "machine",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/P5CXx_jgTDE",
+  "consignes": "Va à quasi à l'échec sur chaque série, place toi légèrement de profil"
+ },
+ {
+  "id": "relev-s-de-genoux-suspendus-1-0-rir",
+  "nom": "Relevés de genoux suspendus (1 - 0 RiR)",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/shorts/qPXgrgUrIsg",
+  "consignes": "Sur chaque rep ne redescends pas complètement les genoux"
+ },
+ {
+  "id": "rowing-b-cheron-sur-banc",
+  "nom": "Rowing bûcheron sur banc",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/shorts/qshhYV2uJEY",
+  "consignes": "Focus sur le désengagement de l'épaule vers l'avant, 30s entre les bras"
+ },
+ {
+  "id": "curl-biceps-sur-banc-inclin",
+  "nom": "Curl biceps sur banc incliné",
+  "categorie": "isolation",
+  "muscle_group": "biceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "1110",
+  "youtube_url": "https://www.youtube.com/shorts/zfJh9K413kQ",
+  "consignes": "Place les épaules bien en arrière pour accentuer l'étirement du biceps"
+ },
+ {
+  "id": "barre-au-front-barre-ez",
+  "nom": "Barre au front barre EZ",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "barre",
+  "tempo_defaut": "1110",
+  "youtube_url": "https://www.youtube.com/watch?v=l3rHYPtMUo8",
+  "consignes": "Les coudes sont fixes, force la flexion des avant-bras au max"
+ },
+ {
+  "id": "curl-concentration-genoux",
+  "nom": "Curl concentration à genoux",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "1110",
+  "youtube_url": "https://www.youtube.com/watch?v=GrAJ6AgBmFk&pp=ygUcc2VhdGVkIGNhYmxlIGNvbmNlbnRyaWMgY3VybA%3D%3D",
+  "consignes": "Focus ici sur la concentrique, force toi à contracter le pic du biceps"
+ },
+ {
+  "id": "arri-re-d-paule-machine-en-bilat-ral",
+  "nom": "Arrière d'épaule machine en bilatéral",
+  "categorie": "isolation",
+  "muscle_group": "dos",
+  "equipement": "machine",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/shorts/pzYksKLqL6A",
+  "consignes": "Ne reviens pas complètement pr garder tension dans les épaules"
+ },
+ {
+  "id": "crunchs-la-poulie-haute-1-0-rir-pas-machine",
+  "nom": "Crunchs à la poulie haute ( 1 - 0 RiR) pas machine",
+  "categorie": "isolation",
+  "muscle_group": "abdos_gainage",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/watch?v=_z8OvPOl4yc",
+  "consignes": "Chercher à étirer les abdos en venant arrondir au maximum la colonne au max"
+ },
+ {
+  "id": "leg-press-full-amplitude-1-2rir-set-pas-machine",
+  "nom": "Leg press full amplitude (1-2RiR / set) pas machine",
+  "categorie": "epuisant",
+  "muscle_group": "autre",
+  "equipement": "machine",
+  "tempo_defaut": "20X0",
+  "youtube_url": "https://www.youtube.com/watch?v=yZmx_Ac3880&pp=ygUYbGVnIHByZXNzIGZ1bGwgYW1wbGl0dWRl",
+  "consignes": "Amplitude à fond jusqu'à ce que les talons décollent"
+ },
+ {
+  "id": "tractions-pronations-1-0-rir",
+  "nom": "Tractions pronations (1 - 0 RiR)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/shorts/60BmRjqUlPc",
+  "consignes": "Focus sur la forme, descente lente bien propre jusqu'en bas"
+ },
+ {
+  "id": "tractions-pronations-pdc-emom4-1-0-rir",
+  "nom": "Tractions pronations pdc EMOM4' (1 - 0 RiR)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/shorts/60BmRjqUlPc",
+  "consignes": "Focus sur la forme, descente lente bien propre jusqu'en bas"
+ },
+ {
+  "id": "cable-rear-delt-flies-unilat-ral",
+  "nom": "Cable rear delt flies unilatéral",
+  "categorie": "isolation",
+  "muscle_group": "dos",
+  "equipement": "poulie",
+  "tempo_defaut": "2110",
+  "youtube_url": "",
+  "consignes": "Reste dans la range qui travaille sur l'arrière d'épaule, regarde vidéo"
+ },
+ {
+  "id": "deadlift-trap-barre-tirage-trap-ze",
+  "nom": "Deadlift trap barre tirage trapèze",
+  "categorie": "epuisant",
+  "muscle_group": "dos",
+  "equipement": "barre",
+  "tempo_defaut": "explosif",
+  "youtube_url": "https://www.youtube.com/watch?v=pcScdJaR9nM",
+  "consignes": "Tire fort en trapèzes et monte en pointe de pied, enchaîne direct avec saut"
+ },
+ {
+  "id": "depth-triple-cmj-depuis-un-banc",
+  "nom": "Depth Triple CMJ (depuis un banc)",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "explosif",
+  "youtube_url": "https://www.youtube.com/shorts/ovJQ7hGfEhU",
+  "consignes": "Garde les mains aux hanches, tps de contact réduit au sol, le + haut possiblev"
+ },
+ {
+  "id": "fentes-lat-rales-prise-gobelet",
+  "nom": "Fentes latérales prise gobelet",
+  "categorie": "semi_epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/watch?v=6DMXBtF_Spg&pp=ygUObGF0ZXJhbCBsdW5nZXM%3D",
+  "consignes": "Toutes les reps sur le mm côté avant de passer à l'autre, as deep as possible"
+ },
+ {
+  "id": "lateral-jumps-plyometrics-absorption-au-sol",
+  "nom": "Lateral jumps plyometrics absorption au sol",
+  "categorie": "isolation",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "tps contact long",
+  "youtube_url": "https://youtu.be/6Ahwy2Yk5qw?t=37",
+  "consignes": "Saute le plus loin possible et prends ton temps pour amortir avant de relancer"
+ },
+ {
+  "id": "bench-press",
+  "nom": "Bench press",
+  "categorie": "epuisant",
+  "muscle_group": "pectoraux",
+  "equipement": "barre",
+  "tempo_defaut": "explosif",
+  "youtube_url": "https://www.youtube.com/watch?v=GnCMg5h0V1U&pp=ygUVYmV0ZXJiaWV2IGJlbmNoIHByZXNz",
+  "consignes": "Sois le plus explo possible, Coordonne ta poussée avec la poussée des jambes"
+ },
+ {
+  "id": "tractions-emom5",
+  "nom": "Tractions EMOM5'",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "classique",
+  "youtube_url": "https://www.youtube.com/watch?v=trq6rUi5F5M&pp=ygUOcGF1c2VkIHB1bGwgdXA%3D",
+  "consignes": "Un peu de travail d'endurance sur le dos"
+ },
+ {
+  "id": "iso-horse-stance",
+  "nom": "Iso horse stance",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "iso",
+  "youtube_url": "https://www.youtube.com/shorts/6NVI4kUSy2E",
+  "consignes": "Travail adducteurs, standardise l'écartement de tes jambes pour progresser"
+ },
+ {
+  "id": "lunges-kb-bounds-laisse-toi-tomber-travail-d-amorti",
+  "nom": "Lunges KB bounds (laisse toi tomber, travail d'amorti)",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "kettlebell",
+  "tempo_defaut": "tps contact long",
+  "youtube_url": "",
+  "consignes": "Travail de décélération, décélère le + vite possible pour relancer, plein pied"
+ },
+ {
+  "id": "zercher-squat",
+  "nom": "Zercher squat",
+  "categorie": "epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "20X0",
+  "youtube_url": "https://www.youtube.com/shorts/_VpJC4AfvzQ",
+  "consignes": "Focus sur la descente, bien accroupi en bas, pause et montée explosive"
+ },
+ {
+  "id": "smith-machine-bench-press-throws-un-bras",
+  "nom": "Smith machine bench press throws un bras",
+  "categorie": "isolation",
+  "muscle_group": "pectoraux",
+  "equipement": "barre",
+  "tempo_defaut": "explosif",
+  "youtube_url": "https://www.youtube.com/watch?v=5Pi66qmX_pw&pp=ygUic21pdGggbWFjaGluZSBiZW5jaCBwcmVzcyBleHBsb3Npdg%3D%3D",
+  "consignes": "Jette à un bras puis réceptionne à deux, fais 6 reps sur un bras puis change"
+ },
+ {
+  "id": "neck-roll-avant-et-c-t-s-vid-o-1-30",
+  "nom": "Neck roll avant et côtés (vidéo 1'30)",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "iso",
+  "youtube_url": "https://youtu.be/W_R5W0Apc_U?t=92",
+  "consignes": "Progression : genou + mains au sol, pompes + mains au sol, pompes mains dans le dos"
+ },
+ {
+  "id": "tirage-invers-pieds-sur-lev-s-la-barre",
+  "nom": "Tirage inversé pieds surélevés (à la barre)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "barre",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/watch?v=-gI2fDiURuE&pp=ygUaaW52ZXJ0ZWQgcm93IGZlZXQgZWxldmF0ZWQ%3D",
+  "consignes": "Standardise la position, tirage explosif, touche les pecs et exc. contrôlée"
+ },
+ {
+  "id": "adducteurs-en-position-tir-e-pieds-sur-box-ou-banc",
+  "nom": "Adducteurs en position étirée (pieds sur box ou banc)",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "21X0",
+  "youtube_url": "",
+  "consignes": "Va le plus loin possible dans l'étirement, tu dois sentir l'étirement de la ribcage"
+ },
+ {
+  "id": "bent-press",
+  "nom": "Bent press",
+  "categorie": "epuisant",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/OqGuJLqjOrE",
+  "consignes": "Imagine que l'haltère ne bouge pas et que c'est toi qui te baisse sous la charge"
+ },
+ {
+  "id": "cossack-gobelet-squat",
+  "nom": "Cossack gobelet squat",
+  "categorie": "semi_epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "lent",
+  "youtube_url": "https://www.youtube.com/watch?v=Wx5dyhn3p88&pp=ygUQa2IgY29zc2FjayBzcXVhdA%3D%3D",
+  "consignes": "Reste vertical et pousse uniquement avec les jambes, pas de hanches"
+ },
+ {
+  "id": "neck-roll-arri-re",
+  "nom": "Neck roll arrière",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://youtu.be/W_R5W0Apc_U?t=174",
+  "consignes": "Si facile, enlève les mains du sol , privilégie l'amplitude"
+ },
+ {
+  "id": "tirage-y-au-trx-explosif",
+  "nom": "Tirage Y au TRX (explosif)",
+  "categorie": "isolation",
+  "muscle_group": "dos",
+  "equipement": "poulie",
+  "tempo_defaut": "explosif",
+  "youtube_url": "https://www.youtube.com/shorts/OsdJlvqllco",
+  "consignes": "Tire le plus haut et le plus fort possible et reviens complètement bras tendus"
+ },
+ {
+  "id": "emom5-kb-swing",
+  "nom": "EMOM5' KB swing",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "kettlebell",
+  "tempo_defaut": "explosif",
+  "youtube_url": "https://www.youtube.com/watch?v=1cVT3ee9mgU&pp=ygUIa2Igc3dpbmc%3D",
+  "consignes": "Fort sur l'extension de hanche, très explosif, pas trop de flexion de genou"
+ },
+ {
+  "id": "mont-e-graduelle-sur-tapis-de-course",
+  "nom": "Montée graduelle sur tapis de course",
+  "categorie": "prevention",
+  "muscle_group": "cardio",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "",
+  "consignes": "5 min d'échauffement en variant les allures graduellement"
+ },
+ {
+  "id": "sprints-de-fin-d-chauffement",
+  "nom": "Sprints de fin d'échauffement",
+  "categorie": "prevention",
+  "muscle_group": "cardio",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "",
+  "consignes": "Va pas dans le dur c'est de l'échauffement, si 10s c'est trop diminue"
+ },
+ {
+  "id": "bloc-1-6min-on-3-rounds",
+  "nom": "BLOC 1 : 6min ON (3 rounds)",
+  "categorie": "epuisant",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "gestion allure",
+  "youtube_url": "",
+  "consignes": "Différentes intensités pour accuuler du temps dans le rouge (mental)"
+ },
+ {
+  "id": "bloc-2-sprints-18km-h",
+  "nom": "BLOC 2 : Sprints à 18km/h",
+  "categorie": "isolation",
+  "muscle_group": "cardio",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "vitesse",
+  "youtube_url": "",
+  "consignes": "Travail de la capacité lactique, ca va tirer dans les jambes + cardio"
+ },
+ {
+  "id": "endurance-longue-sur-v-lo-ou-course",
+  "nom": "Endurance longue sur vélo (ou course)",
+  "categorie": "epuisant",
+  "muscle_group": "cardio",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "Améliorer cardio",
+  "youtube_url": "",
+  "consignes": "- Ca ne doit pas être dur, cible un RPE4-5 max."
+ },
+ {
+  "id": "on-cherche-accumuler-un-temps",
+  "nom": "(on cherche à accumuler un temps",
+  "categorie": "non_classe",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "",
+  "youtube_url": "",
+  "consignes": "- Tu peux décomposer en 2x 20-30min dans la journée."
+ },
+ {
+  "id": "de-travail-total-sur-la-semaine-de-1h30-2h",
+  "nom": "de travail total sur la semaine de 1h30 - 2h)",
+  "categorie": "non_classe",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "",
+  "youtube_url": "",
+  "consignes": "- Cible une fréquence cardiaque (FC) entre 110-130bpm."
+ },
+ {
+  "id": "cars-coudes",
+  "nom": "CARs coudes",
+  "categorie": "isolation",
+  "muscle_group": "mobilité",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "",
+  "youtube_url": "https://www.youtube.com/watch?v=XsUADLdmckc&pp=ygUTd2VpZ2h0ZWQgZWxib3cgY2Fycw%3D%3D",
+  "consignes": "Si tu as charge un haltère d'un seul côté, sinon prends un marteau"
+ },
+ {
+  "id": "pail-rails-coude",
+  "nom": "PAIL / RAILs coude",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "",
+  "youtube_url": "https://www.youtube.com/watch?v=Vzm82iQB6y4",
+  "consignes": "2min stretch au début, 10s iso max dans un sens 10s dans l'autre"
+ },
+ {
+  "id": "towel-wrist-rotation",
+  "nom": "Towel wrist rotation",
+  "categorie": "isolation",
+  "muscle_group": "mobilité",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "",
+  "youtube_url": "https://www.youtube.com/watch?v=cLfZXUa8nOc",
+  "consignes": "Renfo des poignets en rotation, a ne pas négliger ! Pense amplitude"
+ },
+ {
+  "id": "extensions-poignets-long-range",
+  "nom": "Extensions poignets long range",
+  "categorie": "isolation",
+  "muscle_group": "avant_bras",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "",
+  "youtube_url": "https://www.youtube.com/watch?v=motI3hjAQs0&pp=ygUVd2FsbCB3cmlzdCBleHRlZW5zaW9u",
+  "consignes": "2 sens, main en haut, main en bas, pronation & supination"
+ },
+ {
+  "id": "gagner-de-l-espace-dans-la-capsule-articulaire",
+  "nom": "gagner de l'espace dans la capsule articulaire",
+  "categorie": "non_classe",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "",
+  "youtube_url": "",
+  "consignes": "- à faire avec un maximum d'intention (ca va pas se guérir tout seul)"
+ },
+ {
+  "id": "associer-le-travail-de-poignet-et-du-coude-qui-sont-li-s",
+  "nom": "associer le travail de poignet et du coude qui sont liés",
+  "categorie": "non_classe",
+  "muscle_group": "avant_bras",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "",
+  "youtube_url": "https://www.youtube.com/shorts/KEImekoUaAI",
+  "consignes": "- séance prévue d'environ 20min"
+ },
+ {
+  "id": "tractions-emom4",
+  "nom": "Tractions EMOM4'",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "classique",
+  "youtube_url": "https://www.youtube.com/watch?v=trq6rUi5F5M&pp=ygUOcGF1c2VkIHB1bGwgdXA%3D",
+  "consignes": "Un peu de travail d'endurance sur le dos"
+ },
+ {
+  "id": "pails-rails-hip-adduction-abduction",
+  "nom": "PAILs / RAILs hip adduction / abduction",
+  "categorie": "isolation",
+  "muscle_group": "fessiers",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "iso",
+  "youtube_url": "https://www.youtube.com/shorts/pds5GufPhqI",
+  "consignes": "En fin d'amplitude, forces à fond 10s en direction du sol puis essaie de lever 10s"
+ },
+ {
+  "id": "seated-box-jump",
+  "nom": "Seated box jump",
+  "categorie": "isolation",
+  "muscle_group": "pliométrie",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "explosif",
+  "youtube_url": "https://www.youtube.com/shorts/Ogats4wEMlU",
+  "consignes": "Garde les mains aux hanches, tps de contact réduit au sol, le + haut possible"
+ },
+ {
+  "id": "iso-horse-stance-pulses-vid-o",
+  "nom": "Iso horse stance (+ pulses, vidéo)",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "iso",
+  "youtube_url": "https://www.youtube.com/shorts/6NVI4kUSy2E",
+  "consignes": "Tu fais 30s iso pure, +en bas de la position des très légère contractions pdt 30s"
+ },
+ {
+  "id": "smith-machine-bench-press-throws-deux-bras",
+  "nom": "Smith machine bench press throws à deux bras",
+  "categorie": "isolation",
+  "muscle_group": "pectoraux",
+  "equipement": "barre",
+  "tempo_defaut": "explosif",
+  "youtube_url": "https://www.youtube.com/shorts/Fi0ef_SxzqQ",
+  "consignes": "Dès que t'es prêt, descente rapide + relancée explosive"
+ },
+ {
+  "id": "neck-roll-arri-re-avec-passage-sur-l-paule",
+  "nom": "Neck roll arrière avec passage sur l'épaule",
+  "categorie": "isolation",
+  "muscle_group": "épaules",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://youtube.com/shorts/maXWwGJTQfo?si=CIbZLY2rzTqPLJBc",
+  "consignes": "Place le poids (centre de masse) sur le cou et l'épaule, décharge les hanches"
+ },
+ {
+  "id": "tirage-y-au-trx-augmente-la-longueur-du-trx",
+  "nom": "Tirage Y au TRX (augmente la longueur du TRX)",
+  "categorie": "isolation",
+  "muscle_group": "dos",
+  "equipement": "poulie",
+  "tempo_defaut": "explosif",
+  "youtube_url": "https://www.youtube.com/shorts/OsdJlvqllco",
+  "consignes": "Tire le plus haut et le plus fort possible et reviens complètement bras tendus"
+ },
+ {
+  "id": "emom6-kb-swing",
+  "nom": "EMOM6' KB swing",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "kettlebell",
+  "tempo_defaut": "explosif",
+  "youtube_url": "https://www.youtube.com/watch?v=1cVT3ee9mgU&pp=ygUIa2Igc3dpbmc%3D",
+  "consignes": "Fort sur l'extension de hanche, très explosif, pas trop de flexion de genou"
+ },
+ {
+  "id": "emom8-kb-swing",
+  "nom": "EMOM8' KB swing",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "kettlebell",
+  "tempo_defaut": "explosif",
+  "youtube_url": "https://www.youtube.com/watch?v=1cVT3ee9mgU&pp=ygUIa2Igc3dpbmc%3D",
+  "consignes": "Fort sur l'extension de hanche, très explosif, pas trop de flexion de genou"
+ },
+ {
+  "id": "lateral-jumps-plyometrics-absorption-loin",
+  "nom": "Lateral jumps plyometrics absorption (+ loin)",
+  "categorie": "isolation",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "tps contact long",
+  "youtube_url": "https://youtu.be/6Ahwy2Yk5qw?t=37",
+  "consignes": "Saute le plus loin possible et prends ton temps pour amortir avant de relancer"
+ },
+ {
+  "id": "tirage-invers-pieds-sur-lev-s-baisser-niveau-barre",
+  "nom": "Tirage inversé pieds surélevés (baisser niveau barre)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "barre",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/watch?v=-gI2fDiURuE&pp=ygUaaW52ZXJ0ZWQgcm93IGZlZXQgZWxldmF0ZWQ%3D",
+  "consignes": "Standardise la position, tirage explosif, touche les pecs et exc. contrôlée"
+ },
+ {
+  "id": "tirage-y-au-trx-remplace-par-oiseaux-si-pas-trx",
+  "nom": "Tirage Y au TRX (remplace par oiseaux si pas TRX)",
+  "categorie": "isolation",
+  "muscle_group": "dos",
+  "equipement": "poulie",
+  "tempo_defaut": "explosif",
+  "youtube_url": "https://www.youtube.com/shorts/OsdJlvqllco",
+  "consignes": "Tire le plus haut et le plus fort possible et reviens complètement bras tendus"
+ },
+ {
+  "id": "emom9-kb-swing",
+  "nom": "EMOM9' KB swing",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "kettlebell",
+  "tempo_defaut": "explosif",
+  "youtube_url": "https://www.youtube.com/watch?v=1cVT3ee9mgU&pp=ygUIa2Igc3dpbmc%3D",
+  "consignes": "Fort sur l'extension de hanche, très explosif, pas trop de flexion de genou"
+ },
+ {
+  "id": "squat-profond-assist-en-se-tenant",
+  "nom": "Squat profond assisté en se tenant",
+  "categorie": "isolation",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "",
+  "youtube_url": "https://www.youtube.com/shorts/WNrBE8Z-GL8",
+  "consignes": "Tiens toi pour descendre plus bas et balance toi un peu de chaque côté"
+ },
+ {
+  "id": "pompes-claqu-es",
+  "nom": "Pompes claquées",
+  "categorie": "isolation",
+  "muscle_group": "pectoraux",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "explo",
+  "youtube_url": "https://www.youtube.com/shorts/M-eCOBEMZ28",
+  "consignes": "Focus : Saute le + haut possible sur chaque rep et temps de contact au sol court"
+ },
+ {
+  "id": "ischios-serviette-descente-1-jbe-mont-e-2-jbe",
+  "nom": "Ischios serviette descente 1 jbe montée 2 jbe",
+  "categorie": "semi_epuisant",
+  "muscle_group": "ischio_jambiers",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/TD6Pu1mUVyo",
+  "consignes": "Focus descendre le plus loin possible à une jambe, quasi jbe tendue, retro bassin"
+ },
+ {
+  "id": "extensions-triceps-sous-la-table",
+  "nom": "Extensions triceps sous la table",
+  "categorie": "semi_epuisant",
+  "muscle_group": "triceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "iso",
+  "youtube_url": "https://www.youtube.com/watch?v=YhJBHg44uw0",
+  "consignes": "Plus le support va être bas plus ca va être compliqué, imite le mvt \"barre au front\""
+ },
+ {
+  "id": "standing-high-kicks",
+  "nom": "Standing high kicks",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "très lent",
+  "youtube_url": "https://youtu.be/Qb9RIGCYQTg?t=333",
+  "consignes": "Tiens toi pour pour être plus stable, prends ton temps, conscientise mvt"
+ },
+ {
+  "id": "emom5-single-leg-pogo-jump-forme-de-croix",
+  "nom": "EMOM5' Single leg pogo jump (forme de croix)",
+  "categorie": "isolation",
+  "muscle_group": "pliométrie",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/shorts/hn65IF6cVKM",
+  "consignes": "Représente une croix au sol, garde les mains aux hanches, tps contact sol court"
+ },
+ {
+  "id": "one-leg-lunge-high-knee",
+  "nom": "One leg lunge + high knee",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/7mi4YZdFYmg",
+  "consignes": "Enchaîne les 6 sans temps mort, tps contact au sol court, + haut possible"
+ },
+ {
+  "id": "tirage-sous-table",
+  "nom": "Tirage sous table",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poulie",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/k4F3ze51pt8",
+  "consignes": "Surélève également tes pieds, le but c d'être parallèle voire en dévers sous la table"
+ },
+ {
+  "id": "ghd-extensions-sur-table",
+  "nom": "GHD extensions sur table",
+  "categorie": "semi_epuisant",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://youtube.com/shorts/bQnTtk4mHoQ?feature=share",
+  "consignes": "Monte les pieds le plus haut possible, mouvement explosif, sers les fesses"
+ },
+ {
+  "id": "emom10-pompes-progresse-au-fil-des-sem",
+  "nom": "EMOM10' Pompes (progresse au fil des sem.)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "pectoraux",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "11X0",
+  "youtube_url": "https://www.youtube.com/shorts/QSwBgMUaoHM",
+  "consignes": "Standardise en fixant des pt repères pour les pieds, mains, et fais toucher poitrine"
+ },
+ {
+  "id": "gainage-position-hollow",
+  "nom": "Gainage position \"hollow\"",
+  "categorie": "isolation",
+  "muscle_group": "abdos_gainage",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "iso",
+  "youtube_url": "https://www.youtube.com/watch?v=4xRpGgttca8&pp=ygUKaG9sbG93IGFicw%3D%3D",
+  "consignes": "Imagine de l'eau au niveau du nombril qui doit rester, épaules touchent pas le sol"
+ },
+ {
+  "id": "iso-horse-stance-descendre-plus-bas-que-d-hab",
+  "nom": "Iso horse stance (descendre plus bas que d'hab)",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/CD40RnMHwYM",
+  "consignes": "Petit à petit descendre pour venir chercher le grand écart latéral, rajoute oscillation"
+ },
+ {
+  "id": "echauffement-obligatoire",
+  "nom": "Echauffement OBLIGATOIRE",
+  "categorie": "non_classe",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "",
+  "consignes": "30s entre chaque exo, insiste vraiment dessus -> pas de blessure"
+ },
+ {
+  "id": "bloc-1-4x1000m",
+  "nom": "BLOC 1 : (4x1000m)",
+  "categorie": "epuisant",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "gestion allure",
+  "youtube_url": "",
+  "consignes": "Ta recup se fait en passive, en marchant, reste constant ds les temps"
+ },
+ {
+  "id": "emom4-pistol-squat-en-s-asseyant",
+  "nom": "EMOM4' Pistol squat en s'asseyant",
+  "categorie": "semi_epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/watch?v=RbEOQEYvjcw&pp=ygUXcGlzdG9sIHNxdWF0IHdpdGggc3Rvb2w%3D",
+  "consignes": "Standardise en trouvant un support assez bas, ne t'asseois pas complètement"
+ },
+ {
+  "id": "neck-roll-avant-et-c-t-s-vid-o-1-30-faire-sur-r-cup",
+  "nom": "Neck roll avant et côtés (vidéo 1'30) à faire sur récup",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://youtu.be/W_R5W0Apc_U?t=92",
+  "consignes": "Tu fais sur les récup des pompes, garde toi 10s récup passive"
+ },
+ {
+  "id": "emom5-single-leg-pogo-jump-sur-5min",
+  "nom": "EMOM5' Single leg pogo jump (sur 5min)",
+  "categorie": "isolation",
+  "muscle_group": "pliométrie",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/shorts/hn65IF6cVKM",
+  "consignes": "Représente une croix au sol, garde les mains aux hanches, tps contact sol court"
+ },
+ {
+  "id": "tractions-chaise-romaine-emom-sur-5min",
+  "nom": "Tractions chaise romaine (EMOM sur 5min)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "1110",
+  "youtube_url": "https://www.youtube.com/shorts/hpSaHSPLsu8",
+  "consignes": "Je me rends pas compte de ton niveau actuel, si trop facile augmente nbr de rep"
+ },
+ {
+  "id": "emom6-d-velopp-couch-sur-5min",
+  "nom": "EMOM6' Développé couché (sur 5min)",
+  "categorie": "epuisant",
+  "muscle_group": "pectoraux",
+  "equipement": "barre",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/shorts/MV1FW7UQKfA",
+  "consignes": "Respecte bien tempo, focus sur la phase explosive (montée)"
+ },
+ {
+  "id": "iso-horse-stance-oscillation",
+  "nom": "Iso horse stance oscillation",
+  "categorie": "isolation",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/CD40RnMHwYM",
+  "consignes": "Descends bien bas avec les jambes bien ecacrtés, on étire à fond les adduc"
+ },
+ {
+  "id": "pail-rails-coude-en-pronation",
+  "nom": "PAIL / RAILs coude en pronation",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "",
+  "youtube_url": "https://www.youtube.com/watch?v=Vzm82iQB6y4",
+  "consignes": "2min stretch au début, 10s iso max dans un sens 10s dans l'autre"
+ },
+ {
+  "id": "associer-le-travail-d-paule-et-du-coude-qui-sont-li-s",
+  "nom": "associer le travail d'épaule et du coude qui sont liés",
+  "categorie": "non_classe",
+  "muscle_group": "épaules",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "",
+  "youtube_url": "",
+  "consignes": "- séance prévue d'environ 15 - 20min"
+ },
+ {
+  "id": "emom3-pistol-squat-en-s-asseyant-sur-5min",
+  "nom": "EMOM3' Pistol squat en s'asseyant (sur 5min)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/watch?v=RbEOQEYvjcw&pp=ygUXcGlzdG9sIHNxdWF0IHdpdGggc3Rvb2w%3D",
+  "consignes": "Standardise en trouvant un support assez bas, ne t'asseois pas complètement"
+ },
+ {
+  "id": "tractions-chaise-romaine",
+  "nom": "Tractions chaise romaine",
+  "categorie": "semi_epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "1110",
+  "youtube_url": "https://www.youtube.com/shorts/hpSaHSPLsu8",
+  "consignes": "Fais ton max de reps sur 2 séries, essaie de te battre chaque semaine (note nombre)"
+ },
+ {
+  "id": "emom3-4-pistol-squat-en-s-asseyant-sur-5min",
+  "nom": "EMOM3/4' Pistol squat en s'asseyant (sur 5min)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/watch?v=RbEOQEYvjcw&pp=ygUXcGlzdG9sIHNxdWF0IHdpdGggc3Rvb2w%3D",
+  "consignes": "Min 1 : 3 reps, Min 2 : 4 reps, Min 3 : 3 reps, Min 4 : 4 reps, Min 5 : 3 reps..."
+ },
+ {
+  "id": "ischios-march-s",
+  "nom": "Ischios marchés",
+  "categorie": "semi_epuisant",
+  "muscle_group": "ischio_jambiers",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/watch?v=gRqYP8gmW80&pp=ygUUaGVlbCB3YWxrIGhhbXN0cmluZ3M%3D",
+  "consignes": "Focus sur descendre le plus bas possible, petite pause en bas, bassin rétro"
+ },
+ {
+  "id": "emom4-pistol-squat-en-s-asseyant-sur-5min",
+  "nom": "EMOM4' Pistol squat en s'asseyant (sur 5min)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/watch?v=RbEOQEYvjcw&pp=ygUXcGlzdG9sIHNxdWF0IHdpdGggc3Rvb2w%3D",
+  "consignes": "Standardise en trouvant un support assez bas, ne t'asseois pas complètement"
+ },
+ {
+  "id": "emom6-single-leg-pogo-jump-sur-5min",
+  "nom": "EMOM6' Single leg pogo jump (sur 5min)",
+  "categorie": "isolation",
+  "muscle_group": "pliométrie",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/shorts/hn65IF6cVKM",
+  "consignes": "Représente une croix au sol, garde les mains aux hanches, tps contact sol court"
+ },
+ {
+  "id": "emom7-d-velopp-couch-sur-5min",
+  "nom": "EMOM7' Développé couché (sur 5min)",
+  "categorie": "epuisant",
+  "muscle_group": "pectoraux",
+  "equipement": "barre",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/shorts/MV1FW7UQKfA",
+  "consignes": "Respecte bien tempo, focus sur la phase explosive (montée)"
+ },
+ {
+  "id": "tractions-chaise-romaine-note-tes-max",
+  "nom": "Tractions chaise romaine (NOTE TES MAX)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "1110",
+  "youtube_url": "https://www.youtube.com/shorts/hpSaHSPLsu8",
+  "consignes": "Note moi tes maxs ici :"
+ },
+ {
+  "id": "emom10-fentes-saut-es-altern-es-sur-5min",
+  "nom": "EMOM10' Fentes sautées alternées  (sur 5min)",
+  "categorie": "isolation",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "explo",
+  "youtube_url": "https://www.youtube.com/shorts/OvtLGMhr_P0",
+  "consignes": "Saute le plus haut possible sur chaque saut, temps de contact au sol long"
+ },
+ {
+  "id": "tractions-lest-es-en-emom-sur-5min",
+  "nom": "Tractions lestées en EMOM (sur 5min)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "1110",
+  "youtube_url": "https://www.youtube.com/shorts/EJbXkKn3Mi4",
+  "consignes": "Place l'haltère entre les jambes, passe le menton sur chaque rep"
+ },
+ {
+  "id": "dips-pdc-en-endurance-sur-5min",
+  "nom": "Dips pdc en endurance (sur 5min)",
+  "categorie": "epuisant",
+  "muscle_group": "triceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "1110",
+  "youtube_url": "https://www.youtube.com/shorts/xuet8l4V1vE",
+  "consignes": "Attention à la forme, on veut pas se blesser avant le combat, pas trop d'amplitude"
+ },
+ {
+  "id": "one-leg-rdl-halt-res",
+  "nom": "One leg RDL haltères",
+  "categorie": "semi_epuisant",
+  "muscle_group": "autre",
+  "equipement": "haltères",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/watch?v=dUkZ1fThccI&pp=ygUeb25lIGxlZyByZGwgYXNzaXN0ZWQgYmFjayBmb290",
+  "consignes": "Pied avant loin du mur, touche avec tes fesses le mur, pas trop de poids jbe arrière"
+ },
+ {
+  "id": "d-velopp-couch-en-emom-sur-5min",
+  "nom": "Développé couché en EMOM (sur 5min)",
+  "categorie": "epuisant",
+  "muscle_group": "pectoraux",
+  "equipement": "barre",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/shorts/MV1FW7UQKfA",
+  "consignes": "Respecte bien tempo, focus sur la phase explosive (montée)"
+ },
+ {
+  "id": "pistol-squat-complet-en-emom-sur-5min",
+  "nom": "Pistol squat complet en EMOM (sur 5min)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/5R3wjhmjhgU",
+  "consignes": "Teste pour voir si ta mobilité s'est améliorée, si pas possible repasse avec appui"
+ },
+ {
+  "id": "neck-roll-arri-re-sur-la-recup-du-emom",
+  "nom": "Neck roll arrière (sur la recup du EMOM)",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://youtu.be/W_R5W0Apc_U?t=174",
+  "consignes": "Passe sans les mains, beaucoup d'amplitude"
+ },
+ {
+  "id": "tractions-supination-lest-es-en-emom-sur-5min",
+  "nom": "Tractions supination lestées en EMOM (sur 5min)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "1110",
+  "youtube_url": "https://www.youtube.com/watch?v=nMngQ4nxUU0&pp=ygURc3VwaW5hdGVkIHB1bGwgdXA%3D",
+  "consignes": "Objectif full amplitude + travail des biceps pour maintenir la masse"
+ },
+ {
+  "id": "kettle-bell-swing-aux-halt-res-en-emom-sur-5min",
+  "nom": "Kettle-bell swing aux haltères en EMOM (sur 5min)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "autre",
+  "equipement": "haltères",
+  "tempo_defaut": "explo",
+  "youtube_url": "https://www.youtube.com/shorts/8H2LpBjdUi0",
+  "consignes": "Ecarte un peu plus les jambes que sur un travail au ktl-bell, sinon même mvt"
+ },
+ {
+  "id": "emom6-tractions-lest-es-1-sur-5min",
+  "nom": "EMOM6' Tractions lestées (+1) (sur 5min)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "1110",
+  "youtube_url": "https://www.youtube.com/shorts/EJbXkKn3Mi4",
+  "consignes": "Explication : Min 1 : 7 reps, Min 2,3,4,5 : 6 reps. +1 rep / sem."
+ },
+ {
+  "id": "pistol-squat-complet-en-emom-sans-te-tenir-sur-5min",
+  "nom": "Pistol squat complet en EMOM (sans te tenir) (sur 5min)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/5R3wjhmjhgU",
+  "consignes": "Teste pour voir si ta mobilité s'est améliorée, si pas possible repasse avec appui"
+ },
+ {
+  "id": "emom10-gobelet-squat-prise-front-squat-sur-5min",
+  "nom": "EMOM10' Gobelet squat prise front squat (sur 5min)",
+  "categorie": "epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/cm4jBH5rTyE",
+  "consignes": "Sors la poitrine vers l'avant, les coudes bien haut, marque pause en bas"
+ },
+ {
+  "id": "emom6-tractions-lest-es-2-sur-5min",
+  "nom": "EMOM6' Tractions lestées (+2) (sur 5min)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "1110",
+  "youtube_url": "https://www.youtube.com/shorts/EJbXkKn3Mi4",
+  "consignes": "Explication : Min 1,2 : 7 reps, Min 3,4,5 : 6 reps. +1 rep / sem."
+ },
+ {
+  "id": "tractions-supination-en-emom-sur-5min",
+  "nom": "Tractions supination en EMOM (sur 5min)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "1110",
+  "youtube_url": "https://www.youtube.com/watch?v=nMngQ4nxUU0&pp=ygURc3VwaW5hdGVkIHB1bGwgdXA%3D",
+  "consignes": "8 reps / min, sur 5min"
+ },
+ {
+  "id": "one-leg-jump-high-knee",
+  "nom": "One leg jump high knee",
+  "categorie": "isolation",
+  "muscle_group": "pliométrie",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "explo",
+  "youtube_url": "https://www.youtube.com/shorts/7mi4YZdFYmg",
+  "consignes": "Enchaîne les 6 sans temps mort, tps contact au sol court, + haut possible"
+ },
+ {
+  "id": "drop-catch-d-velopp-couch",
+  "nom": "Drop & catch développé couché",
+  "categorie": "isolation",
+  "muscle_group": "pectoraux",
+  "equipement": "barre",
+  "tempo_defaut": "explo",
+  "youtube_url": "https://www.youtube.com/shorts/82vn3GmoAlk",
+  "consignes": "Tu ne dois pas lancer, mais laisser tomber la barre pour la rattraper le + vite"
+ },
+ {
+  "id": "v-lo-basse-intensite",
+  "nom": "Vélo BASSE INTENSITE",
+  "categorie": "non_classe",
+  "muscle_group": "cardio",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "80 RPM",
+  "youtube_url": "",
+  "consignes": ""
+ },
+ {
+  "id": "v-lo-en-chauffement",
+  "nom": "Vélo en échauffement",
+  "categorie": "non_classe",
+  "muscle_group": "cardio",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "Varier",
+  "youtube_url": "",
+  "consignes": ""
+ },
+ {
+  "id": "assault-bike",
+  "nom": "Assault bike",
+  "categorie": "non_classe",
+  "muscle_group": "cardio",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "10'' à bloc",
+  "youtube_url": "",
+  "consignes": ""
+ },
+ {
+  "id": "emom6-tractions-lest-es-3-sur-5min",
+  "nom": "EMOM6' Tractions lestées (+3) (sur 5min)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "1110",
+  "youtube_url": "https://www.youtube.com/shorts/EJbXkKn3Mi4",
+  "consignes": "Explication : Min 1,2,3 : 7 reps, Min 4,5 : 6 reps. +1 rep / sem."
+ },
+ {
+  "id": "squat-la-barre-emom3-en-tempo",
+  "nom": "Squat à la barre EMOM3' (en tempo)",
+  "categorie": "epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "barre",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/watch?v=7A2elbe1m2A&pp=ygUQYmFjayBzcXVhdCB0ZW1wbw%3D%3D",
+  "consignes": "Reprise facile avec un tempo lent et contrôlé, et une pause en bas"
+ },
+ {
+  "id": "staggered-stance-rdl-aux-halt-res",
+  "nom": "Staggered stance RDL aux haltères",
+  "categorie": "semi_epuisant",
+  "muscle_group": "autre",
+  "equipement": "haltères",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/GUsVaTXNmpM",
+  "consignes": "Hanche arrière légèrement en rotation interne, pousser la fesse loin derrière"
+ },
+ {
+  "id": "elevations-lat-rales-aux-halt-res",
+  "nom": "Elevations latérales aux haltères",
+  "categorie": "isolation",
+  "muscle_group": "dos",
+  "equipement": "haltères",
+  "tempo_defaut": "1110",
+  "youtube_url": "https://www.youtube.com/shorts/iK22GwXJji0",
+  "consignes": "Epaule en rota. interne, monte légèrement au dessus de la ligne d'épaule"
+ },
+ {
+  "id": "sac-de-frappe-on-varie-les-sollicitations",
+  "nom": "Sac de frappe, on varie les sollicitations",
+  "categorie": "non_classe",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "20''/10''",
+  "youtube_url": "",
+  "consignes": "Obj : travailler différemment tous les jours. Ici, 20s frappe trql / 10s à bloc"
+ },
+ {
+  "id": "cercle-des-omoplates-4-pattes",
+  "nom": "Cercle des omoplates à 4 pattes",
+  "categorie": "isolation",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "assez rapide",
+  "youtube_url": "https://www.youtube.com/shorts/uUSE0RsEvzo",
+  "consignes": "Commence sur les genoux, puis quand tu seras à l'aise tu passes en pompe"
+ },
+ {
+  "id": "d-velopp-couch-emom3",
+  "nom": "Développé couché EMOM3'",
+  "categorie": "epuisant",
+  "muscle_group": "pectoraux",
+  "equipement": "barre",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/_FkbD0FhgVE",
+  "consignes": "Reprise facile avec un tempo lent et contrôlé, et une pause en bas"
+ },
+ {
+  "id": "dips-lest-es-en-tempo",
+  "nom": "Dips lestées en tempo",
+  "categorie": "epuisant",
+  "muscle_group": "triceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "31X0",
+  "youtube_url": "https://www.youtube.com/shorts/1cARvHTj_R8",
+  "consignes": "Descente extra lente, pause tout en bas, remontée explo. Cherche l'amplitude"
+ },
+ {
+  "id": "soulev-de-terre-sumo-stance",
+  "nom": "Soulevé de terre sumo stance",
+  "categorie": "epuisant",
+  "muscle_group": "fessiers",
+  "equipement": "barre",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/1HLOsYsWV8w",
+  "consignes": "La barre longe les tibias, place toi bien proche de la barre, hanches basses"
+ },
+ {
+  "id": "tractions-endurance-emom6",
+  "nom": "Tractions endurance EMOM6'",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/shorts/gy1dyxEdCqc",
+  "consignes": "Focus sur la vitesse d'execution pour avoir un maximum de recup"
+ },
+ {
+  "id": "dips-lest-es-en-lourd",
+  "nom": "Dips lestées en lourd",
+  "categorie": "epuisant",
+  "muscle_group": "triceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "10X0",
+  "youtube_url": "https://www.youtube.com/shorts/WPKQFySnWAc",
+  "consignes": "Faire une légère pause en bas, épaule full extension, focus soulever lourd"
+ },
+ {
+  "id": "elevations-lat-rales-sur-banc-inclin",
+  "nom": "Elevations latérales sur banc incliné",
+  "categorie": "isolation",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/qpNqQcXMs9c",
+  "consignes": "Incline le banc à environ 30 degrés, garde la tension ds épaule tout le long"
+ },
+ {
+  "id": "mobilisation-des-poign-es",
+  "nom": "Mobilisation des poignées",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/shorts/KEImekoUaAI",
+  "consignes": "Suis la vidéo, une dizaine de rep par exo, ca doit te prendre 5mn de tps total"
+ },
+ {
+  "id": "excentrique-flexion-des-avant-bras",
+  "nom": "Excentrique flexion des avant-bras",
+  "categorie": "semi_epuisant",
+  "muscle_group": "avant_bras",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "très lent",
+  "youtube_url": "https://www.youtube.com/watch?v=jBNNSCOSZLM&pp=ygUXZWNjZW50cmljIHdyaXN0IGZsZXhpb24%3D",
+  "consignes": "Descends le + lentement possible à un bras et t'aide de l'autre pour remonter"
+ },
+ {
+  "id": "travailler-dans-tous-les-plans-de-mvt-du-poignet",
+  "nom": "travailler dans tous les plans de mvt du poignet",
+  "categorie": "non_classe",
+  "muscle_group": "avant_bras",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "",
+  "youtube_url": "",
+  "consignes": "- séance prévue d'environ 20min"
+ },
+ {
+  "id": "tractions-endurance-emom5",
+  "nom": "Tractions endurance EMOM5'",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/shorts/gy1dyxEdCqc",
+  "consignes": "Focus sur la vitesse d'execution pour avoir un maximum de recup"
+ },
+ {
+  "id": "arri-re-d-paule-unilatt-ral-sur-banc",
+  "nom": "Arrière d'épaule unilattéral sur banc",
+  "categorie": "isolation",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/F-lWnJ6VZ2E",
+  "consignes": "Garde le bras aligné sur l'épaule, l'épaule passe devant le menton en bas"
+ },
+ {
+  "id": "soulev-de-terre-classique",
+  "nom": "Soulevé de terre classique",
+  "categorie": "epuisant",
+  "muscle_group": "fessiers",
+  "equipement": "barre",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/watch?v=D8BLpg8fPV8&pp=ygURZGVhZHN0b3AgZGVhZGxpZnTSBwkJzQkBhyohjO8%3D",
+  "consignes": "Replace toi bien entre chaque rep, la barre frôle les tibias"
+ },
+ {
+  "id": "d-velopp-couch-barre",
+  "nom": "Développé couché barre",
+  "categorie": "epuisant",
+  "muscle_group": "pectoraux",
+  "equipement": "barre",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/shorts/_FkbD0FhgVE",
+  "consignes": "Pas forcément de tempo ici, tjs en contrôle mais ajoute de la vitesse"
+ },
+ {
+  "id": "gobelet-squat-en-tempo",
+  "nom": "Gobelet squat en tempo",
+  "categorie": "epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "31X0",
+  "youtube_url": "https://www.youtube.com/shorts/sFdexKWFtNk",
+  "consignes": "Haltère serré contre le buste, coudes collés au corps, ouvres les hanches en bas"
+ },
+ {
+  "id": "tractions-pronation-pdc-en-ladder4-5-6",
+  "nom": "Tractions pronation pdc en ladder4/5/6",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/watch?v=un6HKZo2Mhs&pp=ygUQcHJvbmF0ZWQgcHVsbCB1cA%3D%3D",
+  "consignes": "Focus sur une descente lente et contrôlée, amplitude complète en bas"
+ },
+ {
+  "id": "extensions-triceps-la-corde-poulie-haute",
+  "nom": "Extensions triceps à la corde (poulie haute)",
+  "categorie": "isolation",
+  "muscle_group": "triceps",
+  "equipement": "poulie",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/xguGXQAvbKk",
+  "consignes": "Ouvre sur l'extérieur à la fin du mouvement et contraction volontaire"
+ },
+ {
+  "id": "cars-paules-couch",
+  "nom": "CARs épaules couché",
+  "categorie": "isolation",
+  "muscle_group": "épaules",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "",
+  "youtube_url": "https://youtu.be/7XEjZE4C_Z8",
+  "consignes": "Mobilité des épaules. Le plus haut et le plus loin possible"
+ },
+ {
+  "id": "d-velopp-militaire-la-barre",
+  "nom": "Développé militaire à la barre",
+  "categorie": "epuisant",
+  "muscle_group": "épaules",
+  "equipement": "barre",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/F6RD8fz1Mw4",
+  "consignes": "Ne surcambre pas, bassin en rétro, développe au dessus de la ligne des oreilles"
+ },
+ {
+  "id": "chest-flies-la-poulie-basse",
+  "nom": "Chest flies à la poulie basse",
+  "categorie": "semi_epuisant",
+  "muscle_group": "autre",
+  "equipement": "poulie",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/watch?v=e_8HLu59-to&pp=ygUTbG93IGNhYmxlIGNoZXN0IGZseQ%3D%3D",
+  "consignes": "Etirement maximal, 1s pause en haut, contracte volontairement les pecs"
+ },
+ {
+  "id": "reverse-peck-deck-arri-re-paule",
+  "nom": "Reverse peck deck (arrière épaule)",
+  "categorie": "isolation",
+  "muscle_group": "pectoraux",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/-TKqxK7-ehc",
+  "consignes": "Ne reviens pas complètement pour garder de la tension sur zone qui travaille"
+ },
+ {
+  "id": "relev-s-de-genoux-suspendu-avec-poids",
+  "nom": "Relevés de genoux suspendu avec poids",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/shorts/8MnB1-MSh90",
+  "consignes": "Reste dans l'amplitude qui travaille, ne reviens pas complètement, (vidéo)"
+ },
+ {
+  "id": "back-squat-en-emom4",
+  "nom": "Back squat en EMOM4'",
+  "categorie": "epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/watch?v=7A2elbe1m2A&pp=ygUQYmFjayBzcXVhdCB0ZW1wbw%3D%3D",
+  "consignes": "Pas de tempo, execute tes reps rapidement pour profiter du temps de récup"
+ },
+ {
+  "id": "leg-curl-concentrique-2-jbe-excentrique-1-jbe",
+  "nom": "Leg curl concentrique 2 jbe excentrique 1 jbe",
+  "categorie": "semi_epuisant",
+  "muscle_group": "ischio_jambiers",
+  "equipement": "machine",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/watch?v=0vxmiAxmYsM&pp=ygUjc2VhdGVkIGxlZyBjdXJsIHRlc3Rvc3Rlcm9uZSBuYXRpb24%3D",
+  "consignes": "Poussée à 2 jambes, pause 1s, descente à 1 jambe contrôlée"
+ },
+ {
+  "id": "biceps-curl-prise-marteau",
+  "nom": "Biceps curl prise marteau",
+  "categorie": "semi_epuisant",
+  "muscle_group": "biceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/shorts/TWO3etZuH6I",
+  "consignes": "Focus sur les avant-bras ici, alterne un bras puis l'autre, sers toi de l'élan"
+ },
+ {
+  "id": "leg-extension-concentrique-2-jbe-excentrique-1-jbe",
+  "nom": "Leg extension concentrique 2 jbe excentrique 1 jbe",
+  "categorie": "semi_epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "machine",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/watch?v=E_pTa-uagpE&pp=ygUdbGVnIGV4dGVuc2lvbiAyLTF0ZXN0b3N0ZXJvbmU%3D",
+  "consignes": "Montée à 2 jambes, pause en haut 1s, descente à 1 jambe contrôlée"
+ },
+ {
+  "id": "extensions-triceps-la-barre-ez",
+  "nom": "Extensions triceps à la barre EZ",
+  "categorie": "semi_epuisant",
+  "muscle_group": "triceps",
+  "equipement": "barre",
+  "tempo_defaut": "1110",
+  "youtube_url": "https://www.youtube.com/shorts/vsuqUqnv1Ok",
+  "consignes": "Le bras est fixe, c'est uniquement l'avant bras qui se déplace, viens derrière la tête"
+ },
+ {
+  "id": "dips-poids-du-corps-en-tempo",
+  "nom": "Dips poids du corps en tempo",
+  "categorie": "semi_epuisant",
+  "muscle_group": "triceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "42X0",
+  "youtube_url": "https://www.youtube.com/shorts/9wHqh9RyDZc",
+  "consignes": "Descente basse avec un angle coude>90°, descente lente montée explo"
+ },
+ {
+  "id": "back-extensions-en-lourd",
+  "nom": "Back extensions en lourd",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/x0leCKPvumA",
+  "consignes": "Bassin rétroversé (fixé en avant), fessiers contractés, descendre au plus bas"
+ },
+ {
+  "id": "pail-rails-coude-manche-balai",
+  "nom": "PAIL / RAILs coude manche à balai",
+  "categorie": "semi_epuisant",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "",
+  "youtube_url": "https://www.youtube.com/watch?v=Vzm82iQB6y4",
+  "consignes": "2min stretch au début, 10s iso max dans un sens 10s dans l'autre"
+ },
+ {
+  "id": "towel-wrist-deviation",
+  "nom": "Towel wrist deviation",
+  "categorie": "isolation",
+  "muscle_group": "avant_bras",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "",
+  "youtube_url": "https://www.youtube.com/watch?v=Hv-KA7bbfW8&pp=ygUVdG93ZWwgd3Jpc3QgZGV2aWF0aW9u",
+  "consignes": "Renfo des poignets en deviation ulnaire (cubitus)"
+ },
+ {
+  "id": "tractions-pronation-pdc-en-ladder4-5-7",
+  "nom": "Tractions pronation pdc en ladder4/5/7",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/watch?v=un6HKZo2Mhs&pp=ygUQcHJvbmF0ZWQgcHVsbCB1cA%3D%3D",
+  "consignes": "Focus sur une descente lente et contrôlée, amplitude complète en bas"
+ },
+ {
+  "id": "oiseau-halt-res-assis-sur-banc",
+  "nom": "Oiseau haltères assis sur banc",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "haltères",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/IZJGtLwbMYw",
+  "consignes": "Drive le coude vers le côté et l'arrière, reste dans la range qui travaille"
+ },
+ {
+  "id": "dips-lest-en-tempo",
+  "nom": "Dips lesté en tempo",
+  "categorie": "semi_epuisant",
+  "muscle_group": "triceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "42X0",
+  "youtube_url": "https://www.youtube.com/shorts/9wHqh9RyDZc",
+  "consignes": "Descente basse avec un angle coude>90°, descente lente montée explo"
+ },
+ {
+  "id": "tractions-pronation-pdc-en-ladder4-6-7",
+  "nom": "Tractions pronation pdc en ladder4/6/7",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/watch?v=un6HKZo2Mhs&pp=ygUQcHJvbmF0ZWQgcHVsbCB1cA%3D%3D",
+  "consignes": "Focus sur une descente lente et contrôlée, amplitude complète en bas"
+ },
+ {
+  "id": "tractions-pronation-pdc-en-ladder-5-6-7",
+  "nom": "Tractions pronation pdc en ladder 5/6/7",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/watch?v=un6HKZo2Mhs&pp=ygUQcHJvbmF0ZWQgcHVsbCB1cA%3D%3D",
+  "consignes": "Focus sur une descente lente et contrôlée, amplitude complète en bas"
+ },
+ {
+  "id": "cars-r-tractions-scapulaires",
+  "nom": "CARS rétractions scapulaires",
+  "categorie": "isolation",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "",
+  "youtube_url": "https://www.youtube.com/watch?v=FPpTDqBzYVw&pp=ygUQaGFuZ2luZyBjYXJzIGZyYw%3D%3D",
+  "consignes": "Retracte les omoplates, bras tendus, epaules vers l'arrière"
+ },
+ {
+  "id": "tractions-prise-neutre-lest-es",
+  "nom": "Tractions prise neutre lestées",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/shorts/E9vvwfxSZFc",
+  "consignes": "Reste dans une amplitude dorsaux, va pas tout en haut ni tout en bas"
+ },
+ {
+  "id": "jm-press-smith-machine",
+  "nom": "JM press smith machine",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "machine",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/j0uAD95UYBk",
+  "consignes": "C'est un mélange entre un développé et une barre au front"
+ },
+ {
+  "id": "hollow-hold-avec-un-disque",
+  "nom": "Hollow hold avec un disque",
+  "categorie": "isolation",
+  "muscle_group": "abdos_gainage",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "iso",
+  "youtube_url": "https://www.youtube.com/watch?v=ek-bfRfCGDY&pp=ygUTbWVkZWNpbiBiYWxsIGhvbGxvdw%3D%3D",
+  "consignes": "Tends le disque derrière la tête, bras & jambes tendus, départ en boule puis déplie"
+ },
+ {
+  "id": "back-squat-en-ladder-1-2-3",
+  "nom": "Back squat en ladder 1/2/3",
+  "categorie": "epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/watch?v=7A2elbe1m2A&pp=ygUQYmFjayBzcXVhdCB0ZW1wbw%3D%3D",
+  "consignes": "Pas de tempo, execute tes reps rapidement pour profiter du temps de récup"
+ },
+ {
+  "id": "d-velopp-couch-smith-machine",
+  "nom": "Développé couché smith machine",
+  "categorie": "epuisant",
+  "muscle_group": "pectoraux",
+  "equipement": "barre",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/shorts/gQ3afio08V8",
+  "consignes": "Contrôle la descente et explose sur la remontée bonne amplitude et charge"
+ },
+ {
+  "id": "tractions-endurance-en-emom6-5min",
+  "nom": "Tractions endurance en EMOM6' (5min)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/shorts/TWO3etZuH6I",
+  "consignes": "6 reps / min, toutes les min, sur 5min"
+ },
+ {
+  "id": "leg-extension-classique-en-tempo",
+  "nom": "Leg extension classique en tempo",
+  "categorie": "semi_epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "machine",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/nh7yhZ2P9eA",
+  "consignes": "Rapproche toi de l'échec sur toutes les séries, montée explo (x), amplitude"
+ },
+ {
+  "id": "tractions-endurance-en-emom6-7-5min",
+  "nom": "Tractions endurance en EMOM6/7' (5min)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/shorts/TWO3etZuH6I",
+  "consignes": "6/7 reps / min, toutes les min, sur 5min"
+ },
+ {
+  "id": "tractions-endurance-en-emom7-5min",
+  "nom": "Tractions endurance en EMOM7' (5min)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/shorts/TWO3etZuH6I",
+  "consignes": "7 reps / min, toutes les min, sur 5min"
+ },
+ {
+  "id": "elevations-y",
+  "nom": "Elevations Y",
+  "categorie": "isolation",
+  "muscle_group": "épaules",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/TQ_Bmgd4vQA",
+  "consignes": "Engage avec l'arrière d'épaule, garde les bras tendus, marque une pause en haut"
+ },
+ {
+  "id": "elevations-y-r-gle-bas-les-anneaux",
+  "nom": "Elevations Y (règle + bas les anneaux)",
+  "categorie": "isolation",
+  "muscle_group": "épaules",
+  "equipement": "trx_anneaux",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/TQ_Bmgd4vQA",
+  "consignes": "Engage avec l'arrière d'épaule, garde les bras tendus, marque une pause en haut"
+ },
+ {
+  "id": "cars-hanches-90-90-poids-tendu-au-dessus-t-te",
+  "nom": "CARS hanches 90/90 poids tendu au dessus tête",
+  "categorie": "isolation",
+  "muscle_group": "mobilité",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "",
+  "youtube_url": "https://www.youtube.com/shorts/gdOUhnZ8iWs",
+  "consignes": "Garde les bras tendus pour n'avoir aucune implication du haut du corps"
+ },
+ {
+  "id": "d-velopp-couch-prise-serr-e-smith-machine",
+  "nom": "Développé couché prise serrée smith machine",
+  "categorie": "epuisant",
+  "muscle_group": "pectoraux",
+  "equipement": "barre",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/shorts/h15lqKRpxUQ",
+  "consignes": "Garde les coudes serrés, le long du corps, respecte un tempo lent et côntrolé"
+ },
+ {
+  "id": "lateral-jumps-par-dessus-un-obstabcle",
+  "nom": "Lateral jumps par dessus un obstabcle",
+  "categorie": "isolation",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "explosif",
+  "youtube_url": "https://www.youtube.com/shorts/h_0y84OZ7j4",
+  "consignes": "Place un bâton comme en vidéo, temps de contact au sol court, hauteur d'un banc"
+ },
+ {
+  "id": "fentes-bulgares-halt-res-pied-avant-sur-lev",
+  "nom": "Fentes bulgares haltères pied avant surélevé",
+  "categorie": "semi_epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "haltères",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/watch?v=tn9efls7uaQ&pp=ygUnZnJvbnQgbGVnIGRlZmljaXQgYnVsZ2FyaWFuIHNwbGl0IHNxdWF0",
+  "consignes": "Prends 30s entre les deux jambes pour récupérer, full amplitude"
+ },
+ {
+  "id": "zercher-cossack-squat",
+  "nom": "Zercher cossack squat",
+  "categorie": "semi_epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/nCs0wxQctiM",
+  "consignes": "Objectif descendre le plus bas possible tout en conservant la poitrine sortie"
+ },
+ {
+  "id": "mont-e-de-genoux-la-station-dips",
+  "nom": "Montée de genoux à la station à dips",
+  "categorie": "isolation",
+  "muscle_group": "triceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/DWs4-PmJaC4",
+  "consignes": "Tu dois essayer d'emmener les genoux au menton, monte haut le bassin"
+ },
+ {
+  "id": "cars-r-tractions-scapulaires-un-bras",
+  "nom": "CARS rétractions scapulaires à un bras",
+  "categorie": "isolation",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "",
+  "youtube_url": "https://www.youtube.com/watch?v=M7Aj7saugrI&pp=ygUYb25lIGFybSBzY2FwdWxhciBwdWxsIHVw",
+  "consignes": "Transfère du poids du corps sur bras tendu puis contrôle de l'amplitude et du mvt"
+ },
+ {
+  "id": "d-velopp-militaire-barre-libre",
+  "nom": "Développé militaire barre libre",
+  "categorie": "epuisant",
+  "muscle_group": "épaules",
+  "equipement": "barre",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/shorts/F6RD8fz1Mw4",
+  "consignes": "Ne surcambre pas, bassin en rétro, développe au dessus de la ligne des oreilles"
+ },
+ {
+  "id": "rdl-halt-res",
+  "nom": "RDL haltères",
+  "categorie": "epuisant",
+  "muscle_group": "autre",
+  "equipement": "haltères",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/watch?v=xAL7lHwj30E&pp=ygUacm9tYW5pYW4gZGVhZGxpZnQgZHVtYmJlbGw%3D",
+  "consignes": "Focus envoyer le + possible les fesses en arrière, pousser fort dans les talons"
+ },
+ {
+  "id": "skater-squat-assist-ou-non",
+  "nom": "Skater squat (assisté ou non)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/shorts/WFm3HAal5TM",
+  "consignes": "Commence en te tenant pour trouver tes marques, lâche dès que possible"
+ },
+ {
+  "id": "copenhagen-plank",
+  "nom": "Copenhagen plank",
+  "categorie": "isolation",
+  "muscle_group": "abdos_gainage",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "iso",
+  "youtube_url": "https://www.youtube.com/shorts/Rwap0_j5i5A",
+  "consignes": "Cale l'intérieur du genou contre support, tu peux effectuer des micro-mvts si à l'aise"
+ },
+ {
+  "id": "extensions-triceps-la-corde-poulie-haute-2",
+  "nom": "Extensions triceps à la corde poulie haute",
+  "categorie": "semi_epuisant",
+  "muscle_group": "triceps",
+  "equipement": "poulie",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/1N0kO5jU7n8",
+  "consignes": "Force vers l'extérieur en bas du mouvement pour accentuer la contraction"
+ },
+ {
+  "id": "elevations-en-t",
+  "nom": "Elevations en T",
+  "categorie": "semi_epuisant",
+  "muscle_group": "épaules",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/m_w36N3vfjA",
+  "consignes": "Ouvre sur l'extérieur en gardant les bras tendus, relâche épaules en avant"
+ },
+ {
+  "id": "tractions-en-endurance-emom8-une-minute-sur-deux",
+  "nom": "Tractions en endurance EMOM8, une minute sur deux",
+  "categorie": "epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/shorts/TWO3etZuH6I",
+  "consignes": "Min 1 les tractions, Min 2 les squats"
+ },
+ {
+  "id": "back-squat-emom3-une-minute-sur-deux",
+  "nom": "Back squat EMOM3, une minute sur deux",
+  "categorie": "epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/watch?v=7A2elbe1m2A&pp=ygUQYmFjayBzcXVhdCB0ZW1wbw%3D%3D",
+  "consignes": "Min 1 les tractions, Min 2 les squats"
+ },
+ {
+  "id": "d-velopp-couch-inclin-smith-machine",
+  "nom": "Développé couché incliné smith machine",
+  "categorie": "epuisant",
+  "muscle_group": "pectoraux",
+  "equipement": "barre",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/shorts/gQ3afio08V8",
+  "consignes": "Contrôle la descente et explose sur la remontée bonne amplitude et charge"
+ },
+ {
+  "id": "adducteurs-work-long-range-pied-sur-banc",
+  "nom": "Adducteurs work long range pied sur banc",
+  "categorie": "semi_epuisant",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "3110",
+  "youtube_url": "https://www.youtube.com/shorts/VeO_ewwF70A",
+  "consignes": "Tu cherches à incliner la colonne pour faire toucher tes hanches au sol"
+ },
+ {
+  "id": "curl-sur-banc-inclin",
+  "nom": "Curl sur banc incliné",
+  "categorie": "semi_epuisant",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "1010",
+  "youtube_url": "https://www.youtube.com/shorts/fXFN8_1Bh6k",
+  "consignes": "Epaules bien en arrières et se concentrer sur la contraction en rota externe en haut"
+ },
+ {
+  "id": "one-leg-back-extension",
+  "nom": "One leg back extension",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/efumpY60x18",
+  "consignes": "Bassin rétroversé (en avant), autre jambe sert à stabiliser en poussant coussin"
+ },
+ {
+  "id": "lateral-jumps-par-dessus-un-obstabcle-haut",
+  "nom": "Lateral jumps par dessus un obstabcle (+ haut)",
+  "categorie": "isolation",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "explosif",
+  "youtube_url": "https://www.youtube.com/shorts/h_0y84OZ7j4",
+  "consignes": "Place un bâton comme en vidéo, temps de contact au sol court, hauteur d'un banc"
+ },
+ {
+  "id": "skater-squat-sans-te-tenir",
+  "nom": "Skater squat (sans te tenir)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/shorts/XQyUlYxTGuM",
+  "consignes": "Tu n'as plus le droit de te tenir, genou jbe arrière touche sol chaque rep"
+ },
+ {
+  "id": "elevations-en-t-r-gle-les-sangles-bas",
+  "nom": "Elevations en T (règle les sangles + bas)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "épaules",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/m_w36N3vfjA",
+  "consignes": "Ouvre sur l'extérieur en gardant les bras tendus, relâche épaules en avant"
+ },
+ {
+  "id": "d-velopp-d-clin-smith-machine",
+  "nom": "Développé décliné smith machine",
+  "categorie": "epuisant",
+  "muscle_group": "cardio",
+  "equipement": "machine",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/shorts/DLp4A14eWBg",
+  "consignes": "Garde les coudes serrés, le long du corps, place un disque sous le banc pr décliner"
+ },
+ {
+  "id": "low-lunges-jump-with-core-rotation",
+  "nom": "Low lunges jump with core rotation",
+  "categorie": "isolation",
+  "muscle_group": "mobilité",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "explosif",
+  "youtube_url": "https://www.youtube.com/watch?v=urKcmRjnQxQ&pp=ygUibG93IGx1bmdlIGp1bXAgd2l0aCBtZWQgYmFsbCB0d2lzdA%3D%3D",
+  "consignes": "Ne cherche pas à décoller haut mais à bouger le med-ball + rapidement possible"
+ },
+ {
+  "id": "curl-invers-la-barre",
+  "nom": "Curl inversé à la barre",
+  "categorie": "semi_epuisant",
+  "muscle_group": "autre",
+  "equipement": "barre",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/ahDqj6yPy5M",
+  "consignes": "Exercice qui sollicite les muscles de l'épicondyle (coude), charger sans pb dessus"
+ },
+ {
+  "id": "chest-flies-la-poulie-sur-banc",
+  "nom": "Chest flies à la poulie sur banc",
+  "categorie": "semi_epuisant",
+  "muscle_group": "autre",
+  "equipement": "poulie",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/QDkFWmZqVgk",
+  "consignes": "Reste 1s contracté devant en fin de mouvement en contraction volontaire"
+ },
+ {
+  "id": "low-squat-bunny-jump",
+  "nom": "Low squat bunny jump",
+  "categorie": "isolation",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "",
+  "youtube_url": "https://www.youtube.com/shorts/popbMnbmIo0",
+  "consignes": "6 sauts devant / derrière (1= aller-retour), 6 sur le côté droite / gauche"
+ },
+ {
+  "id": "z-press-altern-s-aux-halt-res-assis-au-sol",
+  "nom": "Z-press alternés aux haltères, assis au sol",
+  "categorie": "semi_epuisant",
+  "muscle_group": "autre",
+  "equipement": "haltères",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/RX6t24H_y2k",
+  "consignes": "Garde la poitrine sortie, pense à t'autograndir au max, ca doit tirer haut du dos"
+ },
+ {
+  "id": "squat-jump-d-part-assis-le-haut-possible",
+  "nom": "Squat jump départ assis le + haut possible",
+  "categorie": "isolation",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "explosif",
+  "youtube_url": "https://www.youtube.com/shorts/ckOWNYFPHHk",
+  "consignes": "Focus : Décolle le + haut possible sur chaque rep, replace toi entre chaque rep"
+ },
+ {
+  "id": "fentes-cursty-pied-avant-sur-lev",
+  "nom": "Fentes cursty pied avant surélevé",
+  "categorie": "semi_epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "20X0",
+  "youtube_url": "https://www.youtube.com/shorts/JQPmfeXSuxo",
+  "consignes": "Garde le femur de la jambe avant en rotation interne, pied arrière loin derrière"
+ },
+ {
+  "id": "tractions-pronation-lest-es-en-lourd",
+  "nom": "Tractions pronation lestées en lourd",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/shorts/XUkb6H9ddiQ",
+  "consignes": "Focus force sur ce programme"
+ },
+ {
+  "id": "rowing-buste-pench-sur-banc-inclin",
+  "nom": "Rowing buste penché sur banc incliné",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/FiQ1X4jaaCY",
+  "consignes": "Trajectoire légèrement circulaire, tire haltères aux hanches. Relâche épaule en avant"
+ },
+ {
+  "id": "single-leg-kb-swap",
+  "nom": "Single leg KB swap",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "kettlebell",
+  "tempo_defaut": "",
+  "youtube_url": "https://www.youtube.com/shorts/hICGAtZEfNA",
+  "consignes": "Exercice d'équilibre, pas de vitesse, fléchis légèrement le genou"
+ },
+ {
+  "id": "back-squat-paus-emom2",
+  "nom": "Back squat pausé EMOM2'",
+  "categorie": "epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2210",
+  "youtube_url": "https://www.youtube.com/shorts/SN6MeVlsTLY",
+  "consignes": "Effectue une pause le cul au sol, avant de remonter de manière explosive"
+ },
+ {
+  "id": "ice-skater-jumps",
+  "nom": "Ice skater jumps",
+  "categorie": "isolation",
+  "muscle_group": "pliométrie",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "explosif",
+  "youtube_url": "https://www.youtube.com/shorts/qM5jviFhw9U",
+  "consignes": "Saute le + loin possible en déportant ton centre 2 gravité, absorbe avant de relancer"
+ },
+ {
+  "id": "one-leg-curl-mont-e-descente",
+  "nom": "One leg curl (montée & descente)",
+  "categorie": "semi_epuisant",
+  "muscle_group": "ischio_jambiers",
+  "equipement": "machine",
+  "tempo_defaut": "1010",
+  "youtube_url": "https://www.youtube.com/shorts/HsNynjAarZA",
+  "consignes": "Amplitude, descente lente (2s) et remontée explosive, recup 30s entre les 2 jbe"
+ },
+ {
+  "id": "position-90-90-to-half-kneeling",
+  "nom": "Position 90/90 to half kneeling",
+  "categorie": "isolation",
+  "muscle_group": "mobilité",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "",
+  "youtube_url": "https://www.youtube.com/shorts/PL1THhSphY4",
+  "consignes": "Monte jambe après l'autre uniquement qd tu sens un étirement intense de l'adducteur"
+ },
+ {
+  "id": "roulade-sur-l-paule-et-cou-en-position-pont",
+  "nom": "Roulade sur l'épaule et cou en position pont",
+  "categorie": "isolation",
+  "muscle_group": "fessiers",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "vitesse",
+  "youtube_url": "https://www.youtube.com/watch?v=0HUvtqKuO9Q&pp=ygUkcmluZyB0aG9yYWNpYyBzcGluZSBicmlkZ2Ugcm90YXRpb25z",
+  "consignes": "Roule à la fois sur l'épaule et sur le cou, oriente tes hanches du côté où tu roules"
+ },
+ {
+  "id": "d-velopp-couch-halt-res",
+  "nom": "Développé couché haltères",
+  "categorie": "epuisant",
+  "muscle_group": "pectoraux",
+  "equipement": "haltères",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/B8JxGOX2t7M",
+  "consignes": "Recherche l'amplitude, une trajectoire convergente, lente et contrôlée"
+ },
+ {
+  "id": "flexions-du-cou-c-t-droit-avec-disque",
+  "nom": "Flexions du cou côté droit avec disque",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/nKXZJGGL4kY",
+  "consignes": "Priviégie l'amplitude à la charge avec un tempo lent, descente complète"
+ },
+ {
+  "id": "tractions-pronation-en-endurance",
+  "nom": "Tractions pronation en endurance",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/watch?v=0UlwXsQMvKA&pp=ygUQbWF4aW11bSBwdWxsIHVwcw%3D%3D",
+  "consignes": "Objectif 20 tractions d'ici la fin du programme, envoie tout première série"
+ },
+ {
+  "id": "romanian-deadlift-aux-halt-res",
+  "nom": "Romanian deadlift aux haltères",
+  "categorie": "semi_epuisant",
+  "muscle_group": "autre",
+  "equipement": "haltères",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/watch?v=9Ruzgah7L2o&pp=ygULZHVtYmVsbCByZGw%3D",
+  "consignes": "Envoie les fesses en arrière, mouvement charnière de hanches"
+ },
+ {
+  "id": "v-up",
+  "nom": "V-up",
+  "categorie": "semi_epuisant",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/watch?v=7UVgs18Y1P4&pp=ygUEdi11cA%3D%3D",
+  "consignes": "Coordonne relevé de jambes avec les épaules, reviens épaules au sol chaque rep"
+ },
+ {
+  "id": "bobine-d-andrieux-avec-barre-lastique",
+  "nom": "Bobine d'andrieux avec barre + élastique",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "barre",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/shorts/TcJIp8Nanrk",
+  "consignes": "Sur 2 set, tu enroules à l'échec, càd jusqu'à ce que tu n'aies plus de jus pr rouler"
+ },
+ {
+  "id": "extensions-du-cou-avec-disque",
+  "nom": "Extensions du cou avec disque",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/XmXCEoGdrxk",
+  "consignes": "Priviégie l'amplitude à la charge avec un tempo lent, descente complète"
+ },
+ {
+  "id": "landmine-row-serviette",
+  "nom": "Landmine row serviette",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/O7_ipP4rOxw",
+  "consignes": "Garde buste parallèle au sol, attention au tempo et relâche épaules en bas"
+ },
+ {
+  "id": "curl-marteau-altern-aux-halt-res",
+  "nom": "Curl marteau alterné aux haltères",
+  "categorie": "semi_epuisant",
+  "muscle_group": "biceps",
+  "equipement": "haltères",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/JbQf3n5olz8",
+  "consignes": "Tu peux te mettre de \"tricher\" le mouvement à mesure que l'on progresse en charge"
+ },
+ {
+  "id": "elevations-laterales-halt-re-unilat-rale",
+  "nom": "Elevations laterales haltère unilatérale",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "haltères",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/hKNlhOECex8",
+  "consignes": "Met lourd quitte à légèrement tricher et monte le petit doigt au niveau de l'épaule"
+ },
+ {
+  "id": "landmine-rotation",
+  "nom": "Landmine rotation",
+  "categorie": "isolation",
+  "muscle_group": "mobilité",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "21X0",
+  "youtube_url": "https://www.youtube.com/watch?v=e5DP6961WEk&pp=ygURbGFuZG1pbmUgcm90YXRpb24%3D",
+  "consignes": "Bascule de chaque côté de manière en retenant, avant de relancer en explosif"
+ },
+ {
+  "id": "back-squat-libre",
+  "nom": "Back squat libre",
+  "categorie": "epuisant",
+  "muscle_group": "quadriceps",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/KI-7iLMF2Gs",
+  "consignes": "Plus de pause, on rebondit direct au sol et essayer de chercher lourd"
+ },
+ {
+  "id": "neck-side-plank",
+  "nom": "Neck side plank",
+  "categorie": "isolation",
+  "muscle_group": "abdos_gainage",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "iso",
+  "youtube_url": "https://www.youtube.com/watch?v=zX2bOekq-q8&pp=ygUPbmVjayBzaWRlIHBsYW5r",
+  "consignes": "Plus tu vas éloigner les pieds, plus tu vas rendre l'exercice difficile"
+ },
+ {
+  "id": "tractions-lest-es",
+  "nom": "Tractions lestées",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "-",
+  "youtube_url": "https://www.youtube.com/shorts/XUkb6H9ddiQ",
+  "consignes": "Toujours focus force sur ce programme"
+ },
+ {
+  "id": "farmer-walk-10-shrugs",
+  "nom": "Farmer walk + 10 shrugs",
+  "categorie": "isolation",
+  "muscle_group": "avant_bras",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "iso",
+  "youtube_url": "https://www.youtube.com/watch?v=gwe-V5RilW4",
+  "consignes": "Prends ton temps sur l'aller-retour, tu termines sur 10 shrugs en arrivant"
+ },
+ {
+  "id": "flexions-du-cou-avec-disque",
+  "nom": "Flexions du cou avec disque",
+  "categorie": "isolation",
+  "muscle_group": "autre",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2110",
+  "youtube_url": "https://www.youtube.com/shorts/nKXZJGGL4kY",
+  "consignes": "Priviégie l'amplitude à la charge avec un tempo lent, descente complète"
+ },
+ {
+  "id": "landmine-meadows-row",
+  "nom": "Landmine meadows row",
+  "categorie": "semi_epuisant",
+  "muscle_group": "dos",
+  "equipement": "poids_du_corps",
+  "tempo_defaut": "2010",
+  "youtube_url": "https://www.youtube.com/shorts/uexTkvxwMGM",
+  "consignes": "Garde buste parallèle au sol, l'angle du coude est relativement ouvert"
+ }
+]

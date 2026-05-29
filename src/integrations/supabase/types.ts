@@ -148,8 +148,12 @@ export type Database = {
           created_by: string | null
           default_tempo: string | null
           description: string | null
+          equipement: string | null
           id: string
+          intensity_code: string | null
+          is_archived: boolean | null
           is_global: boolean | null
+          muscle_group: string | null
           muscles: string[] | null
           name: string
           requires_pelvis_cue: boolean | null
@@ -165,8 +169,12 @@ export type Database = {
           created_by?: string | null
           default_tempo?: string | null
           description?: string | null
+          equipement?: string | null
           id?: string
+          intensity_code?: string | null
+          is_archived?: boolean | null
           is_global?: boolean | null
+          muscle_group?: string | null
           muscles?: string[] | null
           name: string
           requires_pelvis_cue?: boolean | null
@@ -182,8 +190,12 @@ export type Database = {
           created_by?: string | null
           default_tempo?: string | null
           description?: string | null
+          equipement?: string | null
           id?: string
+          intensity_code?: string | null
+          is_archived?: boolean | null
           is_global?: boolean | null
+          muscle_group?: string | null
           muscles?: string[] | null
           name?: string
           requires_pelvis_cue?: boolean | null
@@ -199,7 +211,59 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "exercises_intensity_code_fkey"
+            columns: ["intensity_code"]
+            isOneToOne: false
+            referencedRelation: "intensity_codes"
+            referencedColumns: ["code"]
+          },
         ]
+      }
+      glossary: {
+        Row: {
+          cle: string
+          contenu: string
+          created_at: string | null
+          titre: string
+        }
+        Insert: {
+          cle: string
+          contenu: string
+          created_at?: string | null
+          titre: string
+        }
+        Update: {
+          cle?: string
+          contenu?: string
+          created_at?: string | null
+          titre?: string
+        }
+        Relationships: []
+      }
+      intensity_codes: {
+        Row: {
+          code: string
+          color_hex: string
+          created_at: string | null
+          description: string
+          label: string
+        }
+        Insert: {
+          code: string
+          color_hex: string
+          created_at?: string | null
+          description: string
+          label: string
+        }
+        Update: {
+          code?: string
+          color_hex?: string
+          created_at?: string | null
+          description?: string
+          label?: string
+        }
+        Relationships: []
       }
       member_profiles: {
         Row: {

@@ -1,91 +1,79 @@
 ## Constat
 
-Le projet a bien un thème clair (toggle `ThemeToggle`, variables `--cst-*` re-définies dans `html.theme-light`, et une couche d'overrides dans `src/tokens.css` qui ré-attribue certains styles inline du mode sombre). Mais ~60 styles inline dans les pages utilisent encore des couleurs sombres en dur **non couvertes** par cette couche, donc en mode clair on voit des panneaux/cartes/bordures sombres au milieu d'un fond crème.
+Ton app existe déjà avec un schéma différent du prompt. On ne casse rien : on garde `profiles` + `user_roles` + RLS coach/membre + messagerie + sessions + vidéos, et on enrichit ce qui manque pour faire vivre la bibliothèque d'exercices décrite dans le prompt.
 
-Patterns qui fuient actuellement en clair :
+Table `exercises` actuelle a déjà : `name`, `category`, `color`, `youtube_url`, `youtube_id`, `default_tempo`, `coach_notes`, `description`, `muscles[]`, `is_global`. Il manque : `muscle_group` (texte simple), `equipement`, `is_archived`, et une notion d'intensité reliée au code couleur officiel.
 
-- Hex sombres en dur : `#16261A`, `#1F2A22`, `#243029`, `#0F1B11`, `#1B2E1F` (panneaux Builder, items exercice, fond Logger, header Messages, etc.)
-- `rgba(255,255,255,0.02)` (fond cartes "jour" Builder, items Programme membre…) — la couche d'override couvre 0.03/0.05/0.06/0.08 mais pas 0.02
-- `rgba(0,0,0,0.x)` non couverts pour quelques x
-- Quelques `color: '#fff'` à l'intérieur d'éléments qui doivent rester verts (boutons primaires) — déjà OK — mais d'autres textes blancs sur fond désormais clair restent illisibles malgré l'override (cas où le parent est forcé clair mais l'enfant garde `color: #fff` explicite ré-écrit en `color: rgb(255, 255, 255)` — déjà couvert, à valider page par page)
+## Lot 1 (ce plan) — Bibliothèque /coach/exercices
 
-Pages les plus touchées :
+### 1. Migration DB
 
-- `src/pages/coach/Builder.jsx` (panneau gauche `#16261A`, items `#1F2A22`, cartes jour `rgba(255,255,255,0.02)`)
-- `src/pages/coach/BuilderNew.tsx`, `Programmes.tsx`, `ProgramDetail.tsx`, `Import.jsx`, `Member.jsx`, `Running.tsx`, `Dashboard.jsx`, `Messages.tsx`
-- `src/pages/membre/Dashboard.jsx`, `Programme.jsx`, `Logger.jsx`, `Historique.jsx`, `Progression.jsx`, `Messages.tsx`
-- `src/components/CoachSidebar.jsx` (fond `#16261A`)
-- `src/components/Atoms.jsx` (`#1B2E1F`, `#1F2A22`)
-- `src/components/MemberNav.jsx` (barre du bas)
+- Ajouter à `exercises` : `muscle_group text`, `equipement text`, `is_archived boolean default false`, `intensity_code text` (FK vers nouvelle table). On garde `category`, `color`, `muscles` existants pour ne rien casser.
+- Créer `intensity_codes (code pk, label, description, color_hex)` + seed des 5 codes (`epuisant` rouge, `semi_epuisant` vert, `isolation` jaune, `prevention` bleu, `non_classe` gris).
+- Créer `glossary (cle pk, titre, contenu)` + seed des 4 entrées (tempo, EMOM, RPE, code_lettre).
+- GRANT + RLS : lecture pour `authenticated` sur `intensity_codes` et `glossary` (référence publique côté app), écriture réservée au coach.
+- Index sur `exercises(muscle_group, equipement, intensity_code, is_archived)`.
 
-## Plan de correction
+### 2. Import des 512 exercices
 
-### 1. Étendre la couche d'override dans `src/tokens.css` (gain rapide, sans toucher aux pages)
+- Server function `seedExerciseLibrary` (coach uniquement, idempotent) qui lit `src/data/seed-exercises-v2.json` et upsert sur la clé naturelle `name` :
+  - mappe `categorie` → `intensity_code`
+  - mappe `muscle_group`, `equipement`, `tempo_defaut` → `default_tempo`, `consignes` → `coach_notes`, `youtube_url` → extrait aussi `youtube_id`.
+  - `is_global = true`, `created_by = coachId`.
+- Bouton « Importer la bibliothèque (512 exos) » sur la page Bibliothèque, visible uniquement si la table contient moins de 100 exos globaux (sinon caché).
+- Le JSON est copié depuis `user-uploads://exercices.json` vers `src/data/seed-exercises-v2.json`.
 
-Ajouter des règles `html.theme-light [style*="..."]` pour ré-attribuer en mode clair :
+### 3. Écran `/coach/exercices`
 
-- `background: #16261A` / `rgb(22, 38, 26)` → `var(--cst-bg-elev)` (#EDE8D8)
-- `background: #1F2A22` / `rgb(31, 42, 34)` → `var(--cst-card-bg)` (#FFFFFF)
-- `background: #243029` / `rgb(36, 48, 41)` → `var(--cst-card-bg)`
-- `background: #0F1B11` / `rgb(15, 27, 17)` → `var(--cst-bg)`
-- `background: #1B2E1F` / `rgb(27, 46, 31)` → `var(--cst-bg)`
-- `background: rgba(255, 255, 255, 0.02)` → tint encre léger
-- `background: rgba(45, 90, 53, 0.08/0.10/0.12/0.15/0.18)` → laisser (vert OK sur crème) mais réduire à 0.08 max pour ne pas surcharger
-- `border-color` translucides blancs manquants (0.04, 0.05, 0.10, 0.12, 0.18, 0.35) → encre translucide
-- Hairlines `height: 1px; background: rgba(255,255,255,0.06/0.10)` → encre 10%
-- `color: rgba(255,255,255,0.35/0.4/0.5/0.65/0.72)` → `var(--cst-text-soft)` / `--cst-text-muted` (compléter les stops manquants)
+Nouvelle route `_authenticated.coach.exercices.tsx` + page `src/pages/coach/Exercices.tsx`.
 
-### 2. Refactor ciblé des composants partagés en `var(--cst-*)`
+- Header : titre, recherche live, bouton « + Ajouter », bouton « Importer la bibliothèque » (conditionnel).
+- Barre de filtres combinables (chips multi-select, filtrage client après chargement) :
+  - groupe musculaire (valeurs distinctes calculées depuis les données)
+  - équipement (idem)
+  - intensité (pastille couleur depuis `intensity_codes.color_hex`)
+  - toggle « afficher archivés »
+- Liste/tableau : pastille intensité, nom, groupe musculaire, équipement, tempo défaut, bouton ▶ vidéo (ouvre YouTube dans modale embed comme `ProgramBlocks`), bouton « consignes » qui déplie une ligne avec `coach_notes`.
+- Ajout / édition inline via panneau latéral (drawer) : champs nom, intensité (select pastilles), groupe musculaire, équipement, tempo, URL YouTube, consignes. À la sauvegarde, recalcule `youtube_id` depuis l'URL.
+- Archivage : toggle `is_archived` (pas de suppression dure pour ne pas casser les programmes existants qui référencent l'exo par nom).
+- Toutes les écritures passent par des server functions protégées (`requireSupabaseAuth` + check rôle coach) dans `src/lib/exercises.functions.ts`.
 
-Remplacer les hex en dur par des tokens dans :
+### 4. Page Aide intégrée
 
-- `src/components/CoachSidebar.jsx` — fond, bordures, textes nav
-- `src/components/MemberNav.jsx` — barre bas
-- `src/components/Atoms.jsx` — `CSTPlaceholder`, `CSTDuoTitle`
+- Drawer « Aide / Légende » accessible depuis la page Bibliothèque (icône ?) : liste les 4 entrées `glossary` + la légende des 5 `intensity_codes` avec leurs couleurs.
+- Pas de route dédiée pour ce lot (évite d'ajouter de la nav).
 
-Ces 3 fichiers sont importés partout, donc les corriger en tokens règle d'un coup une grosse partie des fuites sans toucher à chaque page.
+### 5. Tokens / design
 
-### 3. Refactor des pages les plus visibles (route active de l'utilisateur en priorité)
+- Pastilles d'intensité utilisent directement `color_hex` venu de la BDD (pas de tokens), c'est la convention « légende coach ».
+- Le reste de l'écran utilise les tokens `--cst-*` existants (mode clair/sombre OK out-of-the-box).
 
-Pour `coach/Builder.jsx` (page actuellement ouverte), remplacer les constantes `panelStyle`, `exItem`, `dayCard` par des tokens : `var(--cst-bg-elev)`, `var(--cst-card-bg)`, `var(--cst-card-border)`, `var(--cst-hairline)`. Idem pour `Logger.jsx`, `Messages.tsx` (header `#16261A`, bulles `#243029`), `Dashboard.jsx` membre (fond `var(--cst-dark-green)` → `var(--cst-bg)`).
+## Hors périmètre de ce lot
 
-### 4. QA en mode clair
+- Le nouveau Builder onglets S1-S8 / supersets A1-A2 / sélecteur biblio relié → **Lot 2**.
+- Import des 19 programmes depuis `programmes.json` (les programmes vivront toujours dans `programs.structure jsonb`, on adapte le format) → **Lot 3**.
+- Page `/coach/membres` du prompt : déjà couverte par les écrans coach existants, à harmoniser plus tard si besoin.
 
-Après chaque lot, naviguer dans le preview en mode clair sur :
-`/coach`, `/coach/builder`, `/coach/programmes`, `/coach/messages`, `/coach/import`, `/coach/membre/...`, `/membre`, `/membre/programme`, `/membre/messages`, `/membre/historique`, `/membre/progression`, `/membre/logger`.
-
-Pour chaque écran, screenshot et vérifier :
-- Pas de gros bloc sombre résiduel
-- Contraste texte/fond AA
-- Bordures visibles mais discrètes
-- Boutons primaires verts conservent leur texte blanc
-
-## Périmètre
-
-Visuel uniquement (CSS + inline styles). Aucune logique métier, aucun changement de routes ou de serveur. Aucun changement DB.
-
-## Fichiers à modifier
+## Détails techniques
 
 ```text
-src/tokens.css                       (étendre la couche d'override)
-src/components/CoachSidebar.jsx      (tokeniser)
-src/components/MemberNav.jsx         (tokeniser)
-src/components/Atoms.jsx             (tokeniser)
-src/pages/coach/Builder.jsx          (tokeniser)
-src/pages/coach/Messages.tsx
-src/pages/coach/Dashboard.jsx
-src/pages/coach/Programmes.tsx
-src/pages/coach/ProgramDetail.tsx
-src/pages/coach/Import.jsx
-src/pages/coach/Member.jsx
-src/pages/coach/Running.jsx
-src/pages/coach/BuilderNew.tsx
-src/pages/membre/Dashboard.jsx
-src/pages/membre/Programme.jsx
-src/pages/membre/Logger.jsx
-src/pages/membre/Messages.tsx
-src/pages/membre/Historique.jsx
-src/pages/membre/Progression.jsx
+Migration:
+  - alter table exercises add muscle_group, equipement, is_archived, intensity_code
+  - create table intensity_codes + grants + RLS read-all-auth
+  - create table glossary + grants + RLS read-all-auth
+  - seed 5 intensity_codes + 4 glossary entries
+
+Files créés:
+  src/data/seed-exercises-v2.json            (copié depuis user-uploads)
+  src/lib/exercises.functions.ts             (list/create/update/archive/seed)
+  src/pages/coach/Exercices.tsx              (écran principal)
+  src/components/coach/ExerciseDrawer.tsx    (formulaire add/edit)
+  src/components/coach/GlossaryDrawer.tsx    (aide)
+  src/routes/_authenticated.coach.exercices.tsx
+
+Files modifiés:
+  src/components/CoachSidebar.jsx            (lien "Bibliothèque")
+  src/integrations/supabase/types.ts         (auto-régénéré)
 ```
 
-Approche : étape 1 d'abord (override CSS — règle 80 % des cas en quelques minutes), puis étape 2 (composants partagés), puis étape 3 page par page seulement si la QA visuelle révèle encore des fuites. Ça évite de toucher inutilement 18 fichiers si l'override suffit.
+Validation après lot 1 : la page liste les 512 exos, filtres et recherche instantanés, ajout/édition fonctionnels, vidéos s'ouvrent, mode clair/sombre OK. Tu valides puis on enchaîne sur le Builder.
