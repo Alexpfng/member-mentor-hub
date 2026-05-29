@@ -11,7 +11,3 @@ export const SITE_DESCRIPTION =
 export const SITE_URL = normalizeSiteUrl(
   import.meta.env.VITE_PUBLIC_SITE_URL || process.env.PUBLIC_SITE_URL,
 );
-
-// Beta launch flag — when true, hide non-beta features and show the beta banner.
-export const BETA_MODE = true;
-export const BETA_CONTACT_EMAIL = "leocolognesi@gmail.com";
