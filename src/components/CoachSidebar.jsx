@@ -69,8 +69,8 @@ export default function CoachSidebar() {
 
   const activeId =
     items.find((it) =>
-      it.path !== "/coach" ? pathname.startsWith(it.path) : pathname === "/coach",
-    )?.id || "dashboard";
+      it.match ? it.match(pathname) : pathname.startsWith(it.path),
+    )?.id || "membres";
 
   const userBlock = (
     <div
