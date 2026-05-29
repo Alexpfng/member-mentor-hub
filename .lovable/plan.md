@@ -1,79 +1,67 @@
-# Importer les 16 programmes de Léo + bibliothèque d'exercices
+## Problème
 
-Objectif : au premier login de Léo, ses 16 programmes et 436 exercices sont déjà là, prêts à être assignés à Teddy. Zéro ressaisie.
+`/coach/membre` (`src/pages/coach/Member.jsx`) affiche un membre en dur ("JORDAN FERRER", semaine 4/8, exercices fictifs, tendances inventées, note privée pré-remplie). Aucune donnée réelle, et la route n'a pas d'id de membre dans l'URL — depuis le tableau de bord, le bouton VOIR navigue vers `/coach/membre` sans paramètre.
 
-## 1. Données seed bundlées côté serveur
+## Objectif
 
-Copier les 2 fichiers JSON fournis dans `src/data/` (lus uniquement par des server functions, donc jamais envoyés au client) :
-- `src/data/seed-exercises.json` (436 exos, ~100 KB)
-- `src/data/seed-programs.json` (16 programmes, ~3 MB)
+Quand Léo clique VOIR sur un adhérent, il arrive sur une fiche membre réelle, alimentée par la base, avec uniquement les données qui existent (zéro contenu démo).
 
-## 2. Migration BDD
+## Plan
 
-Ajouter 2 colonnes manquantes à `exercises` pour matcher le format fourni :
-- `default_tempo TEXT`
-- `coach_notes TEXT`
+### 1. Route paramétrée
 
-(Le reste — `color`, `category`, `youtube_url`, `youtube_id`, `is_global`, `created_by` — existe déjà.)
+- Renommer la route fichier en `src/routes/_authenticated.coach.membre.$memberId.tsx` (path `/_authenticated/coach/membre/$memberId`).
+- Supprimer l'ancienne `_authenticated.coach.membre.tsx`.
+- Mettre à jour `Dashboard.jsx` : bouton VOIR → `navigate({ to: '/coach/membre/$memberId', params: { memberId: r.id } })`.
 
-## 3. Server function de seed idempotent
+### 2. Nouvelle server function `getMemberDetail`
 
-Nouveau fichier `src/lib/seed.functions.ts` exposant `seedColosmartData` :
-- Protégé par `requireSupabaseAuth` + check rôle coach.
-- Si `exercises` (du coach) vide → insère les 436 exos avec `is_global=true`, `created_by=coachId`.
-- Si `programs` (du coach) vide → insère les 16 programmes :
-  - `name = title`, `objective`, `duration_weeks`, `frequency_per_week = weeks[0].days.length`, `level = 'intermediate'`
-  - `description = "objective · split"`
-  - `structure = { weeks: p.weeks }` (JSONB complet, codes/colors/youtube_id/block_type/coach_notes préservés tels quels)
-- Retourne `{ exercisesInserted, programsInserted }`.
+Dans `src/lib/coach.functions.ts`, ajouter `getMemberDetail({ member_id })` protégée par `requireSupabaseAuth` + `assertCoach`. Retourne :
 
-Appel automatique au montage du dashboard coach (`src/pages/coach/Dashboard.jsx`) via `useServerFn` — silencieux, idempotent.
+- `profile` (id, email, first_name, last_name, created_at, avatar_url)
+- `member_profile` (poids, taille, niveau, objectif, blessures, `coach_private_notes`)
+- `assignment` actif + `program` lié (id, name, duration_weeks, frequency_per_week, objective, structure)
+- `sessions` (30 dernières : date, status, session_label, week_number, day_number, duration_minutes, average_rpe)
+- `recent_set_logs` (≤ 200 dernières lignes pour calculer les tendances clés)
+- `weight_logs` (30 dernières)
+- `unread_messages_count` (messages reçus par le coach depuis ce membre, `read=false`)
+- `last_weight_kg` (dernière entrée weight_logs)
 
-## 4. Page `/coach/programmes` (grille)
+### 3. Server function `updateMemberNotes`
 
-Nouvelle route `src/routes/_authenticated.coach.programmes.tsx` + page `src/pages/coach/Programmes.tsx` :
-- Grille de cards : titre, objectif, durée (X sem.), nb séances/semaine.
-- 3 actions par card : **Voir** → `/coach/programmes/$id` · **Dupliquer** (server fn `duplicateProgram`) · **Assigner** (modale sélecteur membre, réutilise `assignProgram` existant).
-- Mettre à jour `CoachSidebar.jsx` : l'item "Programmes" pointe sur `/coach/programmes` (le builder reste accessible via "Nouveau programme" depuis cette page → `/coach/builder`).
+`updateMemberNotes({ member_id, coach_private_notes })` → upsert dans `member_profiles` (clé `user_id`). Garde-fou coach uniquement.
 
-## 5. Page détail `/coach/programmes/$id`
+### 4. Refonte `src/pages/coach/Member.jsx`
 
-Nouvelle route `src/routes/_authenticated.coach.programmes.$id.tsx` : affichage en lecture seule de toute la structure (semaines → jours → blocs d'exercices) avec :
-- Pastille `color` (red/green/yellow/blue), code (`A1`, `B2`…), nom.
-- Lignes : `series` × `reps` × `charge` × `tempo` × `recup` × `RPE` (strings affichés bruts — "EMOM3'", "pdc", "100 - 80", "8 / côté" passent sans plantage).
-- Notes coach + bouton "Voir la démo" → embed YouTube via `youtube_id`.
-- Bouton "Éditer dans le builder" → ouvre le builder pré-rempli.
+Réécrire entièrement, mêmes atomes/style (`CSTSectionNum`, `CSTAvatar`, `CSTStatus`, `cst-card-dark`, etc.), mais :
 
-## 6. Composant `ExerciseBlocks` partagé
+- Lire `memberId` via `Route.useParams()` (passer en composant route inline ou via `useParams` du router).
+- `useEffect` → appelle `getMemberDetail`. État `loading` / `error` propres.
+- Header hero : initiales depuis `first_name/last_name`, vrai nom, badge `MEMBRE · ACTIF`, "Inscrit le {created_at}". Stats : Objectif (`member_profile.goal` ou "—"), Poids (`last_weight_kg` ou "—"), Niveau (`member_profile.level` ou "—"), Ancienneté (jours depuis `created_at`), Séances (count `sessions`).
+- Onglets : "Programme actuel", "Historique", "Progression", "Profil", "Messages" (badge = `unread_messages_count`, masqué si 0).
+- **Programme actuel** : si pas d'assignment → état vide + bouton "ASSIGNER UN PROGRAMME" (réutilise `AssignSelect` ou redirige vers Dashboard). Sinon : nom programme, durée, semaine courante (`min(ceil(jours_depuis_start/7), duration_weeks)`), liste des jours de la semaine courante depuis `program.structure.weeks[w].days[]` avec statut (done si une session du membre matche `week_number/day_number`).
+- **Historique** : liste des `sessions` (label, date, durée, RPE moyen, statut).
+- **Progression** : top 4 exercices (par fréquence dans `set_logs`) avec delta poids max début→fin (sur la fenêtre). Petit graphe poids corporel (`weight_logs`).
+- **Profil** : poids, taille, niveau, objectif, blessures (read-only avec libellés "Non renseigné" si vide).
+- **Note privée** : `textarea` lié à `member_profile.coach_private_notes`, bouton ENREGISTRER → `updateMemberNotes`. Indicateur "Enregistré ✓".
+- **Bouton MESSAGE** → `navigate({ to: '/coach/messages' })`.
+- Breadcrumb : MEMBRES → vrai nom, cliquable retour vers `/coach`.
 
-Nouveau `src/components/cst/ProgramBlocks.tsx` qui :
-- Groupe les exos par lettre de `code` (A1/A2 = superset, B seul = isolé) via la fonction `groupBlocks` fournie.
-- Branche le rendu selon `block_type` : `standard` (table), `superset` (groupé), `emom` (badge timer), `ladder` (badge schéma), `amrap`, `dropset`, `iso`, `circuit` — chacun avec un en-tête visuel distinct mais affichage tolérant aux strings libres.
+### 5. Routage / nettoyage
 
-Utilisé par la page détail coach **et** par la séance interactive du membre.
-
-## 7. Séance interactive du membre
-
-Mettre à jour `src/routes/_authenticated.membre.seance.$sessionId.tsx` pour utiliser `<ProgramBlocks>` au lieu de l'`ExerciseBlock` actuel basique : Teddy voit pastilles couleur + codes + supersets groupés + vidéos YouTube exactement comme Léo les a pensés.
-
-## 8. Builder pré-rempli (édition)
-
-Étendre `BuilderNew.tsx` pour charger une structure existante via `?id=...` (lit le programme, hydrate les states `weeks`). Pas de refonte du builder — juste l'hydratation initiale.
-
----
-
-## Vérifications après build
-
-- [ ] Premier login Léo → 16 programmes visibles dans `/coach/programmes`
-- [ ] Bibliothèque contient 436 exos (vérifié côté builder & DB)
-- [ ] Cliquer "Voir" sur "Prépa Physique Boxe" affiche toutes les semaines/jours/exos avec couleurs et vidéos
-- [ ] "Assigner" en 2 clics crée une assignment pour Teddy
-- [ ] Teddy ouvre une séance → exos affichés avec couleur, code, supersets groupés, vidéo cliquable
-- [ ] Aucune valeur texte exotique (EMOM3', pdc, 100-80, 8/côté) ne fait planter
-- [ ] Aucun import de `seed-programs.json` côté client (server-only via `.functions.ts`)
+- Aucune donnée fictive ne reste dans `Member.jsx`.
+- Pas de migration DB nécessaire (toutes les colonnes existent).
+- `useNavigate` depuis `@tanstack/react-router` (le fichier utilise actuellement `react-router-dom` → corriger).
 
 ## Fichiers touchés
 
-- **Nouveaux** : `src/data/seed-exercises.json`, `src/data/seed-programs.json`, `src/lib/seed.functions.ts`, `src/pages/coach/Programmes.tsx`, `src/pages/coach/ProgramDetail.tsx`, `src/routes/_authenticated.coach.programmes.tsx`, `src/routes/_authenticated.coach.programmes.$id.tsx`, `src/components/cst/ProgramBlocks.tsx`
-- **Modifiés** : `src/components/CoachSidebar.jsx` (lien), `src/pages/coach/Dashboard.jsx` (appel seed), `src/pages/coach/BuilderNew.tsx` (hydratation via `?id=`), `src/lib/coach.functions.ts` (ajout `duplicateProgram`, `getProgram`), `src/routes/_authenticated.membre.seance.$sessionId.tsx` (rendu via ProgramBlocks)
-- **Migration** : ajout colonnes `default_tempo` + `coach_notes` sur `exercises`
+- `src/lib/coach.functions.ts` (ajout `getMemberDetail`, `updateMemberNotes`)
+- `src/pages/coach/Member.jsx` (réécriture)
+- `src/routes/_authenticated.coach.membre.tsx` (supprimé)
+- `src/routes/_authenticated.coach.membre.$memberId.tsx` (créé)
+- `src/pages/coach/Dashboard.jsx` (lien VOIR avec param)
+
+## Hors scope
+
+- Édition complète du profil membre (poids/taille/objectif) côté coach — read-only pour l'instant.
+- Adapter la semaine / messagerie inline (boutons mènent aux écrans existants).
