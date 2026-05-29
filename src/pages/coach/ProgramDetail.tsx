@@ -69,13 +69,24 @@ export default function ProgramDetail() {
               sub={program?.objective || ""}
             />
           </div>
-          <div
-            className="cst-mono"
-            style={{ fontSize: 11, opacity: 0.75, display: "flex", gap: 16 }}
-          >
-            <span>{program?.duration_weeks ?? "—"} SEMAINES</span>
-            <span>{program?.frequency_per_week ?? "—"} J/SEM.</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <div
+              className="cst-mono"
+              style={{ fontSize: 11, opacity: 0.75, display: "flex", gap: 16 }}
+            >
+              <span>{program?.duration_weeks ?? "—"} SEMAINES</span>
+              <span>{program?.frequency_per_week ?? "—"} J/SEM.</span>
+            </div>
+            {program && (
+              <button
+                className="cst-btn cst-btn-primary cst-btn-sm"
+                onClick={() => navigate({ to: "/coach/builder/$id", params: { id: program.id } })}
+              >
+                ÉDITER →
+              </button>
+            )}
           </div>
+
         </div>
 
         {error && (
