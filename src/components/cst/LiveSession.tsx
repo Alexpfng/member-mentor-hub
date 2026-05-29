@@ -1053,6 +1053,23 @@ function RestScreen({
         <button onClick={() => setRemaining((r) => r + 15)} className="cst-btn cst-btn-ghost-dark cst-btn-sm" style={{ flex: 1 }}>+15s</button>
       </div>
 
+      {currentExercise && (hasVideo(currentExercise) || hasCues(currentExercise)) && (
+        <div style={{ display: "flex", gap: 6, width: "100%" }}>
+          {hasVideo(currentExercise) && (
+            <button onClick={onVideo} className="cst-btn cst-btn-ghost-dark cst-btn-sm" style={{ flex: 1 }}>
+              ▶ DÉMO
+            </button>
+          )}
+          {hasCues(currentExercise) && (
+            <button onClick={onCues} className="cst-btn cst-btn-ghost-dark cst-btn-sm" style={{ flex: 1 }}>
+              📋 CONSIGNES
+            </button>
+          )}
+        </div>
+      )}
+
+
+
       {nextPreview && (
         <div
           style={{
