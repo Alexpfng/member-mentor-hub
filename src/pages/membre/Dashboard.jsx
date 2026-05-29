@@ -91,6 +91,26 @@ export default function MemberDashboard() {
             <CSTLogo size={11} />
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <CSTAvatar initials={initials} size={28} />
+              <button
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                  navigate("/login");
+                }}
+                className="cst-mono"
+                style={{
+                  background: "transparent",
+                  border: "1px solid rgba(255,255,255,0.18)",
+                  color: "rgba(255,255,255,0.75)",
+                  padding: "6px 10px",
+                  borderRadius: 6,
+                  fontSize: 9,
+                  letterSpacing: "0.14em",
+                  cursor: "pointer",
+                }}
+                aria-label="Se déconnecter"
+              >
+                DÉCONNEXION
+              </button>
             </div>
           </div>
 
