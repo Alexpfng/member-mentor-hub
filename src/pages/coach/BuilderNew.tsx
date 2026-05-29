@@ -631,6 +631,24 @@ export default function BuilderNew({ programIdParam }: { programIdParam?: string
     setActiveWeekIdx(weeks.length);
   };
 
+  const duplicateWeek = (idx: number) => {
+    const src = weeks[idx];
+    if (!src) return;
+    const copy: Week = {
+      id: uid(),
+      days: src.days.map(d => ({ ...d, id: uid(), exercises: d.exercises.map(e => ({ ...e, uid: uid() })) })),
+    };
+    setWeeks(w => [...w.slice(0, idx + 1), copy, ...w.slice(idx + 1)]);
+    setActiveWeekIdx(idx + 1);
+  };
+
+  const deleteWeek = (idx: number) => {
+    if (weeks.length <= 1) return;
+    if (!confirm(`Supprimer la semaine ${idx + 1} ?`)) return;
+    setWeeks(w => w.filter((_, i) => i !== idx));
+    setActiveWeekIdx(i => Math.max(0, Math.min(i, weeks.length - 2)));
+  };
+
   // ─ DnD handlers
   const onDragStart = (e: DragStartEvent) => {
     if (e.active.data.current?.type === 'library') {
