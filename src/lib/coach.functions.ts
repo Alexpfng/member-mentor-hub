@@ -435,7 +435,7 @@ export const getMemberDetail = createServerFn({ method: "GET" })
         )
         .eq("member_id", memberId)
         .order("date", { ascending: false })
-        .limit(30),
+        .limit(100),
       supabaseAdmin
         .from("weight_logs")
         .select("date, weight_kg")
