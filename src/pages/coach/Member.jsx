@@ -487,7 +487,7 @@ export default function CoachMember() {
               </>
             )}
 
-            {activeTab === 4 && (
+            {activeTab === 5 && (
               <>
                 <CSTSectionNum num={1} label="MESSAGES" sub={data.unread_messages_count > 0 ? `${data.unread_messages_count} NON LUS` : 'AUCUN NOUVEAU'} />
                 <div className="cst-card-dark" style={{ padding: 24, marginTop: 14, textAlign: 'center' }}>
