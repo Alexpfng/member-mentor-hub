@@ -3,14 +3,13 @@ import { useNavigate } from '@tanstack/react-router';
 import { useServerFn } from '@tanstack/react-start';
 import CoachSidebar from '../../components/CoachSidebar';
 import { CSTSectionNum, CSTDuoTitle, CSTAvatar, CSTBandWords } from '../../components/Atoms';
-import { listMembers, inviteMember, listPrograms, assignProgram } from '@/lib/coach.functions';
+import { listMembers, listPrograms, assignProgram } from '@/lib/coach.functions';
+import { createInvitation } from '@/lib/invitations.functions';
 import { seedColosmartData } from '@/lib/seed.functions';
 
 function InviteModal({ onClose, onDone }) {
-  const inviteFn = useServerFn(inviteMember);
+  const createFn = useServerFn(createInvitation);
   const [email, setEmail] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
 
@@ -19,15 +18,13 @@ function InviteModal({ onClose, onDone }) {
     setErr('');
     setLoading(true);
     try {
-      await inviteFn({
+      const res = await createFn({
         data: {
           email: email.trim().toLowerCase(),
-          first_name: firstName.trim() || undefined,
-          last_name: lastName.trim() || undefined,
-          redirect_to: `${window.location.origin}/reset-password`,
+          send_email: true,
         },
       });
-      onDone(email);
+      onDone(email, res.signup_url);
     } catch (ex) {
       setErr(ex?.message || "Erreur lors de l'invitation");
     } finally {
@@ -45,19 +42,9 @@ function InviteModal({ onClose, onDone }) {
             <label className="cst-label">EMAIL</label>
             <input className="cst-input" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="adherent@email.com" />
           </div>
-          <div style={{ display: 'flex', gap: 10 }}>
-            <div style={{ flex: 1 }}>
-              <label className="cst-label">PRÉNOM</label>
-              <input className="cst-input" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <label className="cst-label">NOM</label>
-              <input className="cst-input" value={lastName} onChange={(e) => setLastName(e.target.value)} />
-            </div>
-          </div>
           {err && <div style={{ padding: '8px 12px', background: 'rgba(139,35,24,0.15)', border: '1px solid rgba(139,35,24,0.4)', borderRadius: 6, fontSize: 12, color: '#C56A60' }}>{err}</div>}
           <div className="cst-mono" style={{ fontSize: 10, opacity: 0.6 }}>
-            L'adhérent recevra un email avec un lien pour définir son mot de passe.
+            L'adhérent recevra un email avec un lien pour créer son compte.
           </div>
           <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
             <button type="button" onClick={onClose} className="cst-btn cst-btn-ghost-dark" style={{ flex: 1 }}>ANNULER</button>
