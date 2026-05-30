@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import { createInvitation } from "@/lib/invitations.functions";
+
+const APP_URL = "https://app.colosmartraining.fr";
 
 type Invitation = {
   id: string;
@@ -19,10 +23,13 @@ function statusOf(inv: Invitation): { label: string; color: string } {
 }
 
 export default function Invitations() {
+  const createFn = useServerFn(createInvitation);
   const [list, setList] = useState<Invitation[]>([]);
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
 
   async function load() {
     const { data } = await supabase
@@ -36,19 +43,34 @@ export default function Invitations() {
     load();
   }, []);
 
-  async function createInvitation() {
-    setLoading(true);
-    const { data: u } = await supabase.auth.getUser();
-    if (!u.user) {
-      setLoading(false);
+  async function createAndSend(sendEmail: boolean) {
+    setErr(null);
+    setNotice(null);
+    if (sendEmail && !email.trim()) {
+      setErr("Renseigne un email pour envoyer l'invitation.");
       return;
     }
-    await supabase
-      .from("invitations")
-      .insert({ created_by: u.user.id, email: email.trim() || null });
-    setEmail("");
-    await load();
-    setLoading(false);
+    setLoading(true);
+    try {
+      const res = await createFn({
+        data: {
+          email: email.trim() || null,
+          send_email: sendEmail,
+        },
+      });
+      setEmail("");
+      await load();
+      setNotice(
+        res.email_sent
+          ? `Invitation envoyée à ${res.invitation.email}.`
+          : "Lien d'invitation généré.",
+      );
+      setTimeout(() => setNotice(null), 4000);
+    } catch (e: any) {
+      setErr(e?.message || "Erreur lors de la création.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function revoke(id: string) {
@@ -60,7 +82,7 @@ export default function Invitations() {
   }
 
   function linkFor(token: string) {
-    return `${window.location.origin}/signup?token=${encodeURIComponent(token)}`;
+    return `${APP_URL}/signup?token=${encodeURIComponent(token)}`;
   }
 
   async function copy(token: string) {
@@ -73,33 +95,52 @@ export default function Invitations() {
     <div style={{ padding: 24, maxWidth: 900, margin: "0 auto" }}>
       <h1 style={{ fontSize: 24, marginBottom: 6 }}>Invitations</h1>
       <p style={{ fontSize: 13, opacity: 0.7, marginBottom: 24 }}>
-        Crée un lien d'invitation et transmets-le à ton client. Le lien est valable 14 jours et
-        utilisable une seule fois.
+        Génère un lien d'invitation ou envoie-le directement par email à ton client. Le lien est
+        valable 14 jours et utilisable une seule fois.
       </p>
 
       <div
         className="cst-card-dark"
-        style={{ padding: 16, marginBottom: 24, display: "flex", gap: 12, alignItems: "flex-end" }}
+        style={{ padding: 16, marginBottom: 16, display: "flex", gap: 12, alignItems: "flex-end", flexWrap: "wrap" }}
       >
-        <div style={{ flex: 1 }}>
-          <span className="cst-label">EMAIL (OPTIONNEL)</span>
+        <div style={{ flex: 1, minWidth: 240 }}>
+          <span className="cst-label">EMAIL DU CLIENT</span>
           <input
             className="cst-input"
             type="email"
-            placeholder="client@email.com (laisse vide pour lien libre)"
+            placeholder="client@email.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
         </div>
         <button
           className="cst-btn cst-btn-primary"
-          onClick={createInvitation}
+          onClick={() => createAndSend(true)}
           disabled={loading}
           style={{ height: 42 }}
         >
-          {loading ? "..." : "GÉNÉRER →"}
+          {loading ? "..." : "ENVOYER L'EMAIL →"}
+        </button>
+        <button
+          className="cst-btn cst-btn-ghost-dark"
+          onClick={() => createAndSend(false)}
+          disabled={loading}
+          style={{ height: 42 }}
+        >
+          GÉNÉRER UN LIEN
         </button>
       </div>
+
+      {notice && (
+        <div style={{ padding: "10px 14px", marginBottom: 12, background: "rgba(45,90,53,0.15)", border: "1px solid rgba(45,90,53,0.4)", borderRadius: 8, fontSize: 12, color: "#6EAB76" }}>
+          {notice}
+        </div>
+      )}
+      {err && (
+        <div style={{ padding: "10px 14px", marginBottom: 12, background: "rgba(139,35,24,0.15)", border: "1px solid rgba(139,35,24,0.4)", borderRadius: 8, fontSize: 12, color: "#C56A60" }}>
+          {err}
+        </div>
+      )}
 
       <div className="cst-col" style={{ gap: 10 }}>
         {list.length === 0 && (
