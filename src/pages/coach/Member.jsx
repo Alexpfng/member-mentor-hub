@@ -254,7 +254,7 @@ export default function CoachMember() {
               <div className="cst-italic" style={{ fontSize: 16, color: 'rgba(255,255,255,0.65)', marginTop: -4 }}>{data.profile.email}</div>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
-              <button className="cst-btn cst-btn-primary cst-btn-sm" onClick={() => navigate({ to: '/coach/messages' })}>MESSAGE →</button>
+              <button className="cst-btn cst-btn-primary cst-btn-sm" onClick={() => navigate({ to: '/coach/messages', search: { partner: memberId } })}>MESSAGE →</button>
             </div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(120px,1fr))', gap: 0, marginTop: 26, borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 18 }}>
@@ -492,7 +492,7 @@ export default function CoachMember() {
                 <CSTSectionNum num={1} label="MESSAGES" sub={data.unread_messages_count > 0 ? `${data.unread_messages_count} NON LUS` : 'AUCUN NOUVEAU'} />
                 <div className="cst-card-dark" style={{ padding: 24, marginTop: 14, textAlign: 'center' }}>
                   <p style={{ margin: '0 0 16px', fontSize: 13, opacity: 0.7 }}>Ouvre la messagerie pour échanger avec {data.profile.first_name || fullName}.</p>
-                  <button className="cst-btn cst-btn-primary" onClick={() => navigate({ to: '/coach/messages' })}>OUVRIR LA MESSAGERIE →</button>
+                  <button className="cst-btn cst-btn-primary" onClick={() => navigate({ to: '/coach/messages', search: { partner: memberId } })}>OUVRIR LA MESSAGERIE →</button>
                 </div>
               </>
             )}

@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useServerFn } from '@tanstack/react-start';
+import { useSearch } from '@tanstack/react-router';
 import CoachSidebar from '../../components/CoachSidebar';
-import { sendMessage, listConversations, listMessages } from '@/lib/coach.functions';
+import { sendMessage, listConversations, listMessages, getMemberDetail } from '@/lib/coach.functions';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -78,6 +79,8 @@ export default function CoachMessages() {
   const sendFn = useServerFn(sendMessage);
   const convFn = useServerFn(listConversations);
   const msgsFn = useServerFn(listMessages);
+  const memberDetailFn = useServerFn(getMemberDetail);
+  const { partner: partnerIdFromUrl } = useSearch({ from: '/_authenticated/coach/messages' });
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activePartner, setActivePartner] = useState<Partner | null>(null);
@@ -88,6 +91,7 @@ export default function CoachMessages() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [search, setSearch] = useState('');
+  const autoSelectedRef = useRef<string | null>(null);
 
   // Load current user
   useEffect(() => {
@@ -101,6 +105,39 @@ export default function CoachMessages() {
       setConversations(r.conversations);
     } catch {}
   }, [convFn]);
+
+  // Auto-select partner from ?partner= URL param
+  useEffect(() => {
+    if (!partnerIdFromUrl) return;
+    if (autoSelectedRef.current === partnerIdFromUrl) return;
+    // Wait until conversations attempt has loaded
+    const existing = conversations.find(c => c.partner.id === partnerIdFromUrl);
+    if (existing) {
+      autoSelectedRef.current = partnerIdFromUrl;
+      setActivePartner(existing.partner);
+      return;
+    }
+    // Not in existing conversations → fetch profile to start a fresh one
+    autoSelectedRef.current = partnerIdFromUrl;
+    (async () => {
+      try {
+        const detail: any = await memberDetailFn({ data: { member_id: partnerIdFromUrl } });
+        const p = detail?.profile;
+        if (p) {
+          setActivePartner({
+            id: p.id,
+            first_name: p.first_name ?? '',
+            last_name: p.last_name ?? '',
+            email: p.email ?? '',
+          });
+        }
+      } catch {
+        autoSelectedRef.current = null;
+      }
+    })();
+  }, [partnerIdFromUrl, conversations, memberDetailFn]);
+
+
 
   useEffect(() => { loadConversations(); }, [loadConversations]);
 
