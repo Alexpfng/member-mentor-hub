@@ -91,7 +91,7 @@ export default function Invitations() {
   return (
     <div style={{ padding: 24, maxWidth: 900, margin: "0 auto" }}>
       <Link
-        to="/coach/dashboard"
+        to="/coach"
         className="cst-btn cst-btn-ghost-dark cst-btn-sm"
         style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 16, textDecoration: "none" }}
       >
