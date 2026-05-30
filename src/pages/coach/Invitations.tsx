@@ -43,28 +43,24 @@ export default function Invitations() {
     load();
   }, []);
 
-  async function createAndSend(sendEmail: boolean) {
+  async function generate() {
     setErr(null);
     setNotice(null);
-    if (sendEmail && !email.trim()) {
-      setErr("Renseigne un email pour envoyer l'invitation.");
-      return;
-    }
     setLoading(true);
     try {
       const res = await createFn({
         data: {
           email: email.trim() || null,
-          send_email: sendEmail,
         },
       });
       setEmail("");
       await load();
-      setNotice(
-        res.email_sent
-          ? `Invitation envoyée à ${res.invitation.email}.`
-          : "Lien d'invitation généré.",
-      );
+      try {
+        await navigator.clipboard.writeText(res.signup_url);
+        setCopied(res.invitation.token);
+        setTimeout(() => setCopied(null), 1500);
+      } catch {}
+      setNotice("Lien d'invitation généré et copié dans le presse-papiers.");
       setTimeout(() => setNotice(null), 4000);
     } catch (e: any) {
       setErr(e?.message || "Erreur lors de la création.");
@@ -95,8 +91,8 @@ export default function Invitations() {
     <div style={{ padding: 24, maxWidth: 900, margin: "0 auto" }}>
       <h1 style={{ fontSize: 24, marginBottom: 6 }}>Invitations</h1>
       <p style={{ fontSize: 13, opacity: 0.7, marginBottom: 24 }}>
-        Génère un lien d'invitation ou envoie-le directement par email à ton client. Le lien est
-        valable 14 jours et utilisable une seule fois.
+        Génère un lien d'invitation à transmettre manuellement à ton client (email, SMS, WhatsApp…).
+        Le lien est valable 14 jours et utilisable une seule fois.
       </p>
 
       <div
@@ -104,7 +100,7 @@ export default function Invitations() {
         style={{ padding: 16, marginBottom: 16, display: "flex", gap: 12, alignItems: "flex-end", flexWrap: "wrap" }}
       >
         <div style={{ flex: 1, minWidth: 240 }}>
-          <span className="cst-label">EMAIL DU CLIENT</span>
+          <span className="cst-label">EMAIL DU CLIENT (OPTIONNEL)</span>
           <input
             className="cst-input"
             type="email"
@@ -115,19 +111,11 @@ export default function Invitations() {
         </div>
         <button
           className="cst-btn cst-btn-primary"
-          onClick={() => createAndSend(true)}
+          onClick={generate}
           disabled={loading}
           style={{ height: 42 }}
         >
-          {loading ? "..." : "ENVOYER L'EMAIL →"}
-        </button>
-        <button
-          className="cst-btn cst-btn-ghost-dark"
-          onClick={() => createAndSend(false)}
-          disabled={loading}
-          style={{ height: 42 }}
-        >
-          GÉNÉRER UN LIEN
+          {loading ? "..." : "GÉNÉRER UN LIEN →"}
         </button>
       </div>
 
