@@ -169,7 +169,7 @@ export default function CoachDashboard() {
   return (
     <div className="cst-screen" style={{ flexDirection: 'row' }}>
       <CoachSidebar />
-      {showInvite && <InviteModal onClose={() => setShowInvite(false)} onDone={(e) => { setShowInvite(false); setInviteOk(`Invitation envoyée à ${e}`); setTimeout(() => setInviteOk(''), 4000); reload(); }} />}
+      {showInvite && <InviteModal onClose={() => setShowInvite(false)} onDone={(e) => { setShowInvite(false); setInviteOk(`Lien d'invitation généré pour ${e} — copié dans le presse-papiers.`); setTimeout(() => setInviteOk(''), 5000); reload(); }} />}
       <div className="cst-col cst-scroll" style={{ flex: 1, minWidth: 0 }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '24px 32px', borderBottom: '1px solid rgba(255,255,255,0.06)', flexWrap: 'wrap', gap: 12 }}>
