@@ -253,27 +253,16 @@ export default function Login() {
                   {loading ? "..." : mode === "login" ? "SE CONNECTER →" : "CRÉER MON COMPTE →"}
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMode(mode === "login" ? "signup" : "login");
-                    setError("");
-                    setInfo("");
-                  }}
+                <div
                   style={{
-                    background: "none",
-                    border: "none",
                     textAlign: "center",
                     fontSize: 11,
                     color: "var(--cst-text-muted)",
-                    cursor: "pointer",
                     fontFamily: "inherit",
                   }}
                 >
-                  {mode === "login"
-                    ? "Pas encore de compte ? S'inscrire"
-                    : "Déjà inscrit ? Se connecter"}
-                </button>
+                  L'inscription se fait sur invitation de ton coach.
+                </div>
                 {mode === "login" && (
                   <button
                     type="button"
