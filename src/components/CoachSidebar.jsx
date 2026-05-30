@@ -12,6 +12,7 @@ const items = [
   { id: "import", label: "Import Excel", icon: "◥", path: "/coach/import" },
   { id: "running", label: "Trail & Run", icon: "▲", path: "/coach/running" },
   { id: "messages", label: "Messages", icon: "◌", path: "/coach/messages" },
+  { id: "invitations", label: "Invitations", icon: "✦", path: "/coach/invitations" },
 ];
 
 function NavItems({ activeId, navigate, onNav }) {

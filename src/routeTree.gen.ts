@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
@@ -25,6 +26,7 @@ import { Route as AuthenticatedMembreHistoriqueRouteImport } from './routes/_aut
 import { Route as AuthenticatedCoachRunningRouteImport } from './routes/_authenticated.coach.running'
 import { Route as AuthenticatedCoachProgrammesRouteImport } from './routes/_authenticated.coach.programmes'
 import { Route as AuthenticatedCoachMessagesRouteImport } from './routes/_authenticated.coach.messages'
+import { Route as AuthenticatedCoachInvitationsRouteImport } from './routes/_authenticated.coach.invitations'
 import { Route as AuthenticatedCoachImportRouteImport } from './routes/_authenticated.coach.import'
 import { Route as AuthenticatedCoachExercicesRouteImport } from './routes/_authenticated.coach.exercices'
 import { Route as AuthenticatedCoachBuilderRouteImport } from './routes/_authenticated.coach.builder'
@@ -36,6 +38,11 @@ import { Route as AuthenticatedCoachProgrammesIdRouteImport } from './routes/_au
 import { Route as AuthenticatedCoachMembreMemberIdRouteImport } from './routes/_authenticated.coach.membre.$memberId'
 import { Route as AuthenticatedCoachBuilderIdRouteImport } from './routes/_authenticated.coach.builder.$id'
 
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
@@ -125,6 +132,12 @@ const AuthenticatedCoachMessagesRoute =
     path: '/coach/messages',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedCoachInvitationsRoute =
+  AuthenticatedCoachInvitationsRouteImport.update({
+    id: '/coach/invitations',
+    path: '/coach/invitations',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedCoachImportRoute =
   AuthenticatedCoachImportRouteImport.update({
     id: '/coach/import',
@@ -188,10 +201,12 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/signup': typeof SignupRoute
   '/onboarding/$step': typeof OnboardingStepRoute
   '/coach/builder': typeof AuthenticatedCoachBuilderRouteWithChildren
   '/coach/exercices': typeof AuthenticatedCoachExercicesRoute
   '/coach/import': typeof AuthenticatedCoachImportRoute
+  '/coach/invitations': typeof AuthenticatedCoachInvitationsRoute
   '/coach/messages': typeof AuthenticatedCoachMessagesRoute
   '/coach/programmes': typeof AuthenticatedCoachProgrammesRouteWithChildren
   '/coach/running': typeof AuthenticatedCoachRunningRoute
@@ -215,10 +230,12 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/signup': typeof SignupRoute
   '/onboarding/$step': typeof OnboardingStepRoute
   '/coach/builder': typeof AuthenticatedCoachBuilderRouteWithChildren
   '/coach/exercices': typeof AuthenticatedCoachExercicesRoute
   '/coach/import': typeof AuthenticatedCoachImportRoute
+  '/coach/invitations': typeof AuthenticatedCoachInvitationsRoute
   '/coach/messages': typeof AuthenticatedCoachMessagesRoute
   '/coach/programmes': typeof AuthenticatedCoachProgrammesRouteWithChildren
   '/coach/running': typeof AuthenticatedCoachRunningRoute
@@ -244,10 +261,12 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/signup': typeof SignupRoute
   '/onboarding/$step': typeof OnboardingStepRoute
   '/_authenticated/coach/builder': typeof AuthenticatedCoachBuilderRouteWithChildren
   '/_authenticated/coach/exercices': typeof AuthenticatedCoachExercicesRoute
   '/_authenticated/coach/import': typeof AuthenticatedCoachImportRoute
+  '/_authenticated/coach/invitations': typeof AuthenticatedCoachInvitationsRoute
   '/_authenticated/coach/messages': typeof AuthenticatedCoachMessagesRoute
   '/_authenticated/coach/programmes': typeof AuthenticatedCoachProgrammesRouteWithChildren
   '/_authenticated/coach/running': typeof AuthenticatedCoachRunningRoute
@@ -273,10 +292,12 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/reset-password'
+    | '/signup'
     | '/onboarding/$step'
     | '/coach/builder'
     | '/coach/exercices'
     | '/coach/import'
+    | '/coach/invitations'
     | '/coach/messages'
     | '/coach/programmes'
     | '/coach/running'
@@ -300,10 +321,12 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/reset-password'
+    | '/signup'
     | '/onboarding/$step'
     | '/coach/builder'
     | '/coach/exercices'
     | '/coach/import'
+    | '/coach/invitations'
     | '/coach/messages'
     | '/coach/programmes'
     | '/coach/running'
@@ -328,10 +351,12 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/login'
     | '/reset-password'
+    | '/signup'
     | '/onboarding/$step'
     | '/_authenticated/coach/builder'
     | '/_authenticated/coach/exercices'
     | '/_authenticated/coach/import'
+    | '/_authenticated/coach/invitations'
     | '/_authenticated/coach/messages'
     | '/_authenticated/coach/programmes'
     | '/_authenticated/coach/running'
@@ -357,6 +382,7 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  SignupRoute: typeof SignupRoute
   OnboardingStepRoute: typeof OnboardingStepRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -365,6 +391,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reset-password': {
       id: '/reset-password'
       path: '/reset-password'
@@ -477,6 +510,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCoachMessagesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/coach/invitations': {
+      id: '/_authenticated/coach/invitations'
+      path: '/coach/invitations'
+      fullPath: '/coach/invitations'
+      preLoaderRoute: typeof AuthenticatedCoachInvitationsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/coach/import': {
       id: '/_authenticated/coach/import'
       path: '/coach/import'
@@ -582,6 +622,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedCoachBuilderRoute: typeof AuthenticatedCoachBuilderRouteWithChildren
   AuthenticatedCoachExercicesRoute: typeof AuthenticatedCoachExercicesRoute
   AuthenticatedCoachImportRoute: typeof AuthenticatedCoachImportRoute
+  AuthenticatedCoachInvitationsRoute: typeof AuthenticatedCoachInvitationsRoute
   AuthenticatedCoachMessagesRoute: typeof AuthenticatedCoachMessagesRoute
   AuthenticatedCoachProgrammesRoute: typeof AuthenticatedCoachProgrammesRouteWithChildren
   AuthenticatedCoachRunningRoute: typeof AuthenticatedCoachRunningRoute
@@ -601,6 +642,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCoachBuilderRoute: AuthenticatedCoachBuilderRouteWithChildren,
   AuthenticatedCoachExercicesRoute: AuthenticatedCoachExercicesRoute,
   AuthenticatedCoachImportRoute: AuthenticatedCoachImportRoute,
+  AuthenticatedCoachInvitationsRoute: AuthenticatedCoachInvitationsRoute,
   AuthenticatedCoachMessagesRoute: AuthenticatedCoachMessagesRoute,
   AuthenticatedCoachProgrammesRoute:
     AuthenticatedCoachProgrammesRouteWithChildren,
@@ -627,6 +669,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  SignupRoute: SignupRoute,
   OnboardingStepRoute: OnboardingStepRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
