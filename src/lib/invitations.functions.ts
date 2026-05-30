@@ -103,6 +103,7 @@ export const createInvitation = createServerFn({ method: "POST" })
         queue_name: "transactional_emails",
         payload: {
           message_id: messageId,
+          idempotency_key: `invitation-${row.id}`,
           to: data.email,
           from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
           sender_domain: SENDER_DOMAIN,
