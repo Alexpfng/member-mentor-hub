@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useServerFn } from '@tanstack/react-start';
+import { useSearch } from '@tanstack/react-router';
 import CoachSidebar from '../../components/CoachSidebar';
-import { sendMessage, listConversations, listMessages } from '@/lib/coach.functions';
+import { sendMessage, listConversations, listMessages, getMemberDetail } from '@/lib/coach.functions';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
