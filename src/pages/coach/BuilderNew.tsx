@@ -230,7 +230,7 @@ function QuickConfig({ ex, onChange, onClose, dayExercises }: PopoverProps) {
       background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
     }} onClick={onClose}>
       <div onClick={e => e.stopPropagation()} style={{
-        background: '#1A2620', border: '1px solid rgba(45,90,53,0.5)',
+        background: 'var(--cst-card-bg)', border: '1px solid var(--cst-card-border)',
         borderRadius: 12, padding: 24, width: 480, maxHeight: '90vh',
         overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 14,
       }}>
@@ -238,9 +238,9 @@ function QuickConfig({ ex, onChange, onClose, dayExercises }: PopoverProps) {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 18 }}>{local.color}</span>
-            <span style={{ fontFamily: 'var(--cst-display)', fontSize: 18, fontWeight: 800, textTransform: 'uppercase', color: '#fff' }}>{local.name}</span>
+            <span style={{ fontFamily: 'var(--cst-display)', fontSize: 18, fontWeight: 800, textTransform: 'uppercase', color: 'var(--cst-text)' }}>{local.name}</span>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', fontSize: 20, cursor: 'pointer' }}>✕</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--cst-text-soft)', fontSize: 20, cursor: 'pointer' }}>✕</button>
         </div>
 
         {/* Séries / Reps / Charge */}
@@ -269,9 +269,9 @@ function QuickConfig({ ex, onChange, onClose, dayExercises }: PopoverProps) {
               {[1,2,3,4,5,6,7,8,9,10].map(n => (
                 <button key={n} onClick={() => set('rpe', n)} style={{
                   width: 30, height: 30, borderRadius: 4, border: '1px solid',
-                  borderColor: local.rpe === n ? 'var(--cst-mid-green)' : 'rgba(255,255,255,0.15)',
+                  borderColor: local.rpe === n ? 'var(--cst-mid-green)' : 'var(--cst-card-border)',
                   background: local.rpe === n ? 'var(--cst-mid-green)' : 'transparent',
-                  color: '#fff', fontSize: 11, cursor: 'pointer',
+                  color: local.rpe === n ? '#fff' : 'var(--cst-text)', fontSize: 11, cursor: 'pointer',
                 }}>{n}</button>
               ))}
             </div>
@@ -285,12 +285,13 @@ function QuickConfig({ ex, onChange, onClose, dayExercises }: PopoverProps) {
             {COLORS.map(c => (
               <button key={c} onClick={() => set('color', c)} style={{
                 width: 36, height: 36, borderRadius: 8, fontSize: 20, cursor: 'pointer',
-                border: local.color === c ? '2px solid var(--cst-mid-green)' : '1px solid rgba(255,255,255,0.15)',
+                border: local.color === c ? '2px solid var(--cst-mid-green)' : '1px solid var(--cst-card-border)',
                 background: 'transparent',
               }}>{c}</button>
             ))}
           </div>
         </div>
+
 
         {/* YouTube */}
         <div>
@@ -330,7 +331,8 @@ function QuickConfig({ ex, onChange, onClose, dayExercises }: PopoverProps) {
 
         {/* CTA */}
         <div style={{ display: 'flex', gap: 10 }}>
-          <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" onClick={onClose}>ANNULER</button>
+          <button className="cst-btn cst-btn-ghost cst-btn-sm" onClick={onClose}>ANNULER</button>
+
           <button className="cst-btn cst-btn-primary" style={{ flex: 1 }} onClick={() => { onChange(local); onClose(); }}>AJOUTER ✓</button>
         </div>
       </div>
