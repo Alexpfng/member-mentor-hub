@@ -12,6 +12,8 @@ function InviteModal({ onClose, onDone }) {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
+  const [link, setLink] = useState('');
+  const [copied, setCopied] = useState(false);
 
   async function submit(e) {
     e.preventDefault();
@@ -20,11 +22,14 @@ function InviteModal({ onClose, onDone }) {
     try {
       const res = await createFn({
         data: {
-          email: email.trim().toLowerCase(),
-          send_email: true,
+          email: email.trim().toLowerCase() || null,
         },
       });
-      onDone(email, res.signup_url);
+      setLink(res.signup_url);
+      try {
+        await navigator.clipboard.writeText(res.signup_url);
+        setCopied(true);
+      } catch {}
     } catch (ex) {
       setErr(ex?.message || "Erreur lors de l'invitation");
     } finally {
@@ -32,23 +37,45 @@ function InviteModal({ onClose, onDone }) {
     }
   }
 
+  async function copyAgain() {
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {}
+  }
+
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 16 }}>
-      <form onClick={(e) => e.stopPropagation()} onSubmit={submit} className="cst-screen cst-hatch" style={{ width: 420, padding: 28, borderRadius: 14 }}>
+      <form onClick={(e) => e.stopPropagation()} onSubmit={submit} className="cst-screen cst-hatch" style={{ width: 460, padding: 28, borderRadius: 14 }}>
         <h2 className="cst-display" style={{ fontSize: 22, marginBottom: 4 }}>INVITER</h2>
         <div className="cst-italic" style={{ fontSize: 14, color: 'var(--cst-mid-green)', marginBottom: 18 }}>un nouvel adhérent.</div>
         <div className="cst-col" style={{ gap: 12 }}>
           <div>
-            <label className="cst-label">EMAIL</label>
-            <input className="cst-input" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="adherent@email.com" />
+            <label className="cst-label">EMAIL (OPTIONNEL)</label>
+            <input className="cst-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="adherent@email.com" />
           </div>
           {err && <div style={{ padding: '8px 12px', background: 'rgba(139,35,24,0.15)', border: '1px solid rgba(139,35,24,0.4)', borderRadius: 6, fontSize: 12, color: '#C56A60' }}>{err}</div>}
-          <div className="cst-mono" style={{ fontSize: 10, opacity: 0.6 }}>
-            L'adhérent recevra un email avec un lien pour créer son compte.
-          </div>
+          {!link && (
+            <div className="cst-mono" style={{ fontSize: 10, opacity: 0.6 }}>
+              Un lien d'inscription sera généré. Tu pourras le transmettre toi-même à l'adhérent.
+            </div>
+          )}
+          {link && (
+            <div className="cst-col" style={{ gap: 6 }}>
+              <span className="cst-label">LIEN À TRANSMETTRE</span>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input className="cst-input" value={link} readOnly onFocus={(e) => e.currentTarget.select()} style={{ flex: 1, fontSize: 11, fontFamily: 'var(--cst-mono)' }} />
+                <button type="button" className="cst-btn" onClick={copyAgain} style={{ fontSize: 11 }}>{copied ? '✓ COPIÉ' : 'COPIER'}</button>
+              </div>
+              <span className="cst-mono" style={{ fontSize: 10, opacity: 0.6 }}>Valable 14 jours, utilisable une seule fois.</span>
+            </div>
+          )}
           <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-            <button type="button" onClick={onClose} className="cst-btn cst-btn-ghost-dark" style={{ flex: 1 }}>ANNULER</button>
-            <button type="submit" disabled={loading} className="cst-btn cst-btn-primary" style={{ flex: 1 }}>{loading ? '...' : "ENVOYER L'INVITATION →"}</button>
+            <button type="button" onClick={() => { if (link) onDone(email || 'adhérent', link); else onClose(); }} className="cst-btn cst-btn-ghost-dark" style={{ flex: 1 }}>{link ? 'FERMER' : 'ANNULER'}</button>
+            {!link && (
+              <button type="submit" disabled={loading} className="cst-btn cst-btn-primary" style={{ flex: 1 }}>{loading ? '...' : "GÉNÉRER LE LIEN →"}</button>
+            )}
           </div>
         </div>
       </form>
@@ -142,7 +169,7 @@ export default function CoachDashboard() {
   return (
     <div className="cst-screen" style={{ flexDirection: 'row' }}>
       <CoachSidebar />
-      {showInvite && <InviteModal onClose={() => setShowInvite(false)} onDone={(e) => { setShowInvite(false); setInviteOk(`Invitation envoyée à ${e}`); setTimeout(() => setInviteOk(''), 4000); reload(); }} />}
+      {showInvite && <InviteModal onClose={() => setShowInvite(false)} onDone={(e) => { setShowInvite(false); setInviteOk(`Lien d'invitation généré pour ${e} — copié dans le presse-papiers.`); setTimeout(() => setInviteOk(''), 5000); reload(); }} />}
       <div className="cst-col cst-scroll" style={{ flex: 1, minWidth: 0 }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '24px 32px', borderBottom: '1px solid rgba(255,255,255,0.06)', flexWrap: 'wrap', gap: 12 }}>
