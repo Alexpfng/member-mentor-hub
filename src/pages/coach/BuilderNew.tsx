@@ -331,7 +331,8 @@ function QuickConfig({ ex, onChange, onClose, dayExercises }: PopoverProps) {
 
         {/* CTA */}
         <div style={{ display: 'flex', gap: 10 }}>
-          <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" onClick={onClose}>ANNULER</button>
+          <button className="cst-btn cst-btn-ghost cst-btn-sm" onClick={onClose}>ANNULER</button>
+
           <button className="cst-btn cst-btn-primary" style={{ flex: 1 }} onClick={() => { onChange(local); onClose(); }}>AJOUTER ✓</button>
         </div>
       </div>
