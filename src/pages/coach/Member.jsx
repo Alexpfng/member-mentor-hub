@@ -400,16 +400,14 @@ export default function CoachMember() {
                   <div className="cst-card-dark cst-hatch" style={{ padding: 28, textAlign: 'center' }}>
                     <div className="cst-display" style={{ fontSize: 22, marginBottom: 8 }}>AUCUN PROGRAMME ASSIGNÉ</div>
                     <p style={{ margin: '0 0 16px', fontSize: 13, opacity: 0.7 }}>Choisis un programme à assigner à {data.profile.first_name || fullName}.</p>
-                    <select
-                      className="cst-input"
-                      disabled={assignBusy || programs.length === 0}
-                      defaultValue=""
-                      onChange={(e) => handleAssign(e.target.value)}
-                      style={{ maxWidth: 360, margin: '0 auto' }}
-                    >
-                      <option value="">— Sélectionner un programme —</option>
-                      {programs.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                    </select>
+                    <div style={{ maxWidth: 360, margin: '0 auto' }}>
+                      <ProgramPicker
+                        programs={programs}
+                        placeholder="Rechercher un programme…"
+                        disabled={assignBusy}
+                        onPick={handleAssign}
+                      />
+                    </div>
                   </div>
                 ) : (
                   <>
