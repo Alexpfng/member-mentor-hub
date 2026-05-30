@@ -919,7 +919,7 @@ export default function BuilderNew({ programIdParam }: { programIdParam?: string
               <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" onClick={handleSave} disabled={saving}>
                 {saving ? '...' : 'SAUVEGARDER ●'}
               </button>
-              <button className="cst-btn cst-btn-primary cst-btn-sm" onClick={() => { if (!programId) { toast.error('Sauvegarde d\'abord le programme.'); return; } setShowAssign(true); }}>
+              <button className="cst-btn cst-btn-primary cst-btn-sm" onClick={handleAssignClick} disabled={saving}>
                 ASSIGNER →
               </button>
             </div>
