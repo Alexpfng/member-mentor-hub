@@ -89,6 +89,13 @@ export default function Invitations() {
 
   return (
     <div style={{ padding: 24, maxWidth: 900, margin: "0 auto" }}>
+      <Link
+        to="/coach/dashboard"
+        className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+        style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 16, textDecoration: "none" }}
+      >
+        ← RETOUR À L'ACCUEIL
+      </Link>
       <h1 style={{ fontSize: 24, marginBottom: 6 }}>Invitations</h1>
       <p style={{ fontSize: 13, opacity: 0.7, marginBottom: 24 }}>
         Génère un lien d'invitation à transmettre manuellement à ton client (email, SMS, WhatsApp…).
