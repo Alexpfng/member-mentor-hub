@@ -1,34 +1,27 @@
-Je vais corriger le flux d’invitation pour que le client arrive bien sur la vraie page d’inscription et reçoive un email d’invitation.
+# Réparer l'envoi des emails d'invitation
+
+## Diagnostic
+
+Toutes les invitations sont bien créées et déposées dans la file d'attente email (`email_send_log` montre 5 emails avec le statut `pending` depuis ce matin), mais **aucun email ne part**.
+
+Cause : le job planifié qui vide la file d'attente email (`process-email-queue`) n'existe pas sur ce projet. Sans lui, les emails s'accumulent indéfiniment en `pending`.
 
 ## Plan
 
-1. **Corriger l’URL des liens copiés**
-   - Remplacer les liens générés avec le domaine Lovable interne par l’URL publique de l’app : `https://app.colosmartraining.fr/signup?token=...`.
-   - Garder un fallback propre si l’app est testée en prévisualisation.
+1. **Provisionner l'infrastructure email manquante** — exécuter la configuration qui :
+   - Crée le job planifié qui traite la file toutes les 5 secondes
+   - Stocke la clé d'accès sécurisée nécessaire au dispatcher
+   - Vérifie que toutes les tables et files (`auth_emails`, `transactional_emails`) sont opérationnelles
 
-2. **Unifier le bouton “Inviter” du dashboard**
-   - Le modal actuel utilise l’ancien système d’invitation qui envoie vers `/reset-password`.
-   - Je vais le basculer sur le nouveau système `/signup?token=...`, pour que “Envoyer l’invitation” crée une invitation compatible avec l’inscription client.
+2. **Rejouer les 5 invitations bloquées** une fois le dispatcher actif (soit en attendant le prochain cycle, soit en relançant l'envoi depuis l'écran Invitations).
 
-3. **Activer l’envoi email d’invitation**
-   - Utiliser l’infrastructure email déjà configurée et vérifiée sur `notify.bulbiz.io`.
-   - Ajouter une fonction serveur sécurisée côté coach qui : crée l’invitation, génère le lien d’inscription, puis déclenche l’email d’invitation au client.
-   - Adapter le contenu email pour dire clairement au client qu’il doit créer son compte via ce lien.
+3. **Vérifier** :
+   - `cron.job` contient bien `process-email-queue`
+   - Les lignes `pending` passent à `sent` dans `email_send_log`
+   - L'email arrive bien dans la boîte du client de test (`alex.pfennig26@gmail.com`)
 
-4. **Sécuriser le comportement**
-   - Vérifier que seuls les coachs peuvent créer/envoyer des invitations.
-   - Empêcher l’envoi si l’email est vide ou invalide.
-   - Afficher un message clair en cas de succès ou d’erreur.
+## Notes
 
-5. **Vérifier le résultat**
-   - Contrôler que le lien affiché/copie pointe vers `/signup?token=...` sur le bon domaine.
-   - Vérifier que l’email d’invitation est bien préparé avec le même lien.
-
-## Détail technique
-
-- Fichiers concernés principalement :
-  - `src/pages/coach/Invitations.tsx`
-  - `src/pages/coach/Dashboard.jsx`
-  - `src/lib/invitations.functions.ts` ou `src/lib/coach.functions.ts`
-  - templates email d’invitation si nécessaire
-- Je ne vais pas rouvrir l’inscription publique : l’inscription restera uniquement sur invitation.
+- Aucun changement de code applicatif n'est nécessaire — le code d'envoi (`createInvitation`) est correct, il dépose bien le message dans la queue.
+- Le domaine d'envoi `notify.bulbiz.io` est déjà vérifié.
+- Si après activation un email reste bloqué, on regardera `error_message` dans `email_send_log` pour ajuster (souvent un domaine expéditeur ou suppression).
