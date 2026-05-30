@@ -492,7 +492,7 @@ export default function CoachMember() {
                 <CSTSectionNum num={1} label="MESSAGES" sub={data.unread_messages_count > 0 ? `${data.unread_messages_count} NON LUS` : 'AUCUN NOUVEAU'} />
                 <div className="cst-card-dark" style={{ padding: 24, marginTop: 14, textAlign: 'center' }}>
                   <p style={{ margin: '0 0 16px', fontSize: 13, opacity: 0.7 }}>Ouvre la messagerie pour échanger avec {data.profile.first_name || fullName}.</p>
-                  <button className="cst-btn cst-btn-primary" onClick={() => navigate({ to: '/coach/messages' })}>OUVRIR LA MESSAGERIE →</button>
+                  <button className="cst-btn cst-btn-primary" onClick={() => navigate({ to: '/coach/messages', search: { partner: memberId } })}>OUVRIR LA MESSAGERIE →</button>
                 </div>
               </>
             )}
