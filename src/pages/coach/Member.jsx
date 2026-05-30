@@ -254,7 +254,7 @@ export default function CoachMember() {
               <div className="cst-italic" style={{ fontSize: 16, color: 'rgba(255,255,255,0.65)', marginTop: -4 }}>{data.profile.email}</div>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
-              <button className="cst-btn cst-btn-primary cst-btn-sm" onClick={() => navigate({ to: '/coach/messages' })}>MESSAGE →</button>
+              <button className="cst-btn cst-btn-primary cst-btn-sm" onClick={() => navigate({ to: '/coach/messages', search: { partner: memberId } })}>MESSAGE →</button>
             </div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(120px,1fr))', gap: 0, marginTop: 26, borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 18 }}>
