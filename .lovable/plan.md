@@ -1,27 +1,40 @@
-## Problème
+## Objectif
 
-Dans la modale d'édition d'exercice (page Builder), le fond est codé en dur en vert foncé (`#1A2620`), mais les labels (`SÉRIES`, `REPS`, `RPE CIBLE`, `COULEUR`, `YOUTUBE`, `NOTES COACH`, etc.) utilisent le token `var(--cst-text-muted)` qui en mode clair vaut `#6B7B6E` (gris foncé). Résultat : texte sombre sur fond sombre, illisible.
+Remplacer les deux `<select>` natifs de la page Membre (« — Sélectionner un programme — » et « CHANGER DE PROGRAMME… ») par un **combobox typeahead** : Léo tape, la liste se filtre en direct, il clique pour assigner. Le composant suit la DA CST (police mono, vert `--cst-mid-green`, cartes sombres, hairlines).
 
-Le titre `ADDUCTEURS WORK…`, les chiffres RPE non sélectionnés et le bouton `ANNULER` ont le même problème.
+## Composant `ProgramPicker` (inline dans Member.jsx)
 
-## Correction
+Petite combobox autonome, réutilisée aux deux endroits :
 
-Un seul fichier touché : `src/pages/coach/BuilderNew.tsx`, dans le composant `EditExerciseModal` (≈ lignes 232–336). On rend la modale **thème-aware** en remplaçant les couleurs codées en dur par les tokens de design :
+- Champ `cst-input` avec placeholder configurable (« Rechercher un programme… » ou « CHANGER DE PROGRAMME… »).
+- Au focus ou dès qu'on tape : panel absolu en dessous (fond `--cst-card-bg`, bordure `--cst-card-border`, ombre, `borderRadius 10`, max-height ~280px scrollable).
+- Filtrage **insensible à la casse et aux accents** sur `name` (+ `objective` si présent), match par sous-chaîne — ordre alphabétique respecté.
+- Chaque ligne : nom du programme (cst-display, taille 13), petit chip `--cst-mono` à droite (durée en semaines si dispo, sinon objectif). Hover : fond `rgba(45,90,53,0.10)`. Sélectionnée au clavier : bordure gauche verte.
+- État vide filtré : « Aucun programme trouvé. » en mono muted.
+- Clavier : ↑/↓ navigue, Entrée sélectionne, Echap ferme, Tab ferme aussi.
+- Clic en dehors → ferme (listener sur `mousedown` du document).
+- Au choix : appel `onPick(programId)` puis vide le champ et ferme. `disabled` désactive le champ.
 
-- **Fond modale** : `#1A2620` → `var(--cst-card-bg)`
-- **Bordure modale** : `rgba(45,90,53,0.5)` → `var(--cst-card-border)`
-- **Titre exercice** : `color: #fff` → `var(--cst-text)`
-- **Bouton fermer (✕)** : `rgba(255,255,255,0.5)` → `var(--cst-text-soft)`
-- **Boutons RPE 1–10** :
-  - bordure inactive `rgba(255,255,255,0.15)` → `var(--cst-card-border)`
-  - couleur texte inactif `#fff` → `var(--cst-text)` ; actif reste `#fff` (sur fond vert)
-- **Boutons COULEUR** : bordure inactive `rgba(255,255,255,0.15)` → `var(--cst-card-border)`
-- Les labels gardent `var(--cst-text-muted)` (devient lisible une fois sur fond clair)
-- Le bouton `ANNULER` (`cst-btn-ghost-dark`) → on remplace par la variante claire/thème (`cst-btn-ghost`) pour qu'il s'adapte
+Signature :
+```tsx
+<ProgramPicker
+  programs={programs}
+  excludeId={data.program?.id}        // pour la variante « changer de »
+  placeholder="Rechercher un programme…"
+  disabled={assignBusy}
+  onPick={handleAssign}
+/>
+```
 
-En mode sombre, les tokens redonnent un rendu équivalent à l'actuel (carte sombre + texte clair) ; en mode clair, la modale devient blanche avec texte foncé, parfaitement lisible.
+## Intégration dans `src/pages/coach/Member.jsx`
+
+1. **Card « AUCUN PROGRAMME ASSIGNÉ »** (≈ ligne 305-314) : remplacer le `<select>` par `<ProgramPicker programs={programs} placeholder="Rechercher un programme…" disabled={assignBusy} onPick={handleAssign} />`, conteneur `maxWidth: 360, margin: '0 auto'`.
+2. **Bouton « CHANGER DE PROGRAMME… »** (≈ ligne 326-335) : même composant avec `excludeId={data.program.id}`, placeholder `"CHANGER DE PROGRAMME…"`, taille plus compacte (`maxWidth: 260`, padding réduit via prop `size="sm"` qui ajuste juste padding/fontSize).
+
+Aucun changement de logique métier : `handleAssign(programId)` reste l'unique point d'appel ; la liste `programs` continue d'être chargée via `listProgramsFn`.
 
 ## Hors scope
 
-- Les autres modales/pages ne sont pas touchées, seul l'exemple signalé.
-- Aucune logique métier modifiée, uniquement les styles inline de cette modale.
+- Pas de modification du backend (`listPrograms`, `assignProgram`).
+- Pas de refonte des autres sélecteurs de la page.
+- Pas d'ajout de dépendance (cmdk, downshift…) — combobox maison ~80 lignes, fidèle à la DA et sans surcoût bundle.
