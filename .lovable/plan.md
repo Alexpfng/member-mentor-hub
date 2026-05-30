@@ -1,19 +1,27 @@
 ## Problème
-Sur la fiche membre (`/coach/membre/:memberId`), les boutons "MESSAGE →" et "OUVRIR LA MESSAGERIE →" naviguent vers `/coach/messages` sans préciser le membre. L'écran affiche alors "Sélectionne un membre" et il faut recliquer dans la liste — bloquant quand la conversation n'existe pas encore.
 
-## Solution
-Ouvrir directement la conversation du membre en passant son id (et ses infos) via la query string, puis auto-sélectionner ce membre côté Messages.
+Dans la modale d'édition d'exercice (page Builder), le fond est codé en dur en vert foncé (`#1A2620`), mais les labels (`SÉRIES`, `REPS`, `RPE CIBLE`, `COULEUR`, `YOUTUBE`, `NOTES COACH`, etc.) utilisent le token `var(--cst-text-muted)` qui en mode clair vaut `#6B7B6E` (gris foncé). Résultat : texte sombre sur fond sombre, illisible.
 
-### 1. `src/pages/coach/Member.jsx`
-Les deux boutons (ligne 257 et 495) → `navigate({ to: '/coach/messages', search: { partner: memberId } })`.
+Le titre `ADDUCTEURS WORK…`, les chiffres RPE non sélectionnés et le bouton `ANNULER` ont le même problème.
 
-### 2. `src/pages/coach/Messages.tsx`
-- Lire `partner` depuis `useSearch()` de la route `/coach/messages`.
-- Au chargement (et quand `conversations` arrivent) : si `partner` est défini et qu'aucun `activePartner` n'est sélectionné, chercher dans `conversations` ; si trouvé → `setActivePartner`.
-- Si le membre n'est pas encore dans `conversations` (jamais échangé) : récupérer son profil minimal via une nouvelle petite serverFn `getMemberProfile({ memberId })` (ou réutiliser `listMemberVideos`/coach.functions existante si elle expose le profil) pour construire un objet `Partner` et l'activer. Cela permet de démarrer une nouvelle conversation depuis la fiche.
+## Correction
 
-### 3. Route `src/routes/_authenticated.coach.messages.tsx`
-Ajouter un `validateSearch` simple (`z.object({ partner: z.string().uuid().optional() })`) pour typer le param.
+Un seul fichier touché : `src/pages/coach/BuilderNew.tsx`, dans le composant `EditExerciseModal` (≈ lignes 232–336). On rend la modale **thème-aware** en remplaçant les couleurs codées en dur par les tokens de design :
 
-## Résultat
-Cliquer "MESSAGE" sur la fiche d'un client ouvre directement la conversation avec lui, prêt à écrire — même s'il n'y a aucun message antérieur.
+- **Fond modale** : `#1A2620` → `var(--cst-card-bg)`
+- **Bordure modale** : `rgba(45,90,53,0.5)` → `var(--cst-card-border)`
+- **Titre exercice** : `color: #fff` → `var(--cst-text)`
+- **Bouton fermer (✕)** : `rgba(255,255,255,0.5)` → `var(--cst-text-soft)`
+- **Boutons RPE 1–10** :
+  - bordure inactive `rgba(255,255,255,0.15)` → `var(--cst-card-border)`
+  - couleur texte inactif `#fff` → `var(--cst-text)` ; actif reste `#fff` (sur fond vert)
+- **Boutons COULEUR** : bordure inactive `rgba(255,255,255,0.15)` → `var(--cst-card-border)`
+- Les labels gardent `var(--cst-text-muted)` (devient lisible une fois sur fond clair)
+- Le bouton `ANNULER` (`cst-btn-ghost-dark`) → on remplace par la variante claire/thème (`cst-btn-ghost`) pour qu'il s'adapte
+
+En mode sombre, les tokens redonnent un rendu équivalent à l'actuel (carte sombre + texte clair) ; en mode clair, la modale devient blanche avec texte foncé, parfaitement lisible.
+
+## Hors scope
+
+- Les autres modales/pages ne sont pas touchées, seul l'exemple signalé.
+- Aucune logique métier modifiée, uniquement les styles inline de cette modale.
