@@ -1,47 +1,34 @@
+Je vais corriger le flux d’invitation pour que le client arrive bien sur la vraie page d’inscription et reçoive un email d’invitation.
 
-# Inscription clients sur invitation
+## Plan
 
-## Objectif
-Permettre aux clients de s'inscrire seuls via un lien d'invitation que tu génères, sans devoir créer les comptes toi-même, et sans confirmation email (accès direct).
+1. **Corriger l’URL des liens copiés**
+   - Remplacer les liens générés avec le domaine Lovable interne par l’URL publique de l’app : `https://app.colosmartraining.fr/signup?token=...`.
+   - Garder un fallback propre si l’app est testée en prévisualisation.
 
-## Étapes
+2. **Unifier le bouton “Inviter” du dashboard**
+   - Le modal actuel utilise l’ancien système d’invitation qui envoie vers `/reset-password`.
+   - Je vais le basculer sur le nouveau système `/signup?token=...`, pour que “Envoyer l’invitation” crée une invitation compatible avec l’inscription client.
 
-### 1. Désactiver la confirmation email
-- Auto-confirm activé : les nouveaux comptes sont utilisables immédiatement après signup.
-- Signup global reste activé (sinon les invités ne pourraient pas créer leur compte).
+3. **Activer l’envoi email d’invitation**
+   - Utiliser l’infrastructure email déjà configurée et vérifiée sur `notify.bulbiz.io`.
+   - Ajouter une fonction serveur sécurisée côté coach qui : crée l’invitation, génère le lien d’inscription, puis déclenche l’email d’invitation au client.
+   - Adapter le contenu email pour dire clairement au client qu’il doit créer son compte via ce lien.
 
-### 2. Table `invitations`
-Nouvelle table pour gérer les invitations émises par le coach :
-- `token` (texte unique, généré aléatoirement) — utilisé dans l'URL
-- `email` (optionnel — si rempli, l'invitation est verrouillée sur cet email)
-- `created_by` (coach)
-- `expires_at` (par défaut +14 jours)
-- `used_at` / `used_by` (marqués au moment de l'inscription)
+4. **Sécuriser le comportement**
+   - Vérifier que seuls les coachs peuvent créer/envoyer des invitations.
+   - Empêcher l’envoi si l’email est vide ou invalide.
+   - Afficher un message clair en cas de succès ou d’erreur.
 
-RLS :
-- Coach : ALL sur ses propres invitations
-- Anon : peut lire une invitation par `token` uniquement (pour valider le lien sur la page signup) — colonnes limitées via une fonction `validate_invitation(token)` SECURITY DEFINER qui renvoie juste `{ valid, email }`.
+5. **Vérifier le résultat**
+   - Contrôler que le lien affiché/copie pointe vers `/signup?token=...` sur le bon domaine.
+   - Vérifier que l’email d’invitation est bien préparé avec le même lien.
 
-### 3. Page coach `/coach/invitations`
-- Bouton "Créer une invitation" (email optionnel)
-- Liste des invitations actives : lien copiable `https://app.colosmartraining.fr/signup?token=XXX`, statut (active / utilisée / expirée), bouton révoquer
-- Lien dans la sidebar coach
+## Détail technique
 
-### 4. Refonte de l'accès signup
-- Retirer le toggle "S'inscrire" de `/login` (les clients ne peuvent plus s'inscrire librement)
-- Nouvelle route `/signup?token=XXX` :
-  - Valide le token via `validate_invitation`
-  - Si invalide/expiré/utilisé → message d'erreur, pas de formulaire
-  - Si valide → formulaire prénom/nom/email/mot de passe (email pré-rempli + verrouillé si l'invitation en spécifie un)
-  - À la soumission : `supabase.auth.signUp` puis marque l'invitation comme utilisée, puis redirige vers `/onboarding/1`
-
-### 5. Trigger existant (déjà OK)
-`handle_new_user` crée déjà `profiles` + `user_roles` avec rôle `member`. Rien à changer.
-
-## Détails techniques
-- Génération token : `encode(gen_random_bytes(24), 'base64')` côté SQL ou `crypto.randomUUID()` côté client puis stocké.
-- Marquage `used_at` : via un serverFn `consumeInvitation(token, userId)` appelé après le signup réussi (utilise `supabaseAdmin` pour bypass RLS et marquer atomiquement).
-- Vérification d'unicité email gérée par Supabase Auth nativement.
-
-## Hors scope
-- Envoi automatique de l'email d'invitation (tu copies/colles le lien manuellement pour l'instant). On pourra brancher l'infra email `notify.bulbiz.io` plus tard si tu veux.
+- Fichiers concernés principalement :
+  - `src/pages/coach/Invitations.tsx`
+  - `src/pages/coach/Dashboard.jsx`
+  - `src/lib/invitations.functions.ts` ou `src/lib/coach.functions.ts`
+  - templates email d’invitation si nécessaire
+- Je ne vais pas rouvrir l’inscription publique : l’inscription restera uniquement sur invitation.
