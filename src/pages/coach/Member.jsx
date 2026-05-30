@@ -419,16 +419,16 @@ export default function CoachMember() {
                         </h2>
                         <span className="cst-mono">{data.program.name.toUpperCase()}</span>
                       </div>
-                      <select
-                        className="cst-input"
-                        disabled={assignBusy}
-                        defaultValue=""
-                        onChange={(e) => handleAssign(e.target.value)}
-                        style={{ fontSize: 11, padding: '6px 8px', maxWidth: 240 }}
-                      >
-                        <option value="">CHANGER DE PROGRAMME…</option>
-                        {programs.filter((p) => p.id !== data.program.id).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                      </select>
+                      <div style={{ width: 260 }}>
+                        <ProgramPicker
+                          programs={programs}
+                          excludeId={data.program.id}
+                          placeholder="CHANGER DE PROGRAMME…"
+                          disabled={assignBusy}
+                          onPick={handleAssign}
+                          size="sm"
+                        />
+                      </div>
                     </div>
                     {data.program.duration_weeks && (
                       <div style={{ height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden', marginBottom: 20 }}>
