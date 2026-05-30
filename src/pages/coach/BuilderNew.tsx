@@ -722,7 +722,7 @@ export default function BuilderNew({ programIdParam }: { programIdParam?: string
   };
 
   // ─ Save
-  const handleSave = async () => {
+  const handleSave = async (): Promise<string | null> => {
     setSaving(true);
     try {
       const r = await saveFn({ data: {
@@ -737,9 +737,17 @@ export default function BuilderNew({ programIdParam }: { programIdParam?: string
       } });
       setProgramId(r.program.id);
       toast.success('Programme sauvegardé ✓');
+      return r.program.id;
     } catch (err: any) {
       toast.error(err.message ?? 'Erreur lors de la sauvegarde');
+      return null;
     } finally { setSaving(false); }
+  };
+
+  const handleAssignClick = async () => {
+    if (programId) { setShowAssign(true); return; }
+    const id = await handleSave();
+    if (id) setShowAssign(true);
   };
 
   // ─ Hydrate from DB if editing
@@ -911,7 +919,7 @@ export default function BuilderNew({ programIdParam }: { programIdParam?: string
               <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" onClick={handleSave} disabled={saving}>
                 {saving ? '...' : 'SAUVEGARDER ●'}
               </button>
-              <button className="cst-btn cst-btn-primary cst-btn-sm" onClick={() => { if (!programId) { toast.error('Sauvegarde d\'abord le programme.'); return; } setShowAssign(true); }}>
+              <button className="cst-btn cst-btn-primary cst-btn-sm" onClick={handleAssignClick} disabled={saving}>
                 ASSIGNER →
               </button>
             </div>
