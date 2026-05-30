@@ -1,4 +1,102 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+
+function normalize(s) {
+  return (s || '').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function ProgramPicker({ programs, excludeId, placeholder = 'Rechercher un programme…', disabled, onPick, size = 'md' }) {
+  const [query, setQuery] = useState('');
+  const [open, setOpen] = useState(false);
+  const [active, setActive] = useState(0);
+  const wrapRef = useRef(null);
+
+  const filtered = useMemo(() => {
+    const q = normalize(query);
+    const base = (programs || []).filter((p) => p.id !== excludeId);
+    const list = q
+      ? base.filter((p) => normalize(p.name).includes(q) || normalize(p.objective).includes(q))
+      : base;
+    return [...list].sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+  }, [programs, excludeId, query]);
+
+  useEffect(() => { setActive(0); }, [query, open]);
+
+  useEffect(() => {
+    function onDoc(e) {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false);
+    }
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, []);
+
+  function pick(p) {
+    if (!p) return;
+    setQuery('');
+    setOpen(false);
+    onPick?.(p.id);
+  }
+
+  function onKey(e) {
+    if (e.key === 'ArrowDown') { e.preventDefault(); setOpen(true); setActive((i) => Math.min(i + 1, filtered.length - 1)); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setActive((i) => Math.max(i - 1, 0)); }
+    else if (e.key === 'Enter') { e.preventDefault(); pick(filtered[active]); }
+    else if (e.key === 'Escape') { setOpen(false); }
+  }
+
+  const compact = size === 'sm';
+
+  return (
+    <div ref={wrapRef} style={{ position: 'relative', width: '100%' }}>
+      <input
+        type="text"
+        className="cst-input"
+        disabled={disabled || (programs || []).length === 0}
+        value={query}
+        placeholder={placeholder}
+        onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
+        onFocus={() => setOpen(true)}
+        onKeyDown={onKey}
+        style={{ width: '100%', fontSize: compact ? 11 : 13, padding: compact ? '6px 10px' : '10px 12px' }}
+      />
+      {open && (
+        <div
+          style={{
+            position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 30,
+            background: 'var(--cst-card-bg)', border: '1px solid var(--cst-card-border)',
+            borderRadius: 10, boxShadow: '0 12px 32px rgba(0,0,0,0.25)',
+            maxHeight: 280, overflowY: 'auto', padding: 4,
+          }}
+        >
+          {filtered.length === 0 ? (
+            <div className="cst-mono" style={{ padding: '12px 10px', fontSize: 11, opacity: 0.6 }}>
+              Aucun programme trouvé.
+            </div>
+          ) : filtered.map((p, i) => (
+            <button
+              key={p.id}
+              type="button"
+              onMouseEnter={() => setActive(i)}
+              onMouseDown={(e) => { e.preventDefault(); pick(p); }}
+              style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12,
+                width: '100%', textAlign: 'left', cursor: 'pointer',
+                padding: '8px 10px', borderRadius: 6,
+                background: i === active ? 'rgba(45,90,53,0.12)' : 'transparent',
+                borderLeft: i === active ? '2px solid var(--cst-mid-green)' : '2px solid transparent',
+                color: 'var(--cst-text)', border: 'none',
+              }}
+            >
+              <span style={{ fontSize: 13, fontWeight: 600 }}>{p.name}</span>
+              <span className="cst-mono" style={{ fontSize: 10, opacity: 0.6 }}>
+                {p.duration_weeks ? `${p.duration_weeks} SEM.` : (p.objective || '').toUpperCase()}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { useServerFn } from '@tanstack/react-start';
 import CoachSidebar from '../../components/CoachSidebar';
@@ -302,16 +400,14 @@ export default function CoachMember() {
                   <div className="cst-card-dark cst-hatch" style={{ padding: 28, textAlign: 'center' }}>
                     <div className="cst-display" style={{ fontSize: 22, marginBottom: 8 }}>AUCUN PROGRAMME ASSIGNÉ</div>
                     <p style={{ margin: '0 0 16px', fontSize: 13, opacity: 0.7 }}>Choisis un programme à assigner à {data.profile.first_name || fullName}.</p>
-                    <select
-                      className="cst-input"
-                      disabled={assignBusy || programs.length === 0}
-                      defaultValue=""
-                      onChange={(e) => handleAssign(e.target.value)}
-                      style={{ maxWidth: 360, margin: '0 auto' }}
-                    >
-                      <option value="">— Sélectionner un programme —</option>
-                      {programs.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                    </select>
+                    <div style={{ maxWidth: 360, margin: '0 auto' }}>
+                      <ProgramPicker
+                        programs={programs}
+                        placeholder="Rechercher un programme…"
+                        disabled={assignBusy}
+                        onPick={handleAssign}
+                      />
+                    </div>
                   </div>
                 ) : (
                   <>
@@ -323,16 +419,16 @@ export default function CoachMember() {
                         </h2>
                         <span className="cst-mono">{data.program.name.toUpperCase()}</span>
                       </div>
-                      <select
-                        className="cst-input"
-                        disabled={assignBusy}
-                        defaultValue=""
-                        onChange={(e) => handleAssign(e.target.value)}
-                        style={{ fontSize: 11, padding: '6px 8px', maxWidth: 240 }}
-                      >
-                        <option value="">CHANGER DE PROGRAMME…</option>
-                        {programs.filter((p) => p.id !== data.program.id).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                      </select>
+                      <div style={{ width: 260 }}>
+                        <ProgramPicker
+                          programs={programs}
+                          excludeId={data.program.id}
+                          placeholder="CHANGER DE PROGRAMME…"
+                          disabled={assignBusy}
+                          onPick={handleAssign}
+                          size="sm"
+                        />
+                      </div>
                     </div>
                     {data.program.duration_weeks && (
                       <div style={{ height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden', marginBottom: 20 }}>
