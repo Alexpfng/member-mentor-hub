@@ -103,6 +103,7 @@ import CoachSidebar from '../../components/CoachSidebar';
 import { CSTSectionNum, CSTAvatar, CSTStatus } from '../../components/Atoms';
 import { getMemberDetail, updateMemberNotes, updateMemberProfile, assignProgram, listPrograms } from '@/lib/coach.functions';
 import { VideoReviewPanel } from '../../components/coach/VideoReviewPanel';
+import MemberFollowupTab from '../../components/coach/MemberFollowupTab';
 import { supabase } from '@/integrations/supabase/client';
 
 function daysBetween(a, b) {
@@ -237,7 +238,7 @@ export default function CoachMember() {
     }
   }
 
-  const tabs = ['Programme actuel', 'Historique', 'Vidéos', 'Progression', 'Profil', 'Messages'];
+  const tabs = ['Suivi', 'Programme actuel', 'Historique', 'Vidéos', 'Progression', 'Profil', 'Messages'];
   const [coachUid, setCoachUid] = useState(null);
   useEffect(() => { supabase.auth.getUser().then(({ data }) => setCoachUid(data.user?.id ?? null)); }, []);
 
@@ -395,6 +396,9 @@ export default function CoachMember() {
         <div style={{ padding: '24px 32px', display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 24 }}>
           <div>
             {activeTab === 0 && (
+              <MemberFollowupTab memberId={memberId} />
+            )}
+            {activeTab === 1 && (
               <>
                 {!data.program ? (
                   <div className="cst-card-dark cst-hatch" style={{ padding: 28, textAlign: 'center' }}>
@@ -460,7 +464,7 @@ export default function CoachMember() {
               </>
             )}
 
-            {activeTab === 1 && (
+            {activeTab === 2 && (
               <>
                 <CSTSectionNum num={1} label="HISTORIQUE" sub={`${data.sessions.length} DERNIÈRES SÉANCES`} />
                 <div className="cst-col" style={{ gap: 10, marginTop: 14 }}>
@@ -483,7 +487,7 @@ export default function CoachMember() {
               </>
             )}
 
-            {activeTab === 2 && (
+            {activeTab === 3 && (
               <>
                 <CSTSectionNum num={1} label="VIDÉOS TECHNIQUE" sub="ENVOIS DU COACHÉ" />
                 <div style={{ marginTop: 14 }}>
@@ -492,7 +496,7 @@ export default function CoachMember() {
               </>
             )}
 
-            {activeTab === 3 && (
+            {activeTab === 4 && (
               <>
                 <CSTSectionNum num={1} label="PROGRESSION" sub="EXERCICES CLÉS" />
                 <div className="cst-col" style={{ gap: 10, marginTop: 14 }}>
@@ -527,7 +531,7 @@ export default function CoachMember() {
               </>
             )}
 
-            {activeTab === 4 && form && (
+            {activeTab === 5 && form && (
               <>
                 <CSTSectionNum num={1} label="PROFIL" sub="ÉDITER LES INFOS ADHÉRENT" />
                 <form onSubmit={saveForm} className="cst-card-dark" style={{ padding: 20, marginTop: 14, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
@@ -583,7 +587,7 @@ export default function CoachMember() {
               </>
             )}
 
-            {activeTab === 5 && (
+            {activeTab === 6 && (
               <>
                 <CSTSectionNum num={1} label="MESSAGES" sub={data.unread_messages_count > 0 ? `${data.unread_messages_count} NON LUS` : 'AUCUN NOUVEAU'} />
                 <div className="cst-card-dark" style={{ padding: 24, marginTop: 14, textAlign: 'center' }}>

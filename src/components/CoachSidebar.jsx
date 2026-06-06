@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SUPABASE_ENABLED } from "@/lib/app-mode";
 import { CSTLogo, CSTAvatar } from "./Atoms";
 import ThemeToggle from "./ThemeToggle";
+import NotificationBell from "./coach/NotificationBell";
 
 const items = [
   { id: "membres", label: "Membres", icon: "○", path: "/coach", match: (p) => p === "/coach" || p.startsWith("/coach/membre") },
@@ -114,8 +115,9 @@ export default function CoachSidebar() {
           ⎋
         </button>
       </div>
-      <div style={{ display: "flex", justifyContent: "flex-start" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
         <ThemeToggle variant="pill" />
+        <NotificationBell />
       </div>
     </div>
   );
@@ -164,6 +166,7 @@ export default function CoachSidebar() {
         </button>
         <span className="topbar-title">{currentLabel}</span>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto" }}>
+          <NotificationBell />
           <ThemeToggle variant="icon" />
           <button
             onClick={handleSignOut}
