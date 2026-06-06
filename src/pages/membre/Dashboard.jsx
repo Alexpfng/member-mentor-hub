@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useNavigate as useTsNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { SUPABASE_ENABLED } from "@/lib/app-mode";
@@ -9,11 +10,8 @@ import ThemeToggle from "../../components/ThemeToggle";
 import { WeightLogDialog } from "../../components/cst/WeightLogDialog";
 import { usePRConfetti } from "@/hooks/usePRConfetti";
 import { getMemberDashboard } from "@/lib/member-stats.functions";
+import { listWeekPlan, upsertPlannedSession } from "@/lib/planning.functions";
 
-
-
-
-const DAYS = ["DIM", "LUN", "MAR", "MER", "JEU", "VEN", "SAM"];
 const today = new Date();
 const todayISO = today.toISOString().slice(0, 10);
 
@@ -34,8 +32,10 @@ function getWeekDates() {
 
 export default function MemberDashboard() {
   const navigate = useNavigate();
+  const tsNavigate = useTsNavigate();
   const [profile, setProfile] = useState(null);
   const [weekSessions, setWeekSessions] = useState([]);
+  const [plan, setPlan] = useState(null); // { planned, sessions, dayDefs, weekNumber, assignment }
   const [assignment, setAssignment] = useState(null);
   const [lastPR, setLastPR] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -46,10 +46,14 @@ export default function MemberDashboard() {
   const [weightRefresh, setWeightRefresh] = useState(0);
   const [streak, setStreak] = useState(0);
   const [coachMessage, setCoachMessage] = useState(null);
+  const [choosing, setChoosing] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   usePRConfetti(userId);
 
   const fetchDashboard = useServerFn(getMemberDashboard);
+  const fetchPlan = useServerFn(listWeekPlan);
+  const upsertPlanned = useServerFn(upsertPlannedSession);
 
   useEffect(() => {
     if (!SUPABASE_ENABLED) { setLoading(false); return; }
@@ -69,6 +73,13 @@ export default function MemberDashboard() {
         setProfile(prof);
         setAssignment(assigns?.[0] ?? null);
         setWeekSessions(sessions ?? []);
+
+        try {
+          const p = await fetchPlan({ data: {} });
+          setPlan(p);
+        } catch (err) {
+          console.error("listWeekPlan failed", err);
+        }
 
         try {
           const dash = await fetchDashboard();
@@ -102,6 +113,47 @@ export default function MemberDashboard() {
   const todaySession = weekSessions.find((s) => s.date === todayISO);
   const inProgress = weekSessions.find((s) => s.status === "in_progress");
 
+  // Plan-derived
+  const plannedByDate = new Map();
+  (plan?.planned ?? []).forEach((p) => {
+    if (p.planned_date) plannedByDate.set(p.planned_date, p);
+  });
+  const todayPlanned = plannedByDate.get(todayISO) ?? null;
+
+  const dayDefs = (plan?.dayDefs ?? []).filter((d) => d?.type !== "Repos");
+  const usedLabels = new Set(
+    (plan?.planned ?? []).map((p) => p.day_label).concat(
+      (plan?.sessions ?? []).map((s) => s.session_label).filter(Boolean),
+    ),
+  );
+  const availableDayDefs = dayDefs.filter((d) => !usedLabels.has(d.label));
+
+  const startSession = (dayLabel) => {
+    tsNavigate({
+      to: "/membre/logger",
+      search: dayLabel ? { day: dayLabel, week: plan?.weekNumber ?? 0 } : {},
+    });
+  };
+
+  const chooseAndStart = async (def) => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await upsertPlanned({
+        data: {
+          programId: plan?.assignment?.program_id ?? null,
+          weekNumber: plan?.weekNumber ?? 0,
+          dayLabel: def.label,
+          plannedDate: todayISO,
+        },
+      });
+      startSession(def.label);
+    } catch (e) {
+      console.error(e);
+      setBusy(false);
+    }
+  };
+
   if (loading) {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--cst-dark-green)", color: "rgba(255,255,255,0.4)", fontFamily: "var(--cst-mono)", fontSize: 11, letterSpacing: "0.18em" }}>
@@ -109,6 +161,14 @@ export default function MemberDashboard() {
       </div>
     );
   }
+
+  // Hero header label: prefer today's real session/planned label
+  const headerSubLabel = (
+    inProgress?.session_label
+    ?? todaySession?.session_label
+    ?? todayPlanned?.day_label
+    ?? programName
+  ).toUpperCase();
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--cst-dark-green)" }}>
@@ -122,7 +182,6 @@ export default function MemberDashboard() {
               <CSTAvatar initials={initials} size={28} />
               <ThemeToggle variant="icon" />
               <button
-
                 onClick={async () => {
                   await supabase.auth.signOut();
                   navigate("/login");
@@ -151,7 +210,7 @@ export default function MemberDashboard() {
               <CSTSectionNum
                 num={1}
                 label={today.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" }).toUpperCase()}
-                sub={programName.toUpperCase()}
+                sub={headerSubLabel}
               />
               <div style={{ marginTop: 14 }}>
                 <h1 className="cst-display" style={{ fontSize: 38, margin: 0 }}>
@@ -196,6 +255,77 @@ export default function MemberDashboard() {
                     {todaySession.duration_minutes ? `${todaySession.duration_minutes} min` : "Durée non enregistrée"}
                   </div>
                 </>
+              ) : todayPlanned ? (
+                <>
+                  <div className="cst-col" style={{ gap: 2 }}>
+                    <span className="cst-mono" style={{ fontSize: 9, color: "var(--cst-mid-green)" }}>★ AUJOURD'HUI · PLANIFIÉ</span>
+                    <div className="cst-display" style={{ fontSize: 22, marginTop: 6 }}>
+                      {todayPlanned.day_label?.toUpperCase()}
+                    </div>
+                  </div>
+                  <div style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "14px 0" }} />
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button
+                      className="cst-btn cst-btn-primary"
+                      style={{ flex: 1 }}
+                      onClick={() => startSession(todayPlanned.day_label)}
+                    >
+                      COMMENCER →
+                    </button>
+                    {availableDayDefs.length > 0 && (
+                      <button
+                        className="cst-btn cst-btn-ghost-dark"
+                        style={{ fontSize: 10 }}
+                        onClick={() => setChoosing((v) => !v)}
+                      >
+                        CHANGER
+                      </button>
+                    )}
+                  </div>
+                  {choosing && availableDayDefs.length > 0 && (
+                    <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+                      <span className="cst-mono" style={{ fontSize: 9, opacity: 0.6 }}>AUTRES SÉANCES DE LA SEMAINE</span>
+                      {availableDayDefs.map((d) => (
+                        <button
+                          key={d.label}
+                          disabled={busy}
+                          onClick={() => chooseAndStart(d)}
+                          className="cst-btn cst-btn-ghost-dark"
+                          style={{ fontSize: 11, justifyContent: "flex-start", textAlign: "left" }}
+                        >
+                          → {d.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : availableDayDefs.length > 0 ? (
+                <>
+                  <div className="cst-col" style={{ gap: 2 }}>
+                    <span className="cst-mono" style={{ fontSize: 9, color: "var(--cst-mid-green)" }}>★ CHOISIR MA SÉANCE</span>
+                    <div className="cst-display" style={{ fontSize: 18, marginTop: 6 }}>
+                      QUE FAIS-TU AUJOURD'HUI ?
+                    </div>
+                    <div className="cst-italic" style={{ fontSize: 13, color: "rgba(255,255,255,0.6)" }}>
+                      {programName}
+                    </div>
+                  </div>
+                  <div style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "14px 0" }} />
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    {availableDayDefs.map((d) => (
+                      <button
+                        key={d.label}
+                        disabled={busy}
+                        onClick={() => chooseAndStart(d)}
+                        className="cst-btn cst-btn-primary"
+                        style={{ fontSize: 12, justifyContent: "space-between", display: "flex" }}
+                      >
+                        <span>{d.label}</span>
+                        <span>→</span>
+                      </button>
+                    ))}
+                  </div>
+                </>
               ) : (
                 <>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
@@ -215,7 +345,7 @@ export default function MemberDashboard() {
                   <button
                     className="cst-btn cst-btn-primary"
                     style={{ width: "100%" }}
-                    onClick={() => navigate("/membre/logger")}
+                    onClick={() => startSession(null)}
                   >
                     COMMENCER →
                   </button>
@@ -229,9 +359,12 @@ export default function MemberDashboard() {
               <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 6, marginTop: 12 }}>
                 {weekDates.map((date, i) => {
                   const sess = weekSessions.find((s) => s.date === date);
+                  const planned = plannedByDate.get(date);
                   const isToday = date === todayISO;
                   const isDone = sess?.status === "completed";
                   const isInProgress = sess?.status === "in_progress";
+                  const label = sess?.session_label ?? planned?.day_label ?? null;
+                  const clickable = !!(sess || planned);
                   return (
                     <div
                       key={date}
@@ -241,16 +374,38 @@ export default function MemberDashboard() {
                         borderRadius: 8,
                         background: isToday ? "var(--cst-mid-green)" : "rgba(255,255,255,0.03)",
                         border: isToday ? "none" : "1px solid rgba(255,255,255,0.06)",
-                        cursor: sess ? "pointer" : "default",
+                        cursor: clickable ? "pointer" : "default",
                       }}
-                      onClick={() => sess && navigate(isInProgress ? `/membre/seance/${sess.id}` : "/membre/historique")}
+                      onClick={() => {
+                        if (isInProgress) navigate(`/membre/seance/${sess.id}`);
+                        else if (isDone) navigate("/membre/historique");
+                        else if (planned && isToday) startSession(planned.day_label);
+                        else if (planned || sess) navigate("/membre/planning");
+                      }}
                     >
                       <div className="cst-mono" style={{ fontSize: 8, color: isToday ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.45)" }}>
                         {dayLabels[i]}
                       </div>
-                      <div style={{ marginTop: 6, fontSize: 14, color: isToday ? "#fff" : isDone ? "var(--cst-mid-green)" : isInProgress ? "#F5A623" : "rgba(255,255,255,0.5)" }}>
-                        {isDone ? "✓" : isToday ? "●" : isInProgress ? "⏱" : "○"}
+                      <div style={{ marginTop: 6, fontSize: 14, color: isToday ? "#fff" : isDone ? "var(--cst-mid-green)" : isInProgress ? "#F5A623" : planned ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.5)" }}>
+                        {isDone ? "✓" : isInProgress ? "⏱" : planned ? "●" : isToday ? "●" : "○"}
                       </div>
+                      {label && (
+                        <div
+                          className="cst-mono"
+                          style={{
+                            marginTop: 4,
+                            fontSize: 7,
+                            lineHeight: 1.1,
+                            color: isToday ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.55)",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                          title={label}
+                        >
+                          {label}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
