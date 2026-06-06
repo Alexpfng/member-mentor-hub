@@ -1,49 +1,40 @@
+## Problème observé
+
+Sur `/membre`, la carte « AUJOURD'HUI » affiche toujours le **nom du programme** ("RENFO SPÉ TRAIL + MUSCU HAUT DU CORPS"), et `COMMENCER` lance un Logger générique. Le membre ne peut donc pas :
+- voir la séance qu'il a planifiée pour aujourd'hui dans `/membre/planning`,
+- choisir, parmi les séances de la semaine du programme, laquelle il veut démarrer.
+
 ## Objectif
 
-Faire en sorte que l’écran **Historique** de l’espace membre n’affiche jamais de séance inventée. Il doit afficher uniquement les séances réelles du membre connecté, issues de la base de données.
+L'accueil membre doit se baser uniquement sur le réel : les `planned_sessions` du membre + les jours du programme assigné, exactement comme dans Planning. Aucune donnée inventée.
 
-## Ce qui sera modifié
+## Changements (uniquement `src/pages/membre/Dashboard.jsx`)
 
-1. **Supprimer les données hardcodées**
-   - Retirer la liste statique `MAI 2026 / AVRIL 2026` actuellement présente dans `src/pages/membre/Historique.jsx`.
-   - Supprimer les textes comme `28 SÉANCES` s’ils ne viennent pas du nombre réel de séances.
+1. **Charger le planning de la semaine** via le server function existant `listWeekPlan` (`@/lib/planning.functions`). Il renvoie déjà `planned`, `sessions`, `dayDefs`, `assignment` pour la semaine courante. Aucun nouveau schéma, aucune nouvelle requête côté SQL.
 
-2. **Charger les vraies séances du membre**
-   - Récupérer l’utilisateur connecté.
-   - Lire uniquement ses lignes réelles dans `sessions`, avec `status = completed`.
-   - Trier par date décroissante.
-   - Grouper l’affichage par mois à partir de la vraie date de séance.
+2. **Carte héro « AUJOURD'HUI »** — logique en cascade, basée sur le réel uniquement :
+   - `in_progress` aujourd'hui → `REPRENDRE` (déjà en place).
+   - `completed` aujourd'hui → état terminé (déjà en place).
+   - `planned` aujourd'hui (entrée `planned_sessions` avec `planned_date = today`) → afficher `day_label` de la séance planifiée + `COMMENCER →` qui ouvre le Logger pour cette séance.
+   - Aucun `planned` pour aujourd'hui mais le programme a des `dayDefs` non encore utilisés cette semaine → afficher un petit **sélecteur** : titre `CHOISIR MA SÉANCE` + liste cliquable des `dayDefs` restants ; le clic appelle `upsertPlannedSession({ plannedDate: today, dayLabel })` puis lance le Logger sur cette séance.
+   - Aucun programme et aucun planifié → fallback `SÉANCE LIBRE` (comportement actuel).
 
-3. **Afficher uniquement des métriques réelles**
-   - Utiliser les champs existants de `sessions` :
-     - `date`
-     - `session_label`
-     - `duration_minutes`
-     - `average_rpe`
-     - `total_volume_kg`
-     - `week_number`
-     - `day_number`
-     - `member_note`
-     - `coach_note`
-   - Ne pas afficher de PR, nombre d’exercices ou note coach si la donnée n’existe pas réellement.
+3. **Bande semaine** : pour chaque jour, en plus du point d'état, afficher le `day_label` de la séance planifiée ou complétée (texte court tronqué). Tap sur un jour :
+   - si séance `in_progress` → `/membre/seance/:id`,
+   - si `planned` → ouvre Logger pour ce `day_label`,
+   - sinon → `/membre/planning` (pour planifier).
 
-4. **Ajouter les données détaillées seulement si elles existent**
-   - Récupérer les `set_logs` liés aux vraies séances pour calculer le nombre réel d’exercices distincts.
-   - Récupérer les `personal_records` liés à ces séances pour afficher un vrai PR uniquement quand il existe.
+4. **Passage de la séance choisie au Logger** : `navigate("/membre/logger?day=<dayLabel>")`. Le Logger lit ce paramètre (via `useSearch` de TanStack Router) et l'utilise pour afficher le bon titre. Le contenu d'exercices du Logger reste tel quel (mock) tant qu'aucun changement de scope n'est demandé — seul le titre/affichage reflète la séance choisie. Pas d'invention de données.
 
-5. **Gérer les états vides proprement**
-   - Si aucune séance terminée n’existe : afficher un état vide clair, par exemple “Aucune séance terminée pour le moment”.
-   - Ne jamais remplacer l’absence de données par des exemples.
+5. **États** : ajout d'un état `loading` pour le bloc planning ; conservation de tous les autres comportements actuels (poids, PR, message coach, liens rapides).
 
-## Détails techniques
+## Hors scope
 
-- Fichier principal : `src/pages/membre/Historique.jsx`.
-- Requêtes côté client avec le client existant et les RLS actuelles : le membre ne peut lire que ses propres `sessions`, `set_logs` et `personal_records`.
-- Aucun changement de schéma base de données nécessaire.
-- Aucun nouvel accès large ou donnée fictive ajoutée.
+- Pas de modification du schéma DB ni des policies RLS.
+- Pas de refonte du Logger (mock conservé), uniquement la lecture du paramètre `day` pour afficher le bon label.
+- Pas de changement de `/membre/planning`.
 
-## Validation
+## Fichiers modifiés
 
-- Ouvrir `/membre/historique`.
-- Vérifier que les séances affichées correspondent aux vraies lignes `sessions` du membre connecté.
-- Vérifier qu’un membre sans historique voit l’état vide, pas des exemples.
+- `src/pages/membre/Dashboard.jsx` (logique héro + bande semaine + appel `listWeekPlan` + sélecteur).
+- `src/pages/membre/Logger.jsx` (lecture du paramètre `day` pour le titre).
