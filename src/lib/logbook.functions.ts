@@ -104,13 +104,15 @@ async function buildLogbook(memberId: string, weekNumber: number) {
 
 async function upsertLogbook(memberId: string, weekNumber: number) {
   const payload = await buildLogbook(memberId, weekNumber);
-  const { data: existing } = await supabaseAdmin
+  const existingQuery = supabaseAdmin
     .from("weekly_logbooks")
     .select("id, coach_message")
     .eq("member_id", memberId)
-    .eq("week_number", weekNumber)
-    .eq("program_id", payload.program_id)
-    .maybeSingle();
+    .eq("week_number", weekNumber);
+  const { data: existing } = payload.program_id
+    ? await existingQuery.eq("program_id", payload.program_id).maybeSingle()
+    : await existingQuery.is("program_id", null).maybeSingle();
+
   if (existing) {
     const { data: row, error } = await supabaseAdmin
       .from("weekly_logbooks")
