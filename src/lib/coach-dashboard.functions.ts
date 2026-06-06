@@ -92,8 +92,8 @@ export const getPriorityFeed = createServerFn({ method: "GET" })
       if (seenSess.has(r.session_id)) continue; seenSess.add(r.session_id);
       items.push({ type: "high_rpe", id: r.id, priority: 80 + r.rpe, memberId: r.sessions.member_id, memberName: nameOf.get(r.sessions.member_id) || "Membre", sessionId: r.session_id, exerciseName: r.exercise_name || "—", rpe: r.rpe, createdAt: r.created_at });
     }
-    for (const v of videos.data ?? []) items.push({ type: "video", id: v.id, priority: 60, memberId: v.member_id, memberName: nameOf.get(v.member_id) || "Membre", sessionId: v.session_id, exerciseName: v.exercise_name, createdAt: v.created_at });
-    for (const m of msgs.data ?? []) items.push({ type: "message", id: m.id, priority: 40, memberId: m.from_id, memberName: nameOf.get(m.from_id) || "Membre", content: m.content, createdAt: m.created_at });
+    for (const v of videos.data ?? []) items.push({ type: "video", id: v.id, priority: 60, memberId: v.member_id, memberName: nameOf.get(v.member_id) || "Membre", sessionId: v.session_id, exerciseName: v.exercise_name, createdAt: v.created_at ?? new Date().toISOString() });
+    for (const m of msgs.data ?? []) items.push({ type: "message", id: m.id, priority: 40, memberId: m.from_id, memberName: nameOf.get(m.from_id) || "Membre", content: m.content, createdAt: m.created_at ?? new Date().toISOString() });
 
     items.sort((a, b) => b.priority - a.priority || (a.createdAt < b.createdAt ? 1 : -1));
     return items.slice(0, 30);
