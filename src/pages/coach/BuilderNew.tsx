@@ -16,8 +16,8 @@ import { toast } from 'sonner';
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
-type ExColor = '🔴' | '🟢' | '🟡' | '🔵';
-type Category = 'PUSH' | 'PULL' | 'LEGS' | 'CORE' | 'CARDIO' | 'TOUT';
+type ExColor = '🔴' | '🟢' | '🟡' | '🔵' | '🟠';
+type Category = 'PUSH' | 'PULL' | 'LEGS' | 'CORE' | 'CARDIO' | 'PLYO' | 'TOUT';
 
 interface LibraryExercise {
   id: string;
@@ -76,7 +76,8 @@ const BASE_LIBRARY: LibraryExercise[] = [
 ];
 
 const REST_OPTIONS = ['0s','30s','45s','1 min','1min30','2 min','2min30','3 min','4 min','5 min'];
-const COLORS: ExColor[] = ['🔴','🟢','🟡','🔵'];
+const COLORS: ExColor[] = ['🔴','🟢','🟡','🔵','🟠'];
+const COLOR_HEX: Record<ExColor, string> = { '🔴': '#C56A60', '🟢': '#7AAB7E', '🟡': '#E2C36B', '🔵': '#6FA3C4', '🟠': '#E07B39' };
 
 // ─── YOUTUBE UTILS ─────────────────────────────────────────────────────────────
 
@@ -116,8 +117,8 @@ function makeExercise(lib: LibraryExercise): ProgramExercise {
 }
 
 // ─── COLOR MAPPING ────────────────────────────────────────────────────────────
-const EMOJI_TO_NAME: Record<string, string> = { '🔴': 'red', '🟢': 'green', '🟡': 'yellow', '🔵': 'blue' };
-const NAME_TO_EMOJI: Record<string, ExColor> = { red: '🔴', green: '🟢', yellow: '🟡', blue: '🔵' };
+const EMOJI_TO_NAME: Record<string, string> = { '🔴': 'red', '🟢': 'green', '🟡': 'yellow', '🔵': 'blue', '🟠': 'orange' };
+const NAME_TO_EMOJI: Record<string, ExColor> = { red: '🔴', green: '🟢', yellow: '🟡', blue: '🔵', orange: '🟠' };
 
 // ─── CANONICAL <-> BUILDER MAPPING ───────────────────────────────────────────
 // Canonical shape lives in programs.structure and is read by ProgramBlocks.
@@ -235,13 +236,22 @@ function QuickConfig({ ex, onChange, onClose, dayExercises }: PopoverProps) {
         overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 14,
       }}>
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
             <span style={{ fontSize: 18 }}>{local.color}</span>
-            <span style={{ fontFamily: 'var(--cst-display)', fontSize: 18, fontWeight: 800, textTransform: 'uppercase', color: 'var(--cst-text)' }}>{local.name}</span>
+            <input
+              className="cst-input"
+              value={local.name}
+              onChange={(e) => set('name', e.target.value)}
+              style={{ fontFamily: 'var(--cst-display)', fontSize: 16, fontWeight: 800, textTransform: 'uppercase', color: 'var(--cst-text)', padding: '6px 10px', flex: 1, minWidth: 0 }}
+              placeholder="Nom de l'exercice"
+            />
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--cst-text-soft)', fontSize: 20, cursor: 'pointer' }}>✕</button>
         </div>
+        <p style={{ margin: 0, fontSize: 10, color: 'var(--cst-text-muted)', fontFamily: 'var(--cst-mono)', letterSpacing: '0.1em' }}>
+          ✎ MODIFIE POUR CE PROGRAMME — Pour renommer dans toute la bibliothèque, va dans Bibliothèque.
+        </p>
 
         {/* Séries / Reps / Charge */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
@@ -842,7 +852,7 @@ export default function BuilderNew({ programIdParam }: { programIdParam?: string
             <input className="cst-input" placeholder="🔍 Rechercher..." value={libSearch}
               onChange={e => setLibSearch(e.target.value)} style={{ padding: '8px 12px', fontSize: 13, marginBottom: 10 }} />
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-              {(['TOUT','PUSH','PULL','LEGS','CORE','CARDIO'] as Category[]).map(c => (
+              {(['TOUT','PUSH','PULL','LEGS','CORE','CARDIO','PLYO'] as Category[]).map(c => (
                 <button key={c} onClick={() => setLibCat(c)} style={{
                   padding: '3px 8px', borderRadius: 4, border: '1px solid',
                   borderColor: libCat === c ? 'var(--cst-mid-green)' : 'rgba(255,255,255,0.12)',

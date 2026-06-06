@@ -23,10 +23,22 @@ type Exercise = {
   youtube_id: string | null;
   coach_notes: string | null;
   is_archived: boolean | null;
+  movement_patterns: string[] | null;
 };
 
 type IntensityCode = { code: string; label: string; description: string; color_hex: string };
 type GlossaryEntry = { cle: string; titre: string; contenu: string };
+
+const PATTERN_OPTIONS: { value: string; label: string }[] = [
+  { value: "push", label: "Push" },
+  { value: "pull", label: "Pull" },
+  { value: "legs", label: "Legs" },
+  { value: "hinge", label: "Hinge" },
+  { value: "core", label: "Core" },
+  { value: "cardio", label: "Cardio" },
+  { value: "mobility", label: "Mobilité" },
+  { value: "carry", label: "Carry" },
+];
 
 const EMPTY: Partial<Exercise> = {
   name: "",
@@ -37,6 +49,7 @@ const EMPTY: Partial<Exercise> = {
   youtube_url: "",
   coach_notes: "",
   is_archived: false,
+  movement_patterns: [],
 };
 
 export default function Exercices() {
@@ -57,6 +70,7 @@ export default function Exercices() {
   const [filterMuscle, setFilterMuscle] = useState<Set<string>>(new Set());
   const [filterEquip, setFilterEquip] = useState<Set<string>>(new Set());
   const [filterIntensity, setFilterIntensity] = useState<Set<string>>(new Set());
+  const [filterPattern, setFilterPattern] = useState<Set<string>>(new Set());
   const [showArchived, setShowArchived] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
@@ -109,10 +123,14 @@ export default function Exercices() {
         const code = it.intensity_code || it.category || "non_classe";
         if (!filterIntensity.has(code)) return false;
       }
+      if (filterPattern.size) {
+        const pats = it.movement_patterns ?? [];
+        if (!pats.some((p) => filterPattern.has(p))) return false;
+      }
       if (q && !it.name.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [items, search, filterMuscle, filterEquip, filterIntensity, showArchived]);
+  }, [items, search, filterMuscle, filterEquip, filterIntensity, filterPattern, showArchived]);
 
   function toggleInSet(set: Set<string>, value: string, setter: (s: Set<string>) => void) {
     const next = new Set(set);
@@ -153,9 +171,10 @@ export default function Exercices() {
           youtube_url: editing.youtube_url || null,
           coach_notes: editing.coach_notes || null,
           is_archived: !!editing.is_archived,
+          movement_patterns: editing.movement_patterns ?? [],
         },
       });
-      toast.success("Exercice enregistré");
+      toast.success("Renommé ✓");
       setEditing(null);
       await reload();
     } catch (e) {
@@ -225,6 +244,9 @@ export default function Exercices() {
             </button>
           </div>
         </div>
+        <p style={{ margin: "8px 0 0", fontSize: 13, color: "var(--cst-text-soft)", maxWidth: 720, lineHeight: 1.55 }}>
+          Gère ici tes exercices de référence&nbsp;: nom, vidéo, couleur, schéma moteur. Les modifications s'appliquent à tous tes futurs programmes.
+        </p>
 
         {/* Filters */}
         <div
@@ -251,6 +273,12 @@ export default function Exercices() {
               color: "var(--cst-text)",
               fontSize: 14,
             }}
+          />
+          <FilterChips
+            label="Schéma moteur"
+            values={PATTERN_OPTIONS}
+            selected={filterPattern}
+            onToggle={(v) => toggleInSet(filterPattern, v, setFilterPattern)}
           />
           <FilterChips
             label="Intensité"
@@ -408,6 +436,37 @@ export default function Exercices() {
                 </option>
               ))}
             </select>
+          </Field>
+          <Field label="Schéma moteur">
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {PATTERN_OPTIONS.map((p) => {
+                const current = editing.movement_patterns ?? [];
+                const on = current.includes(p.value);
+                return (
+                  <button
+                    key={p.value}
+                    type="button"
+                    onClick={() => {
+                      const next = on
+                        ? current.filter((x) => x !== p.value)
+                        : [...current, p.value];
+                      setEditing({ ...editing, movement_patterns: next });
+                    }}
+                    style={{
+                      padding: "5px 10px",
+                      borderRadius: 999,
+                      border: on ? "1px solid var(--cst-mid-green)" : "1px solid var(--cst-input-border)",
+                      background: on ? "rgba(45,90,53,0.15)" : "var(--cst-input-bg)",
+                      color: "var(--cst-text)",
+                      fontSize: 11,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {p.label}
+                  </button>
+                );
+              })}
+            </div>
           </Field>
           <Field label="Groupe musculaire">
             <input

@@ -42,7 +42,12 @@ const VALID_INTENSITY = new Set([
   "semi_epuisant",
   "isolation",
   "prevention",
+  "plyo",
   "non_classe",
+]);
+
+const VALID_PATTERNS = new Set([
+  "push", "pull", "legs", "hinge", "core", "cardio", "mobility", "carry", "other",
 ]);
 
 const exerciseInputSchema = z.object({
@@ -55,6 +60,7 @@ const exerciseInputSchema = z.object({
   youtube_url: z.string().trim().max(500).optional().nullable(),
   coach_notes: z.string().max(2000).optional().nullable(),
   is_archived: z.boolean().optional(),
+  movement_patterns: z.array(z.string().max(20)).max(8).optional().nullable(),
 });
 
 export const listExercises = createServerFn({ method: "GET" })
@@ -63,7 +69,7 @@ export const listExercises = createServerFn({ method: "GET" })
     const { data, error } = await context.supabase
       .from("exercises")
       .select(
-        "id, name, intensity_code, category, color, muscle_group, equipement, default_tempo, youtube_url, youtube_id, coach_notes, is_archived, is_global"
+        "id, name, intensity_code, category, color, muscle_group, equipement, default_tempo, youtube_url, youtube_id, coach_notes, is_archived, is_global, movement_patterns"
       )
       .order("name", { ascending: true })
       .limit(2000);
@@ -102,6 +108,9 @@ export const upsertExercise = createServerFn({ method: "POST" })
       data.intensity_code && VALID_INTENSITY.has(data.intensity_code)
         ? data.intensity_code
         : null;
+    const patterns = (data.movement_patterns ?? [])
+      .map((p) => String(p).toLowerCase().trim())
+      .filter((p) => VALID_PATTERNS.has(p));
     const payload = {
       name: data.name,
       intensity_code: intensity,
@@ -115,6 +124,7 @@ export const upsertExercise = createServerFn({ method: "POST" })
       is_archived: data.is_archived ?? false,
       is_global: true,
       created_by: context.userId,
+      ...(data.movement_patterns !== undefined ? { movement_patterns: patterns } : {}),
     };
     if (data.id) {
       const { data: row, error } = await supabaseAdmin
