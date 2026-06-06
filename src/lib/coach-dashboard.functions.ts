@@ -236,7 +236,7 @@ export const getSessionDetail = createServerFn({ method: "GET" })
     return {
       session: sessR.data,
       member: prof ? { name: [prof.first_name, prof.last_name].filter(Boolean).join(" ") || prof.email || "Membre" } : { name: "Membre" },
-      program,
+      program: programName ? { name: programName, structureJson: programStructureJson } : null,
       setLogs: setsR.data ?? [],
       feedbacks: fbR.data ?? [],
       pains: painsR.data ?? [],
