@@ -37,6 +37,15 @@ export default function MemberDashboard() {
   const [assignment, setAssignment] = useState(null);
   const [lastPR, setLastPR] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState(null);
+  const [currentWeight, setCurrentWeight] = useState(null);
+  const [weightDelta, setWeightDelta] = useState(null);
+  const [weightOpen, setWeightOpen] = useState(false);
+  const [weightRefresh, setWeightRefresh] = useState(0);
+
+  usePRConfetti(userId);
+
+
 
   useEffect(() => {
     if (!SUPABASE_ENABLED) { setLoading(false); return; }
@@ -45,13 +54,25 @@ export default function MemberDashboard() {
         const { data: u } = await supabase.auth.getUser();
         if (!u?.user) { navigate("/login"); return; }
         const uid = u.user.id;
+        setUserId(uid);
 
-        const [{ data: prof }, { data: assigns }, { data: sessions }, { data: prs }] = await Promise.all([
+        const [{ data: prof }, { data: assigns }, { data: sessions }, { data: prs }, { data: weights }] = await Promise.all([
           supabase.from("profiles").select("first_name,last_name").eq("id", uid).maybeSingle(),
           supabase.from("assignments").select("program_id,programs(name,description)").eq("member_id", uid).eq("active", true).order("created_at", { ascending: false }).limit(1),
           supabase.from("sessions").select("id,date,status,session_label,duration_minutes").eq("member_id", uid).gte("date", getWeekDates()[0]).lte("date", getWeekDates()[6]).order("date"),
-          supabase.from("personal_records").select("exercise_name,value_kg,achieved_at").eq("member_id", uid).order("achieved_at", { ascending: false }).limit(1),
+          supabase.from("personal_records").select("exercise_name,weight_kg,reps,date").eq("member_id", uid).order("date", { ascending: false }).limit(1),
+          supabase.from("weight_logs").select("weight_kg,date").eq("member_id", uid).order("date", { ascending: false }).limit(2),
         ]);
+
+        setProfile(prof);
+        setAssignment(assigns?.[0] ?? null);
+        setWeekSessions(sessions ?? []);
+        setLastPR(prs?.[0] ?? null);
+        if (weights?.length) {
+          setCurrentWeight(Number(weights[0].weight_kg));
+          if (weights[1]) setWeightDelta(Number(weights[0].weight_kg) - Number(weights[1].weight_kg));
+        }
+
 
         setProfile(prof);
         setAssignment(assigns?.[0] ?? null);
