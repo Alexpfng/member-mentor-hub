@@ -396,6 +396,9 @@ export default function CoachMember() {
         <div style={{ padding: '24px 32px', display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 24 }}>
           <div>
             {activeTab === 0 && (
+              <MemberFollowupTab memberId={memberId} />
+            )}
+            {activeTab === 1 && (
               <>
                 {!data.program ? (
                   <div className="cst-card-dark cst-hatch" style={{ padding: 28, textAlign: 'center' }}>
