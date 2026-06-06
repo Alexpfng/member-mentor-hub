@@ -480,6 +480,48 @@ export type Database = {
           },
         ]
       }
+      pain_reports: {
+        Row: {
+          comment: string | null
+          created_at: string
+          exercise_name: string
+          id: string
+          intensity: number
+          member_id: string
+          resolved_at: string | null
+          resolved_by: string | null
+          session_id: string | null
+          updated_at: string
+          zone: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          exercise_name: string
+          id?: string
+          intensity: number
+          member_id: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          session_id?: string | null
+          updated_at?: string
+          zone: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          exercise_name?: string
+          id?: string
+          intensity?: number
+          member_id?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          session_id?: string | null
+          updated_at?: string
+          zone?: string
+        }
+        Relationships: []
+      }
       personal_records: {
         Row: {
           created_at: string | null
@@ -667,6 +709,7 @@ export type Database = {
         Row: {
           average_rpe: number | null
           coach_note: string | null
+          coach_seen: boolean
           created_at: string | null
           date: string | null
           day_number: number | null
@@ -686,6 +729,7 @@ export type Database = {
         Insert: {
           average_rpe?: number | null
           coach_note?: string | null
+          coach_seen?: boolean
           created_at?: string | null
           date?: string | null
           day_number?: number | null
@@ -705,6 +749,7 @@ export type Database = {
         Update: {
           average_rpe?: number | null
           coach_note?: string | null
+          coach_seen?: boolean
           created_at?: string | null
           date?: string | null
           day_number?: number | null

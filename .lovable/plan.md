@@ -1,155 +1,132 @@
-# Patch Coach — Léo · corrections + suivi semaine par semaine
+# Refonte Dashboard Coach & Suivi des Coachés
 
-Gros chantier. Je propose de le découper en **4 phases livrables** pour que tu puisses tester au fur et à mesure. Tu me dis si tu veux que je lance tout d'un bloc, ou phase par phase.
+Objectif : transformer `coach/Dashboard.jsx` en poste de pilotage temps réel, enrichir la fiche membre et le détail de séance, brancher notifications + Realtime.
 
----
+## Pré-requis BDD (1 migration)
 
-## Phase 1 — Corrections rapides (Bugs A1–A4)
+Avant tout, créer les éléments manquants :
 
-### A1 · Renommer un exercice
+1. **Table `pain_reports`** (Phase 2 du plan précédent, jamais exécutée)
+   - colonnes : `member_id`, `session_id`, `exercise_name`, `zone`, `intensity` (1-5), `comment`, `resolved_at`, `created_at`
+   - RLS : membre gère ses signalements ; coach lit tout ; coach peut marquer `resolved_at`.
+   - GRANT authenticated + service_role.
+2. **`sessions.coach_seen boolean default false`** — pour badges "NOUVEAU" et compteur "à traiter".
+3. **Realtime** : `ALTER PUBLICATION supabase_realtime ADD TABLE sessions, pain_reports, technique_videos, messages, exercise_feedbacks;`
+4. Optionnel : index `sessions(member_id, ended_at desc)`, `exercise_feedbacks(session_id)`.
 
-- **Bibliothèque** (`src/pages/coach/Exercices.tsx`) : champ nom déjà éditable dans la fiche → vérifier qu'il sauve bien et ajouter un toast « Renommé ✓ ».
-- **Builder** (`src/pages/coach/BuilderNew.tsx`) : rendre le `name` éditable inline (clic sur le titre → input). Auto-save sur blur.
-- **Modale « propager ? »** : quand le nom diffère du nom canonique de l'exercice référencé (lookup par `exercise_id`), proposer :
-  - « Uniquement dans ce programme » → stocké dans `programs.structure` uniquement.
-  - « Aussi dans la bibliothèque » → `UPDATE exercises SET name = ...` via une server fn.
-- Pas de migration DB nécessaire (les noms vivent déjà dans `programs.structure` et `exercises.name`).
+## 1. Dashboard Coach — `src/pages/coach/Dashboard.jsx` → réécriture
 
-### A2 · Filtres Push/Pull/Legs fonctionnels
+Nouvelle structure (sections numérotées style design system existant) :
 
-- **Migration** : ajouter `exercises.movement_patterns text[]` (nullable, default `{}`). GRANTs idem table `exercises`.
-- **Auto-classification** : script de migration SQL qui remplit `movement_patterns` à partir de `name` (ILIKE sur les mots-clés listés). Lancé une fois dans la migration.
-- **UI bibliothèque** : ligne de chips « Schéma moteur » au-dessus des chips « Groupe musculaire » ; filtres combinables (AND entre catégories de filtres, OR à l'intérieur).
-- **Fiche exercice** : multi-sélect chips push/pull/legs/hinge/core/cardio/mobility, sauvegardé dans `movement_patterns`.
+- **Header** : "01 TABLEAU DE BORD · {prénom} · {jour date}"
+- **Cartes métriques (4)** : Coachés actifs, Séances cette semaine, À traiter (accent si >0), Adhérence moyenne 7j.
+- **02 À TRAITER EN PRIORITÉ** : flux trié
+  1. Douleurs actives (`pain_reports` where `resolved_at is null`) — tri intensité desc
+  2. Séances avec RPE anormal (`exercise_feedbacks.rpe ≥ 9` ≥ 2× ou un 10) non vues
+  3. Vidéos technique non revues (`coach_reviewed = false`)
+  4. Messages non lus (`to_id = coach AND read = false`)
+  5. Décrochage : membres sans séance depuis > 4j vs fréquence prévue
+  - Chaque item : icône colorée, libellé, contexte, **boutons inline** (Voir séance, Adapter, Message, Marquer résolu…)
+  - État vide : "Rien à traiter — tes coachés sont à jour 💪"
+- **03 SÉANCES RÉCENTES** : 10 dernières sessions completed, temps réel (channel `sessions`)
+  - Avatar, nom, label séance, semaine/jour, temps relatif
+  - Stats : blocs faits, durée, RPE moyen, note membre tronquée, badge douleur si présente
+  - Badge "NOUVEAU" si `coach_seen=false`
+  - Clic → route détail séance
+- **04 MES COACHÉS** : tableau triable (alerte par défaut, nom, adhérence, dernière séance)
+  - Pastille 🔴/🟠/🟢 dérivée (douleur active > RPE élevé récent > OK)
+  - Colonnes : Coaché, Programme, Semaine x/y, Dernière séance, Adhérence 7j, État
+  - Actions rapides ligne : Voir / Adapter / Message
+  - Clic ligne → `/coach/membre/$memberId?tab=suivi`
 
-### A3 · Édition d'exercice directement depuis le programme
+Chargement progressif : métriques + "à traiter" d'abord, reste en suspense.
 
-- Dans `BuilderNew.tsx`, sur chaque ligne d'exercice : icône `[✎]` ouvrant une modale d'édition complète (réutilise le composant de fiche existant de la bibliothèque, extrait en `ExerciseEditDialog`).
-- En haut de la modale, un tag clair :
-  - `[Pour ce programme uniquement]` (sauve dans `programs.structure`)
-  - bascule `[Aussi dans la bibliothèque]` (sauve aussi `exercises`).
-- Page bibliothèque (`Exercices.tsx`) : ajouter le sous-titre « Gère ici tes exercices de référence… »
+## 2. Détail séance coach — nouvelle route
 
-### A4 · Pliométrie en intensité
+`src/routes/_authenticated.coach.seance.$sessionId.tsx` + page `src/pages/coach/SessionDetail.tsx`.
 
-- **Migration data only** : `UPDATE exercises SET intensity_code = 'plyo'` pour les exos déjà tagués pliométrie en `category`/`muscle_group`. Insert `intensity_codes ('plyo', 'Pliométrie', '#E07B39', '...définition...')`.
-- **Palette UI** : étendre `colorHex` et types `ExerciseColor` dans `src/components/cst/pedagogy.tsx` pour ajouter `"orange"` mappé à `#E07B39`. Ajouter dans la légende membre + filtres bibliothèque + sélecteur builder (5 boutons au lieu de 4).
-- Retirer « pliométrie » de la liste des groupes musculaires côté UI (mais ne pas effacer la donnée — juste ne plus l'afficher comme groupe musculaire).
-- Reclassement des exos pliométriques (box jump, depth jump, lateral jumps, single leg pogo, split squat jump…) par ILIKE dans la même migration.
+Vue lecture seule :
+- **Résumé** : blocs complétés, RPE moyen, volume total, ressenti global
+- **Note membre** (session.member_note)
+- **Bandeau douleur** si `pain_reports` lié à la session (zone, intensité, commentaire, [Adapter cet exo] [Marquer résolu])
+- **Détail par exercice** : pour chaque bloc du programme
+  - Prévu (depuis `programs.structure`) vs réalisé (depuis `set_logs` + `exercise_feedbacks`)
+  - Série par série : poids × reps · RPE · note série
+  - Badge ⚠ "RPE > prévu" quand `feedback.rpe > rpe_cible + 1`
+  - Badge 🔴 DOULEUR si exo dans `pain_reports`
+- **Actions** : [Répondre au membre] [Préparer la semaine suivante] [✓ Marquer comme vu] (set `coach_seen=true`)
 
----
+Au montage, marquer `coach_seen=true` (optimiste + update Supabase).
 
-## Phase 2 — Signalement de douleur (côté membre)
+## 3. Fiche membre — onglet SUIVI enrichi
 
-### Migration
+Dans `src/pages/coach/Member.jsx`, ajouter/refondre onglet "SUIVI" :
+- KPIs 30j : adhérence %, RPE moyen, douleurs actives, prochaine séance prévue
+- **Courbe adhérence 8 semaines** (Recharts LineChart)
+- **Courbe RPE moyen par semaine** (LineChart, seuil visuel à 9)
+- **Exercices à surveiller** : top exos avec RPE ≥ 9 récurrent OU sous-coté (RPE ≤ 6) OU douleur récente — calcul côté serveur
+- **Historique douleurs** (résolues + actives) avec action ✓ résoudre
+- Actions : [Préparer la semaine X+1] [Message] [Changer de programme]
 
-```sql
-CREATE TABLE public.pain_reports (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  member_id uuid NOT NULL,
-  session_id uuid,
-  exercise_name text,
-  zone text,
-  intensity integer CHECK (intensity BETWEEN 1 AND 5),
-  comment text,
-  resolved boolean DEFAULT false,
-  created_at timestamptz DEFAULT now()
-);
--- GRANTs + RLS : member CRUD sur les siens, coach SELECT all.
-```
+## 4. Progression par exercice (vue coach)
 
-### UI membre
+Sous-section ou onglet de la fiche membre :
+- Sélecteur d'exercice (exos présents dans l'historique du membre)
+- Graphe charge max + RPE par séance (Recharts ComposedChart)
+- Texte d'analyse simple : "charge stable, RPE qui monte → plateau"
 
-- Dans `src/components/cst/LiveSession.tsx`, sur l'écran d'un set : petit bouton discret `😣 Signaler une douleur`.
-- Ouvre un overlay : sélecteur de zone (suggestions courantes + champ libre), slider intensité 1-5, commentaire optionnel. Save → insert dans `pain_reports`.
-- Toast « Signalement envoyé au coach ».
+## 5. Signalement de douleur côté membre (Phase 2 manquante)
 
-### UI coach (rapide ici, vrai dashboard en phase 3)
+Pour que les douleurs remontent : dans `src/components/cst/LiveSession.tsx`, ajouter bouton "🔴 Signaler une douleur" par exercice → drawer (zone, intensité 1-5, commentaire) → insert `pain_reports`.
 
-- Badge rouge sur la card membre du dashboard si `pain_reports.resolved = false` existe.
+## 6. Notifications coach
 
----
+- Composant `<NotificationBell />` dans le header coach
+- Channel Realtime global au layout coach : écoute `pain_reports` (INSERT), `technique_videos` (INSERT), `sessions` (UPDATE status=completed), `messages` (INSERT to_id=coach), `exercise_feedbacks` (INSERT rpe≥9)
+- Toast immédiat + badge compteur
+- Centre déroulant : 20 dernières notifs, persistées en localStorage (lu/non lu)
 
-## Phase 3 — Suivi membre + adaptation S→S+1 (cœur métier)
+## 7. Server functions
 
-### B1 · Onglet « Suivi » dans la fiche membre
+`src/lib/coach-dashboard.functions.ts` (avec `requireSupabaseAuth` + check role coach) :
+- `getDashboardMetrics()` → 4 KPIs
+- `getPriorityFeed()` → liste typée (pain | high_rpe | video | message | skipped)
+- `getRecentSessions(limit=10)` → sessions enrichies (membre, RPE moyen, douleur ?)
+- `getMembersOverview()` → ligne par coaché avec état dérivé
+- `getSessionDetail(sessionId)` → session + program block + set_logs + feedbacks + pain_reports
+- `getMemberFollowup(memberId)` → KPIs 30j, séries adhérence, séries RPE, exos à surveiller, douleurs
+- `getExerciseProgression(memberId, exerciseName)` → points {date, max_weight, avg_rpe, reps}
+- `markSessionSeen(sessionId)`, `resolvePainReport(id)`
 
-Nouvelle page `src/routes/_authenticated.coach.membre.$memberId.tsx` avec un onglet « SUIVI » (les onglets existants restent).
+## 8. Fichiers à créer / modifier
 
-Bloc affiché (semaine courante du programme assigné) :
-- **Adhérence** : count `sessions.status='completed'` cette semaine / `frequency_per_week`.
-- **Douleurs ouvertes** : `pain_reports` non résolus. Liste cliquable « [Voir] [Adapter cet exo] ».
-- **RPE par exercice** : pour chaque exercice de la semaine du programme, comparer `avg(set_logs.rpe)` vs `rpe_target` issu de `programs.structure`. Flèche ↑/↓/= + texte d'interprétation.
+**Créer**
+- migration SQL (pain_reports + coach_seen + realtime)
+- `src/lib/coach-dashboard.functions.ts`
+- `src/lib/pain-reports.functions.ts`
+- `src/pages/coach/SessionDetail.tsx`
+- `src/routes/_authenticated.coach.seance.$sessionId.tsx`
+- `src/components/coach/PriorityFeed.tsx`
+- `src/components/coach/RecentSessionsList.tsx`
+- `src/components/coach/MembersTable.tsx`
+- `src/components/coach/NotificationBell.tsx`
+- `src/components/coach/MemberFollowup.tsx`
+- `src/components/coach/ExerciseProgressChart.tsx`
+- `src/components/cst/PainReportDialog.tsx`
 
-### B2 · Moteur de suggestions
+**Modifier**
+- `src/pages/coach/Dashboard.jsx` → refonte complète
+- `src/pages/coach/Member.jsx` → onglet SUIVI + Progression
+- `src/components/cst/LiveSession.tsx` → bouton signaler douleur
 
-Helper pur `src/lib/coach-suggestions.ts` :
-```ts
-function suggestAdjustment({ rpeDone, rpeTarget, hasPain, lastWeight }): Suggestion
-// → { type: 'reduce_load' | 'increase_load' | 'replace' | 'reduce_rom' | 'keep', delta, label }
-```
-Règles :
-- `rpeDone > rpeTarget + 1` → réduire charge de 5% (10% si > +2).
-- `rpeDone < rpeTarget - 1` → +2.5kg ou +2 reps.
-- `hasPain` → remplacer / réduire amplitude.
-- Sinon → garder.
+## 9. Réalisation en 3 lots (proposition)
 
-### B3 · « Préparer la semaine suivante »
+Pour livrer testable rapidement :
 
-Bouton en haut du suivi → server fn `createNextWeek` :
-- Lit `programs.structure.weeks[currentWeek]`, deep-clone vers `weeks[currentWeek+1]`.
-- Applique les suggestions par défaut **sans modifier** les données (juste annotations `_suggestion` par exo).
-- Persiste, navigue vers `/_authenticated/coach/builder/$id?week=N+1`.
+- **Lot A** (fondations) : migration BDD + server functions + `PainReportDialog` dans LiveSession.
+- **Lot B** (dashboard) : refonte Dashboard + nouvelle route détail séance + Realtime séances récentes.
+- **Lot C** (suivi + notifs) : onglet SUIVI enrichi, progression par exo, NotificationBell.
 
-### B4 · Builder « adaptation »
+## Question pour vous
 
-Dans `BuilderNew.tsx`, quand un exo porte `_suggestion`, afficher une bannière inline sous la ligne :
-- `💡 RPE 9 en S3 (prévu 8) → -5% = 16,5kg` avec boutons `[Appliquer]` `[Garder]` `[Autre]`.
-- `[Appliquer]` mute la valeur (charge, reps…), supprime l'annotation, sauve.
-- `[Garder]` supprime juste l'annotation.
-
-### B5 · Remplacer un exercice
-
-Bouton « Remplacer » sur chaque ligne du builder :
-- Modale avec recherche dans `exercises`, filtrée par `movement_patterns` commun avec l'exo courant.
-- Sélection → l'exercice change (`exercise_id`, `name`, `youtube_*`), séries/reps/RPE/récup conservés.
-
----
-
-## Phase 4 — Vue globale coach
-
-### B5 · Dashboard `MES MEMBRES — CETTE SEMAINE`
-
-Réécrire la section principale de `src/pages/coach/Dashboard.jsx` :
-- Server fn `getMembersWeeklyStatus` qui agrège pour chaque membre assigné :
-  - Programme, semaine actuelle, adhérence (sessions complétées vs prévues).
-  - Nombre de `pain_reports` ouverts.
-  - Max(RPE - RPE_target) de la semaine.
-- Tableau triable (défaut : alertes en haut). Clic ligne → `/coach/membre/$id`.
-
-### B6 · Mini-graphes de progression
-
-Sur la fiche membre, pour chaque exercice apparaissant dans `set_logs` du membre :
-- Mini-graphe Recharts (charge max par semaine, dot coloré par RPE moyen).
-- Affiché sur demande (accordéon) pour pas surcharger.
-
----
-
-## Sécurité & non-régression
-
-- Toutes les écritures passent par des `createServerFn` avec `requireSupabaseAuth` (jamais d'admin client côté membre).
-- RLS sur `pain_reports` : member = own, coach = all (via `has_role`).
-- Aucun changement aux corrections précédentes (focus input, contraste, 1-clic démarrage, navigation libre, parser Excel).
-- Palette : ajout d'une seule couleur (`#E07B39`) — pas de refonte.
-
----
-
-## Question avant de lancer
-
-Vu la taille, je préfère te confirmer le découpage avant de coder. Tu veux :
-
-- **(A)** Tout en une seule passe (gros patch, ~2h de génération, plus dur à tester).
-- **(B)** Phase par phase, je m'arrête après chaque phase pour que tu testes.
-- **(C)** D'abord juste la Phase 1 (les 4 bugs A1–A4), on voit le résultat, puis on attaque B.
-
-Mon avis : **(C)** — les 4 bugs A débloquent Léo immédiatement, et la Partie B mérite qu'on valide le schéma DB et l'UX du suivi avant de tout construire.
+Souhaitez-vous que je livre **les 3 lots d'un coup**, ou **lot par lot** avec validation entre chaque (recommandé vu l'ampleur) ?
