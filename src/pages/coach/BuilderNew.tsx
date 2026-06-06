@@ -16,8 +16,8 @@ import { toast } from 'sonner';
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
-type ExColor = '🔴' | '🟢' | '🟡' | '🔵';
-type Category = 'PUSH' | 'PULL' | 'LEGS' | 'CORE' | 'CARDIO' | 'TOUT';
+type ExColor = '🔴' | '🟢' | '🟡' | '🔵' | '🟠';
+type Category = 'PUSH' | 'PULL' | 'LEGS' | 'CORE' | 'CARDIO' | 'PLYO' | 'TOUT';
 
 interface LibraryExercise {
   id: string;
