@@ -391,6 +391,51 @@ export type Database = {
         }
         Relationships: []
       }
+      member_notification_prefs: {
+        Row: {
+          coach_msg: boolean
+          created_at: string
+          logbook: boolean
+          new_week: boolean
+          planned_session: boolean
+          pr: boolean
+          streak: boolean
+          updated_at: string
+          user_id: string
+          weight_reminder: boolean
+          weight_reminder_dow: number
+          weight_reminder_time: string
+        }
+        Insert: {
+          coach_msg?: boolean
+          created_at?: string
+          logbook?: boolean
+          new_week?: boolean
+          planned_session?: boolean
+          pr?: boolean
+          streak?: boolean
+          updated_at?: string
+          user_id: string
+          weight_reminder?: boolean
+          weight_reminder_dow?: number
+          weight_reminder_time?: string
+        }
+        Update: {
+          coach_msg?: boolean
+          created_at?: string
+          logbook?: boolean
+          new_week?: boolean
+          planned_session?: boolean
+          pr?: boolean
+          streak?: boolean
+          updated_at?: string
+          user_id?: string
+          weight_reminder?: boolean
+          weight_reminder_dow?: number
+          weight_reminder_time?: string
+        }
+        Relationships: []
+      }
       member_profiles: {
         Row: {
           coach_private_notes: string | null
@@ -579,6 +624,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      planned_sessions: {
+        Row: {
+          created_at: string
+          day_label: string
+          id: string
+          member_id: string
+          planned_date: string | null
+          program_id: string | null
+          reminder_time: string | null
+          session_id: string | null
+          status: string
+          updated_at: string
+          week_number: number | null
+        }
+        Insert: {
+          created_at?: string
+          day_label: string
+          id?: string
+          member_id: string
+          planned_date?: string | null
+          program_id?: string | null
+          reminder_time?: string | null
+          session_id?: string | null
+          status?: string
+          updated_at?: string
+          week_number?: number | null
+        }
+        Update: {
+          created_at?: string
+          day_label?: string
+          id?: string
+          member_id?: string
+          planned_date?: string | null
+          program_id?: string | null
+          reminder_time?: string | null
+          session_id?: string | null
+          status?: string
+          updated_at?: string
+          week_number?: number | null
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -948,6 +1035,72 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      weekly_logbooks: {
+        Row: {
+          avg_rpe: number | null
+          coach_message: string | null
+          feelings: Json | null
+          generated_at: string
+          id: string
+          member_id: string
+          new_prs: Json | null
+          pain_summary: string | null
+          period_end: string
+          period_start: string
+          program_id: string | null
+          sessions_done: number | null
+          sessions_planned: number | null
+          total_duration_min: number | null
+          total_volume_kg: number | null
+          updated_at: string
+          week_number: number
+          weight_end: number | null
+          weight_start: number | null
+        }
+        Insert: {
+          avg_rpe?: number | null
+          coach_message?: string | null
+          feelings?: Json | null
+          generated_at?: string
+          id?: string
+          member_id: string
+          new_prs?: Json | null
+          pain_summary?: string | null
+          period_end: string
+          period_start: string
+          program_id?: string | null
+          sessions_done?: number | null
+          sessions_planned?: number | null
+          total_duration_min?: number | null
+          total_volume_kg?: number | null
+          updated_at?: string
+          week_number: number
+          weight_end?: number | null
+          weight_start?: number | null
+        }
+        Update: {
+          avg_rpe?: number | null
+          coach_message?: string | null
+          feelings?: Json | null
+          generated_at?: string
+          id?: string
+          member_id?: string
+          new_prs?: Json | null
+          pain_summary?: string | null
+          period_end?: string
+          period_start?: string
+          program_id?: string | null
+          sessions_done?: number | null
+          sessions_planned?: number | null
+          total_duration_min?: number | null
+          total_volume_kg?: number | null
+          updated_at?: string
+          week_number?: number
+          weight_end?: number | null
+          weight_start?: number | null
         }
         Relationships: []
       }

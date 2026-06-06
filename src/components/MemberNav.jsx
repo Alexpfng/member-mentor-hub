@@ -8,10 +8,12 @@ import { supabase } from "@/integrations/supabase/client";
 const items = [
   { id: "home", icon: "🏠", label: "Accueil", path: "/membre" },
   { id: "prog", icon: "📋", label: "Programme", path: "/membre/programme" },
-  { id: "hist", icon: "📈", label: "Progrès", path: "/membre/historique" },
+  { id: "plan", icon: "📅", label: "Planning", path: "/membre/planning" },
+  { id: "carn", icon: "📖", label: "Carnet", path: "/membre/carnet" },
   { id: "msgs", icon: "💬", label: "Messages", path: "/membre/messages" },
   { id: "profile", icon: "👤", label: "Profil", path: "/membre/profil" },
 ];
+
 
 export default function MemberNav({ unreadCount: unreadProp = undefined } = {}) {
   const navigate = useNavigate();
