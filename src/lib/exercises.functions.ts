@@ -69,7 +69,7 @@ export const listExercises = createServerFn({ method: "GET" })
     const { data, error } = await context.supabase
       .from("exercises")
       .select(
-        "id, name, intensity_code, category, color, muscle_group, equipement, default_tempo, youtube_url, youtube_id, coach_notes, is_archived, is_global"
+        "id, name, intensity_code, category, color, muscle_group, equipement, default_tempo, youtube_url, youtube_id, coach_notes, is_archived, is_global, movement_patterns"
       )
       .order("name", { ascending: true })
       .limit(2000);
