@@ -42,7 +42,12 @@ const VALID_INTENSITY = new Set([
   "semi_epuisant",
   "isolation",
   "prevention",
+  "plyo",
   "non_classe",
+]);
+
+const VALID_PATTERNS = new Set([
+  "push", "pull", "legs", "hinge", "core", "cardio", "mobility", "carry", "other",
 ]);
 
 const exerciseInputSchema = z.object({
@@ -55,6 +60,7 @@ const exerciseInputSchema = z.object({
   youtube_url: z.string().trim().max(500).optional().nullable(),
   coach_notes: z.string().max(2000).optional().nullable(),
   is_archived: z.boolean().optional(),
+  movement_patterns: z.array(z.string().max(20)).max(8).optional().nullable(),
 });
 
 export const listExercises = createServerFn({ method: "GET" })
