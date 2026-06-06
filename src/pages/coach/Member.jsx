@@ -103,6 +103,7 @@ import CoachSidebar from '../../components/CoachSidebar';
 import { CSTSectionNum, CSTAvatar, CSTStatus } from '../../components/Atoms';
 import { getMemberDetail, updateMemberNotes, updateMemberProfile, assignProgram, listPrograms } from '@/lib/coach.functions';
 import { VideoReviewPanel } from '../../components/coach/VideoReviewPanel';
+import MemberFollowupTab from '../../components/coach/MemberFollowupTab';
 import { supabase } from '@/integrations/supabase/client';
 
 function daysBetween(a, b) {
