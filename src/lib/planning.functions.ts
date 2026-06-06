@@ -84,7 +84,7 @@ export const upsertPlannedSession = createServerFn({ method: "POST" })
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    const payload: Record<string, unknown> = {
+    const payload = {
       member_id: context.userId,
       program_id: data.programId ?? null,
       week_number: data.weekNumber,
@@ -93,6 +93,7 @@ export const upsertPlannedSession = createServerFn({ method: "POST" })
       reminder_time: data.reminderTime ?? null,
       status: data.status ?? "planned",
     };
+
     if (data.id) {
       const { data: row, error } = await supabaseAdmin
         .from("planned_sessions")
