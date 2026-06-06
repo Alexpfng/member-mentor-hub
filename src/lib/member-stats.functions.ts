@@ -142,3 +142,82 @@ export const getMemberProgression = createServerFn({ method: "GET" })
       prs: prs ?? [],
     };
   });
+
+export const listMyExercises = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: sessions } = await supabaseAdmin
+      .from("sessions")
+      .select("id")
+      .eq("member_id", context.userId)
+      .eq("status", "completed");
+    const ids = (sessions ?? []).map((s) => s.id);
+    if (!ids.length) return { exercises: [] as string[] };
+    const { data: sets } = await supabaseAdmin
+      .from("set_logs")
+      .select("exercise_name")
+      .in("session_id", ids);
+    const exercises = Array.from(
+      new Set((sets ?? []).map((s) => s.exercise_name).filter((n): n is string => !!n)),
+    ).sort();
+    return { exercises };
+  });
+
+export const getMyExerciseProgression = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ exerciseName: z.string().min(1).max(200).optional() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: sessions } = await supabaseAdmin
+      .from("sessions")
+      .select("id, ended_at, date")
+      .eq("member_id", context.userId)
+      .eq("status", "completed")
+      .order("date", { ascending: true });
+    const ids = (sessions ?? []).map((s) => s.id);
+    if (!ids.length) return { exercises: [] as string[], series: [], selected: null };
+
+    const { data: sets } = await supabaseAdmin
+      .from("set_logs")
+      .select("session_id, exercise_name, weight_kg, reps, rpe")
+      .in("session_id", ids);
+
+    const exercises = Array.from(
+      new Set((sets ?? []).map((s) => s.exercise_name).filter((n): n is string => !!n)),
+    ).sort();
+    const target = data.exerciseName ?? exercises[0];
+    if (!target) return { exercises, series: [], selected: null };
+
+    const dateBySession = new Map<string, string | null>();
+    for (const s of sessions ?? []) dateBySession.set(s.id, s.ended_at ?? s.date);
+
+    const bySession = new Map<
+      string,
+      { date: string; maxWeight: number; topReps: number; rpes: number[] }
+    >();
+    for (const sl of sets ?? []) {
+      if (sl.exercise_name !== target) continue;
+      const d = dateBySession.get(sl.session_id);
+      if (!d) continue;
+      const w = sl.weight_kg != null ? Number(sl.weight_kg) : 0;
+      const cur = bySession.get(sl.session_id) ?? { date: d, maxWeight: 0, topReps: 0, rpes: [] };
+      if (w > cur.maxWeight) { cur.maxWeight = w; cur.topReps = sl.reps ?? 0; }
+      if (sl.rpe != null) cur.rpes.push(sl.rpe);
+      bySession.set(sl.session_id, cur);
+    }
+
+    const series = [...bySession.values()]
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .map((p) => ({
+        date: p.date,
+        label: new Date(p.date).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" }),
+        weight: p.maxWeight,
+        reps: p.topReps,
+        rpe: p.rpes.length
+          ? Math.round((p.rpes.reduce((a, b) => a + b, 0) / p.rpes.length) * 10) / 10
+          : null,
+      }));
+
+    return { exercises, series, selected: target };
+  });
