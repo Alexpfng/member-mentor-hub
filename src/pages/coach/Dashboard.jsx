@@ -90,37 +90,6 @@ function InviteModal({ onClose, onDone }) {
   );
 }
 
-function AssignSelect({ memberId, programs, currentProgramId, onAssigned }) {
-  const assignFn = useServerFn(assignProgram);
-  const [val, setVal] = useState(currentProgramId || '');
-  const [busy, setBusy] = useState(false);
-  async function handleChange(e) {
-    const pid = e.target.value;
-    setVal(pid);
-    if (!pid) return;
-    setBusy(true);
-    try {
-      await assignFn({ data: { member_id: memberId, program_id: pid } });
-      onAssigned();
-    } catch (ex) {
-      alert(ex?.message || 'Erreur');
-    } finally { setBusy(false); }
-  }
-  return (
-    <select className="cst-input" disabled={busy} value={val} onChange={handleChange} style={{ fontSize: 11, padding: '4px 6px', cursor: 'pointer' }}>
-      <option value="">— Assigner un programme —</option>
-      {programs.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-    </select>
-  );
-}
-
-const tableStyle = { width: '100%', borderCollapse: 'collapse', fontSize: 13 };
-const thStyle = {
-  fontFamily: 'var(--cst-mono)', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase',
-  color: 'var(--cst-text-muted)', textAlign: 'left', padding: '12px 16px',
-  borderBottom: '1px solid rgba(255,255,255,0.08)', fontWeight: 600,
-};
-const tdStyle = { padding: '14px 16px', color: 'rgba(255,255,255,0.85)', borderBottom: '1px solid rgba(255,255,255,0.05)' };
 const metricCard = {
   background: '#243029', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12,
   padding: '22px 22px', display: 'flex', flexDirection: 'column', gap: 6,
