@@ -659,7 +659,8 @@ export const updateMemberProfile = createServerFn({ method: "POST" })
 // ─── ELEVATION PROXY (server-side → no CORS/rate-limit issues) ───────────────
 
 export const getElevation = createServerFn({ method: "GET" })
-  .inputValidator((d: unknown) => z.object({ locs: z.string().min(1) }).parse(d))
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ locs: z.string().min(1).max(8000) }).parse(d))
   .handler(async ({ data }) => {
     const res = await fetch(
       `https://api.opentopodata.org/v1/srtm30m?locations=${encodeURIComponent(data.locs)}`,
