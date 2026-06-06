@@ -99,9 +99,36 @@ export default function MemberProgramme() {
                   {weeks.length} SEMAINES{startDate ? ` · DÉMARRÉ LE ${startDate.toLocaleDateString('fr-FR')}` : ''}
                 </div>
 
+                {/* Global progress */}
+                {(() => {
+                  const totalDays = weeks.reduce((a, w) => a + (w.days || []).filter((d) => d.type !== 'Repos').length, 0);
+                  const doneDays = Object.values(sessionsByKey).filter((s) => s.status === 'completed').length;
+                  const pct = totalDays ? Math.round((doneDays / totalDays) * 100) : 0;
+                  return (
+                    <div style={{ marginTop: 14, padding: 12, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                        <span className="cst-mono" style={{ fontSize: 9 }}>PROGRESSION GLOBALE</span>
+                        <span className="cst-mono" style={{ fontSize: 9, color: 'var(--cst-mid-green)' }}>{doneDays}/{totalDays} · {pct}%</span>
+                      </div>
+                      <div style={{ height: 6, background: 'rgba(255,255,255,0.05)', borderRadius: 3, overflow: 'hidden' }}>
+                        <div style={{ width: `${pct}%`, height: '100%', background: 'var(--cst-mid-green)' }} />
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                <button
+                  onClick={() => navigate({ to: '/membre/planning' })}
+                  className="cst-btn cst-btn-ghost-dark"
+                  style={{ marginTop: 10, width: '100%', fontSize: 11 }}
+                >
+                  📅 PLANIFIER MA SEMAINE →
+                </button>
+
                 <div className="cst-col" style={{ gap: 8, marginTop: 18 }}>
                   {weeks.map((w, i) => {
                     const isOpen = openWeek === i;
+                    const weekNum = w.number ?? i + 1;
                     return (
                       <div key={i} className="cst-card-dark" style={{ padding: 0, overflow: 'hidden' }}>
                         <button
@@ -110,35 +137,60 @@ export default function MemberProgramme() {
                         >
                           <span style={{ opacity: 0.5 }}>{isOpen ? '▼' : '▶'}</span>
                           <div className="cst-col" style={{ flex: 1, gap: 2 }}>
-                            <span className="cst-mono" style={{ fontSize: 9 }}>SEMAINE {String(w.number ?? i + 1).padStart(2, '0')}</span>
+                            <span className="cst-mono" style={{ fontSize: 9 }}>
+                              SEMAINE {String(weekNum).padStart(2, '0')}
+                              {i === currentWeek && <span style={{ color: 'var(--cst-mid-green)', marginLeft: 6 }}>· EN COURS</span>}
+                            </span>
                             <span className="cst-display" style={{ fontSize: 15 }}>{(w.days || []).length} SÉANCE{(w.days || []).length > 1 ? 'S' : ''}</span>
                           </div>
                         </button>
                         {isOpen && (
                           <div className="cst-col" style={{ padding: '10px 14px 14px', gap: 14 }}>
-                            {(w.days || []).map((d, di) => (
-                              <div key={di} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: 10 }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
-                                  <span className="cst-display" style={{ fontSize: 13 }}>
-                                    J{d.number ?? di + 1} · {(d.label || 'Séance').toUpperCase()}
-                                  </span>
-                                  {d.type !== 'Repos' && (d.exercises?.length ?? 0) > 0 && (
-                                    <button
-                                      className="cst-btn cst-btn-primary cst-btn-sm"
-                                      onClick={() => navigate({ to: '/membre/logger' })}
-                                      style={{ fontSize: 9, padding: '4px 8px' }}
-                                    >
-                                      DÉMARRER →
-                                    </button>
+                            {(w.days || []).map((d, di) => {
+                              const dayNum = d.number ?? di + 1;
+                              const sess = sessionsByKey[`${weekNum}-${dayNum}`] || sessionsByKey[`${i + 1}-${di + 1}`];
+                              const plannedDate = plannedByKey[`${weekNum}-J${dayNum}`] || plannedByKey[`${weekNum}-${d.label}`];
+                              const isDone = sess?.status === 'completed';
+                              const isInProgress = sess?.status === 'in_progress';
+                              const icon = d.type === 'Repos' ? '🛌' : isDone ? '✓' : isInProgress ? '⏱' : plannedDate ? '◐' : '○';
+                              const iconColor = isDone ? 'var(--cst-mid-green)' : isInProgress ? '#F5A623' : plannedDate ? '#6EAB76' : 'rgba(255,255,255,0.4)';
+                              return (
+                                <div key={di} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: 10 }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8, gap: 8 }}>
+                                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flex: 1 }}>
+                                      <span style={{ fontSize: 14, color: iconColor }}>{icon}</span>
+                                      <div className="cst-col" style={{ gap: 2 }}>
+                                        <span className="cst-display" style={{ fontSize: 13 }}>
+                                          J{dayNum} · {(d.label || 'Séance').toUpperCase()}
+                                        </span>
+                                        {plannedDate && (
+                                          <span className="cst-mono" style={{ fontSize: 9, opacity: 0.6 }}>
+                                            📅 {new Date(plannedDate).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                    {d.type !== 'Repos' && (d.exercises?.length ?? 0) > 0 && !isDone && (
+                                      <button
+                                        className={isInProgress ? 'cst-btn cst-btn-primary cst-btn-sm' : 'cst-btn cst-btn-ghost-dark cst-btn-sm'}
+                                        onClick={() => {
+                                          if (isInProgress && sess?.id) navigate({ to: `/membre/seance/${sess.id}` });
+                                          else navigate({ to: '/membre/logger', search: { week: weekNum, day: dayNum } });
+                                        }}
+                                        style={{ fontSize: 9, padding: '4px 8px' }}
+                                      >
+                                        {isInProgress ? 'REPRENDRE →' : 'DÉMARRER →'}
+                                      </button>
+                                    )}
+                                  </div>
+                                  {d.type === 'Repos' ? (
+                                    <div className="cst-mono" style={{ fontSize: 10, opacity: 0.5, padding: '8px 0' }}>RÉCUPÉRATION</div>
+                                  ) : (
+                                    <ProgramBlocks exercises={d.exercises || []} />
                                   )}
                                 </div>
-                                {d.type === 'Repos' ? (
-                                  <div className="cst-mono" style={{ fontSize: 10, opacity: 0.5, padding: '8px 0' }}>RÉCUPÉRATION</div>
-                                ) : (
-                                  <ProgramBlocks exercises={d.exercises || []} />
-                                )}
-                              </div>
-                            ))}
+                              );
+                            })}
                             {(w.days || []).length === 0 && (
                               <div style={{ opacity: 0.5, fontSize: 12 }}>Aucune séance.</div>
                             )}
