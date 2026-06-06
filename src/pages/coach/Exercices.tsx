@@ -23,10 +23,22 @@ type Exercise = {
   youtube_id: string | null;
   coach_notes: string | null;
   is_archived: boolean | null;
+  movement_patterns: string[] | null;
 };
 
 type IntensityCode = { code: string; label: string; description: string; color_hex: string };
 type GlossaryEntry = { cle: string; titre: string; contenu: string };
+
+const PATTERN_OPTIONS: { value: string; label: string }[] = [
+  { value: "push", label: "Push" },
+  { value: "pull", label: "Pull" },
+  { value: "legs", label: "Legs" },
+  { value: "hinge", label: "Hinge" },
+  { value: "core", label: "Core" },
+  { value: "cardio", label: "Cardio" },
+  { value: "mobility", label: "Mobilité" },
+  { value: "carry", label: "Carry" },
+];
 
 const EMPTY: Partial<Exercise> = {
   name: "",
@@ -37,6 +49,7 @@ const EMPTY: Partial<Exercise> = {
   youtube_url: "",
   coach_notes: "",
   is_archived: false,
+  movement_patterns: [],
 };
 
 export default function Exercices() {
