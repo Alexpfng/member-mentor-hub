@@ -1002,6 +1002,9 @@ export function LiveSession({
           <button onClick={() => setShowThread(setStep.exercise.name)} className="cst-btn cst-btn-ghost-dark cst-btn-sm" style={{ flex: 1 }}>
             💬 Filmer / Échanger
           </button>
+          <button onClick={() => setPainFor(setStep.exercise.name)} className="cst-btn cst-btn-sm" style={{ flex: 1, background: "rgba(192,57,43,0.15)", border: "1px solid rgba(192,57,43,0.5)", color: "#ff8a7a" }}>
+            🔴 Douleur
+          </button>
         </div>
       </div>
       {renderOverlays(exColor)}
