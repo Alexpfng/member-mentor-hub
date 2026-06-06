@@ -1,101 +1,76 @@
-## Objectif
+# Corrections UX séance interactive
 
-Rendre `/coach/import` (fichier `src/pages/coach/Import.jsx`) 100% fonctionnelle : Léo dépose son Excel → parsing du format exact (S1/S2…, en-tête « Exercice », couleurs, YouTube) → mapping vérifiable → aperçu → enregistrement dans `programs` → assignation à un coaché.
+Fichier principal : `src/components/cst/LiveSession.tsx` (+ ajustements `src/routes/_authenticated.membre.seance.$sessionId.tsx` pour le bouton retour et la persistance).
 
-## Périmètre
+## Bug 1 — Perte de focus après 1 chiffre
 
-- Frontend : remplacement complet de la page Import (actuellement mockée).
-- Backend : réutilise `saveProgram` et `assignProgram` déjà présents dans `src/lib/coach.functions.ts`. Aucun changement DB.
-- Aucune modification des autres pages (Builder, Membre, Programmes).
+**Cause réelle** : `Shell` et `Overlays` sont déclarés **à l'intérieur** de `LiveSession` (l. 840 et 848). À chaque frappe, `setLogging` re-render → nouvelles identités de composants → React démonte/remonte tout le sous-arbre, y compris l'`<input>` → focus perdu.
 
-## Dépendance
+Correctifs :
+- Sortir `Shell` et `Overlays` hors de `LiveSession` (composants top-level recevant leurs props/handlers en paramètres).
+- Faire de `LabeledInput` un input à **state local** : `useState(initialValue)` interne, `onChange` met à jour le state local seulement, `onBlur` (et debounce 300ms) appelle `onCommit` pour remonter au parent.
+- `React.memo` sur `LabeledInput`.
+- `useEffect` de sync `initialValue` qui ne remet à jour le state local que si la valeur entrante diffère ET que l'input n'a pas le focus.
+- Attributs : `inputMode="decimal"`, `pattern="[0-9]*[.,]?[0-9]*"`, `autoComplete="off"`, `enterKeyHint="next"`.
 
-- Ajouter `xlsx` (SheetJS) — parsing 100% côté client (lecture du `ArrayBuffer`, pas d'upload serveur). `cellStyles: true` pour les couleurs.
+## Bug 2 — Bouton retour
 
-## Architecture des fichiers
+- Header de séance : flèche `←` permanente à gauche (toujours visible, phases intro/step/rest/recap).
+  - Phase `step`/`rest` non-premier set → revient au step précédent (set ou brief), restaure `logging=null`.
+  - Phase `step` au premier step OU intro → confirmation modal « Quitter la séance ? Tes données sont sauvegardées, tu pourras reprendre où tu en étais » avec [CONTINUER] / [QUITTER]. Sur Quitter → navigate vers `/membre` (status reste `in_progress`).
+- En bas de chaque écran de set/brief, **bouton « ← BLOC PRÉCÉDENT »** à côté du bouton principal (caché au tout premier bloc).
+- Navigation arrière : ne modifie pas `savedLogs` (les données saisies restent). Sauter d'un set saisi à l'arrière puis revenir conserve l'historique en mémoire.
+- Reprise depuis dashboard : déjà OK, route existante recharge la session ; on s'assure que `started_at` n'est pas écrasé si présent.
 
-```text
-src/pages/coach/Import.jsx                    ← réécrit (orchestrateur 3 étapes)
-src/lib/excel-import/parser.ts                ← nouveau, parsing pur (testable)
-  - parseExcelFile(file) → { metadata, weeks, stats, warnings }
-  - findColumnLayout, detectColor, getYoutubeUrl, extractYoutubeId
-  - parseWeekSheet, detectBlockType, extractMetadata
-src/components/coach/import/Dropzone.tsx       ← nouveau (drag & drop + bouton)
-src/components/coach/import/MappingTable.tsx   ← nouveau (mapping colonnes corrigeable)
-src/components/coach/import/ProgramPreview.tsx ← nouveau (aperçu semaine/séance/exos, pastilles couleur, badge vidéo)
-src/components/coach/import/AssignDialog.tsx   ← nouveau (recherche coaché + date début)
-```
+## Bug 3 — Exos au poids du corps
 
-## Flux UX (3 étapes dans une seule page, état React local)
+- Helper `isBodyweight(charge)` : `['pdc','poids du corps','bodyweight','-','corps','pds de corps']`, charge vide → bodyweight.
+- Si `isBodyweight(exercise.charge)` :
+  - Champ poids remplacé par tag grisé **« PDC »** (non éditable).
+  - Validation : poids non requis.
+- Helper `isIsometric(reps)` : si `reps` matche `20s`, `30sec`, `1min`, etc. → reps remplacé par champ « durée (s) » et reps non requis.
+- Validation assouplie : valider une série requiert **au moins une donnée pertinente** (reps OU durée). RPE reste requis (déjà sélecteur).
+- Si validation échoue → message inline rouge sous le champ concerné : « Indique au moins le nombre de reps pour valider cette série. » + `scrollIntoView` sur le champ + bordure rouge. Bouton VALIDER reste cliquable, ne déclenche plus l'effet désactivé (qui ne fournissait aucun feedback) : au clic, on affiche le message si invalide.
 
-```text
-[1 UPLOAD] → parsing client → [2 PRÉVISUALISATION + MAPPING] → "Convertir et enregistrer"
-            ↓
-[3 CONFIRMATION modale] → "Assigner à un coaché" → AssignDialog → toast succès
-```
+## Bug 4 — Cibles reps par série
 
-### Étape 1 — Upload
-- Dropzone : drag-over highlight vert, click → input file (`.xlsx,.xls,.csv`), taille max 20 Mo.
-- Loader « Analyse du fichier… ».
-- Erreurs : fichier invalide, > 20 Mo, aucune feuille `S\d+`, aucun exercice — messages clairs en français, jamais d'échec silencieux.
+- Helper `parseRepsPerSet(repsTarget, seriesCount)` :
+  - Split sur `/`, `-`, `–`, `,`.
+  - Si nb de parts == seriesCount **et** séparateur `/` ou `,` → cibles par série.
+  - Si 2 parts séparées par ` - ` ou `-` → fourchette, même placeholder partout.
+  - Sinon → première valeur répétée.
+- Utiliser cette cible comme **placeholder** de l'input reps (et non `value`). Le placeholder de la série en cours = `targets[setNumber-1]`.
+- Pré-remplissage `logging.reps` : reste vide par défaut (placeholder seul) — le coaché tape sa vraie perf. Retirer le pré-remplissage actuel `setStep.exercise.reps.match(/\d+/)`.
 
-### Étape 2 — Prévisualisation & Mapping
-- Bandeau récap : nom programme (préfilled depuis `OBJECTIF DU PROG`, éditable), athlète détecté, profil/date course, nb semaines/séances/exercices, vidéos, couleurs.
-- Tableau de mapping des colonnes détectées (`Exercice`, `Série(s)`, `Reps`, `Charge`, `Tempo`, `Récup`, `RPE`, `Consignes`, `YouTube`, `Couleur`) avec dropdown de correction + option « Ignorer ».
-- Aperçu interactif : semaines → séances → exercices avec code couleur (réutilise les conventions visuelles de `ProgramBlocks.tsx`), badge 🎬, alertes « X exercices sans couleur ».
-- Boutons : `← Recommencer`, `Convertir et enregistrer →`.
+## Bug 5 — Pré-remplissage intelligent du poids
 
-### Étape 3 — Enregistrement & Assignation
-- Appel `saveProgram({ name, objective, description, duration_weeks, frequency_per_week, structure: { weeks } })`.
-- Modale de confirmation : `Assigner à un coaché` / `Modifier dans le Builder` / `Retour à mes programmes`.
-- `AssignDialog` : `listMembers` (déjà existant), recherche, sélection, date début (défaut lundi prochain), bouton confirmer → `assignProgram({ program_id, member_id, start_date })`.
+Au chargement de la session, charger en une requête tous les `set_logs` de la **dernière séance complétée du même `member_id`** contenant les exercices à venir (par `exercise_name`). Stocker dans une map `lastByExo[name][setNumber] = { weight, reps, rpe, completedAt }`.
 
-## Parser — règles clés (cf. spec utilisateur)
+À l'ouverture du `logging` d'un set :
+1. Si historique existe pour ce set → pré-remplir `weight` avec le poids historique.
+2. Sinon, si série précédente du **même exercice dans la séance en cours** a été loggée → reporter ce poids.
+3. Sinon, si `exercise.charge` numérique → pré-remplir avec ce nombre.
+4. Sinon PDC → null (champ PDC).
+5. Sinon → vide.
 
-- Feuilles retenues : nom matche `/^S\d+/`. Ignorer `Poids`, `NBR PAS`, etc.
-- Métadonnées : scanner les ~20 premières lignes, détecter par mot-clé (`NOM`, `OBJECTIF`, `SPLIT`, `DATE COURSE`, `PROFIL`, `CARDIO`, `STEPS`).
-- Détection dynamique des colonnes via la cellule « Exercice » + en-têtes adjacents (regex `série|reps|charge|tempo|récup|rpe`). Défauts si manquants.
-- Couleurs : `cell.s?.fgColor?.rgb` (6 derniers hex) → map red/green/yellow/blue ; sinon `null`.
-- YouTube : `cell.l?.Target` prioritaire, sinon regex URL dans le texte ; ID extrait via regex 11 chars.
-- Titres de séance vs exercices vs parasites : règles `SESSION_RE`, `EX_CODE_RE`, `JUNK_RE` de la spec.
-- Block type : `emom|ladder|amrap|dropset|iso|circuit|standard`.
-- Valeurs texte préservées telles quelles (PDC, EMOM3', 20s/pied, fourchettes…). Jamais de cast destructif.
+Affichage de la **référence** : sous le bloc, ligne grise discrète « Dernière fois : 60kg × 12 · 60kg × 11 · 57,5kg × 10 (il y a 6j) » construite depuis `lastByExo[name]`.
 
-## Structure persistée dans `programs.structure`
+## Détails techniques
 
-```json
-{
-  "source": "excel_import",
-  "metadata": { "athlete": "...", "objective": "...", "split": "...", "race_date": "...", "race_profile": "..." },
-  "weeks": [
-    { "number": 1, "days": [
-      { "number": 1, "label": "Full body (Durée : 50min)", "exercises": [
-        { "code": "A1", "name": "CARS hanches", "series": "2", "reps": "8-9",
-          "charge": "pdc", "tempo": "très lent", "recup": null, "rpe_target": null,
-          "coach_notes": "...", "color": "blue", "youtube_url": "...", "youtube_id": "...",
-          "block_type": "standard" }
-      ] }
-    ] }
-  ]
-}
-```
+- Conserver les saisies en arrière : extraire `savedLogs` en map indexée par `(stepIdx)` → on peut « réécraser » au lieu d'ajouter en revenant en arrière et en re-validant.
+- Confirmation quitter : petit modal local (réutiliser le pattern overlays existant), pas de lib externe.
+- `LabeledInput` debounce via `useRef` setTimeout ; commit aussi sur `Enter`.
 
-Compatible avec le format déjà lu par `ProgramBlocks` / `Builder` (mêmes champs `code`, `name`, `series`, `reps`, `charge`, `tempo`, `recup`, `rpe_target`, `color`, `youtube_*`, `block_type`, `coach_notes`).
+## Non-régression
 
-## Direction artistique
+- Aucun changement de logique métier (insert `set_logs`, calcul recap, navigation séance, components Overlays, Tempo/Color/RPE).
+- Aucune modif des autres écrans coach/membre.
 
-- Réutiliser les tokens existants (`--cst-mid-green`, `cst-display`, `cst-mono`, `cst-screen`, `CSTSectionNum`, `cst-btn-*`) — même langage visuel que Builder/Programmes. Écritures blanches sur fond `#1F2A22`.
-- Pastilles couleur identiques à `ProgramBlocks` (`COLOR_MAP`).
+## Test rapide (manuel sur preview)
 
-## Hors périmètre (volontairement)
-
-- Pas d'édition inline complète des exos avant import dans cette première itération : un bouton `Modifier dans le Builder` redirige vers `/coach/builder/$id` après save (le Builder gère déjà l'édition fine).
-- Pas de sync automatique des exercices vers la bibliothèque `exercises` (la spec le mentionne mais c'est risqué côté doublons — à traiter dans une itération dédiée). Les exos restent stockés dans `programs.structure`.
-- Pas de notification push au coaché (juste l'assignation DB ; Realtime côté coaché déjà en place).
-
-## Vérification
-
-- Upload du fichier `Programme_Max_C_.xlsx` → 1 semaine, 5 séances, ~47 exercices, ~42 vidéos, 45/47 couleurs.
-- Valeurs texte (`PDC`, `EMOM3'`, `8 on peut augmenter`, `20s/pied`, fourchettes) affichées telles quelles.
-- Save → `programs` créé, visible dans `/coach/programmes`.
-- Assign → ligne dans `assignments`, visible côté `/membre/programme`.
+- Taper « 20 » dans poids → 20 affiché, focus conservé.
+- Cliquer « VALIDER » sans rien → message rouge clair.
+- Exo PDC → tag PDC, validation OK avec juste reps.
+- Exo « 3×15/12/10 » → placeholders 15, 12, 10.
+- Refaire un exo déjà fait → poids pré-rempli + ligne « Dernière fois ».
+- Flèche retour conserve les saisies, modal de confirmation au premier bloc.
