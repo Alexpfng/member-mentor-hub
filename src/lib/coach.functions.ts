@@ -197,6 +197,22 @@ export const sendMessage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => sendMsgSchema.parse(d))
   .handler(async ({ data, context }) => {
+    // Enforce coach-involved constraint (mirrors RLS, since we use supabaseAdmin)
+    if (context.userId === data.to_user_id) {
+      throw new Error("Impossible de s'envoyer un message à soi-même");
+    }
+    const { data: roles, error: rolesError } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id, role")
+      .in("user_id", [context.userId, data.to_user_id])
+      .eq("role", "coach");
+    if (rolesError) throw new Error(rolesError.message);
+    const fromIsCoach = roles?.some((r) => r.user_id === context.userId) ?? false;
+    const toIsCoach = roles?.some((r) => r.user_id === data.to_user_id) ?? false;
+    if (!fromIsCoach && !toIsCoach) {
+      throw new Error("Au moins un des participants doit être un coach");
+    }
+
     const { data: row, error } = await supabaseAdmin
       .from("messages")
       .insert({
