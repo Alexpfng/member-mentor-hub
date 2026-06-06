@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ProgramBlocks, groupBlocks, type ProgExercise } from "./ProgramBlocks";
 import { ExerciseThread } from "./ExerciseThread";
+import PainReportDialog from "./PainReportDialog";
 import {
   ColorDot,
   ColorTooltip,
@@ -301,6 +302,7 @@ export function LiveSession({
   const [validationError, setValidationError] = useState<string | null>(null);
   const [showOverview, setShowOverview] = useState(false);
   const [showThread, setShowThread] = useState<string | null>(null);
+  const [painFor, setPainFor] = useState<string | null>(null);
   const [showColor, setShowColor] = useState<ExerciseColor>(null);
   const [showTempo, setShowTempo] = useState<{ tempo?: string | null; name?: string } | null>(null);
   const [showRpeRef, setShowRpeRef] = useState(false);
@@ -631,6 +633,12 @@ export function LiveSession({
             </div>
           </div>
         )}
+        <PainReportDialog
+          open={!!painFor}
+          onClose={() => setPainFor(null)}
+          sessionId={sessionId}
+          exerciseName={painFor || ""}
+        />
         {showQuitConfirm && (
           <div
             onClick={() => setShowQuitConfirm(false)}
@@ -812,9 +820,14 @@ export function LiveSession({
                 {(ex.youtube_id || ex.youtube_url) && (
                   <a href={ex.youtube_url || `https://www.youtube.com/watch?v=${ex.youtube_id}`} target="_blank" rel="noreferrer" className="cst-mono" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 10px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 6, color: "rgba(255,255,255,0.85)", fontSize: 10, textDecoration: "none", letterSpacing: "0.14em", width: "fit-content" }}>▶ VOIR LA DÉMO</a>
                 )}
-                <button onClick={() => setShowThread(ex.name)} className="cst-btn cst-btn-ghost-dark cst-btn-sm" style={{ alignSelf: "flex-start" }}>
-                  💬 Échanger / Envoyer une vidéo
-                </button>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  <button onClick={() => setShowThread(ex.name)} className="cst-btn cst-btn-ghost-dark cst-btn-sm">
+                    💬 Échanger / Envoyer une vidéo
+                  </button>
+                  <button onClick={() => setPainFor(ex.name)} className="cst-btn cst-btn-sm" style={{ background: "rgba(192,57,43,0.15)", border: "1px solid rgba(192,57,43,0.5)", color: "#ff8a7a" }}>
+                    🔴 Signaler une douleur
+                  </button>
+                </div>
               </div>
             );
           })}
@@ -988,6 +1001,9 @@ export function LiveSession({
           )}
           <button onClick={() => setShowThread(setStep.exercise.name)} className="cst-btn cst-btn-ghost-dark cst-btn-sm" style={{ flex: 1 }}>
             💬 Filmer / Échanger
+          </button>
+          <button onClick={() => setPainFor(setStep.exercise.name)} className="cst-btn cst-btn-sm" style={{ flex: 1, background: "rgba(192,57,43,0.15)", border: "1px solid rgba(192,57,43,0.5)", color: "#ff8a7a" }}>
+            🔴 Douleur
           </button>
         </div>
       </div>
