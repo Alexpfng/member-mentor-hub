@@ -1,11 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useServerFn } from '@tanstack/react-start';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import CoachSidebar from '../../components/CoachSidebar';
-import { CSTSectionNum, CSTDuoTitle, CSTAvatar, CSTBandWords } from '../../components/Atoms';
-import { listMembers, listPrograms, assignProgram } from '@/lib/coach.functions';
+import { CSTSectionNum, CSTDuoTitle, CSTBandWords } from '../../components/Atoms';
+import { listMembers, listPrograms } from '@/lib/coach.functions';
 import { createInvitation } from '@/lib/invitations.functions';
 import { seedColosmartData } from '@/lib/seed.functions';
+import { getDashboardMetrics } from '@/lib/coach-dashboard.functions';
+import PriorityFeed from '@/components/coach/PriorityFeed';
+import RecentSessionsList from '@/components/coach/RecentSessionsList';
+import MembersTable from '@/components/coach/MembersTable';
+import { supabase } from '@/integrations/supabase/client';
+
 
 function InviteModal({ onClose, onDone }) {
   const createFn = useServerFn(createInvitation);
