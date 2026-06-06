@@ -275,6 +275,12 @@ export default function Exercices() {
             }}
           />
           <FilterChips
+            label="Schéma moteur"
+            values={PATTERN_OPTIONS}
+            selected={filterPattern}
+            onToggle={(v) => toggleInSet(filterPattern, v, setFilterPattern)}
+          />
+          <FilterChips
             label="Intensité"
             values={codes.map((c) => ({ value: c.code, label: c.label, color: c.color_hex }))}
             selected={filterIntensity}
