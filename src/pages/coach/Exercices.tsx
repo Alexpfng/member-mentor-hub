@@ -171,9 +171,10 @@ export default function Exercices() {
           youtube_url: editing.youtube_url || null,
           coach_notes: editing.coach_notes || null,
           is_archived: !!editing.is_archived,
+          movement_patterns: editing.movement_patterns ?? [],
         },
       });
-      toast.success("Exercice enregistré");
+      toast.success("Renommé ✓");
       setEditing(null);
       await reload();
     } catch (e) {
