@@ -1170,19 +1170,38 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function LabeledInput({
+const LabeledInput = React.memo(function LabeledInput({
   label,
-  value,
-  onChange,
-  type,
+  initialValue,
+  onCommit,
+  placeholder,
   inputMode,
+  error,
 }: {
   label: string;
-  value: string;
-  onChange: (v: string) => void;
-  type?: string;
+  initialValue: string;
+  onCommit: (v: string) => void;
+  placeholder?: string;
   inputMode?: "numeric" | "decimal" | "text";
+  error?: boolean;
 }) {
+  const [local, setLocal] = useState(initialValue ?? "");
+  const focusedRef = useRef(false);
+  const commitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Sync externe (changement de step/pré-remplissage) — uniquement quand le champ n'a pas le focus
+  useEffect(() => {
+    if (!focusedRef.current && initialValue !== local) {
+      setLocal(initialValue ?? "");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialValue]);
+
+  function scheduleCommit(v: string) {
+    if (commitTimer.current) clearTimeout(commitTimer.current);
+    commitTimer.current = setTimeout(() => onCommit(v), 300);
+  }
+
   return (
     <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
       <span className="cst-mono" style={{ fontSize: 9, opacity: 0.55, letterSpacing: "0.18em" }}>
@@ -1190,15 +1209,42 @@ function LabeledInput({
       </span>
       <input
         className="cst-input"
-        type={type}
+        type="text"
         inputMode={inputMode}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        style={{ padding: "12px 12px", fontSize: 18, textAlign: "center" }}
+        pattern={inputMode === "decimal" ? "[0-9]*[.,]?[0-9]*" : inputMode === "numeric" ? "[0-9]*" : undefined}
+        value={local}
+        placeholder={placeholder}
+        autoComplete="off"
+        enterKeyHint="next"
+        onFocus={(e) => { focusedRef.current = true; try { e.currentTarget.scrollIntoView({ block: "center", behavior: "smooth" }); } catch { /* ignore */ } }}
+        onBlur={() => {
+          focusedRef.current = false;
+          if (commitTimer.current) { clearTimeout(commitTimer.current); commitTimer.current = null; }
+          onCommit(local);
+        }}
+        onChange={(e) => {
+          const v = e.target.value;
+          setLocal(v);
+          scheduleCommit(v);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            (e.target as HTMLInputElement).blur();
+          }
+        }}
+        style={{
+          padding: "14px 12px",
+          fontSize: 24,
+          textAlign: "center",
+          minHeight: 56,
+          borderColor: error ? "rgba(201,72,58,0.7)" : undefined,
+          background: error ? "rgba(201,72,58,0.08)" : undefined,
+        }}
       />
     </label>
   );
-}
+});
+
 
 /* ───────── Cues / Video action bar (used in SET phase) ───────── */
 
