@@ -123,10 +123,14 @@ export default function Exercices() {
         const code = it.intensity_code || it.category || "non_classe";
         if (!filterIntensity.has(code)) return false;
       }
+      if (filterPattern.size) {
+        const pats = it.movement_patterns ?? [];
+        if (!pats.some((p) => filterPattern.has(p))) return false;
+      }
       if (q && !it.name.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [items, search, filterMuscle, filterEquip, filterIntensity, showArchived]);
+  }, [items, search, filterMuscle, filterEquip, filterIntensity, filterPattern, showArchived]);
 
   function toggleInSet(set: Set<string>, value: string, setter: (s: Set<string>) => void) {
     const next = new Set(set);
