@@ -5,6 +5,10 @@ import { SUPABASE_ENABLED } from "@/lib/app-mode";
 import MemberNav from "../../components/MemberNav";
 import { CSTLogo, CSTSectionNum, CSTAvatar } from "../../components/Atoms";
 import ThemeToggle from "../../components/ThemeToggle";
+import { WeightLogDialog } from "../../components/cst/WeightLogDialog";
+import { usePRConfetti } from "@/hooks/usePRConfetti";
+
+
 
 
 const DAYS = ["DIM", "LUN", "MAR", "MER", "JEU", "VEN", "SAM"];
