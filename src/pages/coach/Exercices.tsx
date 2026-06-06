@@ -70,6 +70,7 @@ export default function Exercices() {
   const [filterMuscle, setFilterMuscle] = useState<Set<string>>(new Set());
   const [filterEquip, setFilterEquip] = useState<Set<string>>(new Set());
   const [filterIntensity, setFilterIntensity] = useState<Set<string>>(new Set());
+  const [filterPattern, setFilterPattern] = useState<Set<string>>(new Set());
   const [showArchived, setShowArchived] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
