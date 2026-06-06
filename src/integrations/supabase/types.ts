@@ -240,6 +240,7 @@ export type Database = {
           intensity_code: string | null
           is_archived: boolean | null
           is_global: boolean | null
+          movement_patterns: string[]
           muscle_group: string | null
           muscles: string[] | null
           name: string
@@ -261,6 +262,7 @@ export type Database = {
           intensity_code?: string | null
           is_archived?: boolean | null
           is_global?: boolean | null
+          movement_patterns?: string[]
           muscle_group?: string | null
           muscles?: string[] | null
           name: string
@@ -282,6 +284,7 @@ export type Database = {
           intensity_code?: string | null
           is_archived?: boolean | null
           is_global?: boolean | null
+          movement_patterns?: string[]
           muscle_group?: string | null
           muscles?: string[] | null
           name?: string
