@@ -120,7 +120,7 @@ export default function CoachSessionDetail() {
 
           {/* Détail par exercice */}
           <div>
-            <CSTSectionNum num={2} label="DÉTAIL PAR EXERCICE" />
+            <CSTSectionNum num={2} label="DÉTAIL PAR EXERCICE" sub="" />
             <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 12 }}>
               {Array.from(byExo.entries()).map(([name, logs]) => {
                 const planned = blockForExo.get(name.toLowerCase());
