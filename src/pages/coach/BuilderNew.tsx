@@ -852,7 +852,7 @@ export default function BuilderNew({ programIdParam }: { programIdParam?: string
             <input className="cst-input" placeholder="🔍 Rechercher..." value={libSearch}
               onChange={e => setLibSearch(e.target.value)} style={{ padding: '8px 12px', fontSize: 13, marginBottom: 10 }} />
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-              {(['TOUT','PUSH','PULL','LEGS','CORE','CARDIO'] as Category[]).map(c => (
+              {(['TOUT','PUSH','PULL','LEGS','CORE','CARDIO','PLYO'] as Category[]).map(c => (
                 <button key={c} onClick={() => setLibCat(c)} style={{
                   padding: '3px 8px', borderRadius: 4, border: '1px solid',
                   borderColor: libCat === c ? 'var(--cst-mid-green)' : 'rgba(255,255,255,0.12)',
