@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SUPABASE_ENABLED } from "@/lib/app-mode";
 import { CSTLogo, CSTAvatar } from "./Atoms";
 import ThemeToggle from "./ThemeToggle";
+import NotificationBell from "./coach/NotificationBell";
 
 const items = [
   { id: "membres", label: "Membres", icon: "○", path: "/coach", match: (p) => p === "/coach" || p.startsWith("/coach/membre") },
