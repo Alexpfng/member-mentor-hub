@@ -225,11 +225,11 @@ export const getSessionDetail = createServerFn({ method: "GET" })
     ]);
     if (!sessR.data) throw new Error("Séance introuvable");
 
-    type ProgramStructure = Record<string, unknown> | Array<unknown> | null;
-    let program: { name: string | null; structure: ProgramStructure } | null = null;
+    let programName: string | null = null;
+    let programStructureJson: string | null = null;
     if (sessR.data.program_id) {
       const { data: pg } = await supabaseAdmin.from("programs").select("name, structure").eq("id", sessR.data.program_id).maybeSingle();
-      program = pg ? { name: pg.name, structure: (pg.structure as ProgramStructure) ?? null } : null;
+      if (pg) { programName = pg.name; programStructureJson = pg.structure == null ? null : JSON.stringify(pg.structure); }
     }
     const { data: prof } = await supabaseAdmin.from("profiles").select("first_name, last_name, email").eq("id", sessR.data.member_id).maybeSingle();
 
