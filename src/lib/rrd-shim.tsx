@@ -13,14 +13,20 @@ type NavOpts = { replace?: boolean; state?: unknown };
 
 export function useNavigate() {
   const nav = tsUseNavigate();
-  return (to: string | number, opts?: NavOpts) => {
+  const navRef = React.useRef(nav);
+
+  React.useEffect(() => {
+    navRef.current = nav;
+  }, [nav]);
+
+  return React.useCallback((to: string | number, opts?: NavOpts) => {
     if (typeof to === "number") {
       if (typeof window !== "undefined") window.history.go(to);
       return;
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    nav({ to, replace: opts?.replace } as any);
-  };
+    navRef.current({ to, replace: opts?.replace } as any);
+  }, []);
 }
 
 export function useLocation() {
