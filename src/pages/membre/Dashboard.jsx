@@ -292,6 +292,41 @@ export default function MemberDashboard() {
               </div>
             </div>
 
+            {/* Weight card */}
+            <div className="cst-card-dark" style={{ marginTop: 14, padding: 14, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+              <div className="cst-col" style={{ gap: 2 }}>
+                <span className="cst-mono" style={{ fontSize: 9 }}>POIDS DU CORPS</span>
+                {currentWeight != null ? (
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                    <span className="cst-display" style={{ fontSize: 24 }}>{currentWeight} <span style={{ fontSize: 12, opacity: 0.5 }}>KG</span></span>
+                    {weightDelta != null && weightDelta !== 0 && (
+                      <span className="cst-mono" style={{ fontSize: 10, color: weightDelta < 0 ? "var(--cst-mid-green)" : "#F5A623" }}>
+                        {weightDelta > 0 ? "▲" : "▼"} {Math.abs(weightDelta).toFixed(1)} KG
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{ fontSize: 12, opacity: 0.5 }}>Pas encore noté</div>
+                )}
+              </div>
+              <button className="cst-btn cst-btn-ghost-dark" style={{ fontSize: 10 }} onClick={() => setWeightOpen(true)}>
+                + NOTER
+              </button>
+            </div>
+
+            {/* Coach message */}
+            {coachMessage?.content && (
+              <button
+                onClick={() => navigate("/membre/messages")}
+                style={{ all: "unset", cursor: "pointer", marginTop: 14, padding: 14, display: "block", borderRadius: 10, border: "1px solid rgba(110,171,118,0.35)", background: "rgba(110,171,118,0.08)", width: "100%", boxSizing: "border-box" }}
+              >
+                <span className="cst-mono" style={{ fontSize: 9, color: "var(--cst-mid-green)" }}>💬 MESSAGE COACH</span>
+                <div style={{ marginTop: 6, fontSize: 13, lineHeight: 1.4, color: "rgba(255,255,255,0.85)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                  {coachMessage.content}
+                </div>
+              </button>
+            )}
+
             {/* Quick links */}
             <div style={{ marginTop: 14, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
               <button
@@ -300,6 +335,20 @@ export default function MemberDashboard() {
                 style={{ fontSize: 11 }}
               >
                 MON PROGRAMME →
+              </button>
+              <button
+                className="cst-btn cst-btn-ghost-dark"
+                onClick={() => navigate("/membre/carnet")}
+                style={{ fontSize: 11 }}
+              >
+                MON CARNET →
+              </button>
+              <button
+                className="cst-btn cst-btn-ghost-dark"
+                onClick={() => navigate("/membre/planning")}
+                style={{ fontSize: 11 }}
+              >
+                PLANNING →
               </button>
               <button
                 className="cst-btn cst-btn-ghost-dark"
@@ -314,6 +363,14 @@ export default function MemberDashboard() {
           <MemberNav />
         </div>
       </div>
+
+      <WeightLogDialog
+        open={weightOpen}
+        onOpenChange={(o) => { setWeightOpen(o); if (!o) setWeightRefresh((n) => n + 1); }}
+      />
+    </div>
+  );
+}
     </div>
   );
 }
