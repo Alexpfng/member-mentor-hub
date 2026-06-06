@@ -236,13 +236,22 @@ function QuickConfig({ ex, onChange, onClose, dayExercises }: PopoverProps) {
         overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 14,
       }}>
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
             <span style={{ fontSize: 18 }}>{local.color}</span>
-            <span style={{ fontFamily: 'var(--cst-display)', fontSize: 18, fontWeight: 800, textTransform: 'uppercase', color: 'var(--cst-text)' }}>{local.name}</span>
+            <input
+              className="cst-input"
+              value={local.name}
+              onChange={(e) => set('name', e.target.value)}
+              style={{ fontFamily: 'var(--cst-display)', fontSize: 16, fontWeight: 800, textTransform: 'uppercase', color: 'var(--cst-text)', padding: '6px 10px', flex: 1, minWidth: 0 }}
+              placeholder="Nom de l'exercice"
+            />
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--cst-text-soft)', fontSize: 20, cursor: 'pointer' }}>✕</button>
         </div>
+        <p style={{ margin: 0, fontSize: 10, color: 'var(--cst-text-muted)', fontFamily: 'var(--cst-mono)', letterSpacing: '0.1em' }}>
+          ✎ MODIFIE POUR CE PROGRAMME — Pour renommer dans toute la bibliothèque, va dans Bibliothèque.
+        </p>
 
         {/* Séries / Reps / Charge */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
