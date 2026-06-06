@@ -244,6 +244,9 @@ export default function Exercices() {
             </button>
           </div>
         </div>
+        <p style={{ margin: "8px 0 0", fontSize: 13, color: "var(--cst-text-soft)", maxWidth: 720, lineHeight: 1.55 }}>
+          Gère ici tes exercices de référence&nbsp;: nom, vidéo, couleur, schéma moteur. Les modifications s'appliquent à tous tes futurs programmes.
+        </p>
 
         {/* Filters */}
         <div
