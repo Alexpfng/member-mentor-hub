@@ -44,10 +44,12 @@ export default function MemberDashboard() {
   const [weightDelta, setWeightDelta] = useState(null);
   const [weightOpen, setWeightOpen] = useState(false);
   const [weightRefresh, setWeightRefresh] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [coachMessage, setCoachMessage] = useState(null);
 
   usePRConfetti(userId);
 
-
+  const fetchDashboard = useServerFn(getMemberDashboard);
 
   useEffect(() => {
     if (!SUPABASE_ENABLED) { setLoading(false); return; }
@@ -58,35 +60,33 @@ export default function MemberDashboard() {
         const uid = u.user.id;
         setUserId(uid);
 
-        const [{ data: prof }, { data: assigns }, { data: sessions }, { data: prs }, { data: weights }] = await Promise.all([
+        const [{ data: prof }, { data: assigns }, { data: sessions }] = await Promise.all([
           supabase.from("profiles").select("first_name,last_name").eq("id", uid).maybeSingle(),
           supabase.from("assignments").select("program_id,programs(name,description)").eq("member_id", uid).eq("active", true).order("created_at", { ascending: false }).limit(1),
           supabase.from("sessions").select("id,date,status,session_label,duration_minutes").eq("member_id", uid).gte("date", getWeekDates()[0]).lte("date", getWeekDates()[6]).order("date"),
-          supabase.from("personal_records").select("exercise_name,weight_kg,reps,date").eq("member_id", uid).order("date", { ascending: false }).limit(1),
-          supabase.from("weight_logs").select("weight_kg,date").eq("member_id", uid).order("date", { ascending: false }).limit(2),
         ]);
 
         setProfile(prof);
         setAssignment(assigns?.[0] ?? null);
         setWeekSessions(sessions ?? []);
-        setLastPR(prs?.[0] ?? null);
-        if (weights?.length) {
-          setCurrentWeight(Number(weights[0].weight_kg));
-          if (weights[1]) setWeightDelta(Number(weights[0].weight_kg) - Number(weights[1].weight_kg));
+
+        try {
+          const dash = await fetchDashboard();
+          setStreak(dash.streak ?? 0);
+          setCurrentWeight(dash.currentWeight != null ? Number(dash.currentWeight) : null);
+          setWeightDelta(dash.deltaWeight != null ? Number(dash.deltaWeight) : null);
+          setLastPR(dash.lastPR ?? null);
+          setCoachMessage(dash.coachMessage ?? null);
+        } catch (err) {
+          console.error("getMemberDashboard failed", err);
         }
-
-
-        setProfile(prof);
-        setAssignment(assigns?.[0] ?? null);
-        setWeekSessions(sessions ?? []);
-        setLastPR(prs?.[0] ?? null);
       } catch (e) {
         console.error(e);
       } finally {
         setLoading(false);
       }
     })();
-  }, [navigate]);
+  }, [navigate, weightRefresh]);
 
   const firstName = profile?.first_name ?? "Athlete";
   const lastName = profile?.last_name ?? "";
