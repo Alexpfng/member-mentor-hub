@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { SUPABASE_ENABLED } from "@/lib/app-mode";
 import MemberNav from "../../components/MemberNav";
@@ -7,6 +8,7 @@ import { CSTLogo, CSTSectionNum, CSTAvatar } from "../../components/Atoms";
 import ThemeToggle from "../../components/ThemeToggle";
 import { WeightLogDialog } from "../../components/cst/WeightLogDialog";
 import { usePRConfetti } from "@/hooks/usePRConfetti";
+import { getMemberDashboard } from "@/lib/member-stats.functions";
 
 
 
