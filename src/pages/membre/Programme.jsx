@@ -5,6 +5,8 @@ import MemberNav from '../../components/MemberNav';
 import { CSTSectionNum, CSTDuoTitle } from '../../components/Atoms';
 import { getMyAssignedProgram } from '@/lib/coach.functions';
 import { ProgramBlocks } from '../../components/cst/ProgramBlocks';
+import { supabase } from '@/integrations/supabase/client';
+import { SUPABASE_ENABLED } from '@/lib/app-mode';
 
 function diffDays(a, b) {
   return Math.floor((a.getTime() - b.getTime()) / 86400000);
@@ -16,6 +18,9 @@ export default function MemberProgramme() {
   const [data, setData] = useState(null);
   const [openWeek, setOpenWeek] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [sessionsByKey, setSessionsByKey] = useState({}); // "w-d" -> { status, id }
+  const [plannedByKey, setPlannedByKey] = useState({}); // "w-d" -> planned_date
+  const [currentWeek, setCurrentWeek] = useState(0);
 
   useEffect(() => {
     (async () => {
@@ -23,12 +28,32 @@ export default function MemberProgramme() {
         const r = await fn();
         setData(r);
         const start = r.assignment?.start_date ? new Date(r.assignment.start_date) : null;
-        if (start) {
-          const d = diffDays(new Date(), start);
-          const w = Math.max(0, Math.floor(d / 7));
-          setOpenWeek(w);
-        } else {
-          setOpenWeek(0);
+        const w = start ? Math.max(0, Math.floor(diffDays(new Date(), start) / 7)) : 0;
+        setOpenWeek(w);
+        setCurrentWeek(w);
+
+        if (SUPABASE_ENABLED) {
+          const { data: u } = await supabase.auth.getUser();
+          if (u?.user) {
+            const [{ data: sessions }, { data: planned }] = await Promise.all([
+              supabase.from('sessions').select('id, status, week_number, day_number').eq('member_id', u.user.id),
+              supabase.from('planned_sessions').select('week_number, day_label, planned_date').eq('member_id', u.user.id),
+            ]);
+            const sMap = {};
+            for (const s of sessions ?? []) {
+              const k = `${s.week_number}-${s.day_number}`;
+              // prefer in_progress > completed > scheduled
+              const prev = sMap[k];
+              if (!prev || s.status === 'in_progress') sMap[k] = { status: s.status, id: s.id };
+              else if (prev.status !== 'in_progress' && s.status === 'completed') sMap[k] = { status: s.status, id: s.id };
+            }
+            setSessionsByKey(sMap);
+            const pMap = {};
+            for (const p of planned ?? []) {
+              if (p.week_number != null) pMap[`${p.week_number}-${p.day_label}`] = p.planned_date;
+            }
+            setPlannedByKey(pMap);
+          }
         }
       } catch (e) {
         // noop
