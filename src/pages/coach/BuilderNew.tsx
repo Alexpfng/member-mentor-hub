@@ -76,7 +76,8 @@ const BASE_LIBRARY: LibraryExercise[] = [
 ];
 
 const REST_OPTIONS = ['0s','30s','45s','1 min','1min30','2 min','2min30','3 min','4 min','5 min'];
-const COLORS: ExColor[] = ['🔴','🟢','🟡','🔵'];
+const COLORS: ExColor[] = ['🔴','🟢','🟡','🔵','🟠'];
+const COLOR_HEX: Record<ExColor, string> = { '🔴': '#C56A60', '🟢': '#7AAB7E', '🟡': '#E2C36B', '🔵': '#6FA3C4', '🟠': '#E07B39' };
 
 // ─── YOUTUBE UTILS ─────────────────────────────────────────────────────────────
 
