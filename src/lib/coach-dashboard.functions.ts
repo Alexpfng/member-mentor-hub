@@ -85,15 +85,15 @@ export const getPriorityFeed = createServerFn({ method: "GET" })
       | { type: "message"; id: string; priority: number; memberId: string; memberName: string; content: string; createdAt: string };
 
     const items: Item[] = [];
-    for (const p of pains ?? []) items.push({ type: "pain", id: p.id, priority: 100 + p.intensity, memberId: p.member_id, memberName: nameOf.get(p.member_id) || "Membre", sessionId: p.session_id, exerciseName: p.exercise_name, zone: p.zone, intensity: p.intensity, comment: p.comment, createdAt: p.created_at });
+    for (const p of pains.data ?? []) items.push({ type: "pain", id: p.id, priority: 100 + p.intensity, memberId: p.member_id, memberName: nameOf.get(p.member_id) || "Membre", sessionId: p.session_id, exerciseName: p.exercise_name, zone: p.zone, intensity: p.intensity, comment: p.comment, createdAt: p.created_at });
     // Dedup high RPE per session
     const seenSess = new Set<string>();
-    for (const r of (highRpe ?? []) as Array<{ id: string; session_id: string; exercise_name: string | null; rpe: number; created_at: string; sessions: { member_id: string } }>) {
+    for (const r of (highRpe.data ?? []) as unknown as Array<{ id: string; session_id: string; exercise_name: string | null; rpe: number; created_at: string; sessions: { member_id: string } }>) {
       if (seenSess.has(r.session_id)) continue; seenSess.add(r.session_id);
       items.push({ type: "high_rpe", id: r.id, priority: 80 + r.rpe, memberId: r.sessions.member_id, memberName: nameOf.get(r.sessions.member_id) || "Membre", sessionId: r.session_id, exerciseName: r.exercise_name || "—", rpe: r.rpe, createdAt: r.created_at });
     }
-    for (const v of videos ?? []) items.push({ type: "video", id: v.id, priority: 60, memberId: v.member_id, memberName: nameOf.get(v.member_id) || "Membre", sessionId: v.session_id, exerciseName: v.exercise_name, createdAt: v.created_at });
-    for (const m of msgs ?? []) items.push({ type: "message", id: m.id, priority: 40, memberId: m.from_id, memberName: nameOf.get(m.from_id) || "Membre", content: m.content, createdAt: m.created_at });
+    for (const v of videos.data ?? []) items.push({ type: "video", id: v.id, priority: 60, memberId: v.member_id, memberName: nameOf.get(v.member_id) || "Membre", sessionId: v.session_id, exerciseName: v.exercise_name, createdAt: v.created_at });
+    for (const m of msgs.data ?? []) items.push({ type: "message", id: m.id, priority: 40, memberId: m.from_id, memberName: nameOf.get(m.from_id) || "Membre", content: m.content, createdAt: m.created_at });
 
     items.sort((a, b) => b.priority - a.priority || (a.createdAt < b.createdAt ? 1 : -1));
     return items.slice(0, 30);
