@@ -17,58 +17,74 @@ export const getMemberDashboard = createServerFn({ method: "GET" })
     const sunday = new Date(monday);
     sunday.setDate(monday.getDate() + 6);
 
-    const [{ data: sessions }, { data: weights }, { data: lastPR }, { data: planned }] =
-      await Promise.all([
-        supabaseAdmin
-          .from("sessions")
-          .select("id, status, date, duration_minutes, total_volume_kg, session_label")
-          .eq("member_id", context.userId)
-          .gte("date", isoDay(monday))
-          .lte("date", isoDay(sunday)),
-        supabaseAdmin
-          .from("weight_logs")
-          .select("weight_kg, date")
-          .eq("member_id", context.userId)
-          .order("date", { ascending: false })
-          .limit(2),
-        supabaseAdmin
-          .from("personal_records")
-          .select("exercise_name, weight_kg, reps, date")
-          .eq("member_id", context.userId)
-          .order("date", { ascending: false })
-          .limit(1),
-        supabaseAdmin
-          .from("planned_sessions")
-          .select("id, day_label, planned_date, status, session_id")
-          .eq("member_id", context.userId)
-          .gte("planned_date", isoDay(monday))
-          .lte("planned_date", isoDay(sunday)),
-      ]);
+    const streakStart = new Date(monday);
+    streakStart.setDate(monday.getDate() - 25 * 7);
+
+    const [
+      { data: sessions },
+      { data: weights },
+      { data: lastPR },
+      { data: planned },
+      { data: streakSessions },
+    ] = await Promise.all([
+      supabaseAdmin
+        .from("sessions")
+        .select("id, status, date, duration_minutes, total_volume_kg, session_label")
+        .eq("member_id", context.userId)
+        .gte("date", isoDay(monday))
+        .lte("date", isoDay(sunday)),
+      supabaseAdmin
+        .from("weight_logs")
+        .select("weight_kg, date")
+        .eq("member_id", context.userId)
+        .order("date", { ascending: false })
+        .limit(2),
+      supabaseAdmin
+        .from("personal_records")
+        .select("exercise_name, weight_kg, reps, date")
+        .eq("member_id", context.userId)
+        .order("date", { ascending: false })
+        .limit(1),
+      supabaseAdmin
+        .from("planned_sessions")
+        .select("id, day_label, planned_date, status, session_id")
+        .eq("member_id", context.userId)
+        .gte("planned_date", isoDay(monday))
+        .lte("planned_date", isoDay(sunday)),
+      supabaseAdmin
+        .from("sessions")
+        .select("date")
+        .eq("member_id", context.userId)
+        .eq("status", "completed")
+        .gte("date", isoDay(streakStart))
+        .lte("date", isoDay(sunday)),
+    ]);
 
     const done = (sessions ?? []).filter((s) => s.status === "completed");
     const volume = done.reduce((a, s) => a + Number(s.total_volume_kg ?? 0), 0);
     const duration = done.reduce((a, s) => a + (s.duration_minutes ?? 0), 0);
 
-    // Streak: weeks consecutives with >= 3 done sessions, going back from current week
-    const startStreak = new Date(monday);
+    // Streak: weeks consécutives avec >= 3 séances done (semaine en cours tolérée)
+    const counts = new Map<string, number>();
+    for (const s of streakSessions ?? []) {
+      if (!s.date) continue;
+      const d = new Date(s.date);
+      const day = (d.getDay() + 6) % 7;
+      d.setDate(d.getDate() - day);
+      d.setHours(0, 0, 0, 0);
+      const k = isoDay(d);
+      counts.set(k, (counts.get(k) ?? 0) + 1);
+    }
+    const currentKey = isoDay(monday);
     let streak = 0;
     for (let i = 0; i < 26; i++) {
-      const ws = new Date(startStreak);
-      ws.setDate(startStreak.getDate() - i * 7);
-      const we = new Date(ws);
-      we.setDate(ws.getDate() + 6);
-      const { count } = await supabaseAdmin
-        .from("sessions")
-        .select("id", { count: "exact", head: true })
-        .eq("member_id", context.userId)
-        .eq("status", "completed")
-        .gte("date", isoDay(ws))
-        .lte("date", isoDay(we));
-      if ((count ?? 0) >= 3) streak++;
-      else if (i === 0) {
-        // current week not yet validated — keep checking previous weeks
-        continue;
-      } else break;
+      const ws = new Date(monday);
+      ws.setDate(monday.getDate() - i * 7);
+      const k = isoDay(ws);
+      const c = counts.get(k) ?? 0;
+      if (c >= 3) streak++;
+      else if (k === currentKey) continue;
+      else break;
     }
 
     const w0 = weights?.[0];
