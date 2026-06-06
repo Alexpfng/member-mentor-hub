@@ -1,6 +1,6 @@
 /* ColosmartTraining — Séance interactive guidée
    Un écran = une action. Chrono auto. Aucun scroll-fest. */
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ProgramBlocks, groupBlocks, type ProgExercise } from "./ProgramBlocks";
 import { ExerciseThread } from "./ExerciseThread";
