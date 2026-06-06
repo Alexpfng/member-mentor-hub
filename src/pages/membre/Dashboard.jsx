@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { SUPABASE_ENABLED } from "@/lib/app-mode";
 import MemberNav from "../../components/MemberNav";
@@ -7,6 +8,7 @@ import { CSTLogo, CSTSectionNum, CSTAvatar } from "../../components/Atoms";
 import ThemeToggle from "../../components/ThemeToggle";
 import { WeightLogDialog } from "../../components/cst/WeightLogDialog";
 import { usePRConfetti } from "@/hooks/usePRConfetti";
+import { getMemberDashboard } from "@/lib/member-stats.functions";
 
 
 
@@ -42,10 +44,12 @@ export default function MemberDashboard() {
   const [weightDelta, setWeightDelta] = useState(null);
   const [weightOpen, setWeightOpen] = useState(false);
   const [weightRefresh, setWeightRefresh] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [coachMessage, setCoachMessage] = useState(null);
 
   usePRConfetti(userId);
 
-
+  const fetchDashboard = useServerFn(getMemberDashboard);
 
   useEffect(() => {
     if (!SUPABASE_ENABLED) { setLoading(false); return; }
@@ -56,35 +60,33 @@ export default function MemberDashboard() {
         const uid = u.user.id;
         setUserId(uid);
 
-        const [{ data: prof }, { data: assigns }, { data: sessions }, { data: prs }, { data: weights }] = await Promise.all([
+        const [{ data: prof }, { data: assigns }, { data: sessions }] = await Promise.all([
           supabase.from("profiles").select("first_name,last_name").eq("id", uid).maybeSingle(),
           supabase.from("assignments").select("program_id,programs(name,description)").eq("member_id", uid).eq("active", true).order("created_at", { ascending: false }).limit(1),
           supabase.from("sessions").select("id,date,status,session_label,duration_minutes").eq("member_id", uid).gte("date", getWeekDates()[0]).lte("date", getWeekDates()[6]).order("date"),
-          supabase.from("personal_records").select("exercise_name,weight_kg,reps,date").eq("member_id", uid).order("date", { ascending: false }).limit(1),
-          supabase.from("weight_logs").select("weight_kg,date").eq("member_id", uid).order("date", { ascending: false }).limit(2),
         ]);
 
         setProfile(prof);
         setAssignment(assigns?.[0] ?? null);
         setWeekSessions(sessions ?? []);
-        setLastPR(prs?.[0] ?? null);
-        if (weights?.length) {
-          setCurrentWeight(Number(weights[0].weight_kg));
-          if (weights[1]) setWeightDelta(Number(weights[0].weight_kg) - Number(weights[1].weight_kg));
+
+        try {
+          const dash = await fetchDashboard();
+          setStreak(dash.streak ?? 0);
+          setCurrentWeight(dash.currentWeight != null ? Number(dash.currentWeight) : null);
+          setWeightDelta(dash.deltaWeight != null ? Number(dash.deltaWeight) : null);
+          setLastPR(dash.lastPR ?? null);
+          setCoachMessage(dash.coachMessage ?? null);
+        } catch (err) {
+          console.error("getMemberDashboard failed", err);
         }
-
-
-        setProfile(prof);
-        setAssignment(assigns?.[0] ?? null);
-        setWeekSessions(sessions ?? []);
-        setLastPR(prs?.[0] ?? null);
       } catch (e) {
         console.error(e);
       } finally {
         setLoading(false);
       }
     })();
-  }, [navigate]);
+  }, [navigate, weightRefresh]);
 
   const firstName = profile?.first_name ?? "Athlete";
   const lastName = profile?.last_name ?? "";
@@ -155,7 +157,14 @@ export default function MemberDashboard() {
                 <h1 className="cst-display" style={{ fontSize: 38, margin: 0 }}>
                   {today.getHours() < 12 ? "BON MATIN," : today.getHours() < 18 ? "BONNE APRÈS-MIDI," : "BONNE SOIRÉE,"}
                 </h1>
-                <div className="cst-italic" style={{ fontSize: 30, marginTop: -2 }}>{firstName}.</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: -2 }}>
+                  <div className="cst-italic" style={{ fontSize: 30 }}>{firstName}.</div>
+                  {streak > 0 && (
+                    <span className="cst-mono" style={{ fontSize: 11, padding: "4px 10px", borderRadius: 999, background: "rgba(245,166,35,0.15)", color: "#F5A623", border: "1px solid rgba(245,166,35,0.35)" }}>
+                      🔥 {streak} SEM
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -269,17 +278,54 @@ export default function MemberDashboard() {
                       {lastPR.exercise_name?.toUpperCase() ?? "—"}
                     </div>
                     <div className="cst-mono" style={{ fontSize: 10, color: "var(--cst-mid-green)", marginTop: 2 }}>
-                      {lastPR.value_kg}KG
+                      {lastPR.weight_kg != null ? `${lastPR.weight_kg}KG` : lastPR.reps != null ? `${lastPR.reps} REPS` : "—"}
                     </div>
-                    <span className="cst-mono" style={{ fontSize: 9, opacity: 0.55 }}>
-                      {new Date(lastPR.achieved_at).toLocaleDateString("fr-FR")}
-                    </span>
+                    {lastPR.date && (
+                      <span className="cst-mono" style={{ fontSize: 9, opacity: 0.55 }}>
+                        {new Date(lastPR.date).toLocaleDateString("fr-FR")}
+                      </span>
+                    )}
                   </>
                 ) : (
                   <div style={{ fontSize: 12, opacity: 0.45, marginTop: 8 }}>Aucun PR encore</div>
                 )}
               </div>
             </div>
+
+            {/* Weight card */}
+            <div className="cst-card-dark" style={{ marginTop: 14, padding: 14, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+              <div className="cst-col" style={{ gap: 2 }}>
+                <span className="cst-mono" style={{ fontSize: 9 }}>POIDS DU CORPS</span>
+                {currentWeight != null ? (
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                    <span className="cst-display" style={{ fontSize: 24 }}>{currentWeight} <span style={{ fontSize: 12, opacity: 0.5 }}>KG</span></span>
+                    {weightDelta != null && weightDelta !== 0 && (
+                      <span className="cst-mono" style={{ fontSize: 10, color: weightDelta < 0 ? "var(--cst-mid-green)" : "#F5A623" }}>
+                        {weightDelta > 0 ? "▲" : "▼"} {Math.abs(weightDelta).toFixed(1)} KG
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{ fontSize: 12, opacity: 0.5 }}>Pas encore noté</div>
+                )}
+              </div>
+              <button className="cst-btn cst-btn-ghost-dark" style={{ fontSize: 10 }} onClick={() => setWeightOpen(true)}>
+                + NOTER
+              </button>
+            </div>
+
+            {/* Coach message */}
+            {coachMessage?.content && (
+              <button
+                onClick={() => navigate("/membre/messages")}
+                style={{ all: "unset", cursor: "pointer", marginTop: 14, padding: 14, display: "block", borderRadius: 10, border: "1px solid rgba(110,171,118,0.35)", background: "rgba(110,171,118,0.08)", width: "100%", boxSizing: "border-box" }}
+              >
+                <span className="cst-mono" style={{ fontSize: 9, color: "var(--cst-mid-green)" }}>💬 MESSAGE COACH</span>
+                <div style={{ marginTop: 6, fontSize: 13, lineHeight: 1.4, color: "rgba(255,255,255,0.85)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                  {coachMessage.content}
+                </div>
+              </button>
+            )}
 
             {/* Quick links */}
             <div style={{ marginTop: 14, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
@@ -289,6 +335,20 @@ export default function MemberDashboard() {
                 style={{ fontSize: 11 }}
               >
                 MON PROGRAMME →
+              </button>
+              <button
+                className="cst-btn cst-btn-ghost-dark"
+                onClick={() => navigate("/membre/carnet")}
+                style={{ fontSize: 11 }}
+              >
+                MON CARNET →
+              </button>
+              <button
+                className="cst-btn cst-btn-ghost-dark"
+                onClick={() => navigate("/membre/planning")}
+                style={{ fontSize: 11 }}
+              >
+                PLANNING →
               </button>
               <button
                 className="cst-btn cst-btn-ghost-dark"
@@ -303,6 +363,11 @@ export default function MemberDashboard() {
           <MemberNav />
         </div>
       </div>
+
+      <WeightLogDialog
+        open={weightOpen}
+        onOpenChange={(o) => { setWeightOpen(o); if (!o) setWeightRefresh((n) => n + 1); }}
+      />
     </div>
   );
 }
