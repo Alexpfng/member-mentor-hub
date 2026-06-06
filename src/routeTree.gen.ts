@@ -34,6 +34,7 @@ import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/e
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as AuthenticatedMembreSeanceSessionIdRouteImport } from './routes/_authenticated.membre.seance.$sessionId'
+import { Route as AuthenticatedCoachSeanceSessionIdRouteImport } from './routes/_authenticated.coach.seance.$sessionId'
 import { Route as AuthenticatedCoachProgrammesIdRouteImport } from './routes/_authenticated.coach.programmes.$id'
 import { Route as AuthenticatedCoachMembreMemberIdRouteImport } from './routes/_authenticated.coach.membre.$memberId'
 import { Route as AuthenticatedCoachBuilderIdRouteImport } from './routes/_authenticated.coach.builder.$id'
@@ -178,6 +179,12 @@ const AuthenticatedMembreSeanceSessionIdRoute =
     path: '/membre/seance/$sessionId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedCoachSeanceSessionIdRoute =
+  AuthenticatedCoachSeanceSessionIdRouteImport.update({
+    id: '/coach/seance/$sessionId',
+    path: '/coach/seance/$sessionId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedCoachProgrammesIdRoute =
   AuthenticatedCoachProgrammesIdRouteImport.update({
     id: '/$id',
@@ -221,6 +228,7 @@ export interface FileRoutesByFullPath {
   '/coach/builder/$id': typeof AuthenticatedCoachBuilderIdRoute
   '/coach/membre/$memberId': typeof AuthenticatedCoachMembreMemberIdRoute
   '/coach/programmes/$id': typeof AuthenticatedCoachProgrammesIdRoute
+  '/coach/seance/$sessionId': typeof AuthenticatedCoachSeanceSessionIdRoute
   '/membre/seance/$sessionId': typeof AuthenticatedMembreSeanceSessionIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -250,6 +258,7 @@ export interface FileRoutesByTo {
   '/coach/builder/$id': typeof AuthenticatedCoachBuilderIdRoute
   '/coach/membre/$memberId': typeof AuthenticatedCoachMembreMemberIdRoute
   '/coach/programmes/$id': typeof AuthenticatedCoachProgrammesIdRoute
+  '/coach/seance/$sessionId': typeof AuthenticatedCoachSeanceSessionIdRoute
   '/membre/seance/$sessionId': typeof AuthenticatedMembreSeanceSessionIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -281,6 +290,7 @@ export interface FileRoutesById {
   '/_authenticated/coach/builder/$id': typeof AuthenticatedCoachBuilderIdRoute
   '/_authenticated/coach/membre/$memberId': typeof AuthenticatedCoachMembreMemberIdRoute
   '/_authenticated/coach/programmes/$id': typeof AuthenticatedCoachProgrammesIdRoute
+  '/_authenticated/coach/seance/$sessionId': typeof AuthenticatedCoachSeanceSessionIdRoute
   '/_authenticated/membre/seance/$sessionId': typeof AuthenticatedMembreSeanceSessionIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -312,6 +322,7 @@ export interface FileRouteTypes {
     | '/coach/builder/$id'
     | '/coach/membre/$memberId'
     | '/coach/programmes/$id'
+    | '/coach/seance/$sessionId'
     | '/membre/seance/$sessionId'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -341,6 +352,7 @@ export interface FileRouteTypes {
     | '/coach/builder/$id'
     | '/coach/membre/$memberId'
     | '/coach/programmes/$id'
+    | '/coach/seance/$sessionId'
     | '/membre/seance/$sessionId'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -371,6 +383,7 @@ export interface FileRouteTypes {
     | '/_authenticated/coach/builder/$id'
     | '/_authenticated/coach/membre/$memberId'
     | '/_authenticated/coach/programmes/$id'
+    | '/_authenticated/coach/seance/$sessionId'
     | '/_authenticated/membre/seance/$sessionId'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -566,6 +579,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMembreSeanceSessionIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/coach/seance/$sessionId': {
+      id: '/_authenticated/coach/seance/$sessionId'
+      path: '/coach/seance/$sessionId'
+      fullPath: '/coach/seance/$sessionId'
+      preLoaderRoute: typeof AuthenticatedCoachSeanceSessionIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/coach/programmes/$id': {
       id: '/_authenticated/coach/programmes/$id'
       path: '/$id'
@@ -635,6 +655,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedCoachIndexRoute: typeof AuthenticatedCoachIndexRoute
   AuthenticatedMembreIndexRoute: typeof AuthenticatedMembreIndexRoute
   AuthenticatedCoachMembreMemberIdRoute: typeof AuthenticatedCoachMembreMemberIdRoute
+  AuthenticatedCoachSeanceSessionIdRoute: typeof AuthenticatedCoachSeanceSessionIdRoute
   AuthenticatedMembreSeanceSessionIdRoute: typeof AuthenticatedMembreSeanceSessionIdRoute
 }
 
@@ -656,6 +677,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCoachIndexRoute: AuthenticatedCoachIndexRoute,
   AuthenticatedMembreIndexRoute: AuthenticatedMembreIndexRoute,
   AuthenticatedCoachMembreMemberIdRoute: AuthenticatedCoachMembreMemberIdRoute,
+  AuthenticatedCoachSeanceSessionIdRoute:
+    AuthenticatedCoachSeanceSessionIdRoute,
   AuthenticatedMembreSeanceSessionIdRoute:
     AuthenticatedMembreSeanceSessionIdRoute,
 }
@@ -678,3 +701,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
