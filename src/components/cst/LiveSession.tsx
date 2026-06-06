@@ -633,6 +633,12 @@ export function LiveSession({
             </div>
           </div>
         )}
+        <PainReportDialog
+          open={!!painFor}
+          onClose={() => setPainFor(null)}
+          sessionId={sessionId}
+          exerciseName={painFor || ""}
+        />
         {showQuitConfirm && (
           <div
             onClick={() => setShowQuitConfirm(false)}
