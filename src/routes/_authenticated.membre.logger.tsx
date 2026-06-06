@@ -1,17 +1,28 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 
+const searchSchema = z.object({
+  day: z.string().min(1).max(120).optional(),
+  week: z.coerce.number().int().min(0).optional(),
+});
+
 export const Route = createFileRoute("/_authenticated/membre/logger")({
+  validateSearch: (s) => searchSchema.parse(s),
   component: SessionLauncher,
 });
 
 /**
  * Entry point that creates (or resumes) an in-progress session for the
  * current member, then redirects to /membre/seance/$id.
+ *
+ * Accepts ?day=<label>&week=<n> so the member can start a specific session
+ * picked from the planning.
  */
 function SessionLauncher() {
   const navigate = useNavigate();
+  const search = useSearch({ from: Route.id }) as { day?: string; week?: number };
   const [error, setError] = useState<string | null>(null);
   const ran = useRef(false);
 
@@ -61,7 +72,8 @@ function SessionLauncher() {
             date: today,
             started_at: new Date().toISOString(),
             status: "in_progress",
-            session_label: "Séance libre",
+            session_label: search.day ?? "Séance libre",
+            week_number: search.week ?? null,
           })
           .select("id")
           .single();
@@ -71,7 +83,7 @@ function SessionLauncher() {
         setError((e as Error).message);
       }
     })();
-  }, [navigate]);
+  }, [navigate, search.day, search.week]);
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--cst-dark-green)", color: "rgba(255,255,255,0.6)" }}>
