@@ -242,3 +242,162 @@ export const getSessionDetail = createServerFn({ method: "GET" })
       pains: painsR.data ?? [],
     };
   });
+
+export const getMemberFollowup = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ memberId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertCoach(context.userId);
+    const memberId = data.memberId;
+    const thirtyDaysAgo = daysAgo(30).toISOString();
+
+    const [sessR, painsR, fbR, assignR] = await Promise.all([
+      supabaseAdmin.from("sessions").select("id, status, started_at, ended_at, average_rpe, coach_seen, session_label, week_number, day_number").eq("member_id", memberId).gte("started_at", thirtyDaysAgo).order("started_at", { ascending: false }),
+      supabaseAdmin.from("pain_reports").select("id, exercise_name, zone, intensity, comment, resolved_at, created_at, session_id").eq("member_id", memberId).order("created_at", { ascending: false }).limit(20),
+      supabaseAdmin.from("exercise_feedbacks").select("id, exercise_name, rpe, felt_too_hard, felt_too_easy, could_not_do, member_comment, created_at, sessions!inner(member_id, ended_at)").eq("sessions.member_id", memberId).gte("sessions.ended_at", thirtyDaysAgo),
+      supabaseAdmin.from("assignments").select("program_id, start_date, programs(structure, duration_weeks)").eq("member_id", memberId).eq("active", true).maybeSingle(),
+    ]);
+
+    const sessions = sessR.data ?? [];
+    const completed = sessions.filter((s) => s.status === "completed");
+    const rpes = completed.map((s) => Number(s.average_rpe)).filter((n) => !isNaN(n) && n > 0);
+    const avgRpe = rpes.length ? rpes.reduce((a, b) => a + b, 0) / rpes.length : null;
+    const unseenCount = completed.filter((s) => !s.coach_seen).length;
+
+    // Adhérence : sessions terminées / sessions prévues (sur 30j, 4 semaines)
+    let plannedPerWeek = 0;
+    type ProgramShape = { structure?: { weeks?: Array<{ days?: Array<{ rest?: boolean }> }> } | null; duration_weeks?: number | null };
+    const assignTyped = assignR.data as ({ programs?: ProgramShape | ProgramShape[] | null } | null);
+    const prog = Array.isArray(assignTyped?.programs) ? assignTyped?.programs[0] : assignTyped?.programs;
+    const weeks = prog?.structure?.weeks;
+    if (weeks && weeks.length > 0) {
+      const days = weeks[0]?.days ?? [];
+      plannedPerWeek = days.filter((d) => !d?.rest).length;
+    }
+    const planned30 = plannedPerWeek * 4;
+    const done30 = completed.length;
+    const adherence = planned30 > 0 ? Math.round((done30 / planned30) * 100) : null;
+
+    const openPains = (painsR.data ?? []).filter((p) => !p.resolved_at);
+
+    // Exos à surveiller : agrégation feedbacks
+    type FbRow = { id: string; exercise_name: string | null; rpe: number | null; felt_too_hard: boolean | null; felt_too_easy: boolean | null; could_not_do: boolean | null; created_at: string };
+    const fbList = (fbR.data ?? []) as unknown as FbRow[];
+    const byEx = new Map<string, { name: string; tooHard: number; couldNot: number; highRpe: number; total: number }>();
+    for (const f of fbList) {
+      if (!f.exercise_name) continue;
+      const cur = byEx.get(f.exercise_name) ?? { name: f.exercise_name, tooHard: 0, couldNot: 0, highRpe: 0, total: 0 };
+      cur.total += 1;
+      if (f.felt_too_hard) cur.tooHard += 1;
+      if (f.could_not_do) cur.couldNot += 1;
+      if (f.rpe != null && f.rpe >= 9) cur.highRpe += 1;
+      byEx.set(f.exercise_name, cur);
+    }
+    const watchList = [...byEx.values()]
+      .filter((e) => e.tooHard >= 2 || e.couldNot >= 1 || e.highRpe >= 2)
+      .sort((a, b) => (b.couldNot + b.tooHard + b.highRpe) - (a.couldNot + a.tooHard + a.highRpe))
+      .slice(0, 6);
+
+    return {
+      kpis: {
+        sessionsDone: done30,
+        sessionsPlanned: planned30,
+        adherence,
+        avgRpe: avgRpe != null ? Math.round(avgRpe * 10) / 10 : null,
+        openPainsCount: openPains.length,
+        unseenSessionsCount: unseenCount,
+      },
+      openPains,
+      pastPains: (painsR.data ?? []).filter((p) => p.resolved_at).slice(0, 10),
+      watchList,
+      recentSessions: completed.slice(0, 8).map((s) => ({ id: s.id, label: s.session_label, week: s.week_number, day: s.day_number, endedAt: s.ended_at, averageRpe: s.average_rpe, coachSeen: s.coach_seen })),
+    };
+  });
+
+export const getMemberCharts = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ memberId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertCoach(context.userId);
+    const memberId = data.memberId;
+    const eightWeeksAgo = daysAgo(56).toISOString();
+    const sevenDaysAgo = daysAgo(7).toISOString();
+
+    const [adhR, rpeR, assignR] = await Promise.all([
+      supabaseAdmin.from("sessions").select("status, started_at, ended_at").eq("member_id", memberId).gte("started_at", eightWeeksAgo),
+      supabaseAdmin.from("sessions").select("ended_at, average_rpe").eq("member_id", memberId).eq("status", "completed").gte("ended_at", sevenDaysAgo).order("ended_at", { ascending: true }),
+      supabaseAdmin.from("assignments").select("programs(structure)").eq("member_id", memberId).eq("active", true).maybeSingle(),
+    ]);
+
+    // Compute weekly buckets
+    const weekStartOf = (d: Date) => { const x = new Date(d); const day = (x.getDay() + 6) % 7; x.setDate(x.getDate() - day); x.setHours(0, 0, 0, 0); return x; };
+    const buckets: Array<{ weekLabel: string; weekKey: string; done: number; planned: number }> = [];
+    const now = new Date();
+    for (let i = 7; i >= 0; i--) {
+      const ws = weekStartOf(new Date(now.getTime() - i * 7 * 86400000));
+      buckets.push({ weekKey: ws.toISOString(), weekLabel: `S${52 - i}`, done: 0, planned: 0 });
+    }
+    type ProgramShape = { structure?: { weeks?: Array<{ days?: Array<{ rest?: boolean }> }> } | null };
+    const assignTyped = assignR.data as ({ programs?: ProgramShape | ProgramShape[] | null } | null);
+    const prog = Array.isArray(assignTyped?.programs) ? assignTyped?.programs[0] : assignTyped?.programs;
+    const weeks = prog?.structure?.weeks;
+    const plannedPerWeek = weeks?.[0]?.days?.filter((d) => !d?.rest).length ?? 0;
+    for (const b of buckets) b.planned = plannedPerWeek;
+
+    for (const s of adhR.data ?? []) {
+      if (!s.ended_at || s.status !== "completed") continue;
+      const ws = weekStartOf(new Date(s.ended_at)).toISOString();
+      const b = buckets.find((x) => x.weekKey === ws);
+      if (b) b.done += 1;
+    }
+
+    const rpe7 = (rpeR.data ?? []).map((s) => ({
+      date: s.ended_at,
+      rpe: s.average_rpe != null ? Number(s.average_rpe) : null,
+    })).filter((p) => p.rpe != null);
+
+    return { adherence: buckets.map((b, i) => ({ week: `S-${7 - i}`, done: b.done, planned: b.planned })), rpe7 };
+  });
+
+export const getExerciseProgression = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ memberId: z.string().uuid(), exerciseName: z.string().min(1).max(200).optional() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertCoach(context.userId);
+    const memberId = data.memberId;
+
+    const { data: sessions } = await supabaseAdmin.from("sessions").select("id, ended_at").eq("member_id", memberId).eq("status", "completed").order("ended_at", { ascending: true });
+    const ids = (sessions ?? []).map((s) => s.id);
+    if (!ids.length) return { exercises: [], series: [] };
+
+    const { data: sets } = await supabaseAdmin.from("set_logs").select("session_id, exercise_name, weight_kg, reps, rpe").in("session_id", ids);
+
+    const exercises = Array.from(new Set((sets ?? []).map((s) => s.exercise_name).filter((n): n is string => !!n))).sort();
+    const target = data.exerciseName ?? exercises[0];
+    if (!target) return { exercises, series: [] };
+
+    const dateBySession = new Map<string, string | null>();
+    for (const s of sessions ?? []) dateBySession.set(s.id, s.ended_at);
+
+    const bySession = new Map<string, { date: string; maxWeight: number; topReps: number; rpes: number[] }>();
+    for (const sl of sets ?? []) {
+      if (sl.exercise_name !== target) continue;
+      const d = dateBySession.get(sl.session_id);
+      if (!d) continue;
+      const w = sl.weight_kg != null ? Number(sl.weight_kg) : 0;
+      const cur = bySession.get(sl.session_id) ?? { date: d, maxWeight: 0, topReps: 0, rpes: [] };
+      if (w > cur.maxWeight) { cur.maxWeight = w; cur.topReps = sl.reps ?? 0; }
+      if (sl.rpe != null) cur.rpes.push(sl.rpe);
+      bySession.set(sl.session_id, cur);
+    }
+
+    const series = [...bySession.values()].sort((a, b) => a.date.localeCompare(b.date)).map((p) => ({
+      date: p.date,
+      label: new Date(p.date).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" }),
+      weight: p.maxWeight,
+      reps: p.topReps,
+      rpe: p.rpes.length ? Math.round((p.rpes.reduce((a, b) => a + b, 0) / p.rpes.length) * 10) / 10 : null,
+    }));
+
+    return { exercises, series, selected: target };
+  });
