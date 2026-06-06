@@ -115,8 +115,9 @@ export default function CoachSidebar() {
           ⎋
         </button>
       </div>
-      <div style={{ display: "flex", justifyContent: "flex-start" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
         <ThemeToggle variant="pill" />
+        <NotificationBell />
       </div>
     </div>
   );
