@@ -271,11 +271,13 @@ export default function MemberDashboard() {
                       {lastPR.exercise_name?.toUpperCase() ?? "—"}
                     </div>
                     <div className="cst-mono" style={{ fontSize: 10, color: "var(--cst-mid-green)", marginTop: 2 }}>
-                      {lastPR.value_kg}KG
+                      {lastPR.weight_kg != null ? `${lastPR.weight_kg}KG` : lastPR.reps != null ? `${lastPR.reps} REPS` : "—"}
                     </div>
-                    <span className="cst-mono" style={{ fontSize: 9, opacity: 0.55 }}>
-                      {new Date(lastPR.achieved_at).toLocaleDateString("fr-FR")}
-                    </span>
+                    {lastPR.date && (
+                      <span className="cst-mono" style={{ fontSize: 9, opacity: 0.55 }}>
+                        {new Date(lastPR.date).toLocaleDateString("fr-FR")}
+                      </span>
+                    )}
                   </>
                 ) : (
                   <div style={{ fontSize: 12, opacity: 0.45, marginTop: 8 }}>Aucun PR encore</div>
