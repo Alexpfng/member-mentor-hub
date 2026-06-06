@@ -437,6 +437,37 @@ export default function Exercices() {
               ))}
             </select>
           </Field>
+          <Field label="Schéma moteur">
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {PATTERN_OPTIONS.map((p) => {
+                const current = editing.movement_patterns ?? [];
+                const on = current.includes(p.value);
+                return (
+                  <button
+                    key={p.value}
+                    type="button"
+                    onClick={() => {
+                      const next = on
+                        ? current.filter((x) => x !== p.value)
+                        : [...current, p.value];
+                      setEditing({ ...editing, movement_patterns: next });
+                    }}
+                    style={{
+                      padding: "5px 10px",
+                      borderRadius: 999,
+                      border: on ? "1px solid var(--cst-mid-green)" : "1px solid var(--cst-input-border)",
+                      background: on ? "rgba(45,90,53,0.15)" : "var(--cst-input-bg)",
+                      color: "var(--cst-text)",
+                      fontSize: 11,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {p.label}
+                  </button>
+                );
+              })}
+            </div>
+          </Field>
           <Field label="Groupe musculaire">
             <input
               value={editing.muscle_group || ""}
