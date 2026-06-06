@@ -76,6 +76,69 @@ function blockExplain(type?: string | null, isSuperset = false): string | null {
   return null;
 }
 
+/* ───────── Helpers ajoutés (PDC, cibles reps, durée, formats) ───────── */
+
+const BODYWEIGHT_KEYWORDS = ["pdc", "poids du corps", "bodyweight", "corps", "pds de corps"];
+
+function isBodyweight(charge?: string | null): boolean {
+  if (charge == null) return false;
+  const c = String(charge).toLowerCase().trim();
+  if (!c) return false;
+  if (c === "-" || c === "—" || c === "/") return true;
+  return BODYWEIGHT_KEYWORDS.some((k) => c.includes(k));
+}
+
+function isDurationReps(reps?: string | number | null): boolean {
+  if (reps == null) return false;
+  const r = String(reps).toLowerCase().trim();
+  return /\d+\s*(s|sec|secondes?|"|''|min|m)\b/.test(r) || /\d+\s*['"]/.test(r);
+}
+
+/** Découpe une cible reps en une cible par série (15/12/10) ou répète une fourchette (10-8) */
+function parseRepsPerSet(repsTarget: string | number | null | undefined, seriesCount: number): string[] {
+  const fallback = Array(seriesCount).fill("");
+  if (repsTarget == null || repsTarget === "") return fallback;
+  const raw = String(repsTarget).trim();
+
+  // Cas "10-8" ou "10 - 8" : fourchette à 2 valeurs → même placeholder partout
+  const range = raw.match(/^(\d+)\s*[-–]\s*(\d+)$/);
+  if (range && seriesCount !== 2) {
+    return Array(seriesCount).fill(raw);
+  }
+
+  // Split sur / , ; ou - (mais on a déjà capté la fourchette ci-dessus)
+  const parts = raw
+    .split(/[\/,;]|\s+[-–]\s+|(?<=\d)\s*[-–]\s*(?=\d)/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  if (parts.length === seriesCount) return parts;
+  if (parts.length > 1 && parts.length === seriesCount) return parts;
+  return Array(seriesCount).fill(parts[0] || raw);
+}
+
+/** Extrait le premier nombre d'une chaîne (ex: "60kg" → 60, "12,5kg" → 12.5) */
+function extractNumeric(s?: string | null): number | null {
+  if (s == null) return null;
+  const m = String(s).match(/-?\d+(?:[.,]\d+)?/);
+  if (!m) return null;
+  const n = parseFloat(m[0].replace(",", "."));
+  return Number.isFinite(n) ? n : null;
+}
+
+function formatRelativeDays(iso?: string | null): string {
+  if (!iso) return "";
+  const diff = Date.now() - new Date(iso).getTime();
+  const days = Math.round(diff / 86400000);
+  if (days <= 0) return "aujourd'hui";
+  if (days === 1) return "hier";
+  return `il y a ${days}j`;
+}
+
+type LastSet = { weight: number | null; reps: number | null; rpe: number | null; loggedAt: string | null };
+type LastByExo = Record<string, Record<number, LastSet> & { _loggedAt?: string | null; _sets?: LastSet[] }>;
+
+
 function extractYoutubeId(input?: string | null): string | null {
   if (!input) return null;
   const s = String(input).trim();
