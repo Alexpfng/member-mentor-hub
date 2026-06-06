@@ -166,6 +166,7 @@ export default function CoachSidebar() {
         </button>
         <span className="topbar-title">{currentLabel}</span>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto" }}>
+          <NotificationBell />
           <ThemeToggle variant="icon" />
           <button
             onClick={handleSignOut}
