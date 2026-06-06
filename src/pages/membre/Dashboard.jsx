@@ -157,7 +157,14 @@ export default function MemberDashboard() {
                 <h1 className="cst-display" style={{ fontSize: 38, margin: 0 }}>
                   {today.getHours() < 12 ? "BON MATIN," : today.getHours() < 18 ? "BONNE APRÈS-MIDI," : "BONNE SOIRÉE,"}
                 </h1>
-                <div className="cst-italic" style={{ fontSize: 30, marginTop: -2 }}>{firstName}.</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: -2 }}>
+                  <div className="cst-italic" style={{ fontSize: 30 }}>{firstName}.</div>
+                  {streak > 0 && (
+                    <span className="cst-mono" style={{ fontSize: 11, padding: "4px 10px", borderRadius: 999, background: "rgba(245,166,35,0.15)", color: "#F5A623", border: "1px solid rgba(245,166,35,0.35)" }}>
+                      🔥 {streak} SEM
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
