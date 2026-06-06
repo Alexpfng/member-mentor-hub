@@ -464,7 +464,7 @@ export default function CoachMember() {
               </>
             )}
 
-            {activeTab === 1 && (
+            {activeTab === 2 && (
               <>
                 <CSTSectionNum num={1} label="HISTORIQUE" sub={`${data.sessions.length} DERNIÈRES SÉANCES`} />
                 <div className="cst-col" style={{ gap: 10, marginTop: 14 }}>
@@ -487,7 +487,7 @@ export default function CoachMember() {
               </>
             )}
 
-            {activeTab === 2 && (
+            {activeTab === 3 && (
               <>
                 <CSTSectionNum num={1} label="VIDÉOS TECHNIQUE" sub="ENVOIS DU COACHÉ" />
                 <div style={{ marginTop: 14 }}>
@@ -496,7 +496,7 @@ export default function CoachMember() {
               </>
             )}
 
-            {activeTab === 3 && (
+            {activeTab === 4 && (
               <>
                 <CSTSectionNum num={1} label="PROGRESSION" sub="EXERCICES CLÉS" />
                 <div className="cst-col" style={{ gap: 10, marginTop: 14 }}>
@@ -531,7 +531,7 @@ export default function CoachMember() {
               </>
             )}
 
-            {activeTab === 4 && form && (
+            {activeTab === 5 && form && (
               <>
                 <CSTSectionNum num={1} label="PROFIL" sub="ÉDITER LES INFOS ADHÉRENT" />
                 <form onSubmit={saveForm} className="cst-card-dark" style={{ padding: 20, marginTop: 14, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
@@ -587,7 +587,7 @@ export default function CoachMember() {
               </>
             )}
 
-            {activeTab === 5 && (
+            {activeTab === 6 && (
               <>
                 <CSTSectionNum num={1} label="MESSAGES" sub={data.unread_messages_count > 0 ? `${data.unread_messages_count} NON LUS` : 'AUCUN NOUVEAU'} />
                 <div className="cst-card-dark" style={{ padding: 24, marginTop: 14, textAlign: 'center' }}>
