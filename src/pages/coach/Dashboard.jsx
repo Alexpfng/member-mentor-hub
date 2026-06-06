@@ -131,8 +131,10 @@ const MONTHS = ['JAN', 'FÉV', 'MAR', 'AVR', 'MAI', 'JUIN', 'JUIL', 'AOÛT', 'SE
 
 export default function CoachDashboard() {
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const listMembersFn = useServerFn(listMembers);
   const listProgramsFn = useServerFn(listPrograms);
+  const metricsFn = useServerFn(getDashboardMetrics);
   const [showInvite, setShowInvite] = useState(false);
   const [inviteOk, setInviteOk] = useState('');
   const [realMembers, setRealMembers] = useState([]);
@@ -140,6 +142,7 @@ export default function CoachDashboard() {
   const [firstName, setFirstName] = useState('Coach');
 
   const seedFn = useServerFn(seedColosmartData);
+  const { data: metrics } = useQuery({ queryKey: ['coach', 'metrics'], queryFn: () => metricsFn() });
 
   async function reload() {
     try {
@@ -156,10 +159,21 @@ export default function CoachDashboard() {
     })();
   }, []);
 
+  // Realtime — invalidate coach queries on relevant changes
+  useEffect(() => {
+    const ch = supabase.channel('coach-dashboard')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sessions' }, () => qc.invalidateQueries({ queryKey: ['coach'] }))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'pain_reports' }, () => qc.invalidateQueries({ queryKey: ['coach'] }))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'exercise_feedbacks' }, () => qc.invalidateQueries({ queryKey: ['coach'] }))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'technique_videos' }, () => qc.invalidateQueries({ queryKey: ['coach'] }))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => qc.invalidateQueries({ queryKey: ['coach'] }))
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [qc]);
+
   useEffect(() => {
     (async () => {
       try {
-        const { supabase } = await import('@/integrations/supabase/client');
         const { data: u } = await supabase.auth.getUser();
         if (!u?.user) return;
         const { data: prof } = await supabase
@@ -173,6 +187,13 @@ export default function CoachDashboard() {
   const dateLabel = `${['DIM','LUN','MAR','MER','JEU','VEN','SAM'][now.getDay()]}. ${now.getDate()} ${MONTHS[now.getMonth()]} · ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
   const monthLabel = `${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
 
+  const kpis = [
+    [String(metrics?.activeMembers ?? realMembers.length).padStart(2, '0'), 'COACHÉS ACTIFS'],
+    [String(metrics?.sessionsThisWeek ?? 0).padStart(2, '0'), 'SÉANCES CETTE SEMAINE'],
+    [String(metrics?.toTreat ?? 0).padStart(2, '0'), 'À TRAITER'],
+    [metrics?.adherence7d != null ? `${metrics.adherence7d}%` : '—', 'ADHÉRENCE 7J'],
+  ];
+
   return (
     <div className="cst-screen" style={{ flexDirection: 'row' }}>
       <CoachSidebar />
@@ -184,7 +205,7 @@ export default function CoachDashboard() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
             <span className="cst-mono">{dateLabel}</span>
             <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" onClick={() => navigate({ to: '/coach/import' })}>IMPORTER EXCEL ▲</button>
-            <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" onClick={() => setShowInvite(true)}>+ INVITER UN ADHÉRENT</button>
+            <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" onClick={() => setShowInvite(true)}>+ INVITER</button>
             <button className="cst-btn cst-btn-primary cst-btn-sm" onClick={() => navigate({ to: '/coach/builder' })}>NOUVEAU PROGRAMME →</button>
           </div>
         </div>
@@ -197,88 +218,63 @@ export default function CoachDashboard() {
           <CSTDuoTitle
             top={`BONJOUR, ${firstName.toUpperCase()}.`}
             bottom={realMembers.length === 0
-              ? 'Aucun adhérent pour l\'instant.'
+              ? 'Aucun coaché pour l\'instant.'
               : `${realMembers.length} ${realMembers.length > 1 ? 'athlètes' : 'athlète'} en mouvement.`}
             size={42}
           />
           <CSTBandWords items={['LIBERTÉ', 'MOUVEMENT', 'NATURE', 'PROGRESSION']} />
         </div>
 
-        {/* Metrics (real data only) */}
+        {/* Metrics */}
         <div style={{ padding: '24px 32px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
-          {[
-            [String(realMembers.length).padStart(2, '0'), 'MEMBRES ACTIFS'],
-            [String(programs.length).padStart(2, '0'), 'PROGRAMMES CRÉÉS'],
-            [String(realMembers.filter((r) => r.program_id).length).padStart(2, '0'), 'PROG. ASSIGNÉS'],
-            ['00', 'MESSAGES NON LUS'],
-          ].map(([n, l], i) => (
+          {kpis.map(([n, l], i) => (
             <div key={i} className="cst-hatch" style={metricCard}>
               <span className="cst-mono" style={{ fontSize: 9 }}>★ {String(i+1).padStart(2,'0')}</span>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                <span style={{ fontFamily: 'var(--cst-display)', fontWeight: 800, fontSize: 64, lineHeight: 0.9 }}>{n}</span>
+                <span style={{ fontFamily: 'var(--cst-display)', fontWeight: 800, fontSize: 56, lineHeight: 0.9, color: i === 2 && metrics?.toTreat > 0 ? '#E07B39' : '#fff' }}>{n}</span>
               </div>
               <span className="cst-mono" style={{ fontSize: 9, letterSpacing: '0.22em' }}>{l}</span>
             </div>
           ))}
         </div>
 
-        {/* Real Members table */}
-        <div style={{ padding: '8px 32px 0' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-            <CSTSectionNum num={2} label="MES ADHÉRENTS" sub={`${realMembers.length} INSCRITS`} />
-            <button className="cst-btn cst-btn-primary cst-btn-sm" onClick={() => setShowInvite(true)}>+ INVITER</button>
+        {/* Two-column: Priority feed + Recent sessions */}
+        <div style={{ padding: '8px 32px', display: 'grid', gridTemplateColumns: 'minmax(0, 1.2fr) minmax(0, 1fr)', gap: 24 }}>
+          <div>
+            <div style={{ marginBottom: 14 }}>
+              <CSTSectionNum num={2} label="À TRAITER EN PRIORITÉ" sub={metrics?.toTreat ? `${metrics.toTreat} ITEMS` : 'TOUT EST À JOUR'} />
+            </div>
+            <PriorityFeed />
           </div>
-          <div className="cst-card-dark" style={{ padding: 0, overflow: 'hidden' }}>
-            <table style={tableStyle}>
-              <thead>
-                <tr>
-                  <th style={{ ...thStyle, width: 260 }}>MEMBRE</th>
-                  <th style={thStyle}>EMAIL</th>
-                  <th style={thStyle}>PROGRAMME ASSIGNÉ</th>
-                  <th style={thStyle}>INSCRIT LE</th>
-                  <th style={thStyle}></th>
-                </tr>
-              </thead>
-              <tbody>
-                {realMembers.length === 0 && (
-                  <tr><td colSpan={5} style={{ ...tdStyle, textAlign: 'center', padding: '32px 16px', opacity: 0.6 }}>
-                    Aucun adhérent pour l'instant. <span style={{ color: 'var(--cst-mid-green)', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => setShowInvite(true)}>Inviter le premier →</span>
-                  </td></tr>
-                )}
-                {realMembers.map((r) => {
-                  const init = `${(r.first_name?.[0] || r.email?.[0] || '?')}${(r.last_name?.[0] || '')}`.toUpperCase();
-                  const name = [r.first_name, r.last_name].filter(Boolean).join(' ') || r.email;
-                  return (
-                    <tr key={r.id}>
-                      <td style={tdStyle}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <CSTAvatar initials={init} size={28} />
-                          <span style={{ fontWeight: 600 }}>{name}</span>
-                        </div>
-                      </td>
-                      <td style={{ ...tdStyle, opacity: 0.7, fontSize: 12 }}>{r.email}</td>
-                      <td style={tdStyle}>
-                        <AssignSelect memberId={r.id} programs={programs} currentProgramId={r.program_id} onAssigned={reload} />
-                      </td>
-                      <td style={{ ...tdStyle, opacity: 0.6, fontSize: 11 }} className="cst-mono">{r.created_at ? new Date(r.created_at).toLocaleDateString('fr-FR') : '—'}</td>
-                      <td style={{ ...tdStyle, textAlign: 'right' }}>
-                        <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" onClick={() => navigate({ to: '/coach/membre/$memberId', params: { memberId: r.id } })}>VOIR</button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div>
+            <div style={{ marginBottom: 14 }}>
+              <CSTSectionNum num={3} label="SÉANCES RÉCENTES" sub="TEMPS RÉEL" />
+            </div>
+            <RecentSessionsList />
           </div>
         </div>
 
-        {/* Empty programs hint */}
+        {/* Members overview */}
+        <div style={{ padding: '24px 32px 32px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+            <CSTSectionNum num={4} label="MES COACHÉS" sub={`${realMembers.length} INSCRITS`} />
+            <button className="cst-btn cst-btn-primary cst-btn-sm" onClick={() => setShowInvite(true)}>+ INVITER</button>
+          </div>
+          {realMembers.length === 0 ? (
+            <div className="cst-card-dark" style={{ padding: 32, textAlign: 'center', opacity: 0.7 }}>
+              Aucun coaché pour l'instant. <span style={{ color: 'var(--cst-mid-green)', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => setShowInvite(true)}>Inviter le premier →</span>
+            </div>
+          ) : (
+            <MembersTable />
+          )}
+        </div>
+
         {programs.length === 0 && (
-          <div style={{ padding: '32px 32px' }}>
+          <div style={{ padding: '0 32px 32px' }}>
             <div className="cst-card-dark cst-hatch" style={{ padding: 24, textAlign: 'center' }}>
               <div className="cst-display" style={{ fontSize: 22, marginBottom: 6 }}>AUCUN PROGRAMME ENCORE</div>
               <p style={{ margin: '0 0 16px', fontSize: 13, opacity: 0.7 }}>
-                Crée ton premier programme pour pouvoir l'assigner à tes adhérents.
+                Crée ton premier programme pour pouvoir l'assigner à tes coachés.
               </p>
               <button className="cst-btn cst-btn-primary" onClick={() => navigate({ to: '/coach/builder' })}>
                 CRÉER UN PROGRAMME →
@@ -290,3 +286,4 @@ export default function CoachDashboard() {
     </div>
   );
 }
+
