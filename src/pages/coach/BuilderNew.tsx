@@ -117,8 +117,8 @@ function makeExercise(lib: LibraryExercise): ProgramExercise {
 }
 
 // ─── COLOR MAPPING ────────────────────────────────────────────────────────────
-const EMOJI_TO_NAME: Record<string, string> = { '🔴': 'red', '🟢': 'green', '🟡': 'yellow', '🔵': 'blue' };
-const NAME_TO_EMOJI: Record<string, ExColor> = { red: '🔴', green: '🟢', yellow: '🟡', blue: '🔵' };
+const EMOJI_TO_NAME: Record<string, string> = { '🔴': 'red', '🟢': 'green', '🟡': 'yellow', '🔵': 'blue', '🟠': 'orange' };
+const NAME_TO_EMOJI: Record<string, ExColor> = { red: '🔴', green: '🟢', yellow: '🟡', blue: '🔵', orange: '🟠' };
 
 // ─── CANONICAL <-> BUILDER MAPPING ───────────────────────────────────────────
 // Canonical shape lives in programs.structure and is read by ProgramBlocks.
