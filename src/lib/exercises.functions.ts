@@ -108,6 +108,9 @@ export const upsertExercise = createServerFn({ method: "POST" })
       data.intensity_code && VALID_INTENSITY.has(data.intensity_code)
         ? data.intensity_code
         : null;
+    const patterns = (data.movement_patterns ?? [])
+      .map((p) => String(p).toLowerCase().trim())
+      .filter((p) => VALID_PATTERNS.has(p));
     const payload = {
       name: data.name,
       intensity_code: intensity,
@@ -121,6 +124,7 @@ export const upsertExercise = createServerFn({ method: "POST" })
       is_archived: data.is_archived ?? false,
       is_global: true,
       created_by: context.userId,
+      ...(data.movement_patterns !== undefined ? { movement_patterns: patterns } : {}),
     };
     if (data.id) {
       const { data: row, error } = await supabaseAdmin
