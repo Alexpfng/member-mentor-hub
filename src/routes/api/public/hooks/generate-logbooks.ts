@@ -5,9 +5,13 @@ export const Route = createFileRoute("/api/public/hooks/generate-logbooks")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const apikey = request.headers.get("apikey") ?? request.headers.get("authorization")?.replace("Bearer ", "");
-        const expected = process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.SUPABASE_ANON_KEY;
-        if (!expected || apikey !== expected) {
+        // Server-only secret. Never use VITE_/anon key here — it is bundled in the client.
+        const expected =
+          process.env.CRON_SECRET ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
+        const provided =
+          request.headers.get("x-cron-secret") ??
+          request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
+        if (!expected || !provided || provided !== expected) {
           return new Response("Unauthorized", { status: 401 });
         }
         const results = await generateLogbooksForAll();
