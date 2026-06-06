@@ -1,46 +1,49 @@
-## Le problème
+## Objectif
 
-L'écran d'erreur "This page didn't load…" en ligne vient de `getMemberDashboard` qui dépasse le délai d'attente du serveur :
+Faire en sorte que l’écran **Historique** de l’espace membre n’affiche jamais de séance inventée. Il doit afficher uniquement les séances réelles du membre connecté, issues de la base de données.
 
-```
-error: getMemberDashboard failed
-message: "upstream request timeout"
-```
+## Ce qui sera modifié
 
-Dans `src/lib/member-stats.functions.ts`, le calcul du `streak` lance **jusqu'à 26 requêtes Supabase en série** (une par semaine, en `await` dans une boucle `for`). En prod (Cloudflare Worker → Supabase via Internet), chaque aller-retour coûte 80–200 ms, donc on tape facilement les 5–10 s de timeout du Worker — d'où le 500 générique côté navigateur.
+1. **Supprimer les données hardcodées**
+   - Retirer la liste statique `MAI 2026 / AVRIL 2026` actuellement présente dans `src/pages/membre/Historique.jsx`.
+   - Supprimer les textes comme `28 SÉANCES` s’ils ne viennent pas du nombre réel de séances.
 
-En plus, la logique est buggée : si la semaine courante a `< 3` séances, on fait `continue` (au lieu de regarder la semaine d'avant), ce qui force la boucle à toujours faire les 26 itérations.
+2. **Charger les vraies séances du membre**
+   - Récupérer l’utilisateur connecté.
+   - Lire uniquement ses lignes réelles dans `sessions`, avec `status = completed`.
+   - Trier par date décroissante.
+   - Grouper l’affichage par mois à partir de la vraie date de séance.
 
-## Le correctif
+3. **Afficher uniquement des métriques réelles**
+   - Utiliser les champs existants de `sessions` :
+     - `date`
+     - `session_label`
+     - `duration_minutes`
+     - `average_rpe`
+     - `total_volume_kg`
+     - `week_number`
+     - `day_number`
+     - `member_note`
+     - `coach_note`
+   - Ne pas afficher de PR, nombre d’exercices ou note coach si la donnée n’existe pas réellement.
 
-Remplacer la boucle par **une seule requête** qui ramène toutes les sessions `completed` des 26 dernières semaines, puis grouper par semaine en mémoire pour calculer le streak.
+4. **Ajouter les données détaillées seulement si elles existent**
+   - Récupérer les `set_logs` liés aux vraies séances pour calculer le nombre réel d’exercices distincts.
+   - Récupérer les `personal_records` liés à ces séances pour afficher un vrai PR uniquement quand il existe.
 
-### Fichier modifié
+5. **Gérer les états vides proprement**
+   - Si aucune séance terminée n’existe : afficher un état vide clair, par exemple “Aucune séance terminée pour le moment”.
+   - Ne jamais remplacer l’absence de données par des exemples.
 
-`src/lib/member-stats.functions.ts` — fonction `getMemberDashboard` uniquement.
+## Détails techniques
 
-### Détail technique
+- Fichier principal : `src/pages/membre/Historique.jsx`.
+- Requêtes côté client avec le client existant et les RLS actuelles : le membre ne peut lire que ses propres `sessions`, `set_logs` et `personal_records`.
+- Aucun changement de schéma base de données nécessaire.
+- Aucun nouvel accès large ou donnée fictive ajoutée.
 
-1. Dans le `Promise.all` initial, ajouter une 5e requête :
-   ```
-   supabaseAdmin
-     .from("sessions")
-     .select("date")
-     .eq("member_id", context.userId)
-     .eq("status", "completed")
-     .gte("date", isoDay(26 semaines avant lundi))
-     .lte("date", isoDay(sunday))
-   ```
-2. Côté JS : pour chaque ligne, calculer le lundi de sa semaine (`YYYY-MM-DD`), incrémenter un compteur par semaine dans une `Map`.
-3. Itérer les semaines en partant de la semaine courante vers le passé :
-   - semaine courante : si `count >= 3` → streak++, sinon on ignore (on n'arrête pas le streak sur une semaine en cours).
-   - semaines passées : `count >= 3` → streak++, sinon `break`.
-4. Supprimer la boucle `for (i=0; i<26; i++)` avec `await` dans le corps.
+## Validation
 
-Aucun changement de schéma, aucun changement de l'API publique de la fonction (mêmes champs retournés). Les autres fonctions du fichier (`getMemberProgression`, `listMyExercises`, `getMyExerciseProgression`) ne sont pas touchées.
-
-### Validation
-
-- Rafraîchir `/membre` une fois loggué : le dashboard charge sans 500.
-- Vérifier dans les logs Worker que `getMemberDashboard` ne renvoie plus `upstream request timeout`.
-- Vérifier que `streak` affiché correspond bien aux semaines avec ≥ 3 séances complétées.
+- Ouvrir `/membre/historique`.
+- Vérifier que les séances affichées correspondent aux vraies lignes `sessions` du membre connecté.
+- Vérifier qu’un membre sans historique voit l’état vide, pas des exemples.
