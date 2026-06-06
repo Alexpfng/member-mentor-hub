@@ -1,40 +1,27 @@
-## Problème observé
+## Problème
 
-Sur `/membre`, la carte « AUJOURD'HUI » affiche toujours le **nom du programme** ("RENFO SPÉ TRAIL + MUSCU HAUT DU CORPS"), et `COMMENCER` lance un Logger générique. Le membre ne peut donc pas :
-- voir la séance qu'il a planifiée pour aujourd'hui dans `/membre/planning`,
-- choisir, parmi les séances de la semaine du programme, laquelle il veut démarrer.
+Quand on clique « COMMENCER » sur la séance planifiée, le launcher (`src/routes/_authenticated.membre.logger.tsx`) :
 
-## Objectif
+1. **Reprend systématiquement** la dernière séance `in_progress` du membre, **sans tenir compte** du paramètre `?day=…` qu'on vient de passer. Donc si une vieille séance traîne en `in_progress`, on est redirigé dessus au lieu de lancer celle choisie dans le planning.
+2. Quand il crée bien une nouvelle séance, il n'écrit **pas** le `day_number` correspondant au `day_label`. Or `src/routes/_authenticated.membre.seance.$sessionId.tsx` cherche les exercices via `structure.weeks[week_number-1].days[day_number-1]` ; sans `day_number`, il retombe sur le jour 0, puis sur `DEFAULT_EXERCISES` (Tractions / Row barre / Face pull / Curl) — qui n'a rien à voir avec la séance du programme.
 
-L'accueil membre doit se baser uniquement sur le réel : les `planned_sessions` du membre + les jours du programme assigné, exactement comme dans Planning. Aucune donnée inventée.
+## Correctif (uniquement `src/routes/_authenticated.membre.logger.tsx`)
 
-## Changements (uniquement `src/pages/membre/Dashboard.jsx`)
+1. **Résoudre la séance demandée à partir du programme assigné** : lire l'`assignment` actif du membre + `programs.structure`, retrouver dans `structure.weeks[search.week ?? currentWeek].days` l'index dont `label === search.day`. Cet index (1-based) sert de `day_number`. Si rien ne matche, on garde `day_number = null` et `session_label = search.day`.
 
-1. **Charger le planning de la semaine** via le server function existant `listWeekPlan` (`@/lib/planning.functions`). Il renvoie déjà `planned`, `sessions`, `dayDefs`, `assignment` pour la semaine courante. Aucun nouveau schéma, aucune nouvelle requête côté SQL.
+2. **Gérer la séance `in_progress` existante** :
+   - Si `search.day` est fourni :
+     - S'il existe une `in_progress`, **la mettre à jour** (`session_label`, `program_id`, `week_number`, `day_number`) puis naviguer dessus — pas de doublon, et on lance bien la séance choisie.
+     - Sinon, INSERT avec les bons champs (`program_id`, `week_number`, `day_number`, `session_label`).
+   - Si `search.day` n'est **pas** fourni : conserver le comportement actuel (reprise de l'`in_progress` si présente, sinon création « Séance libre »).
 
-2. **Carte héro « AUJOURD'HUI »** — logique en cascade, basée sur le réel uniquement :
-   - `in_progress` aujourd'hui → `REPRENDRE` (déjà en place).
-   - `completed` aujourd'hui → état terminé (déjà en place).
-   - `planned` aujourd'hui (entrée `planned_sessions` avec `planned_date = today`) → afficher `day_label` de la séance planifiée + `COMMENCER →` qui ouvre le Logger pour cette séance.
-   - Aucun `planned` pour aujourd'hui mais le programme a des `dayDefs` non encore utilisés cette semaine → afficher un petit **sélecteur** : titre `CHOISIR MA SÉANCE` + liste cliquable des `dayDefs` restants ; le clic appelle `upsertPlannedSession({ plannedDate: today, dayLabel })` puis lance le Logger sur cette séance.
-   - Aucun programme et aucun planifié → fallback `SÉANCE LIBRE` (comportement actuel).
-
-3. **Bande semaine** : pour chaque jour, en plus du point d'état, afficher le `day_label` de la séance planifiée ou complétée (texte court tronqué). Tap sur un jour :
-   - si séance `in_progress` → `/membre/seance/:id`,
-   - si `planned` → ouvre Logger pour ce `day_label`,
-   - sinon → `/membre/planning` (pour planifier).
-
-4. **Passage de la séance choisie au Logger** : `navigate("/membre/logger?day=<dayLabel>")`. Le Logger lit ce paramètre (via `useSearch` de TanStack Router) et l'utilise pour afficher le bon titre. Le contenu d'exercices du Logger reste tel quel (mock) tant qu'aucun changement de scope n'est demandé — seul le titre/affichage reflète la séance choisie. Pas d'invention de données.
-
-5. **États** : ajout d'un état `loading` pour le bloc planning ; conservation de tous les autres comportements actuels (poids, PR, message coach, liens rapides).
+3. Ne pas toucher au reste du code (Dashboard, Planning, page séance, Logger.jsx mock).
 
 ## Hors scope
 
-- Pas de modification du schéma DB ni des policies RLS.
-- Pas de refonte du Logger (mock conservé), uniquement la lecture du paramètre `day` pour afficher le bon label.
-- Pas de changement de `/membre/planning`.
+- Pas de changement de schéma DB ni de RLS.
+- Pas de modification de la page `seance/$sessionId.tsx` : une fois `program_id`, `week_number` et `day_number` correctement renseignés, elle charge déjà les bons exercices.
 
 ## Fichiers modifiés
 
-- `src/pages/membre/Dashboard.jsx` (logique héro + bande semaine + appel `listWeekPlan` + sélecteur).
-- `src/pages/membre/Logger.jsx` (lecture du paramètre `day` pour le titre).
+- `src/routes/_authenticated.membre.logger.tsx`
