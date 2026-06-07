@@ -49,7 +49,11 @@ export const updateFreeSessionMeta = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const patch: Record<string, unknown> = {};
+    const patch: {
+      free_category?: string | null;
+      free_title?: string | null;
+      session_label?: string | null;
+    } = {};
     if (data.category !== undefined) patch.free_category = data.category;
     if (data.title !== undefined) {
       const t = data.title?.trim() || null;
