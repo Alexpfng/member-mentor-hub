@@ -368,6 +368,7 @@ export default function AdapterSemaine() {
             {savedAt ? `✓ Sauvegardé ${new Date(savedAt).toLocaleTimeString("fr-FR")}` : "—"}
           </div>
           <div style={{ display: "flex", gap: 10 }}>
+            <button onClick={() => setShowDuplicate(true)} className="cst-btn cst-btn-ghost-dark">Dupliquer vers…</button>
             <button onClick={() => setShowPreview(true)} className="cst-btn cst-btn-ghost-dark">Aperçu membre</button>
             <button onClick={openPublish} className="cst-btn cst-btn-primary">Publier la semaine {ctx.week.week_number} →</button>
           </div>
