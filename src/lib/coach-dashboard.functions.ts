@@ -48,8 +48,8 @@ export const getDashboardMetrics = createServerFn({ method: "GET" })
       supabaseAdmin.from("sessions").select("id", { count: "exact", head: true }).eq("coach_seen", false).eq("status", "completed"),
     ]);
 
-    // adhérence 7j : sessions completed dans les 7j / membres actifs (proxy simple)
-    const { data: recent7 } = await supabaseAdmin.from("sessions").select("id, status").gte("started_at", sevenDaysAgo);
+    // adhérence 7j : seulement séances de PROGRAMME (les libres ne faussent pas l'adhérence)
+    const { data: recent7 } = await supabaseAdmin.from("sessions").select("id, status").eq("session_type", "program").gte("started_at", sevenDaysAgo);
     const done = (recent7 ?? []).filter((s) => s.status === "completed").length;
     const total = recent7?.length || 0;
     const adherence = total > 0 ? Math.round((done / total) * 100) : 0;
@@ -109,7 +109,7 @@ export const getRecentSessions = createServerFn({ method: "GET" })
 
     const { data: sessions } = await supabaseAdmin
       .from("sessions")
-      .select("id, member_id, session_label, week_number, day_number, started_at, ended_at, duration_minutes, average_rpe, member_note, coach_seen, status")
+      .select("id, member_id, session_label, week_number, day_number, started_at, ended_at, duration_minutes, average_rpe, member_note, coach_seen, status, session_type, free_title, free_category")
       .eq("status", "completed")
       .order("ended_at", { ascending: false, nullsFirst: false })
       .limit(data.limit ?? 10);
@@ -133,6 +133,9 @@ export const getRecentSessions = createServerFn({ method: "GET" })
       memberNote: s.member_note,
       coachSeen: s.coach_seen,
       painCount: painsBySession.get(s.id) || 0,
+      sessionType: s.session_type ?? "program",
+      freeTitle: s.free_title ?? null,
+      freeCategory: s.free_category ?? null,
     }));
   });
 
@@ -147,7 +150,7 @@ export const getMembersOverview = createServerFn({ method: "GET" })
     const sevenDaysAgo = daysAgo(7).toISOString();
     const [assignsR, lastSessionsR, painsR, highRpeR] = await Promise.all([
       supabaseAdmin.from("assignments").select("member_id, program_id, start_date, active, programs(name, duration_weeks)").in("member_id", ids).eq("active", true),
-      supabaseAdmin.from("sessions").select("member_id, ended_at, status").in("member_id", ids).order("ended_at", { ascending: false }),
+      supabaseAdmin.from("sessions").select("member_id, ended_at, status, session_type").in("member_id", ids).order("ended_at", { ascending: false }),
       supabaseAdmin.from("pain_reports").select("member_id").in("member_id", ids).is("resolved_at", null),
       supabaseAdmin.from("exercise_feedbacks").select("rpe, sessions!inner(member_id, ended_at)").gte("rpe", 9).gte("sessions.ended_at", sevenDaysAgo),
     ]);
@@ -160,7 +163,8 @@ export const getMembersOverview = createServerFn({ method: "GET" })
     const sessions7By = new Map<string, { done: number; total: number }>();
     for (const s of lastSessionsR.data ?? []) {
       if (!lastByMember.has(s.member_id) && s.ended_at) lastByMember.set(s.member_id, s.ended_at);
-      if (s.ended_at && s.ended_at >= sevenDaysAgo) {
+      // Adhérence : seulement les séances de programme
+      if (s.ended_at && s.ended_at >= sevenDaysAgo && (s.session_type ?? "program") === "program") {
         const cur = sessions7By.get(s.member_id) || { done: 0, total: 0 };
         cur.total += 1; if (s.status === "completed") cur.done += 1;
         sessions7By.set(s.member_id, cur);
@@ -217,11 +221,13 @@ export const getSessionDetail = createServerFn({ method: "GET" })
   .inputValidator((d) => z.object({ sessionId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertCoach(context.userId);
-    const [sessR, setsR, fbR, painsR] = await Promise.all([
-      supabaseAdmin.from("sessions").select("id, member_id, program_id, session_label, week_number, day_number, started_at, ended_at, duration_minutes, average_rpe, total_volume_kg, overall_feeling, member_note, coach_seen, status").eq("id", data.sessionId).maybeSingle(),
+    const [sessR, setsR, fbR, painsR, freeActR, mediaR] = await Promise.all([
+      supabaseAdmin.from("sessions").select("id, member_id, program_id, session_label, week_number, day_number, started_at, ended_at, duration_minutes, average_rpe, total_volume_kg, overall_feeling, member_note, coach_seen, status, session_type, free_title, free_category").eq("id", data.sessionId).maybeSingle(),
       supabaseAdmin.from("set_logs").select("exercise_name, set_number, weight_kg, reps, rpe, note, completed, logged_at").eq("session_id", data.sessionId).order("logged_at", { ascending: true }),
       supabaseAdmin.from("exercise_feedbacks").select("exercise_name, block_id, rpe, felt_too_hard, felt_too_easy, could_not_do, member_comment, created_at").eq("session_id", data.sessionId),
       supabaseAdmin.from("pain_reports").select("id, exercise_name, zone, intensity, comment, resolved_at, created_at").eq("session_id", data.sessionId),
+      supabaseAdmin.from("free_activities").select("id, name, category, series, reps, charge, duration_min, distance_km, elevation_m, rpe, note, order_index").eq("session_id", data.sessionId).order("order_index", { ascending: true }),
+      supabaseAdmin.from("session_media").select("id, type, storage_path, thumbnail_path, caption, created_at").eq("session_id", data.sessionId).order("created_at", { ascending: true }),
     ]);
     if (!sessR.data) throw new Error("Séance introuvable");
 
@@ -233,6 +239,25 @@ export const getSessionDetail = createServerFn({ method: "GET" })
     }
     const { data: prof } = await supabaseAdmin.from("profiles").select("first_name, last_name, email").eq("id", sessR.data.member_id).maybeSingle();
 
+    // Signed URLs for private bucket
+    const mediaWithUrls = await Promise.all(
+      (mediaR.data ?? []).map(async (m) => {
+        const [signed, signedThumb] = await Promise.all([
+          supabaseAdmin.storage.from("session-media").createSignedUrl(m.storage_path, 3600),
+          m.thumbnail_path
+            ? supabaseAdmin.storage.from("session-media").createSignedUrl(m.thumbnail_path, 3600)
+            : Promise.resolve({ data: null }),
+        ]);
+        return {
+          id: m.id,
+          type: m.type,
+          caption: m.caption,
+          url: signed.data?.signedUrl ?? null,
+          thumbnailUrl: signedThumb?.data?.signedUrl ?? null,
+        };
+      }),
+    );
+
     return {
       session: sessR.data,
       member: prof ? { name: [prof.first_name, prof.last_name].filter(Boolean).join(" ") || prof.email || "Membre" } : { name: "Membre" },
@@ -240,6 +265,8 @@ export const getSessionDetail = createServerFn({ method: "GET" })
       setLogs: setsR.data ?? [],
       feedbacks: fbR.data ?? [],
       pains: painsR.data ?? [],
+      freeActivities: freeActR.data ?? [],
+      media: mediaWithUrls,
     };
   });
 
@@ -252,7 +279,7 @@ export const getMemberFollowup = createServerFn({ method: "GET" })
     const thirtyDaysAgo = daysAgo(30).toISOString();
 
     const [sessR, painsR, fbR, assignR] = await Promise.all([
-      supabaseAdmin.from("sessions").select("id, status, started_at, ended_at, average_rpe, coach_seen, session_label, week_number, day_number").eq("member_id", memberId).gte("started_at", thirtyDaysAgo).order("started_at", { ascending: false }),
+      supabaseAdmin.from("sessions").select("id, status, started_at, ended_at, average_rpe, coach_seen, session_label, week_number, day_number, session_type, free_title, free_category").eq("member_id", memberId).gte("started_at", thirtyDaysAgo).order("started_at", { ascending: false }),
       supabaseAdmin.from("pain_reports").select("id, exercise_name, zone, intensity, comment, resolved_at, created_at, session_id").eq("member_id", memberId).order("created_at", { ascending: false }).limit(20),
       supabaseAdmin.from("exercise_feedbacks").select("id, exercise_name, rpe, felt_too_hard, felt_too_easy, could_not_do, member_comment, created_at, sessions!inner(member_id, ended_at)").eq("sessions.member_id", memberId).gte("sessions.ended_at", thirtyDaysAgo),
       supabaseAdmin.from("assignments").select("program_id, start_date, programs(structure, duration_weeks)").eq("member_id", memberId).eq("active", true).maybeSingle(),
@@ -260,11 +287,13 @@ export const getMemberFollowup = createServerFn({ method: "GET" })
 
     const sessions = sessR.data ?? [];
     const completed = sessions.filter((s) => s.status === "completed");
+    const completedProgram = completed.filter((s) => (s.session_type ?? "program") === "program");
+    const completedFree = completed.filter((s) => s.session_type === "free");
     const rpes = completed.map((s) => Number(s.average_rpe)).filter((n) => !isNaN(n) && n > 0);
     const avgRpe = rpes.length ? rpes.reduce((a, b) => a + b, 0) / rpes.length : null;
     const unseenCount = completed.filter((s) => !s.coach_seen).length;
 
-    // Adhérence : sessions terminées / sessions prévues (sur 30j, 4 semaines)
+    // Adhérence : SEULEMENT séances de programme (les libres ne comptent pas dans l'adhérence)
     let plannedPerWeek = 0;
     type ProgramShape = { structure?: { weeks?: Array<{ days?: Array<{ rest?: boolean }> }> } | null; duration_weeks?: number | null };
     const assignTyped = assignR.data as ({ programs?: ProgramShape | ProgramShape[] | null } | null);
@@ -275,7 +304,8 @@ export const getMemberFollowup = createServerFn({ method: "GET" })
       plannedPerWeek = days.filter((d) => !d?.rest).length;
     }
     const planned30 = plannedPerWeek * 4;
-    const done30 = completed.length;
+    const done30 = completedProgram.length;
+    const free30 = completedFree.length;
     const adherence = planned30 > 0 ? Math.round((done30 / planned30) * 100) : null;
 
     const openPains = (painsR.data ?? []).filter((p) => !p.resolved_at);
@@ -303,6 +333,7 @@ export const getMemberFollowup = createServerFn({ method: "GET" })
         sessionsDone: done30,
         sessionsPlanned: planned30,
         adherence,
+        freeSessions30: free30,
         avgRpe: avgRpe != null ? Math.round(avgRpe * 10) / 10 : null,
         openPainsCount: openPains.length,
         unseenSessionsCount: unseenCount,
@@ -310,7 +341,7 @@ export const getMemberFollowup = createServerFn({ method: "GET" })
       openPains,
       pastPains: (painsR.data ?? []).filter((p) => p.resolved_at).slice(0, 10),
       watchList,
-      recentSessions: completed.slice(0, 8).map((s) => ({ id: s.id, label: s.session_label, week: s.week_number, day: s.day_number, endedAt: s.ended_at, averageRpe: s.average_rpe, coachSeen: s.coach_seen })),
+      recentSessions: completed.slice(0, 8).map((s) => ({ id: s.id, label: s.session_label, week: s.week_number, day: s.day_number, endedAt: s.ended_at, averageRpe: s.average_rpe, coachSeen: s.coach_seen, sessionType: s.session_type ?? "program", freeTitle: s.free_title ?? null, freeCategory: s.free_category ?? null })),
     };
   });
 
@@ -324,7 +355,7 @@ export const getMemberCharts = createServerFn({ method: "GET" })
     const sevenDaysAgo = daysAgo(7).toISOString();
 
     const [adhR, rpeR, assignR] = await Promise.all([
-      supabaseAdmin.from("sessions").select("status, started_at, ended_at").eq("member_id", memberId).gte("started_at", eightWeeksAgo),
+      supabaseAdmin.from("sessions").select("status, started_at, ended_at, session_type").eq("member_id", memberId).gte("started_at", eightWeeksAgo),
       supabaseAdmin.from("sessions").select("ended_at, average_rpe").eq("member_id", memberId).eq("status", "completed").gte("ended_at", sevenDaysAgo).order("ended_at", { ascending: true }),
       supabaseAdmin.from("assignments").select("programs(structure)").eq("member_id", memberId).eq("active", true).maybeSingle(),
     ]);
@@ -346,6 +377,8 @@ export const getMemberCharts = createServerFn({ method: "GET" })
 
     for (const s of adhR.data ?? []) {
       if (!s.ended_at || s.status !== "completed") continue;
+      // Adhérence : seulement les séances de programme
+      if ((s.session_type ?? "program") !== "program") continue;
       const ws = weekStartOf(new Date(s.ended_at)).toISOString();
       const b = buckets.find((x) => x.weekKey === ws);
       if (b) b.done += 1;

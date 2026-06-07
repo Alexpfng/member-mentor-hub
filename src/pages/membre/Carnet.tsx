@@ -107,6 +107,9 @@ export default function MemberCarnet() {
                 <span className="opacity-50 text-lg">/{logbook.sessions_planned || "—"}</span>
               </div>
               <div className="text-xs opacity-70 mt-1">séances ({adherence}%)</div>
+              {logbook.free_sessions_done > 0 && (
+                <div className="text-xs opacity-60 mt-1">+ {logbook.free_sessions_done} libre{logbook.free_sessions_done > 1 ? "s" : ""}</div>
+              )}
             </div>
             <div className="p-4 rounded-lg border border-border bg-card">
               <div className="text-3xl font-semibold">
