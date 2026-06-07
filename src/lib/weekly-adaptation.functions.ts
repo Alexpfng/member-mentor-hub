@@ -523,3 +523,58 @@ export const listMemberWeekHistory = createServerFn({ method: "POST" })
       .order("week_number", { ascending: false });
     return { weeks: rows ?? [] };
   });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Replace a single exercise inside a draft week's structure
+// Keeps series/reps/charge/rpe_target/tempo/recup from the source exercise.
+// ─────────────────────────────────────────────────────────────────────────────
+export const replaceExercise = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      weekId: z.string().uuid(),
+      dayIndex: z.number().int().min(0).max(20),
+      exoIndex: z.number().int().min(0).max(50),
+      newExerciseId: z.string().uuid(),
+      memberNote: z.string().max(500).optional(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await requireCoach(context.userId);
+    const { data: week } = await supabaseAdmin
+      .from("assignment_weeks").select("*").eq("id", data.weekId).maybeSingle();
+    if (!week) throw new Error("Semaine introuvable.");
+    if (week.status === "done") throw new Error("Semaine terminée, non modifiable.");
+
+    const { data: exo, error: exErr } = await supabaseAdmin
+      .from("exercises")
+      .select("name, color, default_tempo, youtube_url, youtube_id, coach_notes, intensity_code")
+      .eq("id", data.newExerciseId)
+      .maybeSingle();
+    if (exErr || !exo) throw new Error("Exercice introuvable.");
+
+    const structure = JSON.parse(JSON.stringify(week.structure ?? {})) as WeekStructure;
+    const day = (structure.days ?? [])[data.dayIndex];
+    const source = day?.exercises?.[data.exoIndex];
+    if (!day || !source) throw new Error("Exercice source introuvable dans la semaine.");
+
+    const replaced: ProgExercise = {
+      ...source,
+      name: exo.name,
+      color: exo.color ?? source.color ?? null,
+      tempo: source.tempo ?? exo.default_tempo ?? null,
+      youtube_url: exo.youtube_url ?? null,
+      youtube_id: exo.youtube_id ?? null,
+      coach_notes: data.memberNote?.trim() || source.coach_notes || exo.coach_notes || null,
+      code: exo.intensity_code ?? source.code ?? null,
+    };
+    day.exercises![data.exoIndex] = replaced;
+
+    const { error } = await supabaseAdmin
+      .from("assignment_weeks")
+      .update({ structure: structure as unknown as never })
+      .eq("id", data.weekId);
+    if (error) throw new Error(error.message);
+    return { ok: true, structure };
+  });
+
