@@ -109,7 +109,7 @@ export const getRecentSessions = createServerFn({ method: "GET" })
 
     const { data: sessions } = await supabaseAdmin
       .from("sessions")
-      .select("id, member_id, session_label, week_number, day_number, started_at, ended_at, duration_minutes, average_rpe, member_note, coach_seen, status")
+      .select("id, member_id, session_label, week_number, day_number, started_at, ended_at, duration_minutes, average_rpe, member_note, coach_seen, status, session_type, free_title, free_category")
       .eq("status", "completed")
       .order("ended_at", { ascending: false, nullsFirst: false })
       .limit(data.limit ?? 10);
@@ -133,6 +133,9 @@ export const getRecentSessions = createServerFn({ method: "GET" })
       memberNote: s.member_note,
       coachSeen: s.coach_seen,
       painCount: painsBySession.get(s.id) || 0,
+      sessionType: s.session_type ?? "program",
+      freeTitle: s.free_title ?? null,
+      freeCategory: s.free_category ?? null,
     }));
   });
 
