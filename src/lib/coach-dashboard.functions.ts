@@ -48,8 +48,8 @@ export const getDashboardMetrics = createServerFn({ method: "GET" })
       supabaseAdmin.from("sessions").select("id", { count: "exact", head: true }).eq("coach_seen", false).eq("status", "completed"),
     ]);
 
-    // adhérence 7j : sessions completed dans les 7j / membres actifs (proxy simple)
-    const { data: recent7 } = await supabaseAdmin.from("sessions").select("id, status").gte("started_at", sevenDaysAgo);
+    // adhérence 7j : seulement séances de PROGRAMME (les libres ne faussent pas l'adhérence)
+    const { data: recent7 } = await supabaseAdmin.from("sessions").select("id, status").eq("session_type", "program").gte("started_at", sevenDaysAgo);
     const done = (recent7 ?? []).filter((s) => s.status === "completed").length;
     const total = recent7?.length || 0;
     const adherence = total > 0 ? Math.round((done / total) * 100) : 0;
