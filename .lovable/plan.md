@@ -1,96 +1,54 @@
-## Objectif
+## Phase 2 — Séance libre côté coach
 
-Ajouter le **choix de séance** au lancement et la **séance libre** (avec photos / vidéos / notes) que le membre documente pour le coach. Le reste de l'app existante reste intact.
+Objectif : le coach voit clairement les séances libres (différentes du programme), avec photos/vidéos et activités libres en ligne, et l'adhérence au programme n'est plus faussée.
 
-## Architecture
+### 1. Backend — server functions
 
-### Base de données (migration)
+**`src/lib/coach-dashboard.functions.ts` — étendre `getSessionDetail`**
+- Charger en parallèle :
+  - `free_activities` (où `session_id = …`, ordonnés par `order_index`)
+  - `session_media` (mêmes critères) + générer une URL signée par item via `supabaseAdmin.storage.from('session-media').createSignedUrl(path, 3600)` (et pareil pour `thumbnail_path`)
+- Inclure dans le retour : `session_type`, `free_title`, `free_category` (déjà dans le select à compléter), `freeActivities`, `media: [{ id, type, url, thumbnailUrl, caption }]`.
 
-1. Étendre `sessions` :
-   - `session_type` `text` `default 'program'` `check in ('program','free')`
-   - `free_title` `text`
-   - `free_category` `text` (`muscu` / `course` / `cardio` / `sport` / `mobilite` / `autre`)
-2. Nouvelle table `free_activities` (RLS : membre gère les siennes, coach lit) :
-   - `session_id`, `name`, `category`, `series`, `reps`, `charge`, `distance_km`, `duration_min`, `elevation_m`, `rpe`, `note`, `order_index`
-3. Nouvelle table `session_media` (RLS : membre gère les siens, coach lit) :
-   - `session_id`, `member_id`, `type` (`photo|video`), `storage_path`, `public_url`, `thumbnail_url`, `caption`
-4. Bucket Storage privé `session-media` avec policies (membre upload/lit ses propres fichiers `{member_id}/{session_id}/…`, coach lit tout).
+**Adhérence — exclure les séances libres**
+- Dans `getDashboardMetrics`, `getMembersOverview`, `getMemberFollowup`, `getMemberCharts` : ajouter `.eq("session_type", "program")` sur toutes les requêtes `sessions` qui servent au calcul d'adhérence (done/total/recent7/sessions7By/adhR). Les requêtes de volume, RPE, durée, "récentes" gardent toutes les séances.
+- `getRecentSessions` : garder toutes les séances mais exposer `sessionType`, `freeTitle`, `freeCategory` dans le retour.
+- `getPriorityFeed` : pas de changement (RPE/douleur/vidéos restent pertinents même pour libres).
 
-### Server functions (`src/lib/free-session.functions.ts`)
+**`getMemberFollowup`** : ajouter dans `kpis` un `freeSessions30` (compte des séances `session_type='free'` terminées sur 30j) ; `recentSessions` doit inclure `sessionType`.
 
-- `createFreeSession({ category?, title? }) → { sessionId }` — insère `sessions` avec `session_type='free'`, `started_at=now`, `status='in_progress'`.
-- `addFreeActivity({ sessionId, …fields })`
-- `updateFreeActivity` / `deleteFreeActivity`
-- `listFreeActivities({ sessionId })`
-- `attachSessionMedia({ sessionId, type, storagePath, caption? })` — résout `public_url` (signed URL longue durée ou URL publique selon bucket) et insère la ligne.
-- `listSessionMedia({ sessionId })`
-- `deleteSessionMedia({ id })`
-- `finishFreeSession({ sessionId, overallFeeling?, averageRpe?, memberNote? })` — `status='completed'`, `ended_at`, `duration_minutes`.
+### 2. UI Coach
 
-L'upload du blob est fait côté client avec `supabase.storage.from('session-media').upload(path, file)` (RLS storage le scope au membre), puis on appelle `attachSessionMedia`.
+**`src/components/coach/RecentSessionsList.tsx`**
+- Si `s.sessionType === 'free'` : afficher un badge `LIBRE` (vert/cyan, style `cst-mono`) à côté du nom, et utiliser `s.freeTitle` (+ icône catégorie) comme libellé au lieu de `s.label` + semaine/jour.
 
-### Routes / pages
+**`src/pages/coach/SessionDetail.tsx`**
+- En tête : si `session_type='free'`, sous-titre = `freeTitle` + chip catégorie, masquer la grille "détail par exercice prévu vs réalisé".
+- Nouvelle section "ACTIVITÉS LIBRES" rendant `freeActivities` (carte par activité : nom, catégorie, série/reps/charge OU distance/durée/D+ OU durée/intensité + note + RPE).
+- Nouvelle section "PHOTOS & VIDÉOS" : galerie 3-col (réutiliser `src/components/cst/MediaGallery.tsx`) avec les URLs signées du backend ; clic = lightbox plein écran (image native ou `<video controls>`).
+- Si séance programme : comportement actuel inchangé.
 
-1. **`/membre/commencer`** (nouveau, `src/routes/_authenticated.membre.commencer.tsx` + `src/pages/membre/Commencer.tsx`) — écran de choix :
-   - Bloc « MON PROGRAMME » : liste des séances de la semaine (tag ✓/●/○, badge « recommandée » sur la prochaine non faite), bouton ▶ par ligne → `/membre/logger?day=…&week=…`.
-   - Bloc « SÉANCE LIBRE » → bouton qui appelle `createFreeSession` puis navigue vers `/membre/seance-libre/$sessionId`.
-   - Si pas de programme assigné → seul le bloc libre (en grand).
-2. **Dashboard** : le bouton « COMMENCER » garde le 1-clic vers la séance recommandée et ajoute un lien « Choisir une autre séance » → `/membre/commencer`. Si aucun programme : « DÉMARRER UNE SÉANCE LIBRE » direct.
-3. **`/membre/seance-libre/$sessionId`** (nouveau) — écran séance libre :
-   - Sélecteur catégorie + champ titre.
-   - Liste d'activités + bouton « + Ajouter une activité » (modale avec champs dépendant de la catégorie : muscu = séries/reps/charge ; course = distance/durée/D+ ; cardio = durée/intensité ; sport/autre = durée + note).
-   - Zone « Notes pour le coach ».
-   - Pièces jointes : 3 inputs (`accept="image/*" capture="environment"`, `accept="video/*" capture="environment"`, `accept="image/*,video/*" multiple`). Miniatures + caption + suppression avant envoi. Compression de base si vidéo > 50 Mo via re-encode best-effort (sinon erreur si > 100 Mo).
-   - Ressenti (4 emojis) + RPE 1-10 + bouton « Signaler une gêne » (réutilise `PainReportDialog`).
-   - Bouton « TERMINER ET ENVOYER AU COACH → » : `finishFreeSession`, puis écran confirmation `/membre` avec toast récap.
-4. **Logger existant (`/membre/logger`)** : inchangé, reste pour les séances programme. Plus de création « Séance libre » implicite ici — si arrivée sans `?day=` et sans `in_progress`, rediriger vers `/membre/commencer`.
-5. **Historique & Carnet** : afficher tag `LIBRE` quand `session_type='free'`, titre = `free_title || session_label`. Les séances libres comptent dans volume/durée/ressenti mais pas dans l'adhérence programme (filtrer sur `session_type='program'` pour le ratio d'adhérence).
-6. **Côté coach** :
-   - `RecentSessionsList` / fiche membre : badge LIBRE + titre, activités, médias (galerie cliquable plein écran), note membre.
-   - Nouvelle page/section `SessionDetail` : si `session_type='free'`, afficher activités + médias + note (au lieu de la vue set_logs).
-   - `getCoachDashboard` (ou équivalent) : intégrer les séances libres dans le flux récent (le tri par `created_at` les inclut déjà, on ajoute juste le tag).
-   - Notification : insertion dans `messages` au coach (`to_id` = coach assignant le programme, ou s'il n'y en a pas, premier coach trouvé) avec « <Prénom> a fait une séance libre · <titre> ». Pas de système séparé.
+**`src/components/coach/PriorityFeed.tsx`** : non modifié (les notifs "séance libre terminée" arrivent déjà via le message auto envoyé par `finishFreeSession` en Phase 1).
+
+### 3. UI Membre — finitions
+
+**`src/pages/membre/Carnet.tsx`**
+- Sous le chiffre `sessions_done / sessions_planned` (programme), afficher une ligne secondaire `+ N séance(s) libre(s)` si applicable. Nécessite ajout d'un champ `freeSessions` retourné par la query du carnet (à brancher sur la query déjà utilisée — soit `member-stats.functions.ts`, soit count direct côté composant).
+
+**`src/lib/member-stats.functions.ts`**
+- Vérifier `getMemberDashboard` : exclure `session_type='free'` du calcul d'adhérence, garder dans le compte de volume/durée/PR. Ajouter `freeSessionsThisWeek` au retour si la donnée est utilisée par le dashboard.
+
+### 4. Critères d'acceptation
+
+- [ ] Sur la fiche coach d'une séance libre : titre + catégorie + activités listées + médias affichés (signed URLs).
+- [ ] Badge `LIBRE` visible dans la liste des séances récentes coach.
+- [ ] L'adhérence (dashboard coach, fiche membre coach, carnet membre) n'est plus impactée par les séances libres terminées.
+- [ ] Le volume total et le nombre total de séances (vue "activité") incluent les libres.
+- [ ] Compteur "+ N séances libres" affiché dans le carnet hebdo membre quand > 0.
+- [ ] Rien n'a régressé sur l'affichage des séances de programme.
 
 ### Détails techniques
 
-- Bucket privé + URL via `createSignedUrl(path, 60*60*24*30)` au moment de `listSessionMedia` → stockée temporairement côté front (1 jour de cache react-query suffisant).
-- Vidéo : pas de thumbnail serveur (limites Worker), on capture la 1re frame côté client via `<video>` + `<canvas>` au moment de l'upload et on l'upload aussi → `thumbnail_url`.
-- Réutiliser composants existants : `CSTSectionNum`, `cst-card-dark`, `cst-btn`, `PainReportDialog`, palette tokens.
-- Pas d'auto-confirm email, pas de RLS sur `auth.*`, pas de nouveau provider auth.
-
-## Hors scope (phase 2 éventuelle)
-
-- Édition d'une séance libre après envoi.
-- Commentaires coach inline sur chaque média (le coach pourra déjà répondre via Messages).
-- Compression vidéo poussée (on plafonne à 100 Mo, best-effort).
-- Notifications push / email (on s'appuie sur le flux existant).
-
-## Fichiers / objets créés ou modifiés
-
-**Migration** : `sessions` (3 colonnes), `free_activities`, `session_media`, bucket `session-media` + policies storage.
-
-**Nouveaux** :
-- `src/lib/free-session.functions.ts`
-- `src/pages/membre/Commencer.tsx` + `src/routes/_authenticated.membre.commencer.tsx`
-- `src/pages/membre/SeanceLibre.tsx` + `src/routes/_authenticated.membre.seance-libre.$sessionId.tsx`
-- `src/components/cst/FreeActivityDialog.tsx`
-- `src/components/cst/MediaUploader.tsx` (gère capture / galerie / miniature / progression)
-- `src/components/cst/MediaGallery.tsx` (lecture, plein écran)
-- `src/components/coach/FreeSessionView.tsx`
-
-**Modifiés** :
-- `src/pages/membre/Dashboard.jsx` : lien « Choisir une autre séance » + cas « pas de programme ».
-- `src/routes/_authenticated.membre.logger.tsx` : si pas de `?day=` et pas d'`in_progress`, redirige vers `/membre/commencer` au lieu de créer une « Séance libre » fantôme.
-- `src/pages/membre/Historique.jsx` : badge LIBRE + titre.
-- `src/pages/membre/Carnet.tsx` : compte séances libres séparément dans le résumé.
-- `src/components/coach/RecentSessionsList.tsx` + `src/pages/coach/SessionDetail.tsx` (et la route associée) : affichage séance libre.
-- `src/lib/member-stats.functions.ts` / `coach-dashboard.functions.ts` : exclure les séances libres du calcul d'adhérence ; les inclure dans volume/durée.
-
-## Question avant de lancer
-
-Faut-il livrer tout ça d'un coup ou en **2 phases** ?
-
-- **Phase 1 (rapide, ~2 itérations)** : choix de séance + séance libre côté membre (création, activités, médias, envoi) + tag dans l'historique. Le coach voit déjà tout via la page séance + médias.
-- **Phase 2** : vue coach dédiée (galerie inline, notification dans Messages, intégration carnet/adhérence).
-
-Je propose la phase 1 d'abord pour que tu puisses tester de bout en bout, puis on enchaîne la phase 2. Dis-moi si tu préfères tout d'un seul jet.
+- Bucket `session-media` privé → toutes les URLs côté coach passent par `createSignedUrl` (TTL 1h) générées dans `getSessionDetail`.
+- Pas de nouvelle migration nécessaire (tables `free_activities` et `session_media` créées en Phase 1, colonnes `session_type/free_title/free_category` déjà présentes sur `sessions`).
+- Pas de modification des RLS (les policies coach existantes couvrent déjà la lecture).
