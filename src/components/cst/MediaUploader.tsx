@@ -168,7 +168,7 @@ export default function MediaUploader({ sessionId, memberId, onUploaded }: Props
         ref={photoRef}
         type="file"
         accept="image/*"
-        multiple
+        capture="environment"
         style={{ display: "none" }}
         onChange={(e) => handleFiles(e.target.files)}
       />
