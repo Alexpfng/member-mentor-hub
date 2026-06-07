@@ -234,9 +234,21 @@ export default function AdapterSemaine() {
   return (
     <Shell>
       <div style={{ padding: 20, maxWidth: 1100 }}>
-        <button onClick={() => navigate({ to: "/coach/membre/$memberId", params: { memberId } })} className="cst-mono" style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.6)", borderRadius: 6, padding: "4px 10px", fontSize: 10, cursor: "pointer", marginBottom: 16 }}>
-          ← FICHE MEMBRE
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+          <button onClick={() => navigate({ to: "/coach/membre/$memberId", params: { memberId } })} className="cst-mono" style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.6)", borderRadius: 6, padding: "4px 10px", fontSize: 10, cursor: "pointer" }}>
+            ← FICHE MEMBRE
+          </button>
+          {ctx && ctx.week.week_number > 0 && (
+            <button onClick={() => navigate({ to: "/coach/membre/$memberId/adapter", params: { memberId }, search: { week: ctx.week.week_number - 1 } })} className="cst-mono" style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.6)", borderRadius: 6, padding: "4px 10px", fontSize: 10, cursor: "pointer" }}>
+              ← S{String(ctx.week.week_number - 1).padStart(2, "0")}
+            </button>
+          )}
+          {ctx && (
+            <button onClick={() => navigate({ to: "/coach/membre/$memberId/adapter", params: { memberId }, search: { week: ctx.week.week_number + 1 } })} className="cst-mono" style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.6)", borderRadius: 6, padding: "4px 10px", fontSize: 10, cursor: "pointer" }}>
+              S{String(ctx.week.week_number + 1).padStart(2, "0")} →
+            </button>
+          )}
+        </div>
 
         <div className="cst-mono" style={{ fontSize: 10, letterSpacing: "0.18em", opacity: 0.55, marginBottom: 4 }}>
           ADAPTER · {ctx.member.name} · {ctx.assignment.program_name}
