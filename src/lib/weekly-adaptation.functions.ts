@@ -197,7 +197,7 @@ export const getMemberWeekContext = createServerFn({ method: "POST" })
           program_id: assignment.program_id,
           week_number: targetWeek,
           based_on_week: src.basedOn,
-          structure: src.structure as object,
+          structure: src.structure as unknown as never,
           status: "draft",
           created_by: context.userId,
         })
@@ -454,7 +454,7 @@ export const duplicateWeekTo = createServerFn({ method: "POST" })
           program_id: week.program_id,
           week_number: tw,
           based_on_week: week.week_number,
-          structure: structure as object,
+          structure: structure as unknown as never,
           status: "draft",
           created_by: context.userId,
         })
@@ -491,7 +491,7 @@ export const duplicateProgramForMember = createServerFn({ method: "POST" })
         frequency_per_week: src.frequency_per_week,
         level: src.level,
         objective: src.objective,
-        structure: src.structure as object,
+        structure: src.structure as unknown as never,
       }).select("id").single();
     if (error) throw new Error(error.message);
 
