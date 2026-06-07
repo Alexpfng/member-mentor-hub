@@ -206,7 +206,7 @@ export default function SeanceLibre() {
     );
   }
 
-  const activityName = activities[0]?.name ?? title || "Séance libre";
+  const activityName = activities[0]?.name ?? (title || "Séance libre");
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--cst-dark-green)" }}>
