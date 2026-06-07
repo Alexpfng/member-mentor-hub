@@ -333,6 +333,7 @@ export const getMemberFollowup = createServerFn({ method: "GET" })
         sessionsDone: done30,
         sessionsPlanned: planned30,
         adherence,
+        freeSessions30: free30,
         avgRpe: avgRpe != null ? Math.round(avgRpe * 10) / 10 : null,
         openPainsCount: openPains.length,
         unseenSessionsCount: unseenCount,
@@ -340,7 +341,7 @@ export const getMemberFollowup = createServerFn({ method: "GET" })
       openPains,
       pastPains: (painsR.data ?? []).filter((p) => p.resolved_at).slice(0, 10),
       watchList,
-      recentSessions: completed.slice(0, 8).map((s) => ({ id: s.id, label: s.session_label, week: s.week_number, day: s.day_number, endedAt: s.ended_at, averageRpe: s.average_rpe, coachSeen: s.coach_seen })),
+      recentSessions: completed.slice(0, 8).map((s) => ({ id: s.id, label: s.session_label, week: s.week_number, day: s.day_number, endedAt: s.ended_at, averageRpe: s.average_rpe, coachSeen: s.coach_seen, sessionType: s.session_type ?? "program", freeTitle: s.free_title ?? null, freeCategory: s.free_category ?? null })),
     };
   });
 
