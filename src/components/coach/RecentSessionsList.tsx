@@ -23,6 +23,11 @@ export default function RecentSessionsList() {
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       {sessions.map((s) => {
         const initials = s.memberName.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
+        const isFree = s.sessionType === "free";
+        const catIcon = s.freeCategory === "course" ? "🏃" : s.freeCategory === "cardio" ? "❤️" : s.freeCategory === "muscu" ? "🏋️" : s.freeCategory === "sport" ? "⚽" : "✨";
+        const label = isFree
+          ? `${catIcon} ${s.freeTitle || "Séance libre"}`
+          : `${s.label || "Séance"}${s.week ? ` · Sem ${s.week}` : ""}${s.day ? ` J${s.day}` : ""}`;
         return (
           <div key={s.id} className="cst-card-dark" style={{ padding: 14, display: "flex", gap: 14, alignItems: "flex-start", cursor: "pointer" }}
             onClick={() => navigate({ to: "/coach/seance/$sessionId", params: { sessionId: s.id } })}>
@@ -30,8 +35,9 @@ export default function RecentSessionsList() {
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                 <strong style={{ fontSize: 14 }}>{s.memberName.toUpperCase()}</strong>
+                {isFree && <span className="cst-mono" style={{ fontSize: 9, padding: "2px 6px", background: "#2DBE9A", color: "#0a0a0a", borderRadius: 3, letterSpacing: "0.15em" }}>LIBRE</span>}
                 {!s.coachSeen && <span className="cst-mono" style={{ fontSize: 9, padding: "2px 6px", background: "#E07B39", color: "#fff", borderRadius: 3, letterSpacing: "0.15em" }}>NOUVEAU</span>}
-                <span style={{ fontSize: 12, opacity: 0.7 }}>{s.label || "Séance"}{s.week ? ` · Sem ${s.week}` : ""}{s.day ? ` J${s.day}` : ""}</span>
+                <span style={{ fontSize: 12, opacity: 0.7 }}>{label}</span>
                 <span className="cst-mono" style={{ fontSize: 10, opacity: 0.55, marginLeft: "auto" }}>{timeAgo(s.endedAt)}</span>
               </div>
               <div style={{ display: "flex", gap: 14, marginTop: 6, fontSize: 12, opacity: 0.85, flexWrap: "wrap" }}>
