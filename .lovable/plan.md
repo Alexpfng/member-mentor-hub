@@ -1,70 +1,138 @@
-## Constat de l'audit (rapide)
+# Adaptation hebdomadaire des programmes (coach)
 
-J'ai inspecté la base, le code de lancement de séance, les routes et les logs. Voici ce qui est avéré, ce qui est probable, et ce qui ne l'est pas.
+Objectif : permettre à Léo de dupliquer la semaine d'un coaché, voir les retours, appliquer des ajustements suggérés et publier la nouvelle semaine — le tout en < 2 min, dans un écran unique, sans ressaisie.
 
-### 1. Login — pas de bug serveur
-- Le compte `leocolognesi@gmail.com` (coach) **s'est connecté avec succès aujourd'hui à 16:17 UTC** (last_sign_in_at en base). Donc l'auth Supabase fonctionne.
-- La route `/login` rend bien (200 après canonicalisation du search param).
-- Cause probable côté Leo : redirection bloquée ou écran "CHARGEMENT…" qui ne sort jamais, ou session corrompue dans le navigateur. Je traite ce point ci-dessous (étape 2).
+## 1. Base de données
 
-### 2. Lancement de séance — bug confirmé
-Fichier : `src/routes/_authenticated.membre.seance.$sessionId.tsx`
+Nouvelle table versionnée `assignment_weeks` (une ligne par semaine livrée à un membre) :
 
 ```text
-if (!exos.length) exos = DEFAULT_EXERCISES; // Tractions / Row / Face pull / Curl
+assignment_weeks
+  id, assignment_id, member_id, program_id
+  week_number, based_on_week
+  structure JSONB            -- jours + exercices figés de cette semaine
+  status: draft|published|in_progress|done
+  changes_summary JSONB      -- récap auto vs semaine précédente
+  start_date, published_at
+  created_at, updated_at
 ```
 
-Si la résolution `program.structure.weeks[w].days[d].exercises` échoue (mauvais `day_number`, mauvais `week_number`, ou exercices vides), la page **affiche silencieusement 4 exercices génériques** au lieu d'avertir. C'est l'origine des "séances aléatoires".
+RLS :
+- Coach (has_role coach) : ALL
+- Membre : SELECT sur ses propres lignes `published`/`in_progress`/`done`
+- GRANT authenticated + service_role
 
-Vérif base : les 3 programmes actifs (Teddy, Pierre, Max) ont bien des exercices (7 à 12 par jour). Donc le fallback ne devrait pas se déclencher — mais il existe et il masque un vrai problème quand il se déclenche.
+Migration de bootstrap : pour chaque `assignment` actif, créer rétroactivement les `assignment_weeks` à partir de `programs.structure.weeks[]` en `published` (pour ne rien casser).
 
-### 3. Code mort à risque
-`src/pages/membre/Logger.jsx` (380 lignes) est **du mock pur** (`MOCK_EXERCISES = [...]`, "PULL B" en dur). Aucune route ne l'importe — la vraie route `/membre/logger` utilise `SessionLauncher` défini dans `_authenticated.membre.logger.tsx`. À supprimer.
+Le code membre (séance, planning, carnet) lit en priorité `assignment_weeks` ; fallback sur `programs.structure` si vide.
 
-### 4. Reste à auditer (rapport, pas correction immédiate)
-- Onboarding (`onboarding.$step.tsx`) — flow d'invitation/inscription
-- Messages coach/membre (realtime, déjà sécurisé via `can_subscribe_topic`)
-- Carnet hebdo (`/membre/carnet`) — génération via cron
-- Coach dashboard, programme builder, page membre du coach
-- Page `/membre/seance/$sessionId` complète (le composant `LiveSession.tsx` fait 1553 lignes — à vérifier pour mocks résiduels)
-- `_authenticated.tsx` : le double check (beforeLoad + useEffect AuthenticatedLayout) peut générer des navigations en double si rôle ↔ chemin
+## 2. Points d'entrée (bouton « Adapter S+1 »)
 
----
+Ajouté à 3 endroits, même action :
+- **Dashboard coach** — colonne action sur chaque membre du tableau.
+- **Fiche membre → onglet Suivi** — gros CTA en tête.
+- **Détail d'une séance coach** — dans la barre d'actions.
 
-## Plan d'action
+Le clic ouvre `/coach/membre/$memberId/adapter/$weekNumber` en pré-créant un brouillon `assignment_weeks` (copie de la dernière semaine publiée).
 
-### Phase 1 — Bugs bloquants (à corriger maintenant)
+## 3. Éditeur d'adaptation (`AdapterSemaine.tsx`)
 
-**A. Lancement de séance — supprimer le fallback silencieux**
-- `_authenticated.membre.seance.$sessionId.tsx` : retirer `DEFAULT_EXERCISES`. Quand la structure ne renvoie rien, afficher un message clair ("Aucun exercice n'est défini pour ce jour — contacte ton coach") + bouton retour, et logger en console le couple `(programId, week, day, label)` pour diagnostic.
-- `_authenticated.membre.logger.tsx` (SessionLauncher) : quand `search.day` ne matche aucun jour du programme, **ne pas créer de session avec `day_number: null`** — afficher l'erreur et rediriger vers `/membre/commencer`.
-- Match plus tolérant : normaliser (trim + lowercase + suppression accents) côté launcher pour résister aux libellés saisis avec/sans accents/espaces.
+Écran unique, auto-save (debounce 600 ms, server fn `saveDraftWeek`).
 
-**B. Login Leo — diagnostic + fix réactif**
-- Demander à Leo de vider le cache + retenter (la session navigateur peut être désynchronisée du dernier déploiement).
-- Renforcer `_authenticated.tsx` : supprimer la double redirection (le `beforeLoad` fait déjà `getUser`, le `useEffect` ré-interroge en plus → flicker possible). Garder une seule source de vérité côté `useEffect` pour la vérif de rôle, et afficher un bouton "Se reconnecter" si la session est invalide au lieu d'un écran "CHARGEMENT…" infini.
-- Sur `/login`, si `supabase.auth.signInWithPassword` réussit mais que la requête `user_roles` échoue (RLS, latence), aujourd'hui on reste bloqué → ajouter fallback "/membre" + log.
+Structure :
+- **En-tête contexte** — membre, programme, semaine N (copiée de N-1), résumé S-1 (adhérence, RPE moyen, douleurs) calculé via server fn `getWeekFeedback`.
+- **Barre progression globale** — `[Identique] [+2,5%] [+5%] [Déload −40%]` applique aux exos 🔴 force, exclut ceux avec douleur signalée.
+- **Liste des jours** (accordéon ouvert) — chaque exercice avec :
+  - poignée drag, pastille couleur, nom, prescription, boutons ✎/🗑
+  - **bloc suggestion** sous l'exo si retour pertinent (logique ci-dessous)
+  - boutons d'action 1 clic qui patchent l'exo en place
+- **Actions par jour** : `+ Ajouter exercice`, réorganiser, renommer, supprimer/ajouter jour.
+- **Footer collant** : `[Aperçu membre] [Publier la semaine N →]`.
 
-**C. Nettoyage**
-- Supprimer `src/pages/membre/Logger.jsx` (mock, plus utilisé).
+### Logique de suggestion (client, à partir des feedbacks S-1)
 
-### Phase 2 — Audit large (rapport)
+```ts
+function suggest(ex, fb) {
+  if (fb.pain) return { type:'pain', actions:[
+    'Réduire amplitude','Remplacer par…','Mettre en pause'] }
+  if (fb.failure || fb.rpe >= 10) return { type:'too_hard', actions:['−10%','−5%','Garder'] }
+  if (fb.rpe >= ex.rpe_target + 1) return { type:'high', actions:['−5%','Garder'] }
+  if (fb.rpe <= ex.rpe_target - 2) return { type:'low', actions:['+2,5kg','+1 rep','Garder'] }
+  if (fb.rpe <= ex.rpe_target - 1) return { type:'slightly_low', actions:['+2,5kg','Garder'] }
+  return null
+}
+```
 
-Je passerai en revue dans cet ordre et te livrerai un rapport `AUDIT.md` listant chaque problème trouvé avec un niveau (bloquant / dégradé / cosmétique) **avant** de toucher au code :
+Données nourrissant `fb` : `set_logs` (RPE réel), `exercise_feedbacks` (too_hard/too_easy), `pain_reports` de la semaine précédente — agrégés par `exercise_name`.
 
-1. Auth / onboarding / reset password (3 routes)
-2. Espace membre : commencer, logger, seance, seance-libre, carnet, planning, programme, profil, progression, historique, messages
-3. Espace coach : dashboard, builder, programmes, exercices, membre, seance, messages, invitations, import, running
-4. Composant `LiveSession.tsx` (1553 lignes — chercher mocks, états orphelins, fuites realtime)
-5. Server functions (`src/lib/*.functions.ts`) — cohérence des inputValidators, fuites de données via `supabaseAdmin`
-6. RLS — vérifier que les policies présentes correspondent aux usages réels du code
+### Modifications libres
+- Édition complète d'un exo (modal réutilisant le composant du Builder).
+- Remplacement : modal avec recherche, filtres `movement_patterns` identiques, conserve séries/reps/RPE, ajoute note membre optionnelle.
+- Drag & drop exos / jours (dnd-kit déjà utilisé dans le Builder).
+- Annulation suppression via toast.
 
-### Phase 3 — Correctifs issus du rapport
-Après ta validation des items priorisés du rapport, je corrige par lots (1 lot = 1 domaine fonctionnel) pour que tu puisses tester au fur et à mesure.
+## 4. Aperçu membre
 
----
+Bouton `[Aperçu membre]` ouvre une drawer en lecture seule réutilisant `ProgramBlocks` avec la `structure` du brouillon — exactement ce que le membre verra.
 
-## Ce qu'il me faut pour démarrer
-Rien de plus : je peux lancer Phase 1 immédiatement. Phase 2 (audit) suit dans la foulée — je te livre `AUDIT.md` avant toute autre modification.
+## 5. Publication
 
-Validation pour lancer Phase 1 + Phase 2 ?
+Modal `PublierSemaine` :
+- Date de début (défaut : prochain lundi).
+- Récap auto des changements vs S-1 (diff calculé côté serveur : charges, exos remplacés/ajoutés/retirés, RPE cibles modifiés).
+- Checkbox « Notifier le membre » + champ message pré-rempli.
+- `[Publier et envoyer]` → server fn `publishWeek` :
+  1. `status='published'`, `published_at=now()`, fige `changes_summary`.
+  2. Si notifier : insert dans `messages` (from coach → to membre).
+  3. Realtime : le membre reçoit via `assignment_weeks` (subscription sur `user:<uid>:weeks`).
+
+## 6. Duplication multi-semaines (bloc)
+
+Action `[Dupliquer vers…]` dans l'éditeur :
+- Cases Sem N+1, N+2, N+3.
+- Progression : identique / +5%/sem cumulé / déload final.
+- Crée plusieurs `assignment_weeks` en `draft`. Léo les ouvre et publie au fil de l'eau.
+
+## 7. Duplication d'un programme vers un autre membre
+
+Depuis `/coach/programmes/$id` et fiche membre :
+- `[Dupliquer ce programme]` → sélecteur de membre (existant ou « Nouveau… »).
+- Server fn `duplicateProgramForMember` : copie `programs` + crée `assignment` actif + crée `assignment_weeks` initiale (semaine 1 = copie de la semaine 1 du programme source).
+
+## 8. Historique
+
+`/coach/membre/$memberId/historique-semaines` : liste des `assignment_weeks` (statut, date publication, lien vers la version figée). Tout reste consultable même après publication d'une semaine ultérieure.
+
+## 9. Server functions (créer)
+
+`src/lib/weekly-adaptation.functions.ts` :
+- `getMemberWeekContext({ memberId, weekNumber })` — renvoie semaine source + feedbacks agrégés + suggestions.
+- `createDraftWeek({ assignmentId, basedOnWeek })`
+- `saveDraftWeek({ weekId, structure })` (autosave)
+- `applyGlobalProgression({ weekId, mode })`
+- `replaceExercise({ weekId, dayIdx, exoIdx, newExercise, note })`
+- `publishWeek({ weekId, startDate, notify, message })`
+- `duplicateWeekTo({ weekId, targets:[...], progression })`
+- `duplicateProgramForMember({ programId, memberId })`
+
+Toutes protégées par `requireSupabaseAuth` + check `has_role(uid,'coach')`.
+
+## 10. Realtime côté membre
+
+- Subscription Postgres changes sur `assignment_weeks` filtrée `member_id=eq.<uid>`.
+- À l'évènement `INSERT/UPDATE status=published`, refetch des écrans Programme / Planning / Séance.
+
+## 11. UI / design
+
+Réutilisation stricte du design system existant (`cst-*`, `ProgramBlocks`, modals du Builder). Aucune dépendance nouvelle. Mobile-friendly : éditeur scrollable, footer publication collant.
+
+## 12. Garde-fous
+
+- Pas de régression : `programs.structure` reste la source de vérité tant qu'aucune `assignment_weeks` n'existe pour la semaine demandée.
+- Toutes les écritures passent par server functions (RLS + audit).
+- Auto-save tolérant aux erreurs (toast d'avertissement, pas de navigation).
+
+## Hors périmètre de ce lot
+- Cron de rappel « préparer la semaine du dimanche soir » (notif coach).
+- Templates de progression personnalisés par coach.
+- Comparaison côte à côte S-1 vs S (diff visuel) — le récap textuel suffit pour ce lot.
