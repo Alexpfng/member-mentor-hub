@@ -279,7 +279,7 @@ export const getMemberFollowup = createServerFn({ method: "GET" })
     const thirtyDaysAgo = daysAgo(30).toISOString();
 
     const [sessR, painsR, fbR, assignR] = await Promise.all([
-      supabaseAdmin.from("sessions").select("id, status, started_at, ended_at, average_rpe, coach_seen, session_label, week_number, day_number").eq("member_id", memberId).gte("started_at", thirtyDaysAgo).order("started_at", { ascending: false }),
+      supabaseAdmin.from("sessions").select("id, status, started_at, ended_at, average_rpe, coach_seen, session_label, week_number, day_number, session_type, free_title, free_category").eq("member_id", memberId).gte("started_at", thirtyDaysAgo).order("started_at", { ascending: false }),
       supabaseAdmin.from("pain_reports").select("id, exercise_name, zone, intensity, comment, resolved_at, created_at, session_id").eq("member_id", memberId).order("created_at", { ascending: false }).limit(20),
       supabaseAdmin.from("exercise_feedbacks").select("id, exercise_name, rpe, felt_too_hard, felt_too_easy, could_not_do, member_comment, created_at, sessions!inner(member_id, ended_at)").eq("sessions.member_id", memberId).gte("sessions.ended_at", thirtyDaysAgo),
       supabaseAdmin.from("assignments").select("program_id, start_date, programs(structure, duration_weeks)").eq("member_id", memberId).eq("active", true).maybeSingle(),
@@ -287,11 +287,13 @@ export const getMemberFollowup = createServerFn({ method: "GET" })
 
     const sessions = sessR.data ?? [];
     const completed = sessions.filter((s) => s.status === "completed");
+    const completedProgram = completed.filter((s) => (s.session_type ?? "program") === "program");
+    const completedFree = completed.filter((s) => s.session_type === "free");
     const rpes = completed.map((s) => Number(s.average_rpe)).filter((n) => !isNaN(n) && n > 0);
     const avgRpe = rpes.length ? rpes.reduce((a, b) => a + b, 0) / rpes.length : null;
     const unseenCount = completed.filter((s) => !s.coach_seen).length;
 
-    // Adhérence : sessions terminées / sessions prévues (sur 30j, 4 semaines)
+    // Adhérence : SEULEMENT séances de programme (les libres ne comptent pas dans l'adhérence)
     let plannedPerWeek = 0;
     type ProgramShape = { structure?: { weeks?: Array<{ days?: Array<{ rest?: boolean }> }> } | null; duration_weeks?: number | null };
     const assignTyped = assignR.data as ({ programs?: ProgramShape | ProgramShape[] | null } | null);
@@ -302,7 +304,8 @@ export const getMemberFollowup = createServerFn({ method: "GET" })
       plannedPerWeek = days.filter((d) => !d?.rest).length;
     }
     const planned30 = plannedPerWeek * 4;
-    const done30 = completed.length;
+    const done30 = completedProgram.length;
+    const free30 = completedFree.length;
     const adherence = planned30 > 0 ? Math.round((done30 / planned30) * 100) : null;
 
     const openPains = (painsR.data ?? []).filter((p) => !p.resolved_at);
