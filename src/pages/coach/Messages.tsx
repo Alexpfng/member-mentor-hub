@@ -158,7 +158,7 @@ export default function CoachMessages() {
   // Supabase realtime
   useEffect(() => {
     if (!activePartner || !currentUserId) return;
-    const ch = supabase.channel(`msgs-${activePartner.id}`)
+    const ch = supabase.channel(`coach:msgs:${activePartner.id}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
         const m = payload.new as Message;
         if (

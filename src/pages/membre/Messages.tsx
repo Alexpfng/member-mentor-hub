@@ -80,7 +80,7 @@ export default function MemberMessages() {
   // Realtime
   useEffect(() => {
     if (!coach || !currentUserId) return;
-    const ch = supabase.channel(`msgs-member-${coach.id}`)
+    const ch = supabase.channel(`user:${currentUserId}:msgs`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, (payload) => {
         const m = payload.new as Message;
         if (

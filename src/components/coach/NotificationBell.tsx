@@ -17,7 +17,7 @@ export default function NotificationBell() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const ch = supabase.channel("coach-notif")
+    const ch = supabase.channel("coach:notif")
       .on("postgres_changes", { event: "*", schema: "public", table: "pain_reports" }, () => qc.invalidateQueries({ queryKey: ["coach"] }))
       .on("postgres_changes", { event: "*", schema: "public", table: "sessions" }, () => qc.invalidateQueries({ queryKey: ["coach"] }))
       .on("postgres_changes", { event: "*", schema: "public", table: "technique_videos" }, () => qc.invalidateQueries({ queryKey: ["coach"] }))

@@ -24,6 +24,7 @@ export default function MemberNav({ unreadCount: unreadProp = undefined } = {}) 
   useEffect(() => {
     if (typeof unreadProp === "number") return; // parent controls it
     let cancelled = false;
+    let ch = null;
     const refresh = async () => {
       try {
         const r = await unreadFn({});
@@ -32,14 +33,18 @@ export default function MemberNav({ unreadCount: unreadProp = undefined } = {}) 
     };
     refresh();
     const interval = setInterval(refresh, 30000);
-    // Refresh when a new message arrives in realtime
-    const ch = supabase.channel("nav-unread")
-      .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, refresh)
-      .subscribe();
+    // Refresh when a new message arrives in realtime (scoped to current user)
+    supabase.auth.getUser().then(({ data }) => {
+      const uid = data.user?.id;
+      if (cancelled || !uid) return;
+      ch = supabase.channel(`user:${uid}:nav`)
+        .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, refresh)
+        .subscribe();
+    });
     return () => {
       cancelled = true;
       clearInterval(interval);
-      supabase.removeChannel(ch);
+      if (ch) supabase.removeChannel(ch);
     };
   }, [unreadFn, unreadProp, pathname]);
 

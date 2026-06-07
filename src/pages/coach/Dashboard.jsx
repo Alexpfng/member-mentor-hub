@@ -145,7 +145,7 @@ function CoachDashboardInner() {
 
   // Realtime — invalidate coach queries on relevant changes
   useEffect(() => {
-    const ch = supabase.channel('coach-dashboard')
+    const ch = supabase.channel('coach:dashboard')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'sessions' }, () => qc.invalidateQueries({ queryKey: ['coach'] }))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'pain_reports' }, () => qc.invalidateQueries({ queryKey: ['coach'] }))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'exercise_feedbacks' }, () => qc.invalidateQueries({ queryKey: ['coach'] }))
