@@ -62,18 +62,13 @@ function defaultRestFor(color: ExerciseColor): number {
 
 function blockExplain(type?: string | null, isSuperset = false): string | null {
   const t = (type || "").toLowerCase();
-  if (t === "emom")
-    return "EMOM : 1 série au début de chaque minute. Le temps restant dans la minute = ton repos.";
-  if (t === "ladder")
-    return "Ladder : le nombre de reps change à chaque minute (ex : 1, 2, 3, puis on recommence).";
+  if (t === "emom") return "EMOM : 1 série au début de chaque minute. Le temps restant dans la minute = ton repos.";
+  if (t === "ladder") return "Ladder : le nombre de reps change à chaque minute (ex : 1, 2, 3, puis on recommence).";
   if (t === "amrap")
     return "AMRAP : autant de tours/reps que possible dans le temps imparti, avec une technique propre.";
-  if (t === "dropset")
-    return "Dropset : enchaîne sans repos en baissant la charge jusqu'à l'échec technique.";
-  if (t === "circuit")
-    return "Circuit : enchaîne tous les exos du bloc, puis prends la récup et recommence.";
-  if (isSuperset)
-    return "Superset : enchaîne les deux exercices sans repos, puis prends la récup commune.";
+  if (t === "dropset") return "Dropset : enchaîne sans repos en baissant la charge jusqu'à l'échec technique.";
+  if (t === "circuit") return "Circuit : enchaîne tous les exos du bloc, puis prends la récup et recommence.";
+  if (isSuperset) return "Superset : enchaîne les deux exercices sans repos, puis prends la récup commune.";
   return null;
 }
 
@@ -139,13 +134,11 @@ function formatRelativeDays(iso?: string | null): string {
 type LastSet = { weight: number | null; reps: number | null; rpe: number | null; loggedAt: string | null };
 type LastByExo = Record<string, Record<number, LastSet> & { _loggedAt?: string | null; _sets?: LastSet[] }>;
 
-
 function extractYoutubeId(input?: string | null): string | null {
   if (!input) return null;
   const s = String(input).trim();
   if (/^[a-zA-Z0-9_-]{11}$/.test(s)) return s;
-  const m =
-    s.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  const m = s.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
   return m ? m[1] : null;
 }
 
@@ -195,10 +188,7 @@ function buildSteps(exercises: ProgExercise[]): Step[] {
     const blockType = b.exercises[0]?.block_type ?? null;
     const isSuperset = b.isSuperset;
     const colorOfBlock = asColor(b.exercises[0]?.color);
-    const restSec = parseRecupSeconds(
-      b.exercises[0]?.recup,
-      defaultRestFor(colorOfBlock),
-    );
+    const restSec = parseRecupSeconds(b.exercises[0]?.recup, defaultRestFor(colorOfBlock));
 
     steps.push({
       kind: "brief",
@@ -210,9 +200,7 @@ function buildSteps(exercises: ProgExercise[]): Step[] {
     });
 
     if (isSuperset) {
-      const rounds = Math.max(
-        ...b.exercises.map((e) => parseSeriesCount(e.series)),
-      );
+      const rounds = Math.max(...b.exercises.map((e) => parseSeriesCount(e.series)));
       for (let r = 0; r < rounds; r++) {
         b.exercises.forEach((ex, exIdx) => {
           const total = parseSeriesCount(ex.series);
@@ -256,9 +244,7 @@ function buildSteps(exercises: ProgExercise[]): Step[] {
           restAfter: !isLast,
           restSeconds: exRest,
           isLastSetOfExercise: isLast,
-          nextPreview: !isLast
-            ? { name: ex.name, setNumber: r + 2, totalSets: total }
-            : null,
+          nextPreview: !isLast ? { name: ex.name, setNumber: r + 2, totalSets: total } : null,
         });
       }
     }
@@ -278,19 +264,9 @@ type Props = {
   finishing?: boolean;
 };
 
-export function LiveSession({
-  sessionId,
-  userId,
-  sessionLabel,
-  exercises,
-  onFinish,
-  finishing,
-}: Props) {
+export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFinish, finishing }: Props) {
   const steps = useMemo(() => buildSteps(exercises), [exercises]);
-  const totalWorkSets = useMemo(
-    () => steps.filter((s) => s.kind === "set").length,
-    [steps],
-  );
+  const totalWorkSets = useMemo(() => steps.filter((s) => s.kind === "set").length, [steps]);
 
   const [phase, setPhase] = useState<"intro" | "step" | "rest" | "recap">("intro");
   const [stepIdx, setStepIdx] = useState(0);
@@ -311,7 +287,9 @@ export function LiveSession({
   const [showQuitConfirm, setShowQuitConfirm] = useState(false);
 
   /** Saisies par stepIdx — conservées si on revient en arrière, écrasées si on re-valide. */
-  const [savedByStep, setSavedByStep] = useState<Record<number, { weight: number | null; reps: number | null; rpe: number | null; exo: string }>>({});
+  const [savedByStep, setSavedByStep] = useState<
+    Record<number, { weight: number | null; reps: number | null; rpe: number | null; exo: string }>
+  >({});
 
   /** Historique de la dernière séance pour le même exercice. */
   const [lastByExo, setLastByExo] = useState<LastByExo>({});
@@ -337,7 +315,14 @@ export function LiveSession({
         if (cancelled || !rec) return;
         const map: LastByExo = {};
         // Pour chaque exercice, ne garder QUE la séance la plus récente (le 1er logged_at rencontré définit la date)
-        for (const row of rec as Array<{ exercise_name: string | null; set_number: number | null; weight_kg: number | null; reps: number | null; rpe: number | null; logged_at: string | null }>) {
+        for (const row of rec as Array<{
+          exercise_name: string | null;
+          set_number: number | null;
+          weight_kg: number | null;
+          reps: number | null;
+          rpe: number | null;
+          logged_at: string | null;
+        }>) {
           const name = row.exercise_name;
           if (!name) continue;
           if (!map[name]) {
@@ -367,14 +352,13 @@ export function LiveSession({
         console.warn("Pré-remplissage historique indisponible", e);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [userId, exercises]);
 
   const current = steps[stepIdx];
-  const completedWorkSets = useMemo(
-    () => Object.keys(savedByStep).length,
-    [savedByStep],
-  );
+  const completedWorkSets = useMemo(() => Object.keys(savedByStep).length, [savedByStep]);
 
   function goNext() {
     setLogging(null);
@@ -474,7 +458,7 @@ export function LiveSession({
     setValidationError(null);
     const w = parseFloat(l.weight.replace(",", "."));
     const r = parseInt(l.reps, 10);
-    const weight_kg = bodyweight ? null : (isNaN(w) ? null : w);
+    const weight_kg = bodyweight ? null : isNaN(w) ? null : w;
     const reps = isNaN(r) ? null : r;
 
     try {
@@ -563,7 +547,10 @@ export function LiveSession({
           >
             ←
           </button>
-          <span className="cst-mono" style={{ fontSize: 9, opacity: 0.55, letterSpacing: "0.22em", flex: 1, textAlign: "center" }}>
+          <span
+            className="cst-mono"
+            style={{ fontSize: 9, opacity: 0.55, letterSpacing: "0.22em", flex: 1, textAlign: "center" }}
+          >
             — {sessionLabel?.toUpperCase() || "SÉANCE"}
           </span>
           <span className="cst-mono" style={{ fontSize: 10, opacity: 0.6 }}>
@@ -601,19 +588,58 @@ export function LiveSession({
         <CuesModal
           exercise={showCues}
           onClose={() => setShowCues(null)}
-          onOpenTempo={(ex) => { setShowCues(null); setShowTempo({ tempo: ex.tempo, name: ex.name }); }}
-          onOpenColor={(c) => { setShowCues(null); setShowColor(c); }}
-          onOpenRpeRef={() => { setShowCues(null); setShowRpeRef(true); }}
+          onOpenTempo={(ex) => {
+            setShowCues(null);
+            setShowTempo({ tempo: ex.tempo, name: ex.name });
+          }}
+          onOpenColor={(c) => {
+            setShowCues(null);
+            setShowColor(c);
+          }}
+          onOpenRpeRef={() => {
+            setShowCues(null);
+            setShowRpeRef(true);
+          }}
         />
         {showOverview && (
           <div
             onClick={() => setShowOverview(false)}
-            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)", zIndex: 250, display: "flex", alignItems: "flex-end", justifyContent: "center", padding: 12 }}
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0,0,0,0.75)",
+              backdropFilter: "blur(4px)",
+              zIndex: 250,
+              display: "flex",
+              alignItems: "flex-end",
+              justifyContent: "center",
+              padding: 12,
+            }}
           >
-            <div onClick={(e) => e.stopPropagation()} className="cst-hatch" style={{ width: "100%", maxWidth: 460, maxHeight: "85vh", overflowY: "auto", background: "#1c2620", border: "1px solid rgba(255,255,255,0.10)", borderRadius: 14, padding: 18 }}>
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="cst-hatch"
+              style={{
+                width: "100%",
+                maxWidth: 460,
+                maxHeight: "85vh",
+                overflowY: "auto",
+                background: "#1c2620",
+                border: "1px solid rgba(255,255,255,0.10)",
+                borderRadius: 14,
+                padding: 18,
+              }}
+            >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                <h3 className="cst-display" style={{ margin: 0, fontSize: 20 }}>PROGRAMME COMPLET</h3>
-                <button onClick={() => setShowOverview(false)} style={{ background: "none", border: 0, color: "#fff", fontSize: 18, cursor: "pointer" }}>×</button>
+                <h3 className="cst-display" style={{ margin: 0, fontSize: 20 }}>
+                  PROGRAMME COMPLET
+                </h3>
+                <button
+                  onClick={() => setShowOverview(false)}
+                  style={{ background: "none", border: 0, color: "#fff", fontSize: 18, cursor: "pointer" }}
+                >
+                  ×
+                </button>
               </div>
               <ProgramBlocks exercises={exercises} />
             </div>
@@ -622,12 +648,42 @@ export function LiveSession({
         {showThread && (
           <div
             onClick={() => setShowThread(null)}
-            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)", zIndex: 260, display: "flex", alignItems: "flex-end", justifyContent: "center", padding: 12 }}
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0,0,0,0.75)",
+              backdropFilter: "blur(4px)",
+              zIndex: 260,
+              display: "flex",
+              alignItems: "flex-end",
+              justifyContent: "center",
+              padding: 12,
+            }}
           >
-            <div onClick={(e) => e.stopPropagation()} className="cst-hatch" style={{ width: "100%", maxWidth: 460, maxHeight: "85vh", overflowY: "auto", background: "#1c2620", border: "1px solid rgba(255,255,255,0.10)", borderRadius: 14, padding: 18 }}>
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="cst-hatch"
+              style={{
+                width: "100%",
+                maxWidth: 460,
+                maxHeight: "85vh",
+                overflowY: "auto",
+                background: "#1c2620",
+                border: "1px solid rgba(255,255,255,0.10)",
+                borderRadius: 14,
+                padding: 18,
+              }}
+            >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                <h3 className="cst-display" style={{ margin: 0, fontSize: 18 }}>{showThread.toUpperCase()}</h3>
-                <button onClick={() => setShowThread(null)} style={{ background: "none", border: 0, color: "#fff", fontSize: 18, cursor: "pointer" }}>×</button>
+                <h3 className="cst-display" style={{ margin: 0, fontSize: 18 }}>
+                  {showThread.toUpperCase()}
+                </h3>
+                <button
+                  onClick={() => setShowThread(null)}
+                  style={{ background: "none", border: 0, color: "#fff", fontSize: 18, cursor: "pointer" }}
+                >
+                  ×
+                </button>
               </div>
               <ExerciseThread sessionId={sessionId} exerciseName={showThread} userId={userId} viewerRole="member" />
             </div>
@@ -642,22 +698,52 @@ export function LiveSession({
         {showQuitConfirm && (
           <div
             onClick={() => setShowQuitConfirm(false)}
-            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(4px)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0,0,0,0.85)",
+              backdropFilter: "blur(4px)",
+              zIndex: 300,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 16,
+            }}
           >
             <div
               onClick={(e) => e.stopPropagation()}
               className="cst-hatch"
-              style={{ width: "100%", maxWidth: 380, background: "#1c2620", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14, padding: 22, display: "flex", flexDirection: "column", gap: 14 }}
+              style={{
+                width: "100%",
+                maxWidth: 380,
+                background: "#1c2620",
+                border: "1px solid rgba(255,255,255,0.12)",
+                borderRadius: 14,
+                padding: 22,
+                display: "flex",
+                flexDirection: "column",
+                gap: 14,
+              }}
             >
-              <h3 className="cst-display" style={{ margin: 0, fontSize: 22, color: "#fff" }}>QUITTER LA SÉANCE ?</h3>
+              <h3 className="cst-display" style={{ margin: 0, fontSize: 22, color: "#fff" }}>
+                QUITTER LA SÉANCE ?
+              </h3>
               <p style={{ margin: 0, fontSize: 13, lineHeight: 1.5, color: "rgba(255,255,255,0.8)" }}>
                 Tes données sont sauvegardées, tu pourras reprendre où tu en étais depuis ton tableau de bord.
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 6 }}>
-                <button onClick={() => setShowQuitConfirm(false)} className="cst-btn cst-btn-primary" style={{ width: "100%", padding: "14px 0", fontSize: 13 }}>
+                <button
+                  onClick={() => setShowQuitConfirm(false)}
+                  className="cst-btn cst-btn-primary"
+                  style={{ width: "100%", padding: "14px 0", fontSize: 13 }}
+                >
                   CONTINUER LA SÉANCE
                 </button>
-                <button onClick={navigateToMember} className="cst-btn cst-btn-ghost-dark" style={{ width: "100%", padding: "12px 0", fontSize: 12 }}>
+                <button
+                  onClick={navigateToMember}
+                  className="cst-btn cst-btn-ghost-dark"
+                  style={{ width: "100%", padding: "12px 0", fontSize: 12 }}
+                >
                   QUITTER
                 </button>
               </div>
@@ -680,15 +766,40 @@ export function LiveSession({
         {renderHeader()}
         <div style={{ padding: "0 22px 24px", display: "flex", flexDirection: "column", gap: 18, flex: 1 }}>
           <div>
-            <span className="cst-mono" style={{ fontSize: 10, opacity: 0.5, letterSpacing: "0.2em" }}>★ PRÊT</span>
-            <h1 className="cst-display" style={{ fontSize: 34, margin: "6px 0 0", lineHeight: 1 }}>{(sessionLabel || "Séance").toUpperCase()}</h1>
-            <div className="cst-italic" style={{ opacity: 0.65, marginTop: 6 }}>{blocks.length} blocs · {totalWorkSets} séries · ~{estMin} min</div>
+            <span className="cst-mono" style={{ fontSize: 10, opacity: 0.5, letterSpacing: "0.2em" }}>
+              ★ PRÊT
+            </span>
+            <h1 className="cst-display" style={{ fontSize: 34, margin: "6px 0 0", lineHeight: 1 }}>
+              {(sessionLabel || "Séance").toUpperCase()}
+            </h1>
+            <div className="cst-italic" style={{ opacity: 0.65, marginTop: 6 }}>
+              {blocks.length} blocs · {totalWorkSets} séries · ~{estMin} min
+            </div>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <span className="cst-mono" style={{ fontSize: 9, opacity: 0.5, letterSpacing: "0.2em" }}>CODE COULEUR (clique pour détails)</span>
+            <span className="cst-mono" style={{ fontSize: 9, opacity: 0.5, letterSpacing: "0.2em" }}>
+              CODE COULEUR (clique pour détails)
+            </span>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
               {(["red", "green", "yellow", "blue"] as const).map((c) => (
-                <button key={c} onClick={() => setShowColor(c)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 12px", background: `${colorHex(c)}14`, border: `1px solid ${colorHex(c)}55`, borderRadius: 8, color: "#fff", fontSize: 11, cursor: "pointer", textAlign: "left" }} className="cst-mono">
+                <button
+                  key={c}
+                  onClick={() => setShowColor(c)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "10px 12px",
+                    background: `${colorHex(c)}14`,
+                    border: `1px solid ${colorHex(c)}55`,
+                    borderRadius: 8,
+                    color: "#fff",
+                    fontSize: 11,
+                    cursor: "pointer",
+                    textAlign: "left",
+                  }}
+                  className="cst-mono"
+                >
                   <ColorDot color={c} size={10} />
                   {c === "red" && "Force"}
                   {c === "green" && "Isolation"}
@@ -700,11 +811,20 @@ export function LiveSession({
           </div>
           <div style={{ flex: 1 }} />
           <button
-            onClick={() => { startedAtRef.current = Date.now(); setPhase(steps.length ? "step" : "recap"); }}
+            onClick={() => {
+              startedAtRef.current = Date.now();
+              setPhase(steps.length ? "step" : "recap");
+            }}
             className="cst-btn cst-btn-primary"
             style={{ width: "100%", padding: "18px 0", fontSize: 14 }}
-          >COMMENCER LA SÉANCE →</button>
-          <button onClick={() => setShowOverview(true)} className="cst-btn cst-btn-ghost-dark cst-btn-sm" style={{ width: "100%" }}>
+          >
+            COMMENCER LA SÉANCE →
+          </button>
+          <button
+            onClick={() => setShowOverview(true)}
+            className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+            style={{ width: "100%" }}
+          >
             VOIR TOUT LE PROGRAMME
           </button>
         </div>
@@ -726,23 +846,47 @@ export function LiveSession({
         {renderHeader()}
         <div style={{ padding: "0 22px 24px", display: "flex", flexDirection: "column", gap: 18, flex: 1 }}>
           <div>
-            <span className="cst-mono" style={{ fontSize: 10, opacity: 0.5, letterSpacing: "0.2em" }}>★ TERMINÉ</span>
-            <h1 className="cst-display" style={{ fontSize: 32, margin: "6px 0 0" }}>BIEN JOUÉ.</h1>
-            <div className="cst-italic" style={{ opacity: 0.65, marginTop: 6 }}>Tes données sont envoyées au coach.</div>
+            <span className="cst-mono" style={{ fontSize: 10, opacity: 0.5, letterSpacing: "0.2em" }}>
+              ★ TERMINÉ
+            </span>
+            <h1 className="cst-display" style={{ fontSize: 32, margin: "6px 0 0" }}>
+              BIEN JOUÉ.
+            </h1>
+            <div className="cst-italic" style={{ opacity: 0.65, marginTop: 6 }}>
+              Tes données sont envoyées au coach.
+            </div>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8 }}>
             <Stat label="VOLUME" value={`${Math.round(totalVol)}kg`} />
             <Stat label="RPE MOY" value={avgRpe != null ? String(avgRpe) : "—"} />
             <Stat label="DURÉE" value={`${dur}'`} />
           </div>
-          <div className="cst-scroll" style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4 }}>
+          <div
+            className="cst-scroll"
+            style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4 }}
+          >
             {savedList.map((l, i) => (
-              <div key={i} className="cst-mono" style={{ fontSize: 11, padding: "6px 10px", background: "rgba(0,0,0,0.18)", borderRadius: 4, opacity: 0.85 }}>
+              <div
+                key={i}
+                className="cst-mono"
+                style={{
+                  fontSize: 11,
+                  padding: "6px 10px",
+                  background: "rgba(0,0,0,0.18)",
+                  borderRadius: 4,
+                  opacity: 0.85,
+                }}
+              >
                 {l.exo} — {l.weight ?? "—"}kg × {l.reps ?? "—"} @ RPE {l.rpe ?? "—"}
               </div>
             ))}
           </div>
-          <button onClick={onFinish} disabled={finishing} className="cst-btn cst-btn-primary" style={{ width: "100%", padding: "18px 0", fontSize: 14, opacity: finishing ? 0.6 : 1 }}>
+          <button
+            onClick={onFinish}
+            disabled={finishing}
+            className="cst-btn cst-btn-primary"
+            style={{ width: "100%", padding: "18px 0", fontSize: 14, opacity: finishing ? 0.6 : 1 }}
+          >
             {finishing ? "ENREGISTREMENT…" : "TERMINER LA SÉANCE ✓"}
           </button>
         </div>
@@ -773,7 +917,11 @@ export function LiveSession({
   /* ───────── STEP ───────── */
 
   if (!current) {
-    return <div style={shellStyle}><div style={{ padding: 22, opacity: 0.6 }}>Aucune étape.</div></div>;
+    return (
+      <div style={shellStyle}>
+        <div style={{ padding: 22, opacity: 0.6 }}>Aucune étape.</div>
+      </div>
+    );
   }
 
   const canGoPrevBlock = current.blockIdx > 0;
@@ -784,47 +932,168 @@ export function LiveSession({
     return (
       <div style={shellStyle}>
         {renderHeader()}
-        <div className="cst-scroll" style={{ padding: "0 22px 24px", display: "flex", flexDirection: "column", gap: 14, flex: 1, overflowY: "auto" }}>
+        <div
+          className="cst-scroll"
+          style={{
+            padding: "0 22px 24px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 14,
+            flex: 1,
+            overflowY: "auto",
+          }}
+        >
           <div>
             <span className="cst-mono" style={{ fontSize: 10, opacity: 0.55, letterSpacing: "0.22em" }}>
-              ★ BLOC {current.blockLetter || ""}{current.isSuperset ? " · SUPERSET" : ""}
-              {current.blockType && current.blockType !== "standard" && !current.isSuperset ? ` · ${current.blockType.toUpperCase()}` : ""}
+              ★ BLOC {current.blockLetter || ""}
+              {current.isSuperset ? " · SUPERSET" : ""}
+              {current.blockType && current.blockType !== "standard" && !current.isSuperset
+                ? ` · ${current.blockType.toUpperCase()}`
+                : ""}
             </span>
           </div>
           {explain && (
-            <div style={{ padding: "10px 12px", background: "rgba(45,90,53,0.12)", border: "1px solid rgba(45,90,53,0.35)", borderRadius: 8, fontSize: 12, lineHeight: 1.5 }}>{explain}</div>
+            <div
+              style={{
+                padding: "10px 12px",
+                background: "rgba(45,90,53,0.12)",
+                border: "1px solid rgba(45,90,53,0.35)",
+                borderRadius: 8,
+                fontSize: 12,
+                lineHeight: 1.5,
+              }}
+            >
+              {explain}
+            </div>
           )}
           {current.exercises.map((ex, i) => {
             const color = asColor(ex.color);
             const bodyweight = isBodyweight(ex.charge);
             return (
-              <div key={i} className="cst-card-dark cst-hatch" style={{ padding: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+              <div
+                key={i}
+                className="cst-card-dark cst-hatch"
+                style={{ padding: 14, display: "flex", flexDirection: "column", gap: 10 }}
+              >
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   {color && <ColorDot color={color} size={14} onClick={() => setShowColor(color)} />}
-                  {ex.code && <span className="cst-mono" style={{ fontSize: 10, opacity: 0.55 }}>{ex.code}</span>}
-                  <h2 className="cst-display" style={{ margin: 0, fontSize: 20, flex: 1, color: "#fff" }}>{ex.name.toUpperCase()}</h2>
-                  {bodyweight && <span className="cst-mono" style={{ fontSize: 9, padding: "3px 6px", borderRadius: 4, background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.7)", letterSpacing: "0.1em" }}>PDC</span>}
-                  {ex.tempo && <TempoBadge tempo={ex.tempo} onClick={() => setShowTempo({ tempo: ex.tempo, name: ex.name })} />}
+                  {ex.code && (
+                    <span className="cst-mono" style={{ fontSize: 10, opacity: 0.55 }}>
+                      {ex.code}
+                    </span>
+                  )}
+                  <h2 className="cst-display" style={{ margin: 0, fontSize: 20, flex: 1, color: "#fff" }}>
+                    {ex.name.toUpperCase()}
+                  </h2>
+                  {bodyweight && (
+                    <span
+                      className="cst-mono"
+                      style={{
+                        fontSize: 9,
+                        padding: "3px 6px",
+                        borderRadius: 4,
+                        background: "rgba(255,255,255,0.08)",
+                        color: "rgba(255,255,255,0.7)",
+                        letterSpacing: "0.1em",
+                      }}
+                    >
+                      PDC
+                    </span>
+                  )}
+                  {ex.tempo && (
+                    <TempoBadge tempo={ex.tempo} onClick={() => setShowTempo({ tempo: ex.tempo, name: ex.name })} />
+                  )}
                 </div>
-                <div className="cst-mono" style={{ fontSize: 11, opacity: 0.85, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(95px, 1fr))", gap: "4px 10px" }}>
-                  <span><span style={{ opacity: 0.5 }}>SÉRIES </span>{ex.series ?? "—"}</span>
-                  <span><span style={{ opacity: 0.5 }}>REPS </span>{ex.reps ?? "—"}</span>
-                  {ex.charge && !bodyweight && <span><span style={{ opacity: 0.5 }}>CHARGE </span>{ex.charge}</span>}
-                  {ex.recup && <span><span style={{ opacity: 0.5 }}>RÉCUP </span>{ex.recup}</span>}
-                  {ex.rpe_target && <span><span style={{ opacity: 0.5 }}>RPE </span>{ex.rpe_target}</span>}
+                <div
+                  className="cst-mono"
+                  style={{
+                    fontSize: 11,
+                    opacity: 0.85,
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(95px, 1fr))",
+                    gap: "4px 10px",
+                  }}
+                >
+                  <span>
+                    <span style={{ opacity: 0.5 }}>SÉRIES </span>
+                    {ex.series ?? "—"}
+                  </span>
+                  <span>
+                    <span style={{ opacity: 0.5 }}>REPS </span>
+                    {ex.reps ?? "—"}
+                  </span>
+                  {ex.charge && !bodyweight && (
+                    <span>
+                      <span style={{ opacity: 0.5 }}>CHARGE </span>
+                      {ex.charge}
+                    </span>
+                  )}
+                  {ex.recup && (
+                    <span>
+                      <span style={{ opacity: 0.5 }}>RÉCUP </span>
+                      {ex.recup}
+                    </span>
+                  )}
+                  {ex.rpe_target && (
+                    <span>
+                      <span style={{ opacity: 0.5 }}>RPE </span>
+                      {ex.rpe_target}
+                    </span>
+                  )}
                 </div>
                 {color && <RPEGuidance color={color} />}
                 {ex.coach_notes && (
-                  <div style={{ fontSize: 12, opacity: 0.85, fontStyle: "italic", background: "rgba(45,90,53,0.10)", borderLeft: "2px solid var(--cst-mid-green)", padding: "6px 10px", borderRadius: 3 }}>« {ex.coach_notes} »</div>
+                  <div
+                    style={{
+                      fontSize: 12,
+                      opacity: 0.85,
+                      fontStyle: "italic",
+                      background: "rgba(45,90,53,0.10)",
+                      borderLeft: "2px solid var(--cst-mid-green)",
+                      padding: "6px 10px",
+                      borderRadius: 3,
+                    }}
+                  >
+                    « {ex.coach_notes} »
+                  </div>
                 )}
                 {(ex.youtube_id || ex.youtube_url) && (
-                  <a href={ex.youtube_url || `https://www.youtube.com/watch?v=${ex.youtube_id}`} target="_blank" rel="noreferrer" className="cst-mono" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 10px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 6, color: "rgba(255,255,255,0.85)", fontSize: 10, textDecoration: "none", letterSpacing: "0.14em", width: "fit-content" }}>▶ VOIR LA DÉMO</a>
+                  <a
+                    href={ex.youtube_url || `https://www.youtube.com/watch?v=${ex.youtube_id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="cst-mono"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: "8px 10px",
+                      background: "rgba(255,255,255,0.04)",
+                      border: "1px solid rgba(255,255,255,0.12)",
+                      borderRadius: 6,
+                      color: "rgba(255,255,255,0.85)",
+                      fontSize: 10,
+                      textDecoration: "none",
+                      letterSpacing: "0.14em",
+                      width: "fit-content",
+                    }}
+                  >
+                    ▶ VOIR LA DÉMO
+                  </a>
                 )}
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   <button onClick={() => setShowThread(ex.name)} className="cst-btn cst-btn-ghost-dark cst-btn-sm">
                     💬 Échanger / Envoyer une vidéo
                   </button>
-                  <button onClick={() => setPainFor(ex.name)} className="cst-btn cst-btn-sm" style={{ background: "rgba(192,57,43,0.15)", border: "1px solid rgba(192,57,43,0.5)", color: "#ff8a7a" }}>
+                  <button
+                    onClick={() => setPainFor(ex.name)}
+                    className="cst-btn cst-btn-sm"
+                    style={{
+                      background: "rgba(192,57,43,0.15)",
+                      border: "1px solid rgba(192,57,43,0.5)",
+                      color: "#ff8a7a",
+                    }}
+                  >
                     🔴 Signaler une douleur
                   </button>
                 </div>
@@ -834,9 +1103,21 @@ export function LiveSession({
           <div style={{ flex: 1 }} />
           <div style={{ display: "flex", gap: 8 }}>
             {canGoPrevBlock && (
-              <button onClick={goPrevBlock} className="cst-btn cst-btn-ghost-dark" style={{ flex: "0 0 auto", padding: "16px 14px", fontSize: 12 }}>← BLOC PRÉCÉDENT</button>
+              <button
+                onClick={goPrevBlock}
+                className="cst-btn cst-btn-ghost-dark"
+                style={{ flex: "0 0 auto", padding: "16px 14px", fontSize: 12 }}
+              >
+                ← BLOC PRÉCÉDENT
+              </button>
             )}
-            <button onClick={goNext} className="cst-btn cst-btn-primary" style={{ flex: 1, padding: "16px 0", fontSize: 14 }}>JE COMMENCE →</button>
+            <button
+              onClick={goNext}
+              className="cst-btn cst-btn-primary"
+              style={{ flex: 1, padding: "16px 0", fontSize: 14 }}
+            >
+              JE COMMENCE →
+            </button>
           </div>
         </div>
         {renderOverlays(blockColor)}
@@ -853,18 +1134,20 @@ export function LiveSession({
 
   // Cible reps par série (placeholder)
   const repTargets = parseRepsPerSet(setStep.exercise.reps, setStep.totalSets);
-  const repPlaceholder = repTargets[setStep.setNumber - 1] || (setStep.exercise.reps ? String(setStep.exercise.reps) : "");
+  const repPlaceholder =
+    repTargets[setStep.setNumber - 1] || (setStep.exercise.reps ? String(setStep.exercise.reps) : "");
 
-  const fb = logging?.rpe != null
-    ? rpeFeedbackMessage(exColor, logging.rpe, setStep.isLastSetOfExercise)
-    : null;
+  const fb = logging?.rpe != null ? rpeFeedbackMessage(exColor, logging.rpe, setStep.isLastSetOfExercise) : null;
 
   // Référence : dernière fois
   const lastExo = lastByExo[setStep.exercise.name];
   const lastSetsArr = (lastExo?._sets as LastSet[] | undefined) || [];
   const lastDate = lastExo?._loggedAt as string | null | undefined;
   const lastRefText = lastSetsArr.length
-    ? lastSetsArr.slice(0, 4).map((s) => `${s.weight ?? "—"}kg × ${s.reps ?? "—"}`).join(" · ")
+    ? lastSetsArr
+        .slice(0, 4)
+        .map((s) => `${s.weight ?? "—"}kg × ${s.reps ?? "—"}`)
+        .join(" · ")
     : null;
 
   function startLogging() {
@@ -874,35 +1157,88 @@ export function LiveSession({
   }
 
   function commitWeight(v: string) {
-    setLogging((cur) => cur ? { ...cur, weight: v } : cur);
+    setLogging((cur) => (cur ? { ...cur, weight: v } : cur));
   }
   function commitReps(v: string) {
-    setLogging((cur) => cur ? { ...cur, reps: v } : cur);
+    setLogging((cur) => (cur ? { ...cur, reps: v } : cur));
   }
 
   return (
     <div style={shellStyle}>
       {renderHeader()}
-      <div className="cst-scroll" style={{ padding: "0 22px 24px", display: "flex", flexDirection: "column", gap: 14, flex: 1, overflowY: "auto" }}>
+      <div
+        className="cst-scroll"
+        style={{
+          padding: "0 22px 24px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 14,
+          flex: 1,
+          overflowY: "auto",
+        }}
+      >
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {exColor && <ColorDot color={exColor} size={14} onClick={() => setShowColor(exColor)} />}
-          {setStep.exercise.code && <span className="cst-mono" style={{ fontSize: 10, opacity: 0.6 }}>{setStep.exercise.code}</span>}
-          <h2 className="cst-display" style={{ margin: 0, fontSize: 22, flex: 1, color: "#fff" }}>{setStep.exercise.name.toUpperCase()}</h2>
-          {bodyweight && <span className="cst-mono" style={{ fontSize: 9, padding: "3px 6px", borderRadius: 4, background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.7)", letterSpacing: "0.1em" }}>PDC</span>}
-          {setStep.exercise.tempo && <TempoBadge tempo={setStep.exercise.tempo} onClick={() => setShowTempo({ tempo: setStep.exercise.tempo, name: setStep.exercise.name })} />}
+          {setStep.exercise.code && (
+            <span className="cst-mono" style={{ fontSize: 10, opacity: 0.6 }}>
+              {setStep.exercise.code}
+            </span>
+          )}
+          <h2 className="cst-display" style={{ margin: 0, fontSize: 22, flex: 1, color: "#fff" }}>
+            {setStep.exercise.name.toUpperCase()}
+          </h2>
+          {bodyweight && (
+            <span
+              className="cst-mono"
+              style={{
+                fontSize: 9,
+                padding: "3px 6px",
+                borderRadius: 4,
+                background: "rgba(255,255,255,0.08)",
+                color: "rgba(255,255,255,0.7)",
+                letterSpacing: "0.1em",
+              }}
+            >
+              PDC
+            </span>
+          )}
+          {setStep.exercise.tempo && (
+            <TempoBadge
+              tempo={setStep.exercise.tempo}
+              onClick={() => setShowTempo({ tempo: setStep.exercise.tempo, name: setStep.exercise.name })}
+            />
+          )}
         </div>
 
-        <div style={{ padding: "22px 16px", background: `${accent}14`, border: `1px solid ${accent}55`, borderRadius: 12, textAlign: "center" }}>
-          <div className="cst-mono" style={{ fontSize: 10, opacity: 0.65, letterSpacing: "0.22em" }}>SÉRIE</div>
+        <div
+          style={{
+            padding: "22px 16px",
+            background: `${accent}14`,
+            border: `1px solid ${accent}55`,
+            borderRadius: 12,
+            textAlign: "center",
+          }}
+        >
+          <div className="cst-mono" style={{ fontSize: 10, opacity: 0.65, letterSpacing: "0.22em" }}>
+            SÉRIE
+          </div>
           <div className="cst-display" style={{ fontSize: 56, lineHeight: 1, marginTop: 4 }}>
-            {setStep.setNumber}<span style={{ fontSize: 22, opacity: 0.5 }}> / {setStep.totalSets}</span>
+            {setStep.setNumber}
+            <span style={{ fontSize: 22, opacity: 0.5 }}> / {setStep.totalSets}</span>
           </div>
           <div className="cst-mono" style={{ fontSize: 11, opacity: 0.8, marginTop: 8 }}>
-            {repPlaceholder && <>OBJECTIF {repPlaceholder}{durationMode ? "" : " REPS"}</>}
+            {repPlaceholder && (
+              <>
+                OBJECTIF {repPlaceholder}
+                {durationMode ? "" : " REPS"}
+              </>
+            )}
             {setStep.exercise.rpe_target && <> @ RPE {setStep.exercise.rpe_target}</>}
           </div>
           {setStep.exercise.charge && !bodyweight && (
-            <div className="cst-mono" style={{ fontSize: 11, opacity: 0.7, marginTop: 4 }}>CHARGE : {setStep.exercise.charge}</div>
+            <div className="cst-mono" style={{ fontSize: 11, opacity: 0.7, marginTop: 4 }}>
+              CHARGE : {setStep.exercise.charge}
+            </div>
           )}
         </div>
 
@@ -933,8 +1269,24 @@ export function LiveSession({
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
               {bodyweight ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                  <span className="cst-mono" style={{ fontSize: 9, opacity: 0.55, letterSpacing: "0.18em" }}>POIDS</span>
-                  <div className="cst-mono" style={{ padding: "14px 12px", textAlign: "center", fontSize: 16, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, color: "rgba(255,255,255,0.6)", letterSpacing: "0.12em" }}>PDC</div>
+                  <span className="cst-mono" style={{ fontSize: 9, opacity: 0.55, letterSpacing: "0.18em" }}>
+                    POIDS
+                  </span>
+                  <div
+                    className="cst-mono"
+                    style={{
+                      padding: "14px 12px",
+                      textAlign: "center",
+                      fontSize: 16,
+                      background: "rgba(255,255,255,0.05)",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      borderRadius: 6,
+                      color: "rgba(255,255,255,0.6)",
+                      letterSpacing: "0.12em",
+                    }}
+                  >
+                    PDC
+                  </div>
                 </div>
               ) : (
                 <LabeledInput
@@ -960,29 +1312,87 @@ export function LiveSession({
 
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span className="cst-mono" style={{ fontSize: 10, opacity: 0.6, letterSpacing: "0.18em" }}>RPE PERÇU</span>
-                <button onClick={() => setShowRpeRef(true)} className="cst-mono" style={{ background: "none", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.7)", fontSize: 9, padding: "2px 8px", borderRadius: 4, cursor: "pointer", letterSpacing: "0.12em" }}>? ÉCHELLE</button>
+                <span className="cst-mono" style={{ fontSize: 10, opacity: 0.6, letterSpacing: "0.18em" }}>
+                  RPE PERÇU
+                </span>
+                <button
+                  onClick={() => setShowRpeRef(true)}
+                  className="cst-mono"
+                  style={{
+                    background: "none",
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    color: "rgba(255,255,255,0.7)",
+                    fontSize: 9,
+                    padding: "2px 8px",
+                    borderRadius: 4,
+                    cursor: "pointer",
+                    letterSpacing: "0.12em",
+                  }}
+                >
+                  ? ÉCHELLE
+                </button>
               </div>
               {exColor && <RPEGuidance color={exColor} />}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 4 }}>
-                {[6, 7, 8, 9, 10].map((v) => {
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((v) => {
                   const on = logging.rpe === v;
                   const hue = v >= 9 ? "#C9483A" : v >= 7 ? "#D4A53B" : "#3A8A4D";
                   return (
-                    <button key={v} onClick={() => { setLogging({ ...logging, rpe: v }); setValidationError(null); }} className="cst-mono" style={{ padding: "12px 0", borderRadius: 6, border: `1px solid ${on ? hue : "rgba(255,255,255,0.12)"}`, background: on ? `${hue}33` : "transparent", color: on ? "#fff" : "rgba(255,255,255,0.7)", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>{v}</button>
+                    <button
+                      key={v}
+                      onClick={() => {
+                        setLogging({ ...logging, rpe: v });
+                        setValidationError(null);
+                      }}
+                      className="cst-mono"
+                      style={{
+                        padding: "12px 0",
+                        borderRadius: 6,
+                        border: `1px solid ${on ? hue : "rgba(255,255,255,0.12)"}`,
+                        background: on ? `${hue}33` : "transparent",
+                        color: on ? "#fff" : "rgba(255,255,255,0.7)",
+                        fontSize: 15,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {v}
+                    </button>
                   );
                 })}
               </div>
             </div>
 
             {validationError && (
-              <div role="alert" style={{ padding: "10px 12px", fontSize: 12, lineHeight: 1.5, background: "rgba(201,72,58,0.15)", border: "1px solid rgba(201,72,58,0.5)", borderRadius: 8, color: "#FFB8AD" }}>
+              <div
+                role="alert"
+                style={{
+                  padding: "10px 12px",
+                  fontSize: 12,
+                  lineHeight: 1.5,
+                  background: "rgba(201,72,58,0.15)",
+                  border: "1px solid rgba(201,72,58,0.5)",
+                  borderRadius: 8,
+                  color: "#FFB8AD",
+                }}
+              >
                 ⚠ {validationError}
               </div>
             )}
 
             {fb && !validationError && (
-              <div style={{ padding: 10, fontSize: 12, lineHeight: 1.5, background: "rgba(212,165,59,0.12)", border: "1px solid rgba(212,165,59,0.3)", borderRadius: 8 }}>{fb}</div>
+              <div
+                style={{
+                  padding: 10,
+                  fontSize: 12,
+                  lineHeight: 1.5,
+                  background: "rgba(212,165,59,0.12)",
+                  border: "1px solid rgba(212,165,59,0.3)",
+                  borderRadius: 8,
+                }}
+              >
+                {fb}
+              </div>
             )}
 
             <button
@@ -997,12 +1407,27 @@ export function LiveSession({
 
         <div style={{ display: "flex", gap: 8 }}>
           {canGoPrevBlock && (
-            <button onClick={goPrevBlock} className="cst-btn cst-btn-ghost-dark cst-btn-sm" style={{ flex: 1 }}>← BLOC PRÉCÉDENT</button>
+            <button onClick={goPrevBlock} className="cst-btn cst-btn-ghost-dark cst-btn-sm" style={{ flex: 1 }}>
+              ← BLOC PRÉCÉDENT
+            </button>
           )}
-          <button onClick={() => setShowThread(setStep.exercise.name)} className="cst-btn cst-btn-ghost-dark cst-btn-sm" style={{ flex: 1 }}>
+          <button
+            onClick={() => setShowThread(setStep.exercise.name)}
+            className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+            style={{ flex: 1 }}
+          >
             💬 Filmer / Échanger
           </button>
-          <button onClick={() => setPainFor(setStep.exercise.name)} className="cst-btn cst-btn-sm" style={{ flex: 1, background: "rgba(192,57,43,0.15)", border: "1px solid rgba(192,57,43,0.5)", color: "#ff8a7a" }}>
+          <button
+            onClick={() => setPainFor(setStep.exercise.name)}
+            className="cst-btn cst-btn-sm"
+            style={{
+              flex: 1,
+              background: "rgba(192,57,43,0.15)",
+              border: "1px solid rgba(192,57,43,0.5)",
+              color: "#ff8a7a",
+            }}
+          >
             🔴 Douleur
           </button>
         </div>
@@ -1011,7 +1436,6 @@ export function LiveSession({
     </div>
   );
 }
-
 
 /* ───────── Rest screen (full) ───────── */
 
@@ -1042,9 +1466,7 @@ function RestScreen({
         doneFiredRef.current = true;
         try {
           if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-            (navigator as Navigator & { vibrate: (p: number | number[]) => boolean }).vibrate(
-              [200, 80, 200],
-            );
+            (navigator as Navigator & { vibrate: (p: number | number[]) => boolean }).vibrate([200, 80, 200]);
           }
         } catch {
           /* ignore */
@@ -1063,7 +1485,16 @@ function RestScreen({
   const color = pct > 0.5 ? "#3A8A4D" : pct > 0.2 ? "#D4A53B" : "#C9483A";
 
   return (
-    <div style={{ padding: "0 22px 24px", display: "flex", flexDirection: "column", gap: 18, flex: 1, alignItems: "center" }}>
+    <div
+      style={{
+        padding: "0 22px 24px",
+        display: "flex",
+        flexDirection: "column",
+        gap: 18,
+        flex: 1,
+        alignItems: "center",
+      }}
+    >
       <span className="cst-mono" style={{ fontSize: 10, opacity: 0.55, letterSpacing: "0.22em" }}>
         — REPOS
       </span>
@@ -1105,11 +1536,27 @@ function RestScreen({
       </div>
 
       <div style={{ display: "flex", gap: 6, width: "100%" }}>
-        <button onClick={() => setRemaining((r) => Math.max(0, r - 15))} className="cst-btn cst-btn-ghost-dark cst-btn-sm" style={{ flex: 1 }}>−15s</button>
-        <button onClick={() => setRunning((r) => !r)} className="cst-btn cst-btn-ghost-dark cst-btn-sm" style={{ flex: 1 }}>
+        <button
+          onClick={() => setRemaining((r) => Math.max(0, r - 15))}
+          className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+          style={{ flex: 1 }}
+        >
+          −15s
+        </button>
+        <button
+          onClick={() => setRunning((r) => !r)}
+          className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+          style={{ flex: 1 }}
+        >
           {running ? "❚❚ PAUSE" : "▶ REPRENDRE"}
         </button>
-        <button onClick={() => setRemaining((r) => r + 15)} className="cst-btn cst-btn-ghost-dark cst-btn-sm" style={{ flex: 1 }}>+15s</button>
+        <button
+          onClick={() => setRemaining((r) => r + 15)}
+          className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+          style={{ flex: 1 }}
+        >
+          +15s
+        </button>
       </div>
 
       {currentExercise && (hasVideo(currentExercise) || hasCues(currentExercise)) && (
@@ -1126,8 +1573,6 @@ function RestScreen({
           )}
         </div>
       )}
-
-
 
       {nextPreview && (
         <div
@@ -1232,10 +1677,20 @@ const LabeledInput = React.memo(function LabeledInput({
         placeholder={placeholder}
         autoComplete="off"
         enterKeyHint="next"
-        onFocus={(e) => { focusedRef.current = true; try { e.currentTarget.scrollIntoView({ block: "center", behavior: "smooth" }); } catch { /* ignore */ } }}
+        onFocus={(e) => {
+          focusedRef.current = true;
+          try {
+            e.currentTarget.scrollIntoView({ block: "center", behavior: "smooth" });
+          } catch {
+            /* ignore */
+          }
+        }}
         onBlur={() => {
           focusedRef.current = false;
-          if (commitTimer.current) { clearTimeout(commitTimer.current); commitTimer.current = null; }
+          if (commitTimer.current) {
+            clearTimeout(commitTimer.current);
+            commitTimer.current = null;
+          }
           onCommit(local);
         }}
         onChange={(e) => {
@@ -1260,7 +1715,6 @@ const LabeledInput = React.memo(function LabeledInput({
     </label>
   );
 });
-
 
 /* ───────── Cues / Video action bar (used in SET phase) ───────── */
 
@@ -1294,18 +1748,10 @@ function CuesActionBar({
 
 /* ───────── Video modal (YouTube embed) ───────── */
 
-function VideoModal({
-  exercise,
-  onClose,
-}: {
-  exercise: ProgExercise | null;
-  onClose: () => void;
-}) {
+function VideoModal({ exercise, onClose }: { exercise: ProgExercise | null; onClose: () => void }) {
   if (!exercise) return null;
   const id =
-    exercise.youtube_id ||
-    extractYoutubeId(exercise.youtube_url) ||
-    extractYoutubeId(exercise.youtube_alt_url);
+    exercise.youtube_id || extractYoutubeId(exercise.youtube_url) || extractYoutubeId(exercise.youtube_alt_url);
   const fallbackUrl = exercise.youtube_url || exercise.youtube_alt_url || null;
   return (
     <div
