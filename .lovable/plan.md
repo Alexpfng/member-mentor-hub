@@ -1,54 +1,38 @@
-## Phase 2 — Séance libre côté coach
+## Problème
 
-Objectif : le coach voit clairement les séances libres (différentes du programme), avec photos/vidéos et activités libres en ligne, et l'adhérence au programme n'est plus faussée.
+Après l'ajout de `src/routes/_authenticated.coach.tsx` (garde de rôle pour rediriger les non-coachs vers `/membre`), toutes les pages affichent **« This page didn't load »** avec :
 
-### 1. Backend — server functions
+```
+Invariant failed: Expected to find a match below the root match in SPA mode.
+```
 
-**`src/lib/coach-dashboard.functions.ts` — étendre `getSessionDetail`**
-- Charger en parallèle :
-  - `free_activities` (où `session_id = …`, ordonnés par `order_index`)
-  - `session_media` (mêmes critères) + générer une URL signée par item via `supabaseAdmin.storage.from('session-media').createSignedUrl(path, 3600)` (et pareil pour `thumbnail_path`)
-- Inclure dans le retour : `session_type`, `free_title`, `free_category` (déjà dans le select à compléter), `freeActivities`, `media: [{ id, type, url, thumbnailUrl, caption }]`.
+### Cause
 
-**Adhérence — exclure les séances libres**
-- Dans `getDashboardMetrics`, `getMembersOverview`, `getMemberFollowup`, `getMemberCharts` : ajouter `.eq("session_type", "program")` sur toutes les requêtes `sessions` qui servent au calcul d'adhérence (done/total/recent7/sessions7By/adhR). Les requêtes de volume, RPE, durée, "récentes" gardent toutes les séances.
-- `getRecentSessions` : garder toutes les séances mais exposer `sessionType`, `freeTitle`, `freeCategory` dans le retour.
-- `getPriorityFeed` : pas de changement (RPE/douleur/vidéos restent pertinents même pour libres).
+1. Le parent `_authenticated/route.tsx` est `ssr: false` (géré par l'intégration).
+2. La nouvelle couche `_authenticated.coach.tsx` n'hérite pas explicitement de cette config et son composant renvoie tantôt `<div>Chargement…</div>`, tantôt `<Navigate />`, tantôt `<Outlet />`. Le routeur attend toujours un `<Outlet />` côté layout, sinon il ne trouve pas le match enfant attendu pendant l'hydratation.
 
-**`getMemberFollowup`** : ajouter dans `kpis` un `freeSessions30` (compte des séances `session_type='free'` terminées sur 30j) ; `recentSessions` doit inclure `sessionType`.
+Résultat : l'hydratation crashe globalement → toutes les routes tombent sur la page d'erreur.
 
-### 2. UI Coach
+## Correctif
 
-**`src/components/coach/RecentSessionsList.tsx`**
-- Si `s.sessionType === 'free'` : afficher un badge `LIBRE` (vert/cyan, style `cst-mono`) à côté du nom, et utiliser `s.freeTitle` (+ icône catégorie) comme libellé au lieu de `s.label` + semaine/jour.
+Supprimer la garde via couche/layout et faire la vérification de rôle **dans la page `CoachDashboard`** (et seulement là). Avantages :
+- Plus de fichier layout intermédiaire → plus d'invariant SPA.
+- L'erreur originale (« Accès réservé aux coachs » sur `listMembers`) n'apparaissait que sur `/coach`, donc gater uniquement `CoachDashboard` suffit. Les autres routes `/coach/*` sont accédées via la nav coach, donc inatteignables par un membre dans le flux normal.
+- Reste cohérent avec le pattern Supabase de l'intégration (pas de double gate, pas de `beforeLoad` qui appelle une server fn protégée pendant le SSR).
 
-**`src/pages/coach/SessionDetail.tsx`**
-- En tête : si `session_type='free'`, sous-titre = `freeTitle` + chip catégorie, masquer la grille "détail par exercice prévu vs réalisé".
-- Nouvelle section "ACTIVITÉS LIBRES" rendant `freeActivities` (carte par activité : nom, catégorie, série/reps/charge OU distance/durée/D+ OU durée/intensité + note + RPE).
-- Nouvelle section "PHOTOS & VIDÉOS" : galerie 3-col (réutiliser `src/components/cst/MediaGallery.tsx`) avec les URLs signées du backend ; clic = lightbox plein écran (image native ou `<video controls>`).
-- Si séance programme : comportement actuel inchangé.
+### Changements
 
-**`src/components/coach/PriorityFeed.tsx`** : non modifié (les notifs "séance libre terminée" arrivent déjà via le message auto envoyé par `finishFreeSession` en Phase 1).
+1. **Supprimer** `src/routes/_authenticated.coach.tsx` (le fichier que j'ai créé).
+2. **Modifier** `src/pages/coach/Dashboard.tsx` (ou `.jsx`) pour, avant tout rendu de données :
+   - lire `useAuth()` ;
+   - si `loading` → écran de chargement ;
+   - si pas de user → `<Navigate to="/login" />` ;
+   - si `role && role !== "coach"` → `<Navigate to="/membre" />`.
+3. Aucun changement de base de données, de RLS, ni de server function.
 
-### 3. UI Membre — finitions
+### Vérification
 
-**`src/pages/membre/Carnet.tsx`**
-- Sous le chiffre `sessions_done / sessions_planned` (programme), afficher une ligne secondaire `+ N séance(s) libre(s)` si applicable. Nécessite ajout d'un champ `freeSessions` retourné par la query du carnet (à brancher sur la query déjà utilisée — soit `member-stats.functions.ts`, soit count direct côté composant).
-
-**`src/lib/member-stats.functions.ts`**
-- Vérifier `getMemberDashboard` : exclure `session_type='free'` du calcul d'adhérence, garder dans le compte de volume/durée/PR. Ajouter `freeSessionsThisWeek` au retour si la donnée est utilisée par le dashboard.
-
-### 4. Critères d'acceptation
-
-- [ ] Sur la fiche coach d'une séance libre : titre + catégorie + activités listées + médias affichés (signed URLs).
-- [ ] Badge `LIBRE` visible dans la liste des séances récentes coach.
-- [ ] L'adhérence (dashboard coach, fiche membre coach, carnet membre) n'est plus impactée par les séances libres terminées.
-- [ ] Le volume total et le nombre total de séances (vue "activité") incluent les libres.
-- [ ] Compteur "+ N séances libres" affiché dans le carnet hebdo membre quand > 0.
-- [ ] Rien n'a régressé sur l'affichage des séances de programme.
-
-### Détails techniques
-
-- Bucket `session-media` privé → toutes les URLs côté coach passent par `createSignedUrl` (TTL 1h) générées dans `getSessionDetail`.
-- Pas de nouvelle migration nécessaire (tables `free_activities` et `session_media` créées en Phase 1, colonnes `session_type/free_title/free_category` déjà présentes sur `sessions`).
-- Pas de modification des RLS (les policies coach existantes couvrent déjà la lecture).
+- `/` se charge à nouveau.
+- `/coach` connecté en tant que membre redirige vers `/membre` sans déclencher l'appel `listMembers` (pas d'erreur 500 « Accès réservé aux coachs »).
+- `/coach` connecté en tant que coach affiche le dashboard normalement.
+- `/coach/builder`, `/login` etc. se chargent (l'invariant SPA disparaît).

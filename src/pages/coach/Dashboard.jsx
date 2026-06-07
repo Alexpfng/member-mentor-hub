@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from '@tanstack/react-router';
+import { useNavigate, Navigate } from '@tanstack/react-router';
 import { useServerFn } from '@tanstack/react-start';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import CoachSidebar from '../../components/CoachSidebar';
@@ -12,6 +12,7 @@ import PriorityFeed from '@/components/coach/PriorityFeed';
 import RecentSessionsList from '@/components/coach/RecentSessionsList';
 import MembersTable from '@/components/coach/MembersTable';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/use-auth';
 
 
 function InviteModal({ onClose, onDone }) {
@@ -99,6 +100,20 @@ const metricCard = {
 const MONTHS = ['JAN', 'FÉV', 'MAR', 'AVR', 'MAI', 'JUIN', 'JUIL', 'AOÛT', 'SEP', 'OCT', 'NOV', 'DÉC'];
 
 export default function CoachDashboard() {
+  const { user, role, loading } = useAuth();
+  if (loading || (user && role === null)) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1a2420', color: 'rgba(255,255,255,0.6)', fontSize: 12, fontFamily: 'var(--cst-mono)' }}>
+        CHARGEMENT…
+      </div>
+    );
+  }
+  if (!user) return <Navigate to="/login" />;
+  if (role !== 'coach') return <Navigate to="/membre" />;
+  return <CoachDashboardInner />;
+}
+
+function CoachDashboardInner() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const listMembersFn = useServerFn(listMembers);
