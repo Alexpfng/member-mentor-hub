@@ -30,12 +30,8 @@ type ProgramStructure = {
   }>;
 };
 
-const DEFAULT_EXERCISES: ProgExercise[] = [
-  { name: "Tractions pronation", series: 4, reps: "6-10", rpe_target: 8, tempo: "3010", color: "red" },
-  { name: "Row barre", series: 4, reps: "8", rpe_target: 8, tempo: "2011", color: "red" },
-  { name: "Face pull", series: 3, reps: "15", rpe_target: 7, tempo: "2012", color: "blue" },
-  { name: "Curl barre", series: 3, reps: "10", rpe_target: 7, tempo: "3010", color: "green" },
-];
+
+
 
 function SeancePage() {
   const { sessionId } = useParams({ from: "/_authenticated/membre/seance/$sessionId" });
