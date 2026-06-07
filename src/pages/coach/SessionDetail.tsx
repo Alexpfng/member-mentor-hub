@@ -80,12 +80,22 @@ export default function CoachSessionDetail() {
     catch (e) { toast.error(e instanceof Error ? e.message : "Erreur"); }
   }
 
+  const isFree = (s as any).session_type === "free";
+  const freeTitle = (s as any).free_title as string | null;
+  const freeCategory = (s as any).free_category as string | null;
+  const catIcon = freeCategory === "course" ? "🏃" : freeCategory === "cardio" ? "❤️" : freeCategory === "muscu" ? "🏋️" : freeCategory === "sport" ? "⚽" : "✨";
+  const freeActivities = (data as any).freeActivities as Array<{ id: string; name: string; category: string | null; series: number | null; reps: string | null; charge: string | null; duration_min: number | null; distance_km: number | null; elevation_m: number | null; rpe: number | null; note: string | null }> | undefined;
+  const media = (data as any).media as Array<{ id: string; type: "photo" | "video"; url: string | null; thumbnailUrl: string | null; caption: string | null }> | undefined;
+
   return (
     <div className="cst-screen" style={{ flexDirection: "row" }}>
       <CoachSidebar />
       <div className="cst-col cst-scroll" style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "24px 32px", borderBottom: "1px solid rgba(255,255,255,0.06)", gap: 12, flexWrap: "wrap" }}>
-          <CSTSectionNum num={1} label="DÉTAIL DE SÉANCE" sub={`${data.member.name} · ${s.session_label || "Séance"}`} />
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+            <CSTSectionNum num={1} label={isFree ? "SÉANCE LIBRE" : "DÉTAIL DE SÉANCE"} sub={`${data.member.name} · ${isFree ? `${catIcon} ${freeTitle || "Séance libre"}` : (s.session_label || "Séance")}`} />
+            {isFree && <span className="cst-mono" style={{ fontSize: 10, padding: "3px 8px", background: "#2DBE9A", color: "#0a0a0a", borderRadius: 3, letterSpacing: "0.18em" }}>HORS PROGRAMME</span>}
+          </div>
           <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" onClick={() => navigate({ to: "/coach" })}>← RETOUR</button>
         </div>
 
@@ -94,7 +104,7 @@ export default function CoachSessionDetail() {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
             <Metric label="DURÉE" value={`${s.duration_minutes ?? "—"} min`} />
             <Metric label="RPE MOYEN" value={s.average_rpe != null ? Number(s.average_rpe).toFixed(1) : "—"} />
-            <Metric label="VOLUME TOTAL" value={s.total_volume_kg != null ? `${Math.round(Number(s.total_volume_kg))} kg` : "—"} />
+            {!isFree && <Metric label="VOLUME TOTAL" value={s.total_volume_kg != null ? `${Math.round(Number(s.total_volume_kg))} kg` : "—"} />}
             <Metric label="RESSENTI" value={s.overall_feeling != null ? `${s.overall_feeling}/5` : "—"} />
           </div>
 
@@ -118,7 +128,67 @@ export default function CoachSessionDetail() {
             </div>
           )}
 
-          {/* Détail par exercice */}
+          {/* Activités libres (séance libre uniquement) */}
+          {isFree && (
+            <div>
+              <CSTSectionNum num={2} label="ACTIVITÉS LIBRES" sub="" />
+              <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+                {(freeActivities ?? []).map((a) => {
+                  const bits: string[] = [];
+                  if (a.series != null || a.reps) bits.push(`${a.series ?? "?"} × ${a.reps ?? "?"}`);
+                  if (a.charge) bits.push(a.charge);
+                  if (a.distance_km != null) bits.push(`${a.distance_km} km`);
+                  if (a.duration_min != null) bits.push(`${a.duration_min} min`);
+                  if (a.elevation_m != null) bits.push(`D+ ${a.elevation_m} m`);
+                  if (a.rpe != null) bits.push(`RPE ${a.rpe}`);
+                  return (
+                    <div key={a.id} className="cst-card-dark" style={{ padding: 14 }}>
+                      <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
+                        {a.category && <span className="cst-mono" style={{ fontSize: 10, opacity: 0.6, letterSpacing: "0.12em" }}>{a.category.toUpperCase()}</span>}
+                        <h3 className="cst-display" style={{ margin: 0, fontSize: 15 }}>{a.name.toUpperCase()}</h3>
+                      </div>
+                      {bits.length > 0 && <div className="cst-mono" style={{ fontSize: 11, opacity: 0.75, marginTop: 6 }}>{bits.join(" · ")}</div>}
+                      {a.note && <div style={{ marginTop: 6, fontSize: 12, opacity: 0.8, fontStyle: "italic" }}>« {a.note} »</div>}
+                    </div>
+                  );
+                })}
+                {(!freeActivities || freeActivities.length === 0) && (
+                  <div className="cst-card-dark" style={{ padding: 14, opacity: 0.6 }}>Aucune activité enregistrée.</div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Médias (photos / vidéos) */}
+          {media && media.length > 0 && (
+            <div>
+              <CSTSectionNum num={isFree ? 3 : 2} label="PHOTOS & VIDÉOS" sub={`${media.length} fichier${media.length > 1 ? "s" : ""}`} />
+              <div style={{ marginTop: 14, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 10 }}>
+                {media.map((m) => (
+                  <a key={m.id} href={m.url ?? "#"} target="_blank" rel="noreferrer" style={{ display: "block", aspectRatio: "1", background: "#111", borderRadius: 8, overflow: "hidden", position: "relative" }}>
+                    {m.type === "video" ? (
+                      m.thumbnailUrl ? (
+                        <img src={m.thumbnailUrl} alt={m.caption || "Vidéo"} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ) : m.url ? (
+                        <video src={m.url} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ) : null
+                    ) : m.url ? (
+                      <img src={m.url} alt={m.caption || "Photo"} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    ) : null}
+                    {m.type === "video" && (
+                      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.25)", color: "#fff", fontSize: 28 }}>▶</div>
+                    )}
+                    {m.caption && (
+                      <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: "6px 8px", background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 11 }}>{m.caption}</div>
+                    )}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Détail par exercice (séance de programme uniquement) */}
+          {!isFree && (
           <div>
             <CSTSectionNum num={2} label="DÉTAIL PAR EXERCICE" sub="" />
             <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 12 }}>
@@ -180,6 +250,7 @@ export default function CoachSessionDetail() {
               {byExo.size === 0 && <div className="cst-card-dark" style={{ padding: 16, opacity: 0.6 }}>Aucune série enregistrée pour cette séance.</div>}
             </div>
           </div>
+          )}
 
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             <button className="cst-btn cst-btn-ghost-dark" onClick={() => navigate({ to: "/coach/messages" })}>Répondre au membre</button>
