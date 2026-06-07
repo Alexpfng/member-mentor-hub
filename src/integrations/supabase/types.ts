@@ -1253,6 +1253,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_subscribe_topic: { Args: { _topic: string }; Returns: boolean }
       consume_invitation: {
         Args: { _token: string; _user_id: string }
         Returns: boolean
