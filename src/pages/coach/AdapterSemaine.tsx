@@ -1,17 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { z } from "zod";
 import CoachSidebar from "@/components/CoachSidebar";
 import {
   getMemberWeekContext,
   saveDraftWeek,
   publishWeek,
   previewWeekChanges,
-  duplicateWeekTo,
 } from "@/lib/weekly-adaptation.functions";
-
-const searchSchema = z.object({ week: z.coerce.number().int().min(0).max(200).optional() });
 
 type ProgExercise = {
   code?: string | null;
@@ -102,7 +98,7 @@ function ColorDot({ c }: { c?: string | null }) {
   return <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: "50%", background: COLOR_DOT[(c || "").toLowerCase()] || "#666" }} />;
 }
 
-export const Route_searchSchema = searchSchema;
+
 
 export default function AdapterSemaine() {
   const { memberId } = useParams({ from: "/_authenticated/coach/membre/$memberId/adapter" });
