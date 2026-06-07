@@ -124,6 +124,8 @@ export default function AdapterSemaine() {
   const [changes, setChanges] = useState<Array<{ type: string; label: string }>>([]);
   const [notify, setNotify] = useState(true);
   const [message, setMessage] = useState("");
+  const [replaceTarget, setReplaceTarget] = useState<{ dayIdx: number; exoIdx: number; ex: ProgExercise } | null>(null);
+  const [showDuplicate, setShowDuplicate] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   async function load() {
