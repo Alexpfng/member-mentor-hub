@@ -24,6 +24,7 @@ import { Route as AuthenticatedMembrePlanningRouteImport } from './routes/_authe
 import { Route as AuthenticatedMembreMessagesRouteImport } from './routes/_authenticated.membre.messages'
 import { Route as AuthenticatedMembreLoggerRouteImport } from './routes/_authenticated.membre.logger'
 import { Route as AuthenticatedMembreHistoriqueRouteImport } from './routes/_authenticated.membre.historique'
+import { Route as AuthenticatedMembreCommencerRouteImport } from './routes/_authenticated.membre.commencer'
 import { Route as AuthenticatedMembreCarnetRouteImport } from './routes/_authenticated.membre.carnet'
 import { Route as AuthenticatedCoachRunningRouteImport } from './routes/_authenticated.coach.running'
 import { Route as AuthenticatedCoachProgrammesRouteImport } from './routes/_authenticated.coach.programmes'
@@ -37,6 +38,7 @@ import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/em
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiPublicHooksGenerateLogbooksRouteImport } from './routes/api/public/hooks/generate-logbooks'
 import { Route as AuthenticatedMembreSeanceSessionIdRouteImport } from './routes/_authenticated.membre.seance.$sessionId'
+import { Route as AuthenticatedMembreSeanceLibreSessionIdRouteImport } from './routes/_authenticated.membre.seance-libre.$sessionId'
 import { Route as AuthenticatedMembreCarnetWeekRouteImport } from './routes/_authenticated.membre.carnet.$week'
 import { Route as AuthenticatedCoachSeanceSessionIdRouteImport } from './routes/_authenticated.coach.seance.$sessionId'
 import { Route as AuthenticatedCoachProgrammesIdRouteImport } from './routes/_authenticated.coach.programmes.$id'
@@ -125,6 +127,12 @@ const AuthenticatedMembreHistoriqueRoute =
     path: '/membre/historique',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedMembreCommencerRoute =
+  AuthenticatedMembreCommencerRouteImport.update({
+    id: '/membre/commencer',
+    path: '/membre/commencer',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedMembreCarnetRoute =
   AuthenticatedMembreCarnetRouteImport.update({
     id: '/membre/carnet',
@@ -201,6 +209,12 @@ const AuthenticatedMembreSeanceSessionIdRoute =
     path: '/membre/seance/$sessionId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedMembreSeanceLibreSessionIdRoute =
+  AuthenticatedMembreSeanceLibreSessionIdRouteImport.update({
+    id: '/membre/seance-libre/$sessionId',
+    path: '/membre/seance-libre/$sessionId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedMembreCarnetWeekRoute =
   AuthenticatedMembreCarnetWeekRouteImport.update({
     id: '/$week',
@@ -246,6 +260,7 @@ export interface FileRoutesByFullPath {
   '/coach/programmes': typeof AuthenticatedCoachProgrammesRouteWithChildren
   '/coach/running': typeof AuthenticatedCoachRunningRoute
   '/membre/carnet': typeof AuthenticatedMembreCarnetRouteWithChildren
+  '/membre/commencer': typeof AuthenticatedMembreCommencerRoute
   '/membre/historique': typeof AuthenticatedMembreHistoriqueRoute
   '/membre/logger': typeof AuthenticatedMembreLoggerRoute
   '/membre/messages': typeof AuthenticatedMembreMessagesRoute
@@ -260,6 +275,7 @@ export interface FileRoutesByFullPath {
   '/coach/programmes/$id': typeof AuthenticatedCoachProgrammesIdRoute
   '/coach/seance/$sessionId': typeof AuthenticatedCoachSeanceSessionIdRoute
   '/membre/carnet/$week': typeof AuthenticatedMembreCarnetWeekRoute
+  '/membre/seance-libre/$sessionId': typeof AuthenticatedMembreSeanceLibreSessionIdRoute
   '/membre/seance/$sessionId': typeof AuthenticatedMembreSeanceSessionIdRoute
   '/api/public/hooks/generate-logbooks': typeof ApiPublicHooksGenerateLogbooksRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -280,6 +296,7 @@ export interface FileRoutesByTo {
   '/coach/programmes': typeof AuthenticatedCoachProgrammesRouteWithChildren
   '/coach/running': typeof AuthenticatedCoachRunningRoute
   '/membre/carnet': typeof AuthenticatedMembreCarnetRouteWithChildren
+  '/membre/commencer': typeof AuthenticatedMembreCommencerRoute
   '/membre/historique': typeof AuthenticatedMembreHistoriqueRoute
   '/membre/logger': typeof AuthenticatedMembreLoggerRoute
   '/membre/messages': typeof AuthenticatedMembreMessagesRoute
@@ -294,6 +311,7 @@ export interface FileRoutesByTo {
   '/coach/programmes/$id': typeof AuthenticatedCoachProgrammesIdRoute
   '/coach/seance/$sessionId': typeof AuthenticatedCoachSeanceSessionIdRoute
   '/membre/carnet/$week': typeof AuthenticatedMembreCarnetWeekRoute
+  '/membre/seance-libre/$sessionId': typeof AuthenticatedMembreSeanceLibreSessionIdRoute
   '/membre/seance/$sessionId': typeof AuthenticatedMembreSeanceSessionIdRoute
   '/api/public/hooks/generate-logbooks': typeof ApiPublicHooksGenerateLogbooksRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -316,6 +334,7 @@ export interface FileRoutesById {
   '/_authenticated/coach/programmes': typeof AuthenticatedCoachProgrammesRouteWithChildren
   '/_authenticated/coach/running': typeof AuthenticatedCoachRunningRoute
   '/_authenticated/membre/carnet': typeof AuthenticatedMembreCarnetRouteWithChildren
+  '/_authenticated/membre/commencer': typeof AuthenticatedMembreCommencerRoute
   '/_authenticated/membre/historique': typeof AuthenticatedMembreHistoriqueRoute
   '/_authenticated/membre/logger': typeof AuthenticatedMembreLoggerRoute
   '/_authenticated/membre/messages': typeof AuthenticatedMembreMessagesRoute
@@ -330,6 +349,7 @@ export interface FileRoutesById {
   '/_authenticated/coach/programmes/$id': typeof AuthenticatedCoachProgrammesIdRoute
   '/_authenticated/coach/seance/$sessionId': typeof AuthenticatedCoachSeanceSessionIdRoute
   '/_authenticated/membre/carnet/$week': typeof AuthenticatedMembreCarnetWeekRoute
+  '/_authenticated/membre/seance-libre/$sessionId': typeof AuthenticatedMembreSeanceLibreSessionIdRoute
   '/_authenticated/membre/seance/$sessionId': typeof AuthenticatedMembreSeanceSessionIdRoute
   '/api/public/hooks/generate-logbooks': typeof ApiPublicHooksGenerateLogbooksRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -352,6 +372,7 @@ export interface FileRouteTypes {
     | '/coach/programmes'
     | '/coach/running'
     | '/membre/carnet'
+    | '/membre/commencer'
     | '/membre/historique'
     | '/membre/logger'
     | '/membre/messages'
@@ -366,6 +387,7 @@ export interface FileRouteTypes {
     | '/coach/programmes/$id'
     | '/coach/seance/$sessionId'
     | '/membre/carnet/$week'
+    | '/membre/seance-libre/$sessionId'
     | '/membre/seance/$sessionId'
     | '/api/public/hooks/generate-logbooks'
     | '/lovable/email/auth/preview'
@@ -386,6 +408,7 @@ export interface FileRouteTypes {
     | '/coach/programmes'
     | '/coach/running'
     | '/membre/carnet'
+    | '/membre/commencer'
     | '/membre/historique'
     | '/membre/logger'
     | '/membre/messages'
@@ -400,6 +423,7 @@ export interface FileRouteTypes {
     | '/coach/programmes/$id'
     | '/coach/seance/$sessionId'
     | '/membre/carnet/$week'
+    | '/membre/seance-libre/$sessionId'
     | '/membre/seance/$sessionId'
     | '/api/public/hooks/generate-logbooks'
     | '/lovable/email/auth/preview'
@@ -421,6 +445,7 @@ export interface FileRouteTypes {
     | '/_authenticated/coach/programmes'
     | '/_authenticated/coach/running'
     | '/_authenticated/membre/carnet'
+    | '/_authenticated/membre/commencer'
     | '/_authenticated/membre/historique'
     | '/_authenticated/membre/logger'
     | '/_authenticated/membre/messages'
@@ -435,6 +460,7 @@ export interface FileRouteTypes {
     | '/_authenticated/coach/programmes/$id'
     | '/_authenticated/coach/seance/$sessionId'
     | '/_authenticated/membre/carnet/$week'
+    | '/_authenticated/membre/seance-libre/$sessionId'
     | '/_authenticated/membre/seance/$sessionId'
     | '/api/public/hooks/generate-logbooks'
     | '/lovable/email/auth/preview'
@@ -562,6 +588,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMembreHistoriqueRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/membre/commencer': {
+      id: '/_authenticated/membre/commencer'
+      path: '/membre/commencer'
+      fullPath: '/membre/commencer'
+      preLoaderRoute: typeof AuthenticatedMembreCommencerRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/membre/carnet': {
       id: '/_authenticated/membre/carnet'
       path: '/membre/carnet'
@@ -653,6 +686,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMembreSeanceSessionIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/membre/seance-libre/$sessionId': {
+      id: '/_authenticated/membre/seance-libre/$sessionId'
+      path: '/membre/seance-libre/$sessionId'
+      fullPath: '/membre/seance-libre/$sessionId'
+      preLoaderRoute: typeof AuthenticatedMembreSeanceLibreSessionIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/membre/carnet/$week': {
       id: '/_authenticated/membre/carnet/$week'
       path: '/$week'
@@ -742,6 +782,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedCoachProgrammesRoute: typeof AuthenticatedCoachProgrammesRouteWithChildren
   AuthenticatedCoachRunningRoute: typeof AuthenticatedCoachRunningRoute
   AuthenticatedMembreCarnetRoute: typeof AuthenticatedMembreCarnetRouteWithChildren
+  AuthenticatedMembreCommencerRoute: typeof AuthenticatedMembreCommencerRoute
   AuthenticatedMembreHistoriqueRoute: typeof AuthenticatedMembreHistoriqueRoute
   AuthenticatedMembreLoggerRoute: typeof AuthenticatedMembreLoggerRoute
   AuthenticatedMembreMessagesRoute: typeof AuthenticatedMembreMessagesRoute
@@ -753,6 +794,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedMembreIndexRoute: typeof AuthenticatedMembreIndexRoute
   AuthenticatedCoachMembreMemberIdRoute: typeof AuthenticatedCoachMembreMemberIdRoute
   AuthenticatedCoachSeanceSessionIdRoute: typeof AuthenticatedCoachSeanceSessionIdRoute
+  AuthenticatedMembreSeanceLibreSessionIdRoute: typeof AuthenticatedMembreSeanceLibreSessionIdRoute
   AuthenticatedMembreSeanceSessionIdRoute: typeof AuthenticatedMembreSeanceSessionIdRoute
 }
 
@@ -766,6 +808,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedCoachProgrammesRouteWithChildren,
   AuthenticatedCoachRunningRoute: AuthenticatedCoachRunningRoute,
   AuthenticatedMembreCarnetRoute: AuthenticatedMembreCarnetRouteWithChildren,
+  AuthenticatedMembreCommencerRoute: AuthenticatedMembreCommencerRoute,
   AuthenticatedMembreHistoriqueRoute: AuthenticatedMembreHistoriqueRoute,
   AuthenticatedMembreLoggerRoute: AuthenticatedMembreLoggerRoute,
   AuthenticatedMembreMessagesRoute: AuthenticatedMembreMessagesRoute,
@@ -778,6 +821,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCoachMembreMemberIdRoute: AuthenticatedCoachMembreMemberIdRoute,
   AuthenticatedCoachSeanceSessionIdRoute:
     AuthenticatedCoachSeanceSessionIdRoute,
+  AuthenticatedMembreSeanceLibreSessionIdRoute:
+    AuthenticatedMembreSeanceLibreSessionIdRoute,
   AuthenticatedMembreSeanceSessionIdRoute:
     AuthenticatedMembreSeanceSessionIdRoute,
 }

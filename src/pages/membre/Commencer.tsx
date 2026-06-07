@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate as useRRDNavigate } from "react-router-dom";
+import { useNavigate as useRRDNavigate } from "@/lib/rrd-shim";
 import { useNavigate as useTSNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
