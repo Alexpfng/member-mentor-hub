@@ -221,11 +221,13 @@ export const getSessionDetail = createServerFn({ method: "GET" })
   .inputValidator((d) => z.object({ sessionId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertCoach(context.userId);
-    const [sessR, setsR, fbR, painsR] = await Promise.all([
-      supabaseAdmin.from("sessions").select("id, member_id, program_id, session_label, week_number, day_number, started_at, ended_at, duration_minutes, average_rpe, total_volume_kg, overall_feeling, member_note, coach_seen, status").eq("id", data.sessionId).maybeSingle(),
+    const [sessR, setsR, fbR, painsR, freeActR, mediaR] = await Promise.all([
+      supabaseAdmin.from("sessions").select("id, member_id, program_id, session_label, week_number, day_number, started_at, ended_at, duration_minutes, average_rpe, total_volume_kg, overall_feeling, member_note, coach_seen, status, session_type, free_title, free_category").eq("id", data.sessionId).maybeSingle(),
       supabaseAdmin.from("set_logs").select("exercise_name, set_number, weight_kg, reps, rpe, note, completed, logged_at").eq("session_id", data.sessionId).order("logged_at", { ascending: true }),
       supabaseAdmin.from("exercise_feedbacks").select("exercise_name, block_id, rpe, felt_too_hard, felt_too_easy, could_not_do, member_comment, created_at").eq("session_id", data.sessionId),
       supabaseAdmin.from("pain_reports").select("id, exercise_name, zone, intensity, comment, resolved_at, created_at").eq("session_id", data.sessionId),
+      supabaseAdmin.from("free_activities").select("id, name, category, series, reps, charge, duration_min, distance_km, elevation_m, rpe, note, order_index").eq("session_id", data.sessionId).order("order_index", { ascending: true }),
+      supabaseAdmin.from("session_media").select("id, type, storage_path, thumbnail_path, caption, created_at").eq("session_id", data.sessionId).order("created_at", { ascending: true }),
     ]);
     if (!sessR.data) throw new Error("Séance introuvable");
 
@@ -237,6 +239,25 @@ export const getSessionDetail = createServerFn({ method: "GET" })
     }
     const { data: prof } = await supabaseAdmin.from("profiles").select("first_name, last_name, email").eq("id", sessR.data.member_id).maybeSingle();
 
+    // Signed URLs for private bucket
+    const mediaWithUrls = await Promise.all(
+      (mediaR.data ?? []).map(async (m) => {
+        const [signed, signedThumb] = await Promise.all([
+          supabaseAdmin.storage.from("session-media").createSignedUrl(m.storage_path, 3600),
+          m.thumbnail_path
+            ? supabaseAdmin.storage.from("session-media").createSignedUrl(m.thumbnail_path, 3600)
+            : Promise.resolve({ data: null }),
+        ]);
+        return {
+          id: m.id,
+          type: m.type,
+          caption: m.caption,
+          url: signed.data?.signedUrl ?? null,
+          thumbnailUrl: signedThumb?.data?.signedUrl ?? null,
+        };
+      }),
+    );
+
     return {
       session: sessR.data,
       member: prof ? { name: [prof.first_name, prof.last_name].filter(Boolean).join(" ") || prof.email || "Membre" } : { name: "Membre" },
@@ -244,6 +265,8 @@ export const getSessionDetail = createServerFn({ method: "GET" })
       setLogs: setsR.data ?? [],
       feedbacks: fbR.data ?? [],
       pains: painsR.data ?? [],
+      freeActivities: freeActR.data ?? [],
+      media: mediaWithUrls,
     };
   });
 
