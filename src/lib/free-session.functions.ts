@@ -18,6 +18,18 @@ export const createFreeSession = createServerFn({ method: "POST" })
       .parse(d ?? {}),
   )
   .handler(async ({ data, context }) => {
+    // Resume existing in_progress free session instead of creating a zombie
+    const { data: existing } = await supabaseAdmin
+      .from("sessions")
+      .select("id")
+      .eq("member_id", context.userId)
+      .eq("session_type", "free")
+      .eq("status", "in_progress")
+      .order("started_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (existing) return { sessionId: existing.id };
+
     const today = new Date().toISOString().slice(0, 10);
     const { data: row, error } = await supabaseAdmin
       .from("sessions")
@@ -238,7 +250,8 @@ export const deleteFreeActivity = createServerFn({ method: "POST" })
 export const listFreeActivities = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ sessionId: z.string().uuid() }).parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await ensureOwnSession(data.sessionId, context.userId);
     const { data: rows, error } = await supabaseAdmin
       .from("free_activities")
       .select("*")
@@ -326,7 +339,8 @@ export const updateMediaCaption = createServerFn({ method: "POST" })
 export const listSessionMedia = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ sessionId: z.string().uuid() }).parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await ensureOwnSession(data.sessionId, context.userId);
     const { data: rows, error } = await supabaseAdmin
       .from("session_media")
       .select("*")

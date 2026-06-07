@@ -640,7 +640,7 @@ export const updateMemberProfile = createServerFn({ method: "POST" })
     if (data.log_weight && data.weight_kg) {
       const { error } = await supabaseAdmin
         .from("weight_logs")
-        .insert({ member_id: data.member_id, weight_kg: data.weight_kg });
+        .insert({ member_id: data.member_id, weight_kg: data.weight_kg, date: new Date().toISOString().slice(0, 10) });
       if (error) throw new Error(error.message);
     }
 

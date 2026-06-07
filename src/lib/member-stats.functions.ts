@@ -26,6 +26,7 @@ export const getMemberDashboard = createServerFn({ method: "GET" })
       { data: lastPR },
       { data: planned },
       { data: streakSessions },
+      { data: activeAssignment },
     ] = await Promise.all([
       supabaseAdmin
         .from("sessions")
@@ -58,6 +59,14 @@ export const getMemberDashboard = createServerFn({ method: "GET" })
         .eq("status", "completed")
         .gte("date", isoDay(streakStart))
         .lte("date", isoDay(sunday)),
+      supabaseAdmin
+        .from("assignments")
+        .select("program_id, programs(frequency_per_week)")
+        .eq("member_id", context.userId)
+        .eq("active", true)
+        .order("start_date", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
     ]);
 
     const allDone = (sessions ?? []).filter((s) => s.status === "completed");
@@ -106,7 +115,7 @@ export const getMemberDashboard = createServerFn({ method: "GET" })
       weekStart: isoDay(monday),
       weekEnd: isoDay(sunday),
       sessionsDone: done.length,
-      sessionsTotal: 5,
+      sessionsTotal: (activeAssignment as any)?.programs?.frequency_per_week ?? 5,
       freeSessionsThisWeek,
       volume,
       duration,

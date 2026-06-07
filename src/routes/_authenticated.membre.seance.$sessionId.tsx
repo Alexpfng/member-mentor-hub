@@ -57,7 +57,7 @@ function SeancePage() {
         const { data: prog } = await supabase
           .from("programs").select("structure").eq("id", s.program_id).maybeSingle();
         const struct = prog?.structure as ProgramStructure | undefined;
-        const w = (s.week_number ?? 1) - 1;
+        const w = s.week_number ?? 0;
         const d = (s.day_number ?? 1) - 1;
         const day = struct?.weeks?.[w]?.days?.[d];
         if (day?.exercises?.length) {
@@ -96,15 +96,18 @@ function SeancePage() {
       const startedAt = session?.started_at ? new Date(session.started_at).getTime() : Date.now();
       const duration = Math.max(1, Math.round((Date.now() - startedAt) / 60000));
 
-      await supabase.from("sessions").update({
+      const { error: updateErr } = await supabase.from("sessions").update({
         ended_at: new Date().toISOString(),
         status: "completed",
         total_volume_kg: totalVol,
         average_rpe: rpeCount ? Math.round((rpeSum / rpeCount) * 10) / 10 : null,
         duration_minutes: duration,
       }).eq("id", sessionId);
+      if (updateErr) throw new Error(updateErr.message);
 
       navigate({ to: "/membre/historique" });
+    } catch (err) {
+      console.error("[finishSession]", err);
     } finally {
       setFinishing(false);
     }
