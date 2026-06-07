@@ -310,6 +310,65 @@ export type Database = {
           },
         ]
       }
+      free_activities: {
+        Row: {
+          category: string | null
+          charge: string | null
+          created_at: string
+          distance_km: number | null
+          duration_min: number | null
+          elevation_m: number | null
+          id: string
+          name: string
+          note: string | null
+          order_index: number
+          reps: string | null
+          rpe: number | null
+          series: number | null
+          session_id: string
+        }
+        Insert: {
+          category?: string | null
+          charge?: string | null
+          created_at?: string
+          distance_km?: number | null
+          duration_min?: number | null
+          elevation_m?: number | null
+          id?: string
+          name: string
+          note?: string | null
+          order_index?: number
+          reps?: string | null
+          rpe?: number | null
+          series?: number | null
+          session_id: string
+        }
+        Update: {
+          category?: string | null
+          charge?: string | null
+          created_at?: string
+          distance_km?: number | null
+          duration_min?: number | null
+          elevation_m?: number | null
+          id?: string
+          name?: string
+          note?: string | null
+          order_index?: number
+          reps?: string | null
+          rpe?: number | null
+          series?: number | null
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "free_activities_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       glossary: {
         Row: {
           cle: string
@@ -792,6 +851,47 @@ export type Database = {
         }
         Relationships: []
       }
+      session_media: {
+        Row: {
+          caption: string | null
+          created_at: string
+          id: string
+          member_id: string
+          session_id: string
+          storage_path: string
+          thumbnail_path: string | null
+          type: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          member_id: string
+          session_id: string
+          storage_path: string
+          thumbnail_path?: string | null
+          type: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          member_id?: string
+          session_id?: string
+          storage_path?: string
+          thumbnail_path?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_media_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sessions: {
         Row: {
           average_rpe: number | null
@@ -802,12 +902,15 @@ export type Database = {
           day_number: number | null
           duration_minutes: number | null
           ended_at: string | null
+          free_category: string | null
+          free_title: string | null
           id: string
           member_id: string
           member_note: string | null
           overall_feeling: number | null
           program_id: string | null
           session_label: string | null
+          session_type: string
           started_at: string | null
           status: string | null
           total_volume_kg: number | null
@@ -822,12 +925,15 @@ export type Database = {
           day_number?: number | null
           duration_minutes?: number | null
           ended_at?: string | null
+          free_category?: string | null
+          free_title?: string | null
           id?: string
           member_id: string
           member_note?: string | null
           overall_feeling?: number | null
           program_id?: string | null
           session_label?: string | null
+          session_type?: string
           started_at?: string | null
           status?: string | null
           total_volume_kg?: number | null
@@ -842,12 +948,15 @@ export type Database = {
           day_number?: number | null
           duration_minutes?: number | null
           ended_at?: string | null
+          free_category?: string | null
+          free_title?: string | null
           id?: string
           member_id?: string
           member_note?: string | null
           overall_feeling?: number | null
           program_id?: string | null
           session_label?: string | null
+          session_type?: string
           started_at?: string | null
           status?: string | null
           total_volume_kg?: number | null

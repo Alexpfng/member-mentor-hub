@@ -345,13 +345,23 @@ export default function MemberDashboard() {
                   <button
                     className="cst-btn cst-btn-primary"
                     style={{ width: "100%" }}
-                    onClick={() => startSession(null)}
+                    onClick={() => navigate("/membre/commencer")}
                   >
-                    COMMENCER →
+                    {assignment ? "COMMENCER →" : "DÉMARRER UNE SÉANCE LIBRE →"}
                   </button>
                 </>
               )}
             </div>
+
+            <button
+              className="cst-btn cst-btn-ghost-dark"
+              onClick={() => navigate("/membre/commencer")}
+              style={{ width: "100%", marginTop: 10, fontSize: 11 }}
+            >
+              CHOISIR UNE AUTRE SÉANCE →
+            </button>
+
+
 
             {/* Week strip */}
             <div style={{ marginTop: 22 }}>

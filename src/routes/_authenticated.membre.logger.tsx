@@ -129,27 +129,14 @@ function SessionLauncher() {
           return;
         }
 
-        // Case B: no explicit choice → resume in-progress if any, else free session.
+        // Case B: no explicit choice → resume in-progress if any, else go to choice screen.
         if (existing?.id) {
           navigate({ to: "/membre/seance/$sessionId", params: { sessionId: existing.id } });
           return;
         }
-
-        const today = new Date().toISOString().slice(0, 10);
-        const { data: created, error: err } = await supabase
-          .from("sessions")
-          .insert({
-            member_id: uid,
-            program_id: programId,
-            date: today,
-            started_at: new Date().toISOString(),
-            status: "in_progress",
-            session_label: "Séance libre",
-          })
-          .select("id")
-          .single();
-        if (err) throw err;
-        navigate({ to: "/membre/seance/$sessionId", params: { sessionId: created.id } });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        navigate({ to: "/membre/commencer" } as any);
+        return;
       } catch (e) {
         setError((e as Error).message);
       }

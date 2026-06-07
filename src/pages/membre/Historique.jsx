@@ -38,7 +38,7 @@ export default function Historique() {
 
         const { data: sess } = await supabase
           .from('sessions')
-          .select('id, date, session_label, duration_minutes, average_rpe, total_volume_kg, week_number, day_number, member_note, coach_note, ended_at')
+          .select('id, date, session_label, duration_minutes, average_rpe, total_volume_kg, week_number, day_number, member_note, coach_note, ended_at, session_type, free_title')
           .eq('member_id', uid)
           .eq('status', 'completed')
           .order('date', { ascending: false, nullsFirst: false })
@@ -208,9 +208,16 @@ export default function Historique() {
                           <div className="cst-card-dark cst-hatch" style={{ flex: 1, padding: 14, minWidth: 0 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
                               <div className="cst-col" style={{ gap: 2, flex: 1 }}>
-                                <span className="cst-display" style={{ fontSize: 16 }}>
-                                  {(s.session_label ?? 'SÉANCE').toUpperCase()}
-                                </span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                                  <span className="cst-display" style={{ fontSize: 16 }}>
+                                    {(s.free_title || s.session_label || 'SÉANCE').toUpperCase()}
+                                  </span>
+                                  {s.session_type === 'free' && (
+                                    <span className="cst-mono" style={{ fontSize: 8, padding: '2px 6px', borderRadius: 3, background: 'rgba(245,166,35,0.15)', color: '#F5A623', border: '1px solid rgba(245,166,35,0.35)', letterSpacing: '0.14em' }}>
+                                      LIBRE
+                                    </span>
+                                  )}
+                                </div>
                                 {sub && (
                                   <span className="cst-mono" style={{ fontSize: 9, opacity: 0.6 }}>{sub}</span>
                                 )}
