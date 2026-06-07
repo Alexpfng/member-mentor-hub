@@ -472,7 +472,7 @@ export const getMemberDetail = createServerFn({ method: "GET" })
         .maybeSingle(),
       supabaseAdmin
         .from("member_profiles")
-        .select("weight_kg, height_cm, level, goal, injuries, coach_private_notes")
+        .select("weight_kg, height_cm, level, goal, injuries")
         .eq("user_id", memberId)
         .maybeSingle(),
       supabaseAdmin
@@ -533,9 +533,17 @@ export const getMemberDetail = createServerFn({ method: "GET" })
 
     const lastWeight = (weightLogs ?? [])[0]?.weight_kg ?? memberProfile?.weight_kg ?? null;
 
+    const { data: coachNotesRow } = await supabaseAdmin
+      .from("member_coach_notes")
+      .select("notes")
+      .eq("member_id", memberId)
+      .maybeSingle();
+
     return {
       profile,
-      member_profile: memberProfile ?? null,
+      member_profile: memberProfile
+        ? { ...memberProfile, coach_private_notes: coachNotesRow?.notes ?? "" }
+        : null,
       assignment: assignment ?? null,
       program,
       sessions: sessions ?? [],
@@ -558,24 +566,13 @@ export const updateMemberNotes = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertCoach(context.userId);
-    const { data: existing } = await supabaseAdmin
-      .from("member_profiles")
-      .select("id")
-      .eq("user_id", data.member_id)
-      .maybeSingle();
-
-    if (existing) {
-      const { error } = await supabaseAdmin
-        .from("member_profiles")
-        .update({ coach_private_notes: data.coach_private_notes })
-        .eq("user_id", data.member_id);
-      if (error) throw new Error(error.message);
-    } else {
-      const { error } = await supabaseAdmin
-        .from("member_profiles")
-        .insert({ user_id: data.member_id, coach_private_notes: data.coach_private_notes });
-      if (error) throw new Error(error.message);
-    }
+    const { error } = await supabaseAdmin
+      .from("member_coach_notes")
+      .upsert(
+        { member_id: data.member_id, notes: data.coach_private_notes },
+        { onConflict: "member_id" },
+      );
+    if (error) throw new Error(error.message);
     return { ok: true };
   });
 
