@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import CoachSidebar from "@/components/CoachSidebar";
+import ReplaceExerciseModal from "@/components/coach/ReplaceExerciseModal";
+import MultiWeekDuplicateModal from "@/components/coach/MultiWeekDuplicateModal";
 import {
   getMemberWeekContext,
   saveDraftWeek,
