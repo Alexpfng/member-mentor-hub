@@ -29,7 +29,7 @@ export const getMemberDashboard = createServerFn({ method: "GET" })
     ] = await Promise.all([
       supabaseAdmin
         .from("sessions")
-        .select("id, status, date, duration_minutes, total_volume_kg, session_label")
+        .select("id, status, date, duration_minutes, total_volume_kg, session_label, session_type")
         .eq("member_id", context.userId)
         .gte("date", isoDay(monday))
         .lte("date", isoDay(sunday)),
