@@ -440,6 +440,7 @@ export default function CoachMember() {
                         <div style={{ width: `${Math.round(((currentWeek || 1) / data.program.duration_weeks) * 100)}%`, height: '100%', background: 'var(--cst-mid-green)' }} />
                       </div>
                     )}
+                    <WeeksManagerPanel memberId={memberId} />
                     <div className="cst-col" style={{ gap: 10 }}>
                       {weekDays.length === 0 && (
                         <div className="cst-card-dark" style={{ padding: 18, opacity: 0.6, fontSize: 12 }}>Pas de jours définis pour cette semaine.</div>
