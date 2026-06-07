@@ -31,7 +31,7 @@ async function buildLogbook(memberId: string, weekNumber: number) {
   const [{ data: sessions }, { data: weights }, { data: pains }, { data: prs }, { data: feedbacks }] = await Promise.all([
     supabaseAdmin
       .from("sessions")
-      .select("id, status, duration_minutes, total_volume_kg, average_rpe, overall_feeling, session_label")
+      .select("id, status, duration_minutes, total_volume_kg, average_rpe, overall_feeling, session_label, session_type")
       .eq("member_id", memberId)
       .gte("date", psISO)
       .lte("date", peISO),
@@ -61,10 +61,12 @@ async function buildLogbook(memberId: string, weekNumber: number) {
       .lte("created_at", peISO + "T23:59:59"),
   ]);
 
-  const doneSessions = (sessions ?? []).filter((s) => s.status === "completed");
-  const totalVolume = doneSessions.reduce((a, s) => a + Number(s.total_volume_kg ?? 0), 0);
-  const totalDuration = doneSessions.reduce((a, s) => a + (s.duration_minutes ?? 0), 0);
-  const rpes = doneSessions.map((s) => Number(s.average_rpe ?? 0)).filter((r) => r > 0);
+  const allDone = (sessions ?? []).filter((s) => s.status === "completed");
+  const doneSessions = allDone.filter((s) => (s.session_type ?? "program") === "program");
+  const freeSessionsDone = allDone.filter((s) => s.session_type === "free").length;
+  const totalVolume = allDone.reduce((a, s) => a + Number(s.total_volume_kg ?? 0), 0);
+  const totalDuration = allDone.reduce((a, s) => a + (s.duration_minutes ?? 0), 0);
+  const rpes = allDone.map((s) => Number(s.average_rpe ?? 0)).filter((r) => r > 0);
   const avgRpe = rpes.length ? rpes.reduce((a, b) => a + b, 0) / rpes.length : null;
 
   const feelings: Record<string, number> = {};
