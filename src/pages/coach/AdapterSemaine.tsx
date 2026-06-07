@@ -108,7 +108,7 @@ export default function AdapterSemaine() {
   const saveFn = useServerFn(saveDraftWeek);
   const publishFn = useServerFn(publishWeek);
   const previewFn = useServerFn(previewWeekChanges);
-  const dupFn = useServerFn(duplicateWeekTo);
+  
 
   type Ctx = Awaited<ReturnType<typeof getMemberWeekContext>>;
   const [ctx, setCtx] = useState<Ctx | null>(null);
