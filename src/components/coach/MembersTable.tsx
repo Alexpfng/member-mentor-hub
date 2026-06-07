@@ -70,7 +70,10 @@ export default function MembersTable() {
                 <td style={{ padding: "12px 12px", fontFamily: "var(--cst-mono)", fontSize: 11 }}>{r.adherence7d != null ? `${r.adherence7d}% (${r.sessionsDone7d}/${r.sessionsTotal7d})` : "—"}</td>
                 <td style={{ padding: "12px 12px", fontSize: 12, color: dot }}>{r.statusLabel}</td>
                 <td style={{ padding: "12px 12px", textAlign: "right" }} onClick={(e) => e.stopPropagation()}>
-                  <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" onClick={() => navigate({ to: "/coach/membre/$memberId", params: { memberId: r.memberId } })}>VOIR</button>
+                  <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+                    <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" onClick={() => navigate({ to: "/coach/membre/$memberId/adapter", params: { memberId: r.memberId } })}>ADAPTER S+1</button>
+                    <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" onClick={() => navigate({ to: "/coach/membre/$memberId", params: { memberId: r.memberId } })}>VOIR</button>
+                  </div>
                 </td>
               </tr>
             );
