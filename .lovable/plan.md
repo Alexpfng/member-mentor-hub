@@ -1,138 +1,105 @@
-# Adaptation hebdomadaire des programmes (coach)
+## Lots de suivi — Adaptation hebdo
 
-Objectif : permettre à Léo de dupliquer la semaine d'un coaché, voir les retours, appliquer des ajustements suggérés et publier la nouvelle semaine — le tout en < 2 min, dans un écran unique, sans ressaisie.
+Découpage en 6 lots indépendants, à valider/livrer un par un. Chaque lot est autonome et testable.
 
-## 1. Base de données
+---
 
-Nouvelle table versionnée `assignment_weeks` (une ligne par semaine livrée à un membre) :
+### Lot 1 — Entrées rapides « Adapter S+1 »
+**Objectif :** ouvrir l'adaptation en 1 clic depuis les contextes naturels.
+
+- **Fiche membre, onglet « Suivi »** : bouton primaire `ADAPTER S+1 →` dans le header de `MemberFollowupTab.tsx` (à côté du nom/avatar du membre).
+- **Détail séance coach** (`SessionDetail.tsx`) : bouton flottant `ADAPTER LA SEMAINE SUIVANTE` en footer, qui ouvre `/coach/membre/$memberId/adapter?week=<week+1>`.
+- **Dashboard coach** (`Dashboard.jsx`, ligne membre) : icône ✎ discrète au survol pour ouvrir l'adapter direct.
+
+Aucune nouvelle server fn — réutilise `getMemberWeekContext`.
+
+---
+
+### Lot 2 — Modale « Remplacer par… »
+**Objectif :** remplacer un exercice en gardant séries/RPE/charge, avec suggestions filtrées.
+
+- Nouveau composant `ReplaceExerciseModal.tsx` :
+  - Recherche dans `exercises` (table existante), filtres par `movement_patterns`, `muscle_group`, `equipement`, `color`.
+  - Préselection : exercices au même `movement_patterns` que l'exercice source.
+  - Aperçu (nom, vidéo, code intensité).
+  - Champ optionnel « note pour le membre » → stocké dans `coach_notes` de l'exo dans la `structure`.
+- Server fn `replaceExercise(weekId, dayIdx, exoIdx, newExerciseId, note?)` dans `weekly-adaptation.functions.ts` : remplace en conservant `series/reps/charge/rpe_target/tempo/recup`.
+- Bouton « ⇄ Remplacer » à côté du 🗑 dans `AdapterSemaine.tsx`.
+
+---
+
+### Lot 3 — Duplication multi-semaines (UI)
+**Objectif :** créer S+1, S+2, S+3 d'un coup avec progression.
+
+- Bouton `Dupliquer vers…` dans le footer de `AdapterSemaine.tsx`.
+- Modale `MultiWeekDuplicateModal.tsx` :
+  - Checkboxes S+1 / S+2 / S+3 / +4 / +5.
+  - Radio progression : `Identique` / `+5% cumulatif` / `Déload sur la dernière`.
+  - Aperçu (« 3 semaines seront créées : S03 identique, S04 +5%, S05 +10% »).
+- Appelle `duplicateWeekTo` (déjà existante).
+- Toast + redirection vers la première créée.
+
+---
+
+### Lot 4 — Duplication de programme vers un autre membre (UI)
+**Objectif :** cloner le programme actif d'un membre vers un nouveau coaché.
+
+- Sur `/coach/programmes/$id` : bouton `Assigner à un membre`.
+- Sur fiche membre, onglet « Programme actuel » : bouton `Copier ce programme à…`.
+- Modale `CopyProgramToMemberModal.tsx` :
+  - Picker membre (liste sans le membre source).
+  - Date de démarrage.
+  - Checkbox « Cloner aussi les semaines déjà publiées » (par défaut : non — repart à S1).
+  - Option « Désactiver le programme actuel du membre cible » si actif.
+- Appelle `duplicateProgramForMember` (déjà existante), à étendre pour copier les `assignment_weeks` si demandé.
+
+---
+
+### Lot 5 — Lecture prioritaire `assignment_weeks` côté membre
+**Objectif :** le membre voit toujours la dernière version publiée par Léo, pas le programme figé.
+
+Helper unique `getMemberWeekStructure(memberId, weekNumber)` :
+1. Cherche dans `assignment_weeks` (status ∈ published/in_progress/done) → renvoie cette structure.
+2. Sinon fallback sur `programs.structure.weeks[weekNumber-1]`.
+
+À intégrer dans :
+- `Programme.jsx` (membre) — vue semaine en cours.
+- `planning.functions.ts` — `getPlannedSessions` et création de séances : copier la structure prioritaire.
+- `logbook.functions.ts` — référence pour calcul d'adhérence.
+- `seance.$sessionId.tsx` (membre) — bloc programme.
+- `carnet.tsx` — résumé hebdo.
+
+Realtime : abonnement `postgres_changes` sur `assignment_weeks` filtré par `member_id`, toast « 📬 Nouvelle semaine publiée par Léo » + refetch.
+
+---
+
+### Lot 6 — Historique des versions + drag & drop
+**Objectif :** Léo voit l'évolution et réordonne sans peine.
+
+**Historique** :
+- Onglet « Historique » dans `AdapterSemaine.tsx` (ou drawer latéral).
+- Liste les semaines passées du membre via `listMemberWeekHistory` (déjà existante) avec diff visuel S vs S-1 (exos ajoutés/retirés/charges modifiées via `changes_summary`).
+- Bouton « Restaurer cette version » → écrase le draft courant.
+
+**Drag & drop** :
+- Bibliothèque : `@dnd-kit/core` + `@dnd-kit/sortable`.
+- Réordonner les exercices dans un jour.
+- Réordonner les jours dans la semaine.
+- Déplacer un exo d'un jour à l'autre.
+- Persistence via le `saveDraftWeek` existant (autosave).
+- Handles visibles ⋮⋮ à gauche de chaque ligne exo.
+
+---
+
+## Ordre d'attaque recommandé
 
 ```text
-assignment_weeks
-  id, assignment_id, member_id, program_id
-  week_number, based_on_week
-  structure JSONB            -- jours + exercices figés de cette semaine
-  status: draft|published|in_progress|done
-  changes_summary JSONB      -- récap auto vs semaine précédente
-  start_date, published_at
-  created_at, updated_at
+Lot 1  →  immédiat (gain UX énorme, 0 risque)
+Lot 5  →  prioritaire métier (sinon la duplication n'a aucun effet pour le membre)
+Lot 2  →  haute valeur quotidienne
+Lot 3  →  utile pour préparer un bloc de 3-4 semaines
+Lot 6  →  confort
+Lot 4  →  cas plus rare
 ```
 
-RLS :
-- Coach (has_role coach) : ALL
-- Membre : SELECT sur ses propres lignes `published`/`in_progress`/`done`
-- GRANT authenticated + service_role
-
-Migration de bootstrap : pour chaque `assignment` actif, créer rétroactivement les `assignment_weeks` à partir de `programs.structure.weeks[]` en `published` (pour ne rien casser).
-
-Le code membre (séance, planning, carnet) lit en priorité `assignment_weeks` ; fallback sur `programs.structure` si vide.
-
-## 2. Points d'entrée (bouton « Adapter S+1 »)
-
-Ajouté à 3 endroits, même action :
-- **Dashboard coach** — colonne action sur chaque membre du tableau.
-- **Fiche membre → onglet Suivi** — gros CTA en tête.
-- **Détail d'une séance coach** — dans la barre d'actions.
-
-Le clic ouvre `/coach/membre/$memberId/adapter/$weekNumber` en pré-créant un brouillon `assignment_weeks` (copie de la dernière semaine publiée).
-
-## 3. Éditeur d'adaptation (`AdapterSemaine.tsx`)
-
-Écran unique, auto-save (debounce 600 ms, server fn `saveDraftWeek`).
-
-Structure :
-- **En-tête contexte** — membre, programme, semaine N (copiée de N-1), résumé S-1 (adhérence, RPE moyen, douleurs) calculé via server fn `getWeekFeedback`.
-- **Barre progression globale** — `[Identique] [+2,5%] [+5%] [Déload −40%]` applique aux exos 🔴 force, exclut ceux avec douleur signalée.
-- **Liste des jours** (accordéon ouvert) — chaque exercice avec :
-  - poignée drag, pastille couleur, nom, prescription, boutons ✎/🗑
-  - **bloc suggestion** sous l'exo si retour pertinent (logique ci-dessous)
-  - boutons d'action 1 clic qui patchent l'exo en place
-- **Actions par jour** : `+ Ajouter exercice`, réorganiser, renommer, supprimer/ajouter jour.
-- **Footer collant** : `[Aperçu membre] [Publier la semaine N →]`.
-
-### Logique de suggestion (client, à partir des feedbacks S-1)
-
-```ts
-function suggest(ex, fb) {
-  if (fb.pain) return { type:'pain', actions:[
-    'Réduire amplitude','Remplacer par…','Mettre en pause'] }
-  if (fb.failure || fb.rpe >= 10) return { type:'too_hard', actions:['−10%','−5%','Garder'] }
-  if (fb.rpe >= ex.rpe_target + 1) return { type:'high', actions:['−5%','Garder'] }
-  if (fb.rpe <= ex.rpe_target - 2) return { type:'low', actions:['+2,5kg','+1 rep','Garder'] }
-  if (fb.rpe <= ex.rpe_target - 1) return { type:'slightly_low', actions:['+2,5kg','Garder'] }
-  return null
-}
-```
-
-Données nourrissant `fb` : `set_logs` (RPE réel), `exercise_feedbacks` (too_hard/too_easy), `pain_reports` de la semaine précédente — agrégés par `exercise_name`.
-
-### Modifications libres
-- Édition complète d'un exo (modal réutilisant le composant du Builder).
-- Remplacement : modal avec recherche, filtres `movement_patterns` identiques, conserve séries/reps/RPE, ajoute note membre optionnelle.
-- Drag & drop exos / jours (dnd-kit déjà utilisé dans le Builder).
-- Annulation suppression via toast.
-
-## 4. Aperçu membre
-
-Bouton `[Aperçu membre]` ouvre une drawer en lecture seule réutilisant `ProgramBlocks` avec la `structure` du brouillon — exactement ce que le membre verra.
-
-## 5. Publication
-
-Modal `PublierSemaine` :
-- Date de début (défaut : prochain lundi).
-- Récap auto des changements vs S-1 (diff calculé côté serveur : charges, exos remplacés/ajoutés/retirés, RPE cibles modifiés).
-- Checkbox « Notifier le membre » + champ message pré-rempli.
-- `[Publier et envoyer]` → server fn `publishWeek` :
-  1. `status='published'`, `published_at=now()`, fige `changes_summary`.
-  2. Si notifier : insert dans `messages` (from coach → to membre).
-  3. Realtime : le membre reçoit via `assignment_weeks` (subscription sur `user:<uid>:weeks`).
-
-## 6. Duplication multi-semaines (bloc)
-
-Action `[Dupliquer vers…]` dans l'éditeur :
-- Cases Sem N+1, N+2, N+3.
-- Progression : identique / +5%/sem cumulé / déload final.
-- Crée plusieurs `assignment_weeks` en `draft`. Léo les ouvre et publie au fil de l'eau.
-
-## 7. Duplication d'un programme vers un autre membre
-
-Depuis `/coach/programmes/$id` et fiche membre :
-- `[Dupliquer ce programme]` → sélecteur de membre (existant ou « Nouveau… »).
-- Server fn `duplicateProgramForMember` : copie `programs` + crée `assignment` actif + crée `assignment_weeks` initiale (semaine 1 = copie de la semaine 1 du programme source).
-
-## 8. Historique
-
-`/coach/membre/$memberId/historique-semaines` : liste des `assignment_weeks` (statut, date publication, lien vers la version figée). Tout reste consultable même après publication d'une semaine ultérieure.
-
-## 9. Server functions (créer)
-
-`src/lib/weekly-adaptation.functions.ts` :
-- `getMemberWeekContext({ memberId, weekNumber })` — renvoie semaine source + feedbacks agrégés + suggestions.
-- `createDraftWeek({ assignmentId, basedOnWeek })`
-- `saveDraftWeek({ weekId, structure })` (autosave)
-- `applyGlobalProgression({ weekId, mode })`
-- `replaceExercise({ weekId, dayIdx, exoIdx, newExercise, note })`
-- `publishWeek({ weekId, startDate, notify, message })`
-- `duplicateWeekTo({ weekId, targets:[...], progression })`
-- `duplicateProgramForMember({ programId, memberId })`
-
-Toutes protégées par `requireSupabaseAuth` + check `has_role(uid,'coach')`.
-
-## 10. Realtime côté membre
-
-- Subscription Postgres changes sur `assignment_weeks` filtrée `member_id=eq.<uid>`.
-- À l'évènement `INSERT/UPDATE status=published`, refetch des écrans Programme / Planning / Séance.
-
-## 11. UI / design
-
-Réutilisation stricte du design system existant (`cst-*`, `ProgramBlocks`, modals du Builder). Aucune dépendance nouvelle. Mobile-friendly : éditeur scrollable, footer publication collant.
-
-## 12. Garde-fous
-
-- Pas de régression : `programs.structure` reste la source de vérité tant qu'aucune `assignment_weeks` n'existe pour la semaine demandée.
-- Toutes les écritures passent par server functions (RLS + audit).
-- Auto-save tolérant aux erreurs (toast d'avertissement, pas de navigation).
-
-## Hors périmètre de ce lot
-- Cron de rappel « préparer la semaine du dimanche soir » (notif coach).
-- Templates de progression personnalisés par coach.
-- Comparaison côte à côte S-1 vs S (diff visuel) — le récap textuel suffit pour ce lot.
+Dis-moi quel lot je lance (ou plusieurs en parallèle si compatibles — 1+2+3 le sont).
