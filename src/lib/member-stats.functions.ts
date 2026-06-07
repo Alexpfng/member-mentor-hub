@@ -107,6 +107,7 @@ export const getMemberDashboard = createServerFn({ method: "GET" })
       weekEnd: isoDay(sunday),
       sessionsDone: done.length,
       sessionsTotal: 5,
+      freeSessionsThisWeek,
       volume,
       duration,
       streak,
