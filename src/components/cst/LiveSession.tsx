@@ -1291,12 +1291,12 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
               ) : (
                 <LabeledInput
                   key={`w-${stepIdx}`}
-                  label="POIDS (kg)"
+                  label="POIDS (kg) — optionnel"
                   initialValue={logging.weight}
                   placeholder="kg"
                   onCommit={commitWeight}
                   inputMode="decimal"
-                  error={validationError && !logging.weight ? true : false}
+                  error={false}
                 />
               )}
               <LabeledInput

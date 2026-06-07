@@ -154,26 +154,14 @@ export default function FreeActivityDialog({ open, defaultCategory, initial, onC
           </div>
         )}
 
-        {(isRun || isCardio) && (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
-            {isRun && (
-              <Field label="Distance (km)">
-                <input value={distance} onChange={(e) => setDistance(e.target.value)} inputMode="decimal" style={inputStyle} placeholder="8" />
-              </Field>
-            )}
+        {isCardio && (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
             <Field label="Durée (min)">
               <input value={duration} onChange={(e) => setDuration(e.target.value)} inputMode="numeric" style={inputStyle} placeholder="48" />
             </Field>
-            {isRun && (
-              <Field label="D+ (m)">
-                <input value={elevation} onChange={(e) => setElevation(e.target.value)} inputMode="numeric" style={inputStyle} placeholder="120" />
-              </Field>
-            )}
-            {isCardio && (
-              <Field label="RPE">
-                <input value={rpe} onChange={(e) => setRpe(e.target.value)} inputMode="numeric" style={inputStyle} placeholder="6" />
-              </Field>
-            )}
+            <Field label="RPE">
+              <input value={rpe} onChange={(e) => setRpe(e.target.value)} inputMode="numeric" style={inputStyle} placeholder="6" />
+            </Field>
           </div>
         )}
 
@@ -183,7 +171,36 @@ export default function FreeActivityDialog({ open, defaultCategory, initial, onC
           </Field>
         )}
 
-        {(isMuscu || isRun) && (
+        {isRun && (
+          <Field label="RPE perçu (0–10)">
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(11, 1fr)", gap: 4 }}>
+              {Array.from({ length: 11 }, (_, i) => i).map((n) => {
+                const active = rpe === String(n);
+                return (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setRpe(String(n))}
+                    className="cst-mono"
+                    style={{
+                      padding: "10px 0",
+                      fontSize: 13,
+                      background: active ? "var(--cst-mid-green)" : "rgba(255,255,255,0.06)",
+                      color: "#fff",
+                      border: `1px solid ${active ? "var(--cst-mid-green)" : "rgba(255,255,255,0.12)"}`,
+                      borderRadius: 6,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {n}
+                  </button>
+                );
+              })}
+            </div>
+          </Field>
+        )}
+
+        {isMuscu && (
           <Field label="RPE (optionnel)">
             <input value={rpe} onChange={(e) => setRpe(e.target.value)} inputMode="numeric" style={inputStyle} placeholder="7" />
           </Field>

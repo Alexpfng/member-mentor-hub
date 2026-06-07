@@ -156,7 +156,7 @@ export default function MediaUploader({ sessionId, memberId, onUploaded }: Props
           disabled={uploading}
           style={{ fontSize: 11 }}
         >
-          🖼 GALERIE
+          🖼 STATS / GALERIE
         </button>
       </div>
       {uploading && (

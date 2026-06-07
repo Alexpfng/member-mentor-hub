@@ -1,105 +1,35 @@
-## Lots de suivi — Adaptation hebdo
+## Objectif
 
-Découpage en 6 lots indépendants, à valider/livrer un par un. Chaque lot est autonome et testable.
+Trois ajustements côté membre pour fluidifier la saisie d'une séance :
 
----
+1. **Séance « Course » simplifiée** : ne demander que le RPE (0–10), pas de poids/charge ni de champs muscu.
+2. **Upload de plusieurs photos** : pouvoir envoyer plusieurs photos d'un coup (ex. captures d'écran de stats de la montre) au coach.
+3. **Poids non obligatoire** en séance muscu : on doit toujours pouvoir passer à la série suivante même sans poids saisi.
 
-### Lot 1 — Entrées rapides « Adapter S+1 »
-**Objectif :** ouvrir l'adaptation en 1 clic depuis les contextes naturels.
+## Changements
 
-- **Fiche membre, onglet « Suivi »** : bouton primaire `ADAPTER S+1 →` dans le header de `MemberFollowupTab.tsx` (à côté du nom/avatar du membre).
-- **Détail séance coach** (`SessionDetail.tsx`) : bouton flottant `ADAPTER LA SEMAINE SUIVANTE` en footer, qui ouvre `/coach/membre/$memberId/adapter?week=<week+1>`.
-- **Dashboard coach** (`Dashboard.jsx`, ligne membre) : icône ✎ discrète au survol pour ouvrir l'adapter direct.
+### 1. `src/components/cst/FreeActivityDialog.tsx` — mode « Course »
+- Quand `category === "course"` : afficher uniquement
+  - Nom (déjà là)
+  - **RPE 0–10 sous forme de slider/boutons** (au lieu d'un input texte optionnel) — la même UI segmentée 0…10 que le RPE des séries.
+  - Note (optionnel)
+- Masquer Distance (km), Durée (min), D+ (m) et tout champ poids/charge en mode course.
+- Conserver le comportement existant pour les autres catégories (muscu, cardio, sport, mobilité, autre).
 
-Aucune nouvelle server fn — réutilise `getMemberWeekContext`.
+### 2. `src/components/cst/MediaUploader.tsx` — photos multiples
+- Ajouter `multiple` sur l'input `photoRef` (le bouton « 📷 PHOTO ») pour permettre la sélection de plusieurs photos d'un coup depuis l'appareil photo / la galerie système.
+- Renommer le bouton « 🖼 GALERIE » en « 🖼 STATS / GALERIE » pour clarifier que c'est l'entrée recommandée pour envoyer plusieurs captures d'écran de stats au coach.
+- Le pipeline d'upload boucle déjà sur `FileList` → rien à changer côté logique.
 
----
+### 3. `src/components/cst/LiveSession.tsx` — poids facultatif
+- Le code n'impose techniquement pas le poids, mais l'UI le suggère :
+  - **Ligne 1299** : retirer le `error={validationError && !logging.weight ? true : false}` sur le champ POIDS (le surlignage rouge fait croire que c'est obligatoire) → mettre `error={false}`.
+  - **Label** : remplacer `POIDS (kg)` par `POIDS (kg) — optionnel` pour lever toute ambiguïté.
+- Vérifier qu'en sauvegarde (lignes 432–476), un poids vide est bien accepté (déjà le cas : `weight_kg = bodyweight ? null : isNaN(w) ? null : w`).
+- Aucun changement de schéma DB : `set_logs.weight_kg` est déjà nullable.
 
-### Lot 2 — Modale « Remplacer par… »
-**Objectif :** remplacer un exercice en gardant séries/RPE/charge, avec suggestions filtrées.
+## Hors scope
 
-- Nouveau composant `ReplaceExerciseModal.tsx` :
-  - Recherche dans `exercises` (table existante), filtres par `movement_patterns`, `muscle_group`, `equipement`, `color`.
-  - Préselection : exercices au même `movement_patterns` que l'exercice source.
-  - Aperçu (nom, vidéo, code intensité).
-  - Champ optionnel « note pour le membre » → stocké dans `coach_notes` de l'exo dans la `structure`.
-- Server fn `replaceExercise(weekId, dayIdx, exoIdx, newExerciseId, note?)` dans `weekly-adaptation.functions.ts` : remplace en conservant `series/reps/charge/rpe_target/tempo/recup`.
-- Bouton « ⇄ Remplacer » à côté du 🗑 dans `AdapterSemaine.tsx`.
-
----
-
-### Lot 3 — Duplication multi-semaines (UI)
-**Objectif :** créer S+1, S+2, S+3 d'un coup avec progression.
-
-- Bouton `Dupliquer vers…` dans le footer de `AdapterSemaine.tsx`.
-- Modale `MultiWeekDuplicateModal.tsx` :
-  - Checkboxes S+1 / S+2 / S+3 / +4 / +5.
-  - Radio progression : `Identique` / `+5% cumulatif` / `Déload sur la dernière`.
-  - Aperçu (« 3 semaines seront créées : S03 identique, S04 +5%, S05 +10% »).
-- Appelle `duplicateWeekTo` (déjà existante).
-- Toast + redirection vers la première créée.
-
----
-
-### Lot 4 — Duplication de programme vers un autre membre (UI)
-**Objectif :** cloner le programme actif d'un membre vers un nouveau coaché.
-
-- Sur `/coach/programmes/$id` : bouton `Assigner à un membre`.
-- Sur fiche membre, onglet « Programme actuel » : bouton `Copier ce programme à…`.
-- Modale `CopyProgramToMemberModal.tsx` :
-  - Picker membre (liste sans le membre source).
-  - Date de démarrage.
-  - Checkbox « Cloner aussi les semaines déjà publiées » (par défaut : non — repart à S1).
-  - Option « Désactiver le programme actuel du membre cible » si actif.
-- Appelle `duplicateProgramForMember` (déjà existante), à étendre pour copier les `assignment_weeks` si demandé.
-
----
-
-### Lot 5 — Lecture prioritaire `assignment_weeks` côté membre
-**Objectif :** le membre voit toujours la dernière version publiée par Léo, pas le programme figé.
-
-Helper unique `getMemberWeekStructure(memberId, weekNumber)` :
-1. Cherche dans `assignment_weeks` (status ∈ published/in_progress/done) → renvoie cette structure.
-2. Sinon fallback sur `programs.structure.weeks[weekNumber-1]`.
-
-À intégrer dans :
-- `Programme.jsx` (membre) — vue semaine en cours.
-- `planning.functions.ts` — `getPlannedSessions` et création de séances : copier la structure prioritaire.
-- `logbook.functions.ts` — référence pour calcul d'adhérence.
-- `seance.$sessionId.tsx` (membre) — bloc programme.
-- `carnet.tsx` — résumé hebdo.
-
-Realtime : abonnement `postgres_changes` sur `assignment_weeks` filtré par `member_id`, toast « 📬 Nouvelle semaine publiée par Léo » + refetch.
-
----
-
-### Lot 6 — Historique des versions + drag & drop
-**Objectif :** Léo voit l'évolution et réordonne sans peine.
-
-**Historique** :
-- Onglet « Historique » dans `AdapterSemaine.tsx` (ou drawer latéral).
-- Liste les semaines passées du membre via `listMemberWeekHistory` (déjà existante) avec diff visuel S vs S-1 (exos ajoutés/retirés/charges modifiées via `changes_summary`).
-- Bouton « Restaurer cette version » → écrase le draft courant.
-
-**Drag & drop** :
-- Bibliothèque : `@dnd-kit/core` + `@dnd-kit/sortable`.
-- Réordonner les exercices dans un jour.
-- Réordonner les jours dans la semaine.
-- Déplacer un exo d'un jour à l'autre.
-- Persistence via le `saveDraftWeek` existant (autosave).
-- Handles visibles ⋮⋮ à gauche de chaque ligne exo.
-
----
-
-## Ordre d'attaque recommandé
-
-```text
-Lot 1  →  immédiat (gain UX énorme, 0 risque)
-Lot 5  →  prioritaire métier (sinon la duplication n'a aucun effet pour le membre)
-Lot 2  →  haute valeur quotidienne
-Lot 3  →  utile pour préparer un bloc de 3-4 semaines
-Lot 6  →  confort
-Lot 4  →  cas plus rare
-```
-
-Dis-moi quel lot je lance (ou plusieurs en parallèle si compatibles — 1+2+3 le sont).
+- Pas de modification du suivi côté coach (le coach voit déjà les séances course / les médias session).
+- Pas de touche à la séance « course » lancée comme exercice dans un programme muscu (LiveSession) — ici on parle uniquement de la séance libre catégorie « Course » via `FreeActivityDialog`.
+- Pas de migration DB.
