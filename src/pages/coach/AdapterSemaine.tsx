@@ -319,6 +319,7 @@ export default function AdapterSemaine() {
                     <input value={String(ex.reps ?? "")} onChange={(e) => updateExo(di, ei, (x) => ({ ...x, reps: e.target.value }))} placeholder="reps" style={{ width: 60 }} className="cst-input" />
                     <input value={ex.charge ?? ""} onChange={(e) => updateExo(di, ei, (x) => ({ ...x, charge: e.target.value }))} placeholder="kg" style={{ width: 70 }} className="cst-input" />
                     <input value={String(ex.rpe_target ?? "")} onChange={(e) => updateExo(di, ei, (x) => ({ ...x, rpe_target: e.target.value }))} placeholder="RPE" style={{ width: 50 }} className="cst-input" />
+                    <button onClick={() => setReplaceTarget({ dayIdx: di, exoIdx: ei, ex })} title="Remplacer" style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)", color: "var(--cst-text-soft)", borderRadius: 6, padding: "4px 8px", cursor: "pointer", fontSize: 12 }}>⇄</button>
                     <button onClick={() => removeExo(di, ei)} title="Supprimer" style={{ background: "transparent", border: "1px solid rgba(196,74,58,0.4)", color: "#C44A3A", borderRadius: 6, padding: "4px 8px", cursor: "pointer", fontSize: 12 }}>🗑</button>
                   </div>
                   {sugg && (
