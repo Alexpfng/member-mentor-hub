@@ -10,7 +10,7 @@ function CoachGate() {
       </div>
     );
   }
-  if (!user) return <Navigate to="/auth" />;
+  if (!user) return <Navigate to="/login" />;
   if (role !== "coach") return <Navigate to="/membre" />;
   return <Outlet />;
 }
