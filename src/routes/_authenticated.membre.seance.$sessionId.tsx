@@ -30,12 +30,8 @@ type ProgramStructure = {
   }>;
 };
 
-const DEFAULT_EXERCISES: ProgExercise[] = [
-  { name: "Tractions pronation", series: 4, reps: "6-10", rpe_target: 8, tempo: "3010", color: "red" },
-  { name: "Row barre", series: 4, reps: "8", rpe_target: 8, tempo: "2011", color: "red" },
-  { name: "Face pull", series: 3, reps: "15", rpe_target: 7, tempo: "2012", color: "blue" },
-  { name: "Curl barre", series: 3, reps: "10", rpe_target: 7, tempo: "3010", color: "green" },
-];
+
+
 
 function SeancePage() {
   const { sessionId } = useParams({ from: "/_authenticated/membre/seance/$sessionId" });
@@ -45,6 +41,7 @@ function SeancePage() {
   const [exercises, setExercises] = useState<ProgExercise[]>([]);
   const [loading, setLoading] = useState(true);
   const [finishing, setFinishing] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -55,6 +52,7 @@ function SeancePage() {
       setSession(s as SessionRow | null);
 
       let exos: ProgExercise[] = [];
+      let resolutionError: string | null = null;
       if (s?.program_id) {
         const { data: prog } = await supabase
           .from("programs").select("structure").eq("id", s.program_id).maybeSingle();
@@ -62,13 +60,25 @@ function SeancePage() {
         const w = (s.week_number ?? 1) - 1;
         const d = (s.day_number ?? 1) - 1;
         const day = struct?.weeks?.[w]?.days?.[d];
-        if (day?.exercises?.length) exos = day.exercises;
+        if (day?.exercises?.length) {
+          exos = day.exercises;
+        } else {
+          resolutionError = `Aucun exercice trouvé pour ${s.session_label ?? "ce jour"} (semaine ${w + 1}, jour ${d + 1}).`;
+          console.warn("[seance] structure lookup failed", {
+            sessionId, programId: s.program_id, week: w, day: d, label: s.session_label,
+          });
+        }
+      } else if (s) {
+        resolutionError = "Cette séance n'est rattachée à aucun programme.";
+      } else {
+        resolutionError = "Séance introuvable.";
       }
-      if (!exos.length) exos = DEFAULT_EXERCISES;
       setExercises(exos);
+      setLoadError(resolutionError);
       setLoading(false);
     })();
   }, [sessionId]);
+
 
   async function finishSession() {
     setFinishing(true);
@@ -107,6 +117,41 @@ function SeancePage() {
       </div>
     );
   }
+
+  if (loadError || exercises.length === 0) {
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--cst-dark-green)", padding: 24 }}>
+        <div style={{ maxWidth: 360, textAlign: "center", color: "rgba(255,255,255,0.85)" }}>
+          <div className="cst-mono" style={{ fontSize: 10, letterSpacing: "0.18em", color: "#C56A60", marginBottom: 10 }}>
+            SÉANCE INDISPONIBLE
+          </div>
+          <div className="cst-display" style={{ fontSize: 22, lineHeight: 1.2, marginBottom: 12 }}>
+            {loadError ?? "Aucun exercice n'est défini pour ce jour."}
+          </div>
+          <p style={{ fontSize: 13, opacity: 0.75, marginBottom: 20 }}>
+            Contacte ton coach pour qu'il vérifie ton programme, ou choisis une autre séance.
+          </p>
+          <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+            <button
+              onClick={() => navigate({ to: "/membre/commencer" })}
+              className="cst-btn cst-btn-primary"
+              style={{ padding: "10px 18px" }}
+            >
+              CHOISIR UNE AUTRE SÉANCE
+            </button>
+            <button
+              onClick={() => navigate({ to: "/membre" })}
+              className="cst-mono"
+              style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.7)", borderRadius: 6, padding: "10px 16px", fontSize: 11, cursor: "pointer", letterSpacing: "0.12em" }}
+            >
+              ACCUEIL
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#111" }}>

@@ -1,42 +1,70 @@
-## Fix: Restrict Realtime channel subscriptions via RLS
+## Constat de l'audit (rapide)
 
-Add Row-Level Security to `realtime.messages` so authenticated users can only subscribe to Realtime topics they're authorized for. Without this, any logged-in user can listen on any channel name and receive private broadcasts from other members' sessions, messages, pain reports, videos, etc.
+J'ai inspecté la base, le code de lancement de séance, les routes et les logs. Voici ce qui est avéré, ce qui est probable, et ce qui ne l'est pas.
 
-### Approach
+### 1. Login — pas de bug serveur
+- Le compte `leocolognesi@gmail.com` (coach) **s'est connecté avec succès aujourd'hui à 16:17 UTC** (last_sign_in_at en base). Donc l'auth Supabase fonctionne.
+- La route `/login` rend bien (200 après canonicalisation du search param).
+- Cause probable côté Leo : redirection bloquée ou écran "CHARGEMENT…" qui ne sort jamais, ou session corrompue dans le navigateur. Je traite ce point ci-dessous (étape 2).
 
-Enable RLS on `realtime.messages` and add a SELECT policy that authorizes subscription based on the channel topic name. We'll adopt a topic naming convention scoped by user id, and the policy will check that the current `auth.uid()` matches the topic owner.
+### 2. Lancement de séance — bug confirmé
+Fichier : `src/routes/_authenticated.membre.seance.$sessionId.tsx`
 
-### Topic naming convention
+```text
+if (!exos.length) exos = DEFAULT_EXERCISES; // Tractions / Row / Face pull / Curl
+```
 
-All client `supabase.channel(...)` calls must use a topic that encodes the authorized user(s):
+Si la résolution `program.structure.weeks[w].days[d].exercises` échoue (mauvais `day_number`, mauvais `week_number`, ou exercices vides), la page **affiche silencieusement 4 exercices génériques** au lieu d'avertir. C'est l'origine des "séances aléatoires".
 
-- `user:{uid}` — private to one user (notifications, own messages)
-- `conv:{uidA}:{uidB}` — direct conversation between two users (sorted)
-- `session:{session_id}` — only the session's member and any coach
-- Generic Postgres-changes channels (e.g. `messages-list`) are no longer allowed; they must be renamed to a scoped topic.
+Vérif base : les 3 programmes actifs (Teddy, Pierre, Max) ont bien des exercices (7 à 12 par jour). Donc le fallback ne devrait pas se déclencher — mais il existe et il masque un vrai problème quand il se déclenche.
 
-### Migration
+### 3. Code mort à risque
+`src/pages/membre/Logger.jsx` (380 lignes) est **du mock pur** (`MOCK_EXERCISES = [...]`, "PULL B" en dur). Aucune route ne l'importe — la vraie route `/membre/logger` utilise `SessionLauncher` défini dans `_authenticated.membre.logger.tsx`. À supprimer.
 
-1. `ALTER TABLE realtime.messages ENABLE ROW LEVEL SECURITY;`
-2. Create a SELECT policy on `realtime.messages` for role `authenticated` that allows subscription when:
-   - `realtime.topic()` equals `user:` || `auth.uid()`, OR
-   - topic starts with `conv:` and contains `auth.uid()` as one of the two ids, OR
-   - topic starts with `session:` and `auth.uid()` is the session's member OR has the `coach` role, OR
-   - topic starts with `coach:` and the user has the `coach` role.
-3. Helper SQL function `public.can_subscribe_topic(topic text)` (SECURITY DEFINER, stable) to centralize the checks and keep the policy readable.
+### 4. Reste à auditer (rapport, pas correction immédiate)
+- Onboarding (`onboarding.$step.tsx`) — flow d'invitation/inscription
+- Messages coach/membre (realtime, déjà sécurisé via `can_subscribe_topic`)
+- Carnet hebdo (`/membre/carnet`) — génération via cron
+- Coach dashboard, programme builder, page membre du coach
+- Page `/membre/seance/$sessionId` complète (le composant `LiveSession.tsx` fait 1553 lignes — à vérifier pour mocks résiduels)
+- `_authenticated.tsx` : le double check (beforeLoad + useEffect AuthenticatedLayout) peut générer des navigations en double si rôle ↔ chemin
 
-### Code changes
+---
 
-Audit and update every `supabase.channel(<name>)` call in `src/` so the channel name follows the new convention. Likely call sites: messaging, live session, coach dashboard, technique videos, pain reports, notifications. Each is a small string change; subscription filters (`postgres_changes` with row filters) remain unchanged — RLS on the underlying tables still protects payloads, and this new layer protects topic membership.
+## Plan d'action
 
-### Out of scope
+### Phase 1 — Bugs bloquants (à corriger maintenant)
 
-- No changes to table-level RLS (already in place).
-- No changes to broadcast/presence semantics beyond topic naming.
-- No new tables.
+**A. Lancement de séance — supprimer le fallback silencieux**
+- `_authenticated.membre.seance.$sessionId.tsx` : retirer `DEFAULT_EXERCISES`. Quand la structure ne renvoie rien, afficher un message clair ("Aucun exercice n'est défini pour ce jour — contacte ton coach") + bouton retour, et logger en console le couple `(programId, week, day, label)` pour diagnostic.
+- `_authenticated.membre.logger.tsx` (SessionLauncher) : quand `search.day` ne matche aucun jour du programme, **ne pas créer de session avec `day_number: null`** — afficher l'erreur et rediriger vers `/membre/commencer`.
+- Match plus tolérant : normaliser (trim + lowercase + suppression accents) côté launcher pour résister aux libellés saisis avec/sans accents/espaces.
 
-### Verification
+**B. Login Leo — diagnostic + fix réactif**
+- Demander à Leo de vider le cache + retenter (la session navigateur peut être désynchronisée du dernier déploiement).
+- Renforcer `_authenticated.tsx` : supprimer la double redirection (le `beforeLoad` fait déjà `getUser`, le `useEffect` ré-interroge en plus → flicker possible). Garder une seule source de vérité côté `useEffect` pour la vérif de rôle, et afficher un bouton "Se reconnecter" si la session est invalide au lieu d'un écran "CHARGEMENT…" infini.
+- Sur `/login`, si `supabase.auth.signInWithPassword` réussit mais que la requête `user_roles` échoue (RLS, latence), aujourd'hui on reste bloqué → ajouter fallback "/membre" + log.
 
-- Re-run the security scan; `realtime_messages_no_rls` should clear.
-- Manually: sign in as Member A, attempt `supabase.channel('user:<member-B-uid>').subscribe()` → should not receive events.
-- Existing realtime features (chat, live session updates) continue to work after the topic rename.
+**C. Nettoyage**
+- Supprimer `src/pages/membre/Logger.jsx` (mock, plus utilisé).
+
+### Phase 2 — Audit large (rapport)
+
+Je passerai en revue dans cet ordre et te livrerai un rapport `AUDIT.md` listant chaque problème trouvé avec un niveau (bloquant / dégradé / cosmétique) **avant** de toucher au code :
+
+1. Auth / onboarding / reset password (3 routes)
+2. Espace membre : commencer, logger, seance, seance-libre, carnet, planning, programme, profil, progression, historique, messages
+3. Espace coach : dashboard, builder, programmes, exercices, membre, seance, messages, invitations, import, running
+4. Composant `LiveSession.tsx` (1553 lignes — chercher mocks, états orphelins, fuites realtime)
+5. Server functions (`src/lib/*.functions.ts`) — cohérence des inputValidators, fuites de données via `supabaseAdmin`
+6. RLS — vérifier que les policies présentes correspondent aux usages réels du code
+
+### Phase 3 — Correctifs issus du rapport
+Après ta validation des items priorisés du rapport, je corrige par lots (1 lot = 1 domaine fonctionnel) pour que tu puisses tester au fur et à mesure.
+
+---
+
+## Ce qu'il me faut pour démarrer
+Rien de plus : je peux lancer Phase 1 immédiatement. Phase 2 (audit) suit dans la foulée — je te livre `AUDIT.md` avant toute autre modification.
+
+Validation pour lancer Phase 1 + Phase 2 ?

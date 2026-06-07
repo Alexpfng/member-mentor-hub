@@ -85,12 +85,18 @@ export default function Login() {
           password: password.trim(),
         });
         if (err) throw err;
-        const { data: r } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", data.user.id)
-          .maybeSingle();
-        navigate(r?.role === "coach" ? "/coach" : "/membre");
+        let role = "member";
+        try {
+          const { data: r } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", data.user.id)
+            .maybeSingle();
+          if (r?.role) role = r.role;
+        } catch (roleErr) {
+          console.warn("[login] role lookup failed, defaulting to member", roleErr);
+        }
+        navigate(role === "coach" ? "/coach" : "/membre");
       }
     } catch (err) {
       const msg = err?.message || "Erreur.";
@@ -101,6 +107,7 @@ export default function Login() {
       setLoading(false);
     }
   }
+
 
 
   return (
