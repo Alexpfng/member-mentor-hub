@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      assignment_weeks: {
+        Row: {
+          assignment_id: string
+          based_on_week: number | null
+          changes_summary: Json
+          created_at: string
+          created_by: string | null
+          id: string
+          member_id: string
+          program_id: string | null
+          published_at: string | null
+          start_date: string | null
+          status: string
+          structure: Json
+          updated_at: string
+          week_number: number
+        }
+        Insert: {
+          assignment_id: string
+          based_on_week?: number | null
+          changes_summary?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          member_id: string
+          program_id?: string | null
+          published_at?: string | null
+          start_date?: string | null
+          status?: string
+          structure?: Json
+          updated_at?: string
+          week_number: number
+        }
+        Update: {
+          assignment_id?: string
+          based_on_week?: number | null
+          changes_summary?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          member_id?: string
+          program_id?: string | null
+          published_at?: string | null
+          start_date?: string | null
+          status?: string
+          structure?: Json
+          updated_at?: string
+          week_number?: number
+        }
+        Relationships: []
+      }
       assignments: {
         Row: {
           active: boolean | null
