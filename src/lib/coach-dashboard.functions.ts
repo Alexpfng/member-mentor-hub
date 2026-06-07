@@ -355,7 +355,7 @@ export const getMemberCharts = createServerFn({ method: "GET" })
     const sevenDaysAgo = daysAgo(7).toISOString();
 
     const [adhR, rpeR, assignR] = await Promise.all([
-      supabaseAdmin.from("sessions").select("status, started_at, ended_at").eq("member_id", memberId).gte("started_at", eightWeeksAgo),
+      supabaseAdmin.from("sessions").select("status, started_at, ended_at, session_type").eq("member_id", memberId).gte("started_at", eightWeeksAgo),
       supabaseAdmin.from("sessions").select("ended_at, average_rpe").eq("member_id", memberId).eq("status", "completed").gte("ended_at", sevenDaysAgo).order("ended_at", { ascending: true }),
       supabaseAdmin.from("assignments").select("programs(structure)").eq("member_id", memberId).eq("active", true).maybeSingle(),
     ]);
@@ -377,6 +377,8 @@ export const getMemberCharts = createServerFn({ method: "GET" })
 
     for (const s of adhR.data ?? []) {
       if (!s.ended_at || s.status !== "completed") continue;
+      // Adhérence : seulement les séances de programme
+      if ((s.session_type ?? "program") !== "program") continue;
       const ws = weekStartOf(new Date(s.ended_at)).toISOString();
       const b = buckets.find((x) => x.weekKey === ws);
       if (b) b.done += 1;
