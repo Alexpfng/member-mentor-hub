@@ -60,9 +60,11 @@ export const getMemberDashboard = createServerFn({ method: "GET" })
         .lte("date", isoDay(sunday)),
     ]);
 
-    const done = (sessions ?? []).filter((s) => s.status === "completed");
-    const volume = done.reduce((a, s) => a + Number(s.total_volume_kg ?? 0), 0);
-    const duration = done.reduce((a, s) => a + (s.duration_minutes ?? 0), 0);
+    const allDone = (sessions ?? []).filter((s) => s.status === "completed");
+    const done = allDone.filter((s) => (s.session_type ?? "program") === "program");
+    const freeSessionsThisWeek = allDone.filter((s) => s.session_type === "free").length;
+    const volume = allDone.reduce((a, s) => a + Number(s.total_volume_kg ?? 0), 0);
+    const duration = allDone.reduce((a, s) => a + (s.duration_minutes ?? 0), 0);
 
     // Streak: weeks consécutives avec >= 3 séances done (semaine en cours tolérée)
     const counts = new Map<string, number>();
