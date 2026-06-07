@@ -45,6 +45,7 @@ function SeancePage() {
   const [exercises, setExercises] = useState<ProgExercise[]>([]);
   const [loading, setLoading] = useState(true);
   const [finishing, setFinishing] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -55,6 +56,7 @@ function SeancePage() {
       setSession(s as SessionRow | null);
 
       let exos: ProgExercise[] = [];
+      let resolutionError: string | null = null;
       if (s?.program_id) {
         const { data: prog } = await supabase
           .from("programs").select("structure").eq("id", s.program_id).maybeSingle();
@@ -62,13 +64,25 @@ function SeancePage() {
         const w = (s.week_number ?? 1) - 1;
         const d = (s.day_number ?? 1) - 1;
         const day = struct?.weeks?.[w]?.days?.[d];
-        if (day?.exercises?.length) exos = day.exercises;
+        if (day?.exercises?.length) {
+          exos = day.exercises;
+        } else {
+          resolutionError = `Aucun exercice trouvé pour ${s.session_label ?? "ce jour"} (semaine ${w + 1}, jour ${d + 1}).`;
+          console.warn("[seance] structure lookup failed", {
+            sessionId, programId: s.program_id, week: w, day: d, label: s.session_label,
+          });
+        }
+      } else if (s) {
+        resolutionError = "Cette séance n'est rattachée à aucun programme.";
+      } else {
+        resolutionError = "Séance introuvable.";
       }
-      if (!exos.length) exos = DEFAULT_EXERCISES;
       setExercises(exos);
+      setLoadError(resolutionError);
       setLoading(false);
     })();
   }, [sessionId]);
+
 
   async function finishSession() {
     setFinishing(true);
