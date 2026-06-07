@@ -150,7 +150,7 @@ export const getMembersOverview = createServerFn({ method: "GET" })
     const sevenDaysAgo = daysAgo(7).toISOString();
     const [assignsR, lastSessionsR, painsR, highRpeR] = await Promise.all([
       supabaseAdmin.from("assignments").select("member_id, program_id, start_date, active, programs(name, duration_weeks)").in("member_id", ids).eq("active", true),
-      supabaseAdmin.from("sessions").select("member_id, ended_at, status").in("member_id", ids).order("ended_at", { ascending: false }),
+      supabaseAdmin.from("sessions").select("member_id, ended_at, status, session_type").in("member_id", ids).order("ended_at", { ascending: false }),
       supabaseAdmin.from("pain_reports").select("member_id").in("member_id", ids).is("resolved_at", null),
       supabaseAdmin.from("exercise_feedbacks").select("rpe, sessions!inner(member_id, ended_at)").gte("rpe", 9).gte("sessions.ended_at", sevenDaysAgo),
     ]);
@@ -163,7 +163,8 @@ export const getMembersOverview = createServerFn({ method: "GET" })
     const sessions7By = new Map<string, { done: number; total: number }>();
     for (const s of lastSessionsR.data ?? []) {
       if (!lastByMember.has(s.member_id) && s.ended_at) lastByMember.set(s.member_id, s.ended_at);
-      if (s.ended_at && s.ended_at >= sevenDaysAgo) {
+      // Adhérence : seulement les séances de programme
+      if (s.ended_at && s.ended_at >= sevenDaysAgo && (s.session_type ?? "program") === "program") {
         const cur = sessions7By.get(s.member_id) || { done: 0, total: 0 };
         cur.total += 1; if (s.status === "completed") cur.done += 1;
         sessions7By.set(s.member_id, cur);
