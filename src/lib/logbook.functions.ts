@@ -163,10 +163,21 @@ export const getLogbook = createServerFn({ method: "GET" })
       .eq("member_id", context.userId)
       .eq("week_number", weekNumber)
       .maybeSingle();
-    if (existing) return existing;
 
-    // Generate on the fly
-    return upsertLogbook(context.userId, weekNumber);
+    const row = existing ?? (await upsertLogbook(context.userId, weekNumber));
+    if (!row) return null;
+
+    // Count free sessions in that period (not persisted in weekly_logbooks)
+    const { count: freeCount } = await supabaseAdmin
+      .from("sessions")
+      .select("id", { count: "exact", head: true })
+      .eq("member_id", context.userId)
+      .eq("status", "completed")
+      .eq("session_type", "free")
+      .gte("date", row.period_start)
+      .lte("date", row.period_end);
+
+    return { ...row, free_sessions_done: freeCount ?? 0 };
   });
 
 export const setCoachLogbookMessage = createServerFn({ method: "POST" })
