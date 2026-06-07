@@ -359,6 +359,9 @@ export default function MemberDashboard() {
               style={{ width: "100%", marginTop: 10, fontSize: 11 }}
             >
               CHOISIR UNE AUTRE SÉANCE →
+            </button>
+
+
 
             {/* Week strip */}
             <div style={{ marginTop: 22 }}>
