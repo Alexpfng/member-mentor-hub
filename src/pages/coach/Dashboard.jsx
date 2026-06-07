@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from '@tanstack/react-router';
+import { useNavigate, Navigate } from '@tanstack/react-router';
 import { useServerFn } from '@tanstack/react-start';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import CoachSidebar from '../../components/CoachSidebar';
@@ -12,6 +12,7 @@ import PriorityFeed from '@/components/coach/PriorityFeed';
 import RecentSessionsList from '@/components/coach/RecentSessionsList';
 import MembersTable from '@/components/coach/MembersTable';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/use-auth';
 
 
 function InviteModal({ onClose, onDone }) {
