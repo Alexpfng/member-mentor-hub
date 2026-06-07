@@ -450,6 +450,30 @@ export type Database = {
         }
         Relationships: []
       }
+      member_coach_notes: {
+        Row: {
+          created_at: string
+          id: string
+          member_id: string
+          notes: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          member_id: string
+          notes?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          member_id?: string
+          notes?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       member_notification_prefs: {
         Row: {
           coach_msg: boolean
@@ -497,7 +521,6 @@ export type Database = {
       }
       member_profiles: {
         Row: {
-          coach_private_notes: string | null
           goal: string | null
           height_cm: number | null
           id: string
@@ -508,7 +531,6 @@ export type Database = {
           weight_kg: number | null
         }
         Insert: {
-          coach_private_notes?: string | null
           goal?: string | null
           height_cm?: number | null
           id?: string
@@ -519,7 +541,6 @@ export type Database = {
           weight_kg?: number | null
         }
         Update: {
-          coach_private_notes?: string | null
           goal?: string | null
           height_cm?: number | null
           id?: string
