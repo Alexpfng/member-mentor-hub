@@ -390,6 +390,26 @@ export default function AdapterSemaine() {
           onPublish={doPublish}
         />
       )}
+      {replaceTarget && ctx && (
+        <ReplaceExerciseModal
+          weekId={ctx.week.id}
+          dayIndex={replaceTarget.dayIdx}
+          exoIndex={replaceTarget.exoIdx}
+          currentName={replaceTarget.ex.name}
+          currentPatterns={null}
+          currentMuscleGroup={null}
+          onClose={() => setReplaceTarget(null)}
+          onReplaced={(s) => setStructure(s as WeekStructure)}
+        />
+      )}
+      {showDuplicate && ctx && (
+        <MultiWeekDuplicateModal
+          weekId={ctx.week.id}
+          currentWeek={ctx.week.week_number}
+          onClose={() => setShowDuplicate(false)}
+          onCreated={(firstWeek) => navigate({ to: "/coach/membre/$memberId/adapter", params: { memberId }, search: { week: firstWeek } })}
+        />
+      )}
     </Shell>
   );
 }
