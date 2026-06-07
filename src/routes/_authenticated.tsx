@@ -6,23 +6,14 @@ import { SUPABASE_ENABLED } from "@/lib/app-mode";
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async ({ location }) => {
-    if (!SUPABASE_ENABLED) {
-      return;
-    }
-
-    // Route auth is resolved client-side because the browser Supabase client
-    // cannot read the user's local session during SSR.
-    if (typeof window === "undefined") {
-      return;
-    }
+    if (!SUPABASE_ENABLED) return;
+    if (typeof window === "undefined") return;
 
     try {
       const { data, error } = await supabase.auth.getUser();
-      if (!error && data.user) {
-        return;
-      }
+      if (!error && data.user) return;
     } catch {
-      // Fall through to the login redirect below.
+      // fall through
     }
 
     throw redirect({
@@ -35,54 +26,39 @@ export const Route = createFileRoute("/_authenticated")({
 
 function AuthenticatedLayout() {
   const router = useRouter();
-  const [checked, setChecked] = useState(!SUPABASE_ENABLED);
+  // role-vs-path check is non-blocking — render children immediately.
+  const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
-    if (!SUPABASE_ENABLED) {
-      return;
-    }
+    if (!SUPABASE_ENABLED) return;
 
     let cancelled = false;
-
-    async function checkRole() {
+    (async () => {
       try {
-        const { data: userData, error } = await supabase.auth.getUser();
-        if (cancelled) return;
-
-        if (error || !userData.user) {
-          router.navigate({
-            to: "/login",
-            search: { redirect: router.state.location.href },
-          });
-          return;
-        }
+        const { data: userData } = await supabase.auth.getUser();
+        if (cancelled || !userData.user) return;
 
         const { data: roleRow } = await supabase
           .from("user_roles")
           .select("role")
           .eq("user_id", userData.user.id)
           .maybeSingle();
+        if (cancelled) return;
+
         const role = (roleRow?.role as "coach" | "member" | null) ?? "member";
         const path = router.state.location.pathname;
-        if (cancelled) return;
 
         if (role === "coach" && path.startsWith("/membre")) {
+          setRedirecting(true);
           router.navigate({ to: "/coach" });
         } else if (role === "member" && path.startsWith("/coach")) {
+          setRedirecting(true);
           router.navigate({ to: "/membre" });
         }
-
-        setChecked(true);
-      } catch {
-        if (cancelled) return;
-        router.navigate({
-          to: "/login",
-          search: { redirect: router.state.location.href },
-        });
+      } catch (err) {
+        console.error("[_authenticated] role check failed", err);
       }
-    }
-
-    checkRole();
+    })();
 
     return () => {
       cancelled = true;
@@ -90,7 +66,7 @@ function AuthenticatedLayout() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router.state.location.pathname]);
 
-  if (!checked) {
+  if (redirecting) {
     return (
       <div
         style={{
@@ -105,7 +81,7 @@ function AuthenticatedLayout() {
           letterSpacing: "0.18em",
         }}
       >
-        CHARGEMENT…
+        REDIRECTION…
       </div>
     );
   }
