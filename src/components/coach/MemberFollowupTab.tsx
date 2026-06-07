@@ -54,6 +54,15 @@ export default function MemberFollowupTab({ memberId }: { memberId: string }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+      {/* Quick action: adapter S+1 */}
+      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <button
+          className="cst-btn cst-btn-primary"
+          onClick={() => navigate({ to: "/coach/membre/$memberId/adapter", params: { memberId } })}
+        >
+          ADAPTER S+1 →
+        </button>
+      </div>
       {/* KPIs */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
         <div style={kpiCard}>

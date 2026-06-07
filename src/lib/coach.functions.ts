@@ -765,8 +765,29 @@ export const getMyAssignedProgram = createServerFn({ method: "GET" })
       )
       .eq("id", assignment.program_id)
       .maybeSingle();
+
+    // Override weeks with published assignment_weeks (latest adapted version wins)
+    if (program) {
+      const { data: weeks } = await supabaseAdmin
+        .from("assignment_weeks")
+        .select("week_number, structure")
+        .eq("assignment_id", assignment.id)
+        .in("status", ["published", "in_progress", "done"]);
+      if (weeks && weeks.length > 0) {
+        const base = (program.structure as { weeks?: unknown[] } | null) ?? { weeks: [] };
+        const merged: unknown[] = Array.isArray(base.weeks) ? [...base.weeks] : [];
+        for (const w of weeks) {
+          const idx = Math.max(0, (w.week_number ?? 1) - 1);
+          while (merged.length <= idx) merged.push({ days: [] });
+          merged[idx] = w.structure;
+        }
+        program.structure = { ...(base as object), weeks: merged } as typeof program.structure;
+      }
+    }
+
     return { assignment, program: program ?? null };
   });
+
 
 export const deleteProgram = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

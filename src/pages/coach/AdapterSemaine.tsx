@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import CoachSidebar from "@/components/CoachSidebar";
+import ReplaceExerciseModal from "@/components/coach/ReplaceExerciseModal";
+import MultiWeekDuplicateModal from "@/components/coach/MultiWeekDuplicateModal";
 import {
   getMemberWeekContext,
   saveDraftWeek,
@@ -122,6 +124,8 @@ export default function AdapterSemaine() {
   const [changes, setChanges] = useState<Array<{ type: string; label: string }>>([]);
   const [notify, setNotify] = useState(true);
   const [message, setMessage] = useState("");
+  const [replaceTarget, setReplaceTarget] = useState<{ dayIdx: number; exoIdx: number; ex: ProgExercise } | null>(null);
+  const [showDuplicate, setShowDuplicate] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   async function load() {
@@ -315,6 +319,7 @@ export default function AdapterSemaine() {
                     <input value={String(ex.reps ?? "")} onChange={(e) => updateExo(di, ei, (x) => ({ ...x, reps: e.target.value }))} placeholder="reps" style={{ width: 60 }} className="cst-input" />
                     <input value={ex.charge ?? ""} onChange={(e) => updateExo(di, ei, (x) => ({ ...x, charge: e.target.value }))} placeholder="kg" style={{ width: 70 }} className="cst-input" />
                     <input value={String(ex.rpe_target ?? "")} onChange={(e) => updateExo(di, ei, (x) => ({ ...x, rpe_target: e.target.value }))} placeholder="RPE" style={{ width: 50 }} className="cst-input" />
+                    <button onClick={() => setReplaceTarget({ dayIdx: di, exoIdx: ei, ex })} title="Remplacer" style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)", color: "var(--cst-text-soft)", borderRadius: 6, padding: "4px 8px", cursor: "pointer", fontSize: 12 }}>⇄</button>
                     <button onClick={() => removeExo(di, ei)} title="Supprimer" style={{ background: "transparent", border: "1px solid rgba(196,74,58,0.4)", color: "#C44A3A", borderRadius: 6, padding: "4px 8px", cursor: "pointer", fontSize: 12 }}>🗑</button>
                   </div>
                   {sugg && (
@@ -363,6 +368,7 @@ export default function AdapterSemaine() {
             {savedAt ? `✓ Sauvegardé ${new Date(savedAt).toLocaleTimeString("fr-FR")}` : "—"}
           </div>
           <div style={{ display: "flex", gap: 10 }}>
+            <button onClick={() => setShowDuplicate(true)} className="cst-btn cst-btn-ghost-dark">Dupliquer vers…</button>
             <button onClick={() => setShowPreview(true)} className="cst-btn cst-btn-ghost-dark">Aperçu membre</button>
             <button onClick={openPublish} className="cst-btn cst-btn-primary">Publier la semaine {ctx.week.week_number} →</button>
           </div>
@@ -382,6 +388,26 @@ export default function AdapterSemaine() {
           publishing={publishing}
           onCancel={() => setShowPublish(false)}
           onPublish={doPublish}
+        />
+      )}
+      {replaceTarget && ctx && (
+        <ReplaceExerciseModal
+          weekId={ctx.week.id}
+          dayIndex={replaceTarget.dayIdx}
+          exoIndex={replaceTarget.exoIdx}
+          currentName={replaceTarget.ex.name}
+          currentPatterns={null}
+          currentMuscleGroup={null}
+          onClose={() => setReplaceTarget(null)}
+          onReplaced={(s) => setStructure(s as WeekStructure)}
+        />
+      )}
+      {showDuplicate && ctx && (
+        <MultiWeekDuplicateModal
+          weekId={ctx.week.id}
+          currentWeek={ctx.week.week_number}
+          onClose={() => setShowDuplicate(false)}
+          onCreated={(firstWeek) => navigate({ to: "/coach/membre/$memberId/adapter", params: { memberId }, search: { week: firstWeek } })}
         />
       )}
     </Shell>

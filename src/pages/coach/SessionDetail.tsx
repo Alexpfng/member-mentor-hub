@@ -253,6 +253,9 @@ export default function CoachSessionDetail() {
           )}
 
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <button className="cst-btn cst-btn-primary" onClick={() => navigate({ to: "/coach/membre/$memberId/adapter", params: { memberId: s.member_id }, search: s.week_number ? { week: s.week_number + 1 } : {} })}>
+              ADAPTER S{s.week_number ? `+1 (S${String(s.week_number + 1).padStart(2, "0")})` : "UIVANTE"} →
+            </button>
             <button className="cst-btn cst-btn-ghost-dark" onClick={() => navigate({ to: "/coach/messages" })}>Répondre au membre</button>
             <button className="cst-btn cst-btn-ghost-dark" onClick={() => navigate({ to: "/coach/membre/$memberId", params: { memberId: s.member_id } })}>Fiche membre</button>
           </div>
