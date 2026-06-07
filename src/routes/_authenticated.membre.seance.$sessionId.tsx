@@ -118,6 +118,41 @@ function SeancePage() {
     );
   }
 
+  if (loadError || exercises.length === 0) {
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--cst-dark-green)", padding: 24 }}>
+        <div style={{ maxWidth: 360, textAlign: "center", color: "rgba(255,255,255,0.85)" }}>
+          <div className="cst-mono" style={{ fontSize: 10, letterSpacing: "0.18em", color: "#C56A60", marginBottom: 10 }}>
+            SÉANCE INDISPONIBLE
+          </div>
+          <div className="cst-display" style={{ fontSize: 22, lineHeight: 1.2, marginBottom: 12 }}>
+            {loadError ?? "Aucun exercice n'est défini pour ce jour."}
+          </div>
+          <p style={{ fontSize: 13, opacity: 0.75, marginBottom: 20 }}>
+            Contacte ton coach pour qu'il vérifie ton programme, ou choisis une autre séance.
+          </p>
+          <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+            <button
+              onClick={() => navigate({ to: "/membre/commencer" })}
+              className="cst-btn cst-btn-primary"
+              style={{ padding: "10px 18px" }}
+            >
+              CHOISIR UNE AUTRE SÉANCE
+            </button>
+            <button
+              onClick={() => navigate({ to: "/membre" })}
+              className="cst-mono"
+              style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.7)", borderRadius: 6, padding: "10px 16px", fontSize: 11, cursor: "pointer", letterSpacing: "0.12em" }}
+            >
+              ACCUEIL
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+
   return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#111" }}>
       <div style={{ width: 390, minHeight: 780, position: "relative" }}>
