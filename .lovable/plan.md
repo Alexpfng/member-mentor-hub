@@ -1,27 +1,43 @@
-## Problème
+## Diagnostic
 
-Quand on clique « COMMENCER » sur la séance planifiée, le launcher (`src/routes/_authenticated.membre.logger.tsx`) :
+L'écran noir « This page didn't load » est le **fallback de secours du worker** (`src/lib/error-page.ts`) : il s'affiche quand le rendu serveur lève une erreur catastrophique. Il apparaît uniquement sur le domaine publié, jamais en preview.
 
-1. **Reprend systématiquement** la dernière séance `in_progress` du membre, **sans tenir compte** du paramètre `?day=…` qu'on vient de passer. Donc si une vieille séance traîne en `in_progress`, on est redirigé dessus au lieu de lancer celle choisie dans le planning.
-2. Quand il crée bien une nouvelle séance, il n'écrit **pas** le `day_number` correspondant au `day_label`. Or `src/routes/_authenticated.membre.seance.$sessionId.tsx` cherche les exercices via `structure.weeks[week_number-1].days[day_number-1]` ; sans `day_number`, il retombe sur le jour 0, puis sur `DEFAULT_EXERCISES` (Tractions / Row barre / Face pull / Curl) — qui n'a rien à voir avec la séance du programme.
+Deux signaux concordants :
 
-## Correctif (uniquement `src/routes/_authenticated.membre.logger.tsx`)
+1. **Console** : `null is not an object (evaluating 'dispatcher.useContext')` — symptôme typique d'un crash React au tout début du rendu (hook appelé sans contexte React valide).
+2. **Runtime** : `React error #418` — *Hydration failed because the server rendered HTML didn't match the client*.
 
-1. **Résoudre la séance demandée à partir du programme assigné** : lire l'`assignment` actif du membre + `programs.structure`, retrouver dans `structure.weeks[search.week ?? currentWeek].days` l'index dont `label === search.day`. Cet index (1-based) sert de `day_number`. Si rien ne matche, on garde `day_number = null` et `session_label = search.day`.
+La cause la plus probable est un **mismatch d'hydratation** sur l'élément `<html>` :
 
-2. **Gérer la séance `in_progress` existante** :
-   - Si `search.day` est fourni :
-     - S'il existe une `in_progress`, **la mettre à jour** (`session_label`, `program_id`, `week_number`, `day_number`) puis naviguer dessus — pas de doublon, et on lance bien la séance choisie.
-     - Sinon, INSERT avec les bons champs (`program_id`, `week_number`, `day_number`, `session_label`).
-   - Si `search.day` n'est **pas** fourni : conserver le comportement actuel (reprise de l'`in_progress` si présente, sinon création « Séance libre »).
+- `src/routes/__root.tsx` injecte un script `themeBootstrapScript` qui, au tout début du chargement, **mute `document.documentElement.classList`** (`theme-light` / `theme-dark` / `dark`) en lisant `localStorage`.
+- Le HTML SSR rendu, lui, sort `<html lang="fr">` **sans aucune de ces classes**.
+- Au premier rendu client, React compare et lève une erreur d'hydratation. En production minifiée, React démonte tout l'arbre → `dispatcher` devient null → tous les `useContext` (`QueryClientProvider`, `ThemeProvider`, Router) explosent → le worker renvoie le fallback HTML.
 
-3. Ne pas toucher au reste du code (Dashboard, Planning, page séance, Logger.jsx mock).
+Cela explique parfaitement pourquoi :
+- ça se produit **partout** (la racine `<html>` plante tout l'arbre, peu importe la route),
+- c'est **sporadique** (dépend de l'état de `localStorage` et du media query `prefers-color-scheme` au moment du load),
+- ça ne se voit **pas en preview** (le build dev n'est pas minifié et tolère les warnings d'hydratation — React les transforme en hard error uniquement en prod).
+
+## Correctif
+
+Édition ciblée d'un seul fichier : `src/routes/__root.tsx`.
+
+1. Ajouter `suppressHydrationWarning` sur le `<html>` et sur le `<body>` dans `RootShell` — c'est la recommandation officielle TanStack (cf. knowledge `tanstack-ssr-head`) dès qu'un script pre-hydratation modifie l'élément.
+2. S'assurer que le script de bootstrap thème s'exécute bien **avant** `<HeadContent />` (déjà le cas).
+3. Vérifier qu'aucun autre script pre-hydratation ne mute le DOM sans suppression de warning.
+
+## Vérification après correctif
+
+- Recharger `app.colosmartraining.fr` plusieurs fois (avec `localStorage.cst-theme` à `light`, `dark`, et vide) → plus d'écran noir.
+- Console : plus de `dispatcher.useContext` ni de React error #418.
+- Récupérer les logs worker publiés (`stack_modern--server-function-logs deployment=published`) pour confirmer qu'aucune SSR exception ne reste — si une autre cause apparaît dans les logs, on traite en suivant le même pattern.
 
 ## Hors scope
 
 - Pas de changement de schéma DB ni de RLS.
-- Pas de modification de la page `seance/$sessionId.tsx` : une fois `program_id`, `week_number` et `day_number` correctement renseignés, elle charge déjà les bons exercices.
+- Pas de modification du provider thème, du routeur, du worker, ni des routes membre/coach.
+- Pas de toucher à `src/lib/error-page.ts` ni à `src/server.ts` — le fallback fonctionne déjà comme prévu, on supprime juste la cause du crash en amont.
 
-## Fichiers modifiés
+## Fichier modifié
 
-- `src/routes/_authenticated.membre.logger.tsx`
+- `src/routes/__root.tsx`
