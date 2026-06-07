@@ -69,11 +69,20 @@ function SessionLauncher() {
         const weekNumber = search.week ?? currentWeek;
 
         // Resolve day_number (1-based) from day_label within the program week
+        const normalize = (s: string) =>
+          s
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/\s+/g, " ")
+            .trim()
+            .toLowerCase();
+
         let dayNumber: number | null = null;
         let sessionLabel: string | null = search.day ?? null;
         if (search.day && structure?.weeks?.[weekNumber]?.days) {
+          const target = normalize(search.day);
           const idx = structure.weeks[weekNumber].days!.findIndex(
-            (d) => (d?.label ?? "").trim().toLowerCase() === search.day!.trim().toLowerCase(),
+            (d) => normalize(d?.label ?? "") === target,
           );
           if (idx >= 0) {
             dayNumber = idx + 1;
@@ -93,6 +102,14 @@ function SessionLauncher() {
 
         // Case A: a specific session was picked
         if (search.day) {
+          if (dayNumber == null) {
+            // Label didn't match the program structure — don't create a stub session.
+            setError(
+              `Le jour « ${search.day} » n'existe pas dans le programme (semaine ${weekNumber + 1}). Choisis une séance du programme ou demande à ton coach.`,
+            );
+            return;
+          }
+
           if (existing?.id) {
             // Realign the existing in-progress session to the chosen one.
             await supabase
@@ -128,6 +145,7 @@ function SessionLauncher() {
           navigate({ to: "/membre/seance/$sessionId", params: { sessionId: created.id } });
           return;
         }
+
 
         // Case B: no explicit choice → resume in-progress if any, else go to choice screen.
         if (existing?.id) {
