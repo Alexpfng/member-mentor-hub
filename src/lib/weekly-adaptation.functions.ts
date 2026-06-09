@@ -147,6 +147,7 @@ export const getMemberWeekContext = createServerFn({ method: "POST" })
     z.object({
       memberId: z.string().uuid(),
       weekNumber: z.number().int().min(0).max(200).optional(),
+      weekId: z.string().uuid().optional(),
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
@@ -162,34 +163,34 @@ export const getMemberWeekContext = createServerFn({ method: "POST" })
       .limit(1)
       .maybeSingle();
 
-    // Determine target week: arg or last week in history + 1 (search by member_id)
-    let targetWeek = data.weekNumber;
-    if (targetWeek == null) {
+    // ── Step 1: resolve the target week row ─────────────────────────────────
+    // Priority A — direct UUID lookup (never fails due to assignment mismatch)
+    const byIdResult = data.weekId
+      ? await supabaseAdmin.from("assignment_weeks").select("*").eq("id", data.weekId).eq("member_id", data.memberId).maybeSingle()
+      : { data: null };
+
+    // Priority B — find by member + week_number
+    let targetWeek: number = data.weekNumber ?? -1;
+    if (!byIdResult.data && targetWeek === -1) {
       const { data: last } = await supabaseAdmin
-        .from("assignment_weeks")
-        .select("week_number")
-        .eq("member_id", data.memberId)
-        .in("status", ["published", "in_progress", "done"])
-        .order("week_number", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .from("assignment_weeks").select("week_number").eq("member_id", data.memberId)
+        .in("status", ["published", "in_progress", "done"]).order("week_number", { ascending: false }).limit(1).maybeSingle();
       targetWeek = (last?.week_number ?? 0) + 1;
       if (targetWeek === 0) targetWeek = 1;
+    } else if (!byIdResult.data) {
+      // targetWeek already set from data.weekNumber
+    } else {
+      targetWeek = byIdResult.data.week_number;
     }
 
-    // Find existing row by member + week number (NOT filtered by current assignment)
-    const { data: existing } = await supabaseAdmin
-      .from("assignment_weeks")
-      .select("*")
-      .eq("member_id", data.memberId)
-      .eq("week_number", targetWeek)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const byNumberResult = !byIdResult.data
+      ? await supabaseAdmin.from("assignment_weeks").select("*").eq("member_id", data.memberId).eq("week_number", targetWeek).order("created_at", { ascending: false }).limit(1).maybeSingle()
+      : { data: null };
 
-    let weekRow = existing;
+    let weekRow = byIdResult.data ?? byNumberResult.data;
+
+    // Priority C — create new week (needs active assignment)
     if (!weekRow) {
-      // Need active assignment to create a new week
       if (!assignment) throw new Error("Aucun programme actif pour ce membre. Assigne d'abord un programme.");
       const src = await resolveSourceWeek(assignment.id, targetWeek);
       const { data: created, error } = await supabaseAdmin
@@ -204,18 +205,16 @@ export const getMemberWeekContext = createServerFn({ method: "POST" })
           status: "draft",
           created_by: context.userId,
         })
-        .select("*")
-        .single();
+        .select("*").single();
       if (error) throw new Error(error.message);
       weekRow = created;
     } else {
-      // Auto-populate empty structure from program (happens when week was created before program was built)
+      // Auto-populate empty structure from program
       const hasContent = (weekRow.structure as WeekStructure)?.days?.some((d) => (d.exercises ?? []).length > 0);
       if (!hasContent && assignment) {
         const src = await resolveSourceWeek(assignment.id, targetWeek);
         if ((src.structure.days ?? []).some((d) => (d.exercises ?? []).length > 0)) {
-          await supabaseAdmin
-            .from("assignment_weeks")
+          await supabaseAdmin.from("assignment_weeks")
             .update({ structure: src.structure as unknown as never, based_on_week: src.basedOn })
             .eq("id", weekRow.id);
           weekRow = { ...weekRow, structure: src.structure as unknown as never, based_on_week: src.basedOn };

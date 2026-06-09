@@ -249,11 +249,11 @@ export default function WeeksManagerPanel({ memberId }: { memberId: string }) {
   }
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [memberId]);
 
-  function openAdapter(week?: number) {
+  function openAdapter(week?: number, weekId?: string) {
     navigate({
       to: "/coach/membre/$memberId/adapter",
       params: { memberId },
-      search: week != null ? { week } : {},
+      search: { ...(week != null ? { week } : {}), ...(weekId ? { weekId } : {}) },
     });
   }
 
@@ -341,9 +341,9 @@ export default function WeeksManagerPanel({ memberId }: { memberId: string }) {
                           : "—"}
                     </div>
                   </div>
-                  {/* Edit/consult button */}
+                  {/* Edit/consult button — passes UUID directly, no assignment lookup */}
                   <button
-                    onClick={() => openAdapter(w.week_number)}
+                    onClick={() => openAdapter(w.week_number, w.id)}
                     className={`cst-btn cst-btn-sm ${w.status === "done" ? "cst-btn-ghost-dark" : "cst-btn-primary"}`}
                     title={w.status === "published" || w.status === "in_progress" ? "Modifier la semaine publiée" : "Ouvrir l'éditeur"}
                     style={w.status === "done" ? { opacity: 0.5 } : undefined}

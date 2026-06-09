@@ -129,7 +129,7 @@ function ColorPicker({ value, onChange }: { value: string | null | undefined; on
 
 export default function AdapterSemaine() {
   const { memberId } = useParams({ from: "/_authenticated/coach/membre/$memberId/adapter" });
-  const search = useSearch({ from: "/_authenticated/coach/membre/$memberId/adapter" }) as { week?: number };
+  const search = useSearch({ from: "/_authenticated/coach/membre/$memberId/adapter" }) as { week?: number; weekId?: string };
   const navigate = useNavigate();
   const fetchCtx = useServerFn(getMemberWeekContext);
   const saveFn = useServerFn(saveDraftWeek);
@@ -159,7 +159,7 @@ export default function AdapterSemaine() {
     setLoading(true);
     setErr(null);
     try {
-      const c = await fetchCtx({ data: { memberId, weekNumber: search.week } });
+      const c = await fetchCtx({ data: { memberId, weekNumber: search.week, weekId: search.weekId } });
       setCtx(c);
       setStructure((c.week.structure as WeekStructure) ?? { days: [] });
       const isAlreadyPublished = ["published", "in_progress"].includes(c.week.status);
