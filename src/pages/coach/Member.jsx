@@ -105,6 +105,7 @@ import { getMemberDetail, updateMemberNotes, updateMemberProfile, assignProgram,
 import { VideoReviewPanel } from '../../components/coach/VideoReviewPanel';
 import MemberFollowupTab from '../../components/coach/MemberFollowupTab';
 import WeeksManagerPanel from '../../components/coach/WeeksManagerPanel';
+import { buildCoachMemberAdapterHref } from '../../lib/coach-navigation';
 import { supabase } from '@/integrations/supabase/client';
 
 function daysBetween(a, b) {
@@ -356,21 +357,22 @@ export default function CoachMember() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
               <button className="cst-btn cst-btn-primary cst-btn-sm" onClick={() => navigate({ to: '/coach/messages', search: { partner: memberId } })}>MESSAGE →</button>
               {data.program && currentWeek && (
-                <button
+                <a
+                  href={buildCoachMemberAdapterHref({ memberId, week: currentWeek })}
                   className="cst-btn cst-btn-primary cst-btn-sm"
-                  style={{ background: 'rgba(212,168,46,0.18)', border: '1px solid rgba(212,168,46,0.5)', color: '#D4A82E' }}
-                  onClick={() => navigate({ to: '/coach/membre/$memberId/adapter', params: { memberId }, search: { week: currentWeek } })}
+                  style={{ background: 'rgba(212,168,46,0.18)', border: '1px solid rgba(212,168,46,0.5)', color: '#D4A82E', textDecoration: 'none' }}
                 >
                   ✏ ADAPTER S{String(currentWeek).padStart(2,'0')} →
-                </button>
+                </a>
               )}
               {data.program && (
-                <button
+                <a
+                  href={buildCoachMemberAdapterHref({ memberId })}
                   className="cst-btn cst-btn-ghost-dark cst-btn-sm"
-                  onClick={() => navigate({ to: '/coach/membre/$memberId/adapter', params: { memberId } })}
+                  style={{ textDecoration: 'none' }}
                 >
                   + SEMAINE SUIVANTE
-                </button>
+                </a>
               )}
             </div>
           </div>

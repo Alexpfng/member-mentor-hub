@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMemberFollowup, getMemberCharts, markSessionSeen } from "@/lib/coach-dashboard.functions";
 import { resolvePainReport } from "@/lib/pain-reports.functions";
 import { timeAgo } from "@/lib/format";
+import { buildCoachMemberAdapterHref } from "@/lib/coach-navigation";
 import AdherenceChart from "./AdherenceChart";
 import RpeChart from "./RpeChart";
 import ExerciseProgressionChart from "./ExerciseProgressionChart";
@@ -56,12 +57,13 @@ export default function MemberFollowupTab({ memberId }: { memberId: string }) {
     <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
       {/* Quick action: adapter S+1 */}
       <div style={{ display: "flex", justifyContent: "flex-end" }}>
-        <button
+        <a
           className="cst-btn cst-btn-primary"
-          onClick={() => navigate({ to: "/coach/membre/$memberId/adapter", params: { memberId } })}
+          href={buildCoachMemberAdapterHref({ memberId })}
+          style={{ textDecoration: "none" }}
         >
           ADAPTER S+1 →
-        </button>
+        </a>
       </div>
       {/* KPIs */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>

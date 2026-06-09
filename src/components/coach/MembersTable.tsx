@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { getMembersOverview } from "@/lib/coach-dashboard.functions";
 import { timeAgo } from "@/lib/format";
+import { buildCoachMemberAdapterHref } from "@/lib/coach-navigation";
 import { CSTAvatar } from "@/components/Atoms";
 
 type SortKey = "alert" | "name" | "adherence" | "last";
@@ -71,7 +72,7 @@ export default function MembersTable() {
                 <td style={{ padding: "12px 12px", fontSize: 12, color: dot }}>{r.statusLabel}</td>
                 <td style={{ padding: "12px 12px", textAlign: "right" }} onClick={(e) => e.stopPropagation()}>
                   <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
-                    <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" onClick={() => navigate({ to: "/coach/membre/$memberId/adapter", params: { memberId: r.memberId } })}>ADAPTER S+1</button>
+                    <a className="cst-btn cst-btn-ghost-dark cst-btn-sm" href={buildCoachMemberAdapterHref({ memberId: r.memberId })} style={{ textDecoration: "none" }}>ADAPTER S+1</a>
                     <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" onClick={() => navigate({ to: "/coach/membre/$memberId", params: { memberId: r.memberId } })}>VOIR</button>
                   </div>
                 </td>

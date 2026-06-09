@@ -4,7 +4,7 @@ import AdapterSemaine from "@/pages/coach/AdapterSemaine";
 
 const searchSchema = z.object({
   week: z.coerce.number().int().min(0).max(200).optional(),
-  weekId: z.string().uuid().optional(),
+  weekId: z.string().optional(),
 });
 
 export const Route = createFileRoute("/_authenticated/coach/membre/$memberId/adapter")({

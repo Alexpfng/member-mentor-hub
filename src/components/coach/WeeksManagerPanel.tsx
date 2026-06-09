@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import {
   listMemberWeekHistory,
@@ -8,6 +7,7 @@ import {
   generateWeekFromSessions,
   deleteWeek,
 } from "@/lib/weekly-adaptation.functions";
+import { buildCoachMemberAdapterHref } from "@/lib/coach-navigation";
 
 type WeekRow = {
   id: string;
@@ -231,7 +231,6 @@ function GenerateModal({
 // ─── Main component ──────────────────────────────────────────────────────────
 
 export default function WeeksManagerPanel({ memberId }: { memberId: string }) {
-  const navigate = useNavigate();
   const listFn = useServerFn(listMemberWeekHistory);
   const dupFn = useServerFn(duplicateWeekTo);
   const delFn = useServerFn(deleteWeek);
@@ -252,12 +251,14 @@ export default function WeeksManagerPanel({ memberId }: { memberId: string }) {
   }
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [memberId]);
 
+  function adapterHref(week?: number, weekId?: string) {
+    return buildCoachMemberAdapterHref({ memberId, week, weekId });
+  }
+
   function openAdapter(week?: number, weekId?: string) {
-    navigate({
-      to: "/coach/membre/$memberId/adapter",
-      params: { memberId },
-      search: { ...(week != null ? { week } : {}), ...(weekId ? { weekId } : {}) },
-    });
+    if (typeof window !== "undefined") {
+      window.location.assign(adapterHref(week, weekId));
+    }
   }
 
   const nextWeek = weeks.length > 0 ? Math.max(...weeks.map((w) => w.week_number)) + 1 : 1;
@@ -309,13 +310,13 @@ export default function WeeksManagerPanel({ memberId }: { memberId: string }) {
             >
               📊 Depuis séances
             </button>
-            <button
-              onClick={() => openAdapter(nextWeek)}
+            <a
+              href={adapterHref(nextWeek)}
               className="cst-btn cst-btn-primary cst-btn-sm"
-              style={{ whiteSpace: "nowrap" }}
+              style={{ whiteSpace: "nowrap", textDecoration: "none" }}
             >
               + SEMAINE S{String(nextWeek).padStart(2, "0")}
-            </button>
+            </a>
           </div>
         </div>
 
@@ -359,14 +360,14 @@ export default function WeeksManagerPanel({ memberId }: { memberId: string }) {
                     </div>
                   </div>
                   {/* Adapt / consult button */}
-                  <button
-                    onClick={() => openAdapter(w.week_number, w.id)}
+                  <a
+                    href={adapterHref(w.week_number, w.id)}
                     className={`cst-btn cst-btn-sm ${w.status === "done" ? "cst-btn-ghost-dark" : "cst-btn-primary"}`}
                     title={w.status === "published" || w.status === "in_progress" ? "Modifier la semaine publiée" : "Ouvrir l'éditeur"}
-                    style={w.status === "done" ? { opacity: 0.5 } : undefined}
+                    style={{ ...(w.status === "done" ? { opacity: 0.5 } : {}), textDecoration: "none" }}
                   >
                     {w.status === "published" || w.status === "in_progress" ? "✏ Modifier" : w.status === "done" ? "Consulter" : "Adapter"}
-                  </button>
+                  </a>
                   {/* Duplicate button */}
                   <button
                     onClick={() => duplicateTo(w.id, nextWeek)}

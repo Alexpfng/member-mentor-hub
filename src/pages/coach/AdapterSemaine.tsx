@@ -10,6 +10,7 @@ import {
   publishWeek,
   previewWeekChanges,
 } from "@/lib/weekly-adaptation.functions";
+import { normalizeWeekId } from "@/lib/coach-navigation";
 
 type ProgExercise = {
   code?: string | null;
@@ -138,6 +139,7 @@ function emptySession(index: number): DayStructure {
 export default function AdapterSemaine() {
   const { memberId } = useParams({ from: "/_authenticated/coach/membre/$memberId/adapter" });
   const search = useSearch({ from: "/_authenticated/coach/membre/$memberId/adapter" }) as { week?: number; weekId?: string };
+  const safeWeekId = normalizeWeekId(search.weekId);
   const navigate = useNavigate();
   const fetchCtx = useServerFn(getMemberWeekContext);
   const saveFn = useServerFn(saveDraftWeek);
@@ -167,7 +169,7 @@ export default function AdapterSemaine() {
     setLoading(true);
     setErr(null);
     try {
-      const c = await fetchCtx({ data: { memberId, weekNumber: search.week, weekId: search.weekId } });
+      const c = await fetchCtx({ data: { memberId, weekNumber: search.week, ...(safeWeekId ? { weekId: safeWeekId } : {}) } });
       setCtx(c);
       setStructure((c.week.structure as WeekStructure) ?? { days: [] });
       const isAlreadyPublished = ["published", "in_progress"].includes(c.week.status);
@@ -182,7 +184,7 @@ export default function AdapterSemaine() {
       setLoading(false);
     }
   }
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [memberId, search.week, search.weekId]);
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [memberId, search.week, safeWeekId]);
 
   // Auto-save with debounce
   useEffect(() => {
