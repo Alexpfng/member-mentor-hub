@@ -13,7 +13,7 @@ export default function MultiWeekDuplicateModal({
   weekId: string;
   currentWeek: number;
   onClose: () => void;
-  onCreated: (firstWeekNumber: number) => void;
+  onCreated: (firstWeekNumber: number, firstWeekId?: string) => void;
 }) {
   const dupFn = useServerFn(duplicateWeekTo);
   const choices = [1, 2, 3, 4, 5];
@@ -44,7 +44,7 @@ export default function MultiWeekDuplicateModal({
       if (r.created.length === 0) {
         alert("Toutes les semaines ciblées existent déjà.");
       } else {
-        onCreated(r.created[0].weekNumber);
+        onCreated(r.created[0].weekNumber, r.created[0].id);
       }
       onClose();
     } catch (e) {

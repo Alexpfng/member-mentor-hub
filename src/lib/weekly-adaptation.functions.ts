@@ -315,8 +315,8 @@ function computeChanges(prev: WeekStructure | null, next: WeekStructure): Array<
   for (let i = 0; i < Math.max(prevDays.length, nextDays.length); i++) {
     const pd = prevDays[i];
     const nd = nextDays[i];
-    if (!pd && nd) { changes.push({ type: "day_added", label: `Jour ajouté : ${nd.label ?? `J${i + 1}`}` }); continue; }
-    if (pd && !nd) { changes.push({ type: "day_removed", label: `Jour retiré : ${pd.label ?? `J${i + 1}`}` }); continue; }
+    if (!pd && nd) { changes.push({ type: "day_added", label: `Séance ajoutée : ${nd.label ?? `Séance ${i + 1}`}` }); continue; }
+    if (pd && !nd) { changes.push({ type: "day_removed", label: `Séance retirée : ${pd.label ?? `Séance ${i + 1}`}` }); continue; }
     if (!pd || !nd) continue;
 
     const prevByName = new Map((pd.exercises ?? []).map((e) => [e.name, e]));
@@ -325,7 +325,7 @@ function computeChanges(prev: WeekStructure | null, next: WeekStructure): Array<
     for (const [name, ex] of nextByName) {
       const old = prevByName.get(name);
       if (!old) {
-        changes.push({ type: "exo_added", label: `${nd.label ?? `J${i + 1}`} : + ${name}` });
+        changes.push({ type: "exo_added", label: `${nd.label ?? `Séance ${i + 1}`} : + ${name}` });
         continue;
       }
       if (String(ex.charge ?? "") !== String(old.charge ?? "")) {
@@ -340,7 +340,7 @@ function computeChanges(prev: WeekStructure | null, next: WeekStructure): Array<
     }
     for (const [name] of prevByName) {
       if (!nextByName.has(name)) {
-        changes.push({ type: "exo_removed", label: `${nd.label ?? `J${i + 1}`} : − ${name}` });
+        changes.push({ type: "exo_removed", label: `${nd.label ?? `Séance ${i + 1}`} : − ${name}` });
       }
     }
   }
@@ -658,7 +658,7 @@ export const generateWeekFromSessions = createServerFn({ method: "POST" })
       const label =
         s.session_type === "free"
           ? (s.free_title ?? "Séance libre")
-          : (s.session_label ?? `Jour ${s.day_number ?? "?"}`);
+          : (s.session_label ?? `Séance ${s.day_number ?? "?"}`);
 
       return { label, exercises };
     });
@@ -777,4 +777,3 @@ export const replaceExercise = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true, structure };
   });
-

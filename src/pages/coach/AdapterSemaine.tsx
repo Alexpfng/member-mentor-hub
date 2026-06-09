@@ -125,6 +125,14 @@ function ColorPicker({ value, onChange }: { value: string | null | undefined; on
   );
 }
 
+function sessionLabel(index: number) {
+  return `Séance ${index + 1}`;
+}
+
+function emptySession(index: number): DayStructure {
+  return { label: sessionLabel(index), exercises: [] };
+}
+
 
 
 export default function AdapterSemaine() {
@@ -174,7 +182,7 @@ export default function AdapterSemaine() {
       setLoading(false);
     }
   }
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [memberId, search.week]);
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [memberId, search.week, search.weekId]);
 
   // Auto-save with debounce
   useEffect(() => {
@@ -223,6 +231,9 @@ export default function AdapterSemaine() {
   function removeDay(dayIdx: number) {
     setStructure((s) => ({ ...s, days: (s.days ?? []).filter((_, i) => i !== dayIdx) }));
     setConfirmDeleteDay(null);
+  }
+  function addDay() {
+    setStructure((s) => ({ ...s, days: [...(s.days ?? []), emptySession(s.days?.length ?? 0)] }));
   }
   function toggleExoExpand(key: string) {
     setExpandedExos((prev) => {
@@ -352,20 +363,20 @@ export default function AdapterSemaine() {
           </div>
         </div>
 
-        {/* Jours */}
+        {/* Séances */}
         {(structure.days ?? []).length === 0 && (
           <div className="cst-card-dark" style={{ padding: 28, textAlign: "center" }}>
             <div className="cst-display" style={{ fontSize: 18, marginBottom: 8 }}>Semaine vide</div>
             <div style={{ fontSize: 13, opacity: 0.65, marginBottom: 20, lineHeight: 1.5 }}>
               Cette semaine n'a pas encore de séances.<br />
-              Commence en ajoutant un jour, ou génère depuis les séances passées.
+              Commence en ajoutant une séance, ou génère depuis les séances passées.
             </div>
             <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
               <button
-                onClick={() => setStructure((s) => ({ ...s, days: [{ label: "Jour 1", exercises: [] }] }))}
+                onClick={() => setStructure((s) => ({ ...s, days: [emptySession(0)] }))}
                 className="cst-btn cst-btn-primary"
               >
-                + Ajouter un premier jour
+                + Ajouter une première séance
               </button>
               <button
                 onClick={() => navigate({ to: "/coach/membre/$memberId", params: { memberId } })}
@@ -381,29 +392,36 @@ export default function AdapterSemaine() {
           <div key={di} className="cst-card-dark" style={{ padding: 16, marginBottom: 14 }}>
             {/* Day header */}
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-              <input
-                value={day.label ?? ""}
-                onChange={(e) => setStructure((s) => {
-                  const days = [...(s.days ?? [])];
-                  days[di] = { ...days[di], label: e.target.value };
-                  return { ...s, days };
-                })}
-                className="cst-display"
-                style={{ flex: 1, background: "transparent", border: "none", color: "var(--cst-text)", fontSize: 18 }}
-              />
+              <div style={{ flex: 1, minWidth: 180 }}>
+                <div className="cst-mono" style={{ fontSize: 9, letterSpacing: "0.14em", opacity: 0.5, marginBottom: 4 }}>
+                  SÉANCE {String(di + 1).padStart(2, "0")}
+                </div>
+                <input
+                  value={day.label ?? ""}
+                  onChange={(e) => setStructure((s) => {
+                    const days = [...(s.days ?? [])];
+                    days[di] = { ...days[di], label: e.target.value };
+                    return { ...s, days };
+                  })}
+                  aria-label={`Nom de la séance ${di + 1}`}
+                  placeholder={sessionLabel(di)}
+                  className="cst-display"
+                  style={{ width: "100%", background: "transparent", border: "none", color: "var(--cst-text)", fontSize: 18 }}
+                />
+              </div>
               {confirmDeleteDay === di ? (
                 <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                  <span style={{ fontSize: 11, opacity: 0.7 }}>Supprimer ce jour ?</span>
-                  <button onClick={() => removeDay(di)} style={{ background: "#C44A3A", border: "none", color: "#fff", borderRadius: 6, padding: "4px 10px", fontSize: 11, cursor: "pointer" }}>Oui</button>
-                  <button onClick={() => setConfirmDeleteDay(null)} style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)", color: "var(--cst-text-soft)", borderRadius: 6, padding: "4px 10px", fontSize: 11, cursor: "pointer" }}>Non</button>
+                  <span style={{ fontSize: 11, opacity: 0.7 }}>Supprimer cette séance ?</span>
+                  <button onClick={() => removeDay(di)} style={{ background: "#C44A3A", border: "none", color: "#fff", borderRadius: 6, padding: "4px 10px", fontSize: 11, cursor: "pointer" }}>Supprimer</button>
+                  <button onClick={() => setConfirmDeleteDay(null)} style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)", color: "var(--cst-text-soft)", borderRadius: 6, padding: "4px 10px", fontSize: 11, cursor: "pointer" }}>Garder</button>
                 </div>
               ) : (
                 <button
                   onClick={() => setConfirmDeleteDay(di)}
                   style={{ background: "transparent", border: "1px solid rgba(196,74,58,0.3)", color: "#C44A3A", borderRadius: 6, padding: "4px 10px", fontSize: 11, cursor: "pointer", whiteSpace: "nowrap" }}
-                  title="Supprimer ce jour"
+                  title="Supprimer cette séance"
                 >
-                  🗑 Jour
+                  Supprimer séance
                 </button>
               )}
             </div>
@@ -422,6 +440,8 @@ export default function AdapterSemaine() {
                     <input
                       value={ex.name}
                       onChange={(e) => updateExo(di, ei, (x) => ({ ...x, name: e.target.value }))}
+                      aria-label={`Nom de l'exercice ${ei + 1} de la séance ${di + 1}`}
+                      placeholder="Nom de l'exercice"
                       style={{ flex: 1, minWidth: 100, background: "transparent", border: "none", color: "var(--cst-text)", fontSize: 14, fontWeight: 600 }}
                     />
                     {ex.block_type === "emom" ? (
@@ -438,20 +458,32 @@ export default function AdapterSemaine() {
                         />
                       </label>
                     ) : (
-                      <input value={String(ex.series ?? "")} onChange={(e) => updateExo(di, ei, (x) => ({ ...x, series: e.target.value }))} placeholder="séries" style={{ width: 55 }} className="cst-input" />
+                      <label style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                        <span className="cst-mono" style={{ fontSize: 8, opacity: 0.5, letterSpacing: "0.1em" }}>SÉRIES</span>
+                        <input value={String(ex.series ?? "")} onChange={(e) => updateExo(di, ei, (x) => ({ ...x, series: e.target.value }))} placeholder="3" style={{ width: 62 }} className="cst-input" />
+                      </label>
                     )}
-                    <input value={String(ex.reps ?? "")} onChange={(e) => updateExo(di, ei, (x) => ({ ...x, reps: e.target.value }))} placeholder={ex.block_type === "emom" ? "reps/min" : "reps"} style={{ width: 55 }} className="cst-input" />
-                    <input value={ex.charge ?? ""} onChange={(e) => updateExo(di, ei, (x) => ({ ...x, charge: e.target.value }))} placeholder="kg" style={{ width: 65 }} className="cst-input" />
-                    <input value={String(ex.rpe_target ?? "")} onChange={(e) => updateExo(di, ei, (x) => ({ ...x, rpe_target: e.target.value }))} placeholder="RPE" style={{ width: 45 }} className="cst-input" />
+                    <label style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                      <span className="cst-mono" style={{ fontSize: 8, opacity: 0.5, letterSpacing: "0.1em" }}>{ex.block_type === "emom" ? "REPS/MIN" : "REPS"}</span>
+                      <input value={String(ex.reps ?? "")} onChange={(e) => updateExo(di, ei, (x) => ({ ...x, reps: e.target.value }))} placeholder={ex.block_type === "emom" ? "10/min" : "10"} style={{ width: 72 }} className="cst-input" />
+                    </label>
+                    <label style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                      <span className="cst-mono" style={{ fontSize: 8, opacity: 0.5, letterSpacing: "0.1em" }}>POIDS</span>
+                      <input value={ex.charge ?? ""} onChange={(e) => updateExo(di, ei, (x) => ({ ...x, charge: e.target.value }))} placeholder="kg" style={{ width: 72 }} className="cst-input" />
+                    </label>
+                    <label style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                      <span className="cst-mono" style={{ fontSize: 8, opacity: 0.5, letterSpacing: "0.1em" }}>RPE</span>
+                      <input value={String(ex.rpe_target ?? "")} onChange={(e) => updateExo(di, ei, (x) => ({ ...x, rpe_target: e.target.value }))} placeholder="8" style={{ width: 58 }} className="cst-input" />
+                    </label>
                     <button
                       onClick={() => toggleExoExpand(exoKey)}
-                      title="Tempo / Récup / Notes"
-                      style={{ background: isExpanded ? "rgba(255,255,255,0.1)" : "transparent", border: "1px solid rgba(255,255,255,0.2)", color: "var(--cst-text-soft)", borderRadius: 6, padding: "4px 8px", cursor: "pointer", fontSize: 12 }}
+                      title="Tempo, récup, notes et couleur"
+                      style={{ background: isExpanded ? "rgba(255,255,255,0.1)" : "transparent", border: "1px solid rgba(255,255,255,0.2)", color: "var(--cst-text-soft)", borderRadius: 6, padding: "7px 10px", cursor: "pointer", fontSize: 12 }}
                     >
-                      {isExpanded ? "▲" : "▼"}
+                      {isExpanded ? "Masquer" : "Détails"}
                     </button>
-                    <button onClick={() => setReplaceTarget({ dayIdx: di, exoIdx: ei, ex })} title="Remplacer l'exercice" style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)", color: "var(--cst-text-soft)", borderRadius: 6, padding: "4px 8px", cursor: "pointer", fontSize: 12 }}>⇄</button>
-                    <button onClick={() => removeExo(di, ei)} title="Supprimer l'exercice" style={{ background: "transparent", border: "1px solid rgba(196,74,58,0.4)", color: "#C44A3A", borderRadius: 6, padding: "4px 8px", cursor: "pointer", fontSize: 12 }}>🗑</button>
+                    <button onClick={() => setReplaceTarget({ dayIdx: di, exoIdx: ei, ex })} title="Remplacer l'exercice" style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)", color: "var(--cst-text-soft)", borderRadius: 6, padding: "7px 10px", cursor: "pointer", fontSize: 12 }}>Remplacer</button>
+                    <button onClick={() => removeExo(di, ei)} title="Supprimer l'exercice" style={{ background: "transparent", border: "1px solid rgba(196,74,58,0.4)", color: "#C44A3A", borderRadius: 6, padding: "7px 10px", cursor: "pointer", fontSize: 12 }}>Supprimer</button>
                   </div>
 
                   {/* Expanded details */}
@@ -469,7 +501,7 @@ export default function AdapterSemaine() {
                           />
                         </label>
                         <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                          <span className="cst-mono" style={{ fontSize: 9, opacity: 0.5, letterSpacing: "0.1em" }}>RÉCUP</span>
+                          <span className="cst-mono" style={{ fontSize: 9, opacity: 0.5, letterSpacing: "0.1em" }}>RÉCUP / TEMPS</span>
                           <input
                             value={ex.recup ?? ""}
                             onChange={(e) => updateExo(di, ei, (x) => ({ ...x, recup: e.target.value || null }))}
@@ -484,12 +516,13 @@ export default function AdapterSemaine() {
                       </div>
                       <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                         <span className="cst-mono" style={{ fontSize: 9, opacity: 0.5, letterSpacing: "0.1em" }}>NOTE POUR LE MEMBRE</span>
-                        <input
+                        <textarea
                           value={ex.coach_notes ?? ""}
                           onChange={(e) => updateExo(di, ei, (x) => ({ ...x, coach_notes: e.target.value || null }))}
                           placeholder="Conseil technique, consigne particulière…"
                           className="cst-input"
-                          style={{ width: "100%" }}
+                          rows={3}
+                          style={{ width: "100%", resize: "vertical" }}
                         />
                       </label>
                     </div>
@@ -529,11 +562,11 @@ export default function AdapterSemaine() {
         ))}
 
         <button
-          onClick={() => setStructure((s) => ({ ...s, days: [...(s.days ?? []), { label: `Jour ${(s.days?.length ?? 0) + 1}`, exercises: [] }] }))}
+          onClick={addDay}
           className="cst-btn cst-btn-ghost-dark cst-btn-sm"
           style={{ marginBottom: 24 }}
         >
-          + Ajouter un jour
+          + Ajouter une séance
         </button>
 
         {/* Footer actions */}
@@ -586,7 +619,7 @@ export default function AdapterSemaine() {
           weekId={ctx.week.id}
           currentWeek={ctx.week.week_number}
           onClose={() => setShowDuplicate(false)}
-          onCreated={(firstWeek) => navigate({ to: "/coach/membre/$memberId/adapter", params: { memberId }, search: { week: firstWeek } })}
+          onCreated={(firstWeek, firstWeekId) => navigate({ to: "/coach/membre/$memberId/adapter", params: { memberId }, search: { week: firstWeek, ...(firstWeekId ? { weekId: firstWeekId } : {}) } })}
         />
       )}
     </Shell>
@@ -610,7 +643,7 @@ function PreviewModal({ structure, weekNumber, onClose }: { structure: WeekStruc
         <h2 className="cst-display" style={{ fontSize: 22, marginBottom: 16 }}>Semaine {weekNumber}</h2>
         {(structure.days ?? []).map((d, i) => (
           <div key={i} style={{ marginBottom: 14 }}>
-            <div className="cst-display" style={{ fontSize: 14, marginBottom: 6 }}>{d.label ?? `Jour ${i + 1}`}</div>
+            <div className="cst-display" style={{ fontSize: 14, marginBottom: 6 }}>{d.label ?? sessionLabel(i)}</div>
             {(d.exercises ?? []).map((e, j) => (
               <div key={j} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid rgba(255,255,255,0.06)", fontSize: 12 }}>
                 <span>

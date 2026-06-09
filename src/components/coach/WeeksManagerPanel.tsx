@@ -53,7 +53,7 @@ function GenerateModal({
   memberId: string;
   nextWeek: number;
   onClose: () => void;
-  onGenerated: (weekNumber: number) => void;
+  onGenerated: (weekNumber: number, weekId?: string) => void;
 }) {
   const listFn = useServerFn(listMemberPastSessions);
   const genFn = useServerFn(generateWeekFromSessions);
@@ -87,7 +87,7 @@ function GenerateModal({
     setError(null);
     try {
       const r = await genFn({ data: { memberId, sessionIds: Array.from(selected) } });
-      onGenerated((r as { weekNumber: number }).weekNumber);
+      onGenerated((r as { weekNumber: number; weekId?: string }).weekNumber, (r as { weekNumber: number; weekId?: string }).weekId);
     } catch (e) {
       setError((e as Error).message);
       setBusy(false);
@@ -121,7 +121,7 @@ function GenerateModal({
             </div>
             <div className="cst-display" style={{ fontSize: 18 }}>Générer depuis séances</div>
             <div style={{ fontSize: 12, opacity: 0.55, marginTop: 4, lineHeight: 1.4 }}>
-              Sélectionne jusqu'à 7 séances · chaque séance devient un jour
+              Sélectionne jusqu'à 7 séances · chaque séance devient une séance adaptée
             </div>
           </div>
           <button
@@ -220,7 +220,7 @@ function GenerateModal({
           >
             {busy
               ? "Génération…"
-              : `Générer S${String(nextWeek).padStart(2, "0")} (${selected.size} jour${selected.size > 1 ? "s" : ""}) →`}
+              : `Générer S${String(nextWeek).padStart(2, "0")} (${selected.size} séance${selected.size > 1 ? "s" : ""}) →`}
           </button>
         </div>
       </div>
@@ -278,9 +278,10 @@ export default function WeeksManagerPanel({ memberId }: { memberId: string }) {
   async function duplicateTo(sourceWeekId: string, targetWeek: number) {
     setBusy(sourceWeekId + targetWeek);
     try {
-      await dupFn({ data: { weekId: sourceWeekId, targetWeeks: [targetWeek], progression: "identical" } });
+      const r = await dupFn({ data: { weekId: sourceWeekId, targetWeeks: [targetWeek], progression: "identical" } });
+      const created = r.created?.[0];
       await load();
-      openAdapter(targetWeek);
+      openAdapter(created?.weekNumber ?? targetWeek, created?.id);
     } catch (e) {
       alert((e as Error).message);
     } finally {
@@ -417,9 +418,9 @@ export default function WeeksManagerPanel({ memberId }: { memberId: string }) {
           memberId={memberId}
           nextWeek={nextWeek}
           onClose={() => setShowGenerateModal(false)}
-          onGenerated={(weekNum) => {
+          onGenerated={(weekNum, weekId) => {
             setShowGenerateModal(false);
-            openAdapter(weekNum);
+            openAdapter(weekNum, weekId);
           }}
         />
       )}
