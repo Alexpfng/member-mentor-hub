@@ -6,6 +6,7 @@ import {
   duplicateWeekTo,
   listMemberPastSessions,
   generateWeekFromSessions,
+  deleteWeek,
 } from "@/lib/weekly-adaptation.functions";
 
 type WeekRow = {
@@ -233,9 +234,11 @@ export default function WeeksManagerPanel({ memberId }: { memberId: string }) {
   const navigate = useNavigate();
   const listFn = useServerFn(listMemberWeekHistory);
   const dupFn = useServerFn(duplicateWeekTo);
+  const delFn = useServerFn(deleteWeek);
   const [weeks, setWeeks] = useState<WeekRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
 
   async function load() {
@@ -258,6 +261,19 @@ export default function WeeksManagerPanel({ memberId }: { memberId: string }) {
   }
 
   const nextWeek = weeks.length > 0 ? Math.max(...weeks.map((w) => w.week_number)) + 1 : 1;
+
+  async function doDeleteWeek(weekId: string) {
+    setBusy("del-" + weekId);
+    try {
+      await delFn({ data: { weekId } });
+      setConfirmDelete(null);
+      await load();
+    } catch (e) {
+      alert((e as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  }
 
   async function duplicateTo(sourceWeekId: string, targetWeek: number) {
     setBusy(sourceWeekId + targetWeek);
@@ -341,7 +357,7 @@ export default function WeeksManagerPanel({ memberId }: { memberId: string }) {
                           : "—"}
                     </div>
                   </div>
-                  {/* Edit/consult button — passes UUID directly, no assignment lookup */}
+                  {/* Adapt / consult button */}
                   <button
                     onClick={() => openAdapter(w.week_number, w.id)}
                     className={`cst-btn cst-btn-sm ${w.status === "done" ? "cst-btn-ghost-dark" : "cst-btn-primary"}`}
@@ -350,16 +366,45 @@ export default function WeeksManagerPanel({ memberId }: { memberId: string }) {
                   >
                     {w.status === "published" || w.status === "in_progress" ? "✏ Modifier" : w.status === "done" ? "Consulter" : "Adapter"}
                   </button>
-                  {/* Duplicate + adapt button */}
+                  {/* Duplicate button */}
                   <button
                     onClick={() => duplicateTo(w.id, nextWeek)}
                     disabled={busy === w.id + nextWeek}
                     className="cst-btn cst-btn-ghost-dark cst-btn-sm"
-                    title={`Dupliquer S${String(w.week_number).padStart(2, "0")} vers S${String(nextWeek).padStart(2, "0")} avec suggestions retours`}
+                    title={`Dupliquer vers S${String(nextWeek).padStart(2, "0")}`}
                     style={{ whiteSpace: "nowrap" }}
                   >
-                    {busy === w.id + nextWeek ? "…" : `⎘ → S${String(nextWeek).padStart(2, "0")}`}
+                    {busy === w.id + nextWeek ? "…" : `⎘ S${String(nextWeek).padStart(2, "0")}`}
                   </button>
+                  {/* Delete button — draft only */}
+                  {w.status === "draft" && (
+                    confirmDelete === w.id ? (
+                      <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                        <span style={{ fontSize: 10, opacity: 0.7, whiteSpace: "nowrap" }}>Supprimer ?</span>
+                        <button
+                          onClick={() => doDeleteWeek(w.id)}
+                          disabled={busy === "del-" + w.id}
+                          style={{ background: "#C44A3A", border: "none", color: "#fff", borderRadius: 6, padding: "4px 8px", fontSize: 11, cursor: "pointer" }}
+                        >
+                          {busy === "del-" + w.id ? "…" : "Oui"}
+                        </button>
+                        <button
+                          onClick={() => setConfirmDelete(null)}
+                          style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)", color: "var(--cst-text-soft)", borderRadius: 6, padding: "4px 8px", fontSize: 11, cursor: "pointer" }}
+                        >
+                          Non
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setConfirmDelete(w.id)}
+                        style={{ background: "transparent", border: "1px solid rgba(196,74,58,0.4)", color: "#C44A3A", borderRadius: 6, padding: "4px 8px", fontSize: 12, cursor: "pointer" }}
+                        title="Supprimer cette semaine brouillon"
+                      >
+                        🗑
+                      </button>
+                    )
+                  )}
                 </div>
               );
             })}

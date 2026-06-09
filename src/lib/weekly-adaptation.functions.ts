@@ -692,6 +692,23 @@ export const generateWeekFromSessions = createServerFn({ method: "POST" })
   });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Delete a draft week (only brouillon weeks can be deleted)
+// ─────────────────────────────────────────────────────────────────────────────
+export const deleteWeek = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ weekId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await requireCoach(context.userId);
+    const { data: week } = await supabaseAdmin
+      .from("assignment_weeks").select("status, member_id").eq("id", data.weekId).maybeSingle();
+    if (!week) throw new Error("Semaine introuvable.");
+    if (week.status !== "draft") throw new Error("Seules les semaines BROUILLON peuvent être supprimées.");
+    const { error } = await supabaseAdmin.from("assignment_weeks").delete().eq("id", data.weekId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+// ─────────────────────────────────────────────────────────────────────────────
 // List versioned weeks history for a member
 // ─────────────────────────────────────────────────────────────────────────────
 export const listMemberWeekHistory = createServerFn({ method: "POST" })
