@@ -509,6 +509,165 @@ export const duplicateProgramForMember = createServerFn({ method: "POST" })
   });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// List past completed sessions for history-based generation
+// ─────────────────────────────────────────────────────────────────────────────
+export const listMemberPastSessions = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ memberId: z.string().uuid(), limit: z.number().int().min(1).max(30).optional() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await requireCoach(context.userId);
+
+    const { data: sessions } = await supabaseAdmin
+      .from("sessions")
+      .select("id, session_label, week_number, day_number, ended_at, session_type, free_title, average_rpe")
+      .eq("member_id", data.memberId)
+      .eq("status", "completed")
+      .order("ended_at", { ascending: false })
+      .limit(data.limit ?? 20);
+
+    const ids = (sessions ?? []).map((s) => s.id);
+    const exoCountBySession = new Map<string, number>();
+
+    if (ids.length) {
+      const { data: sets } = await supabaseAdmin
+        .from("set_logs")
+        .select("session_id, exercise_name")
+        .in("session_id", ids);
+
+      const exosBySession = new Map<string, Set<string>>();
+      for (const s of sets ?? []) {
+        if (!s.session_id || !s.exercise_name) continue;
+        if (!exosBySession.has(s.session_id)) exosBySession.set(s.session_id, new Set());
+        exosBySession.get(s.session_id)!.add(s.exercise_name);
+      }
+      for (const [sid, exos] of exosBySession) exoCountBySession.set(sid, exos.size);
+    }
+
+    return (sessions ?? []).map((s) => ({
+      id: s.id,
+      label: s.session_type === "free" ? (s.free_title ?? "Séance libre") : (s.session_label ?? "Séance"),
+      weekNumber: s.week_number,
+      dayNumber: s.day_number,
+      endedAt: s.ended_at,
+      averageRpe: s.average_rpe,
+      exerciseCount: exoCountBySession.get(s.id) ?? 0,
+      sessionType: s.session_type ?? "program",
+    }));
+  });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Generate a new draft week from selected past sessions (each session = 1 day)
+// ─────────────────────────────────────────────────────────────────────────────
+export const generateWeekFromSessions = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      memberId: z.string().uuid(),
+      sessionIds: z.array(z.string().uuid()).min(1).max(7),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await requireCoach(context.userId);
+
+    const { data: assignment } = await supabaseAdmin
+      .from("assignments")
+      .select("id, program_id")
+      .eq("member_id", data.memberId)
+      .eq("active", true)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!assignment) throw new Error("Aucun programme actif pour ce membre.");
+
+    const { data: sessions } = await supabaseAdmin
+      .from("sessions")
+      .select("id, session_label, free_title, session_type, week_number, day_number, ended_at")
+      .in("id", data.sessionIds)
+      .order("ended_at", { ascending: true });
+
+    const { data: setLogs } = await supabaseAdmin
+      .from("set_logs")
+      .select("session_id, exercise_name, set_number, weight_kg, reps")
+      .in("session_id", data.sessionIds)
+      .order("logged_at", { ascending: true });
+
+    // Group logs by session
+    const logsBySession = new Map<string, typeof setLogs>();
+    for (const log of setLogs ?? []) {
+      if (!logsBySession.has(log.session_id)) logsBySession.set(log.session_id, []);
+      logsBySession.get(log.session_id)!.push(log);
+    }
+
+    // Build structure: each session becomes a day
+    const orderedSessions = (sessions ?? []).filter((s) => data.sessionIds.includes(s.id));
+    const days: DayStructure[] = orderedSessions.map((s) => {
+      const logs = logsBySession.get(s.id) ?? [];
+
+      const exoOrder: string[] = [];
+      const exoData = new Map<string, { maxSets: number; maxReps: number; maxWeight: number }>();
+
+      for (const log of logs) {
+        if (!log.exercise_name) continue;
+        if (!exoData.has(log.exercise_name)) {
+          exoOrder.push(log.exercise_name);
+          exoData.set(log.exercise_name, { maxSets: 0, maxReps: 0, maxWeight: 0 });
+        }
+        const cur = exoData.get(log.exercise_name)!;
+        if ((log.set_number ?? 1) > cur.maxSets) cur.maxSets = log.set_number ?? 1;
+        if ((log.reps ?? 0) > cur.maxReps) cur.maxReps = log.reps ?? 0;
+        if (Number(log.weight_kg ?? 0) > cur.maxWeight) cur.maxWeight = Number(log.weight_kg ?? 0);
+      }
+
+      const exercises: ProgExercise[] = exoOrder.map((name) => {
+        const d = exoData.get(name)!;
+        return {
+          name,
+          series: d.maxSets > 0 ? String(d.maxSets) : null,
+          reps: d.maxReps > 0 ? String(d.maxReps) : null,
+          charge: d.maxWeight > 0 ? String(d.maxWeight) : null,
+          color: "red",
+        };
+      });
+
+      const label =
+        s.session_type === "free"
+          ? (s.free_title ?? "Séance libre")
+          : (s.session_label ?? `Jour ${s.day_number ?? "?"}`);
+
+      return { label, exercises };
+    });
+
+    const { data: lastWeek } = await supabaseAdmin
+      .from("assignment_weeks")
+      .select("week_number")
+      .eq("assignment_id", assignment.id)
+      .order("week_number", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const nextWeekNum = (lastWeek?.week_number ?? 0) + 1;
+
+    const { data: created, error } = await supabaseAdmin
+      .from("assignment_weeks")
+      .insert({
+        assignment_id: assignment.id,
+        member_id: data.memberId,
+        program_id: assignment.program_id,
+        week_number: nextWeekNum,
+        based_on_week: null,
+        structure: { days } as unknown as never,
+        status: "draft",
+        created_by: context.userId,
+      })
+      .select("id, week_number")
+      .single();
+    if (error) throw new Error(error.message);
+
+    return { weekNumber: created.week_number, weekId: created.id };
+  });
+
+// ─────────────────────────────────────────────────────────────────────────────
 // List versioned weeks history for a member
 // ─────────────────────────────────────────────────────────────────────────────
 export const listMemberWeekHistory = createServerFn({ method: "POST" })
