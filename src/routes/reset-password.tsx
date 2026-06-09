@@ -24,7 +24,7 @@ function ResetPasswordPage() {
     setLoading(false);
     if (err) { setError(err.message); return; }
     setInfo("Mot de passe mis à jour ✓");
-    setTimeout(() => navigate({ to: "/login" }), 1200);
+    setTimeout(() => navigate({ to: "/login", search: { redirect: "/" } }), 1200);
   }
 
   return (

@@ -118,7 +118,7 @@ export default function MemberProfil() {
             className="w-full py-3 rounded border border-border text-sm"
             onClick={async () => {
               await supabase.auth.signOut();
-              navigate({ to: "/login" });
+              navigate({ to: "/login", search: { redirect: "/" } });
             }}
           >
             Se déconnecter

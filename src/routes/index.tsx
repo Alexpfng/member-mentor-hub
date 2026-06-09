@@ -12,19 +12,21 @@ export const Route = createFileRoute("/")({
     // don't have the user's local session, so trying to resolve it can turn a
     // simple unauthenticated visit into a hard 500.
     if (typeof window === "undefined") {
-      throw redirect({ to: "/login" });
+      throw redirect({ to: "/login", search: { redirect: "/" } });
     }
 
     try {
-      const { data } = await supabase.auth.getUser();
-      if (!data.user) {
-        throw redirect({ to: "/login" });
+      // getSession() reads the persisted session (no network) → reliable on cold load
+      const { data: sessionData } = await supabase.auth.getSession();
+      const user = sessionData.session?.user;
+      if (!user) {
+        throw redirect({ to: "/login", search: { redirect: "/" } });
       }
 
       const { data: roleRow } = await supabase
         .from("user_roles")
         .select("role")
-        .eq("user_id", data.user.id)
+        .eq("user_id", user.id)
         .maybeSingle();
       const role = (roleRow?.role as string | undefined) ?? "member";
 
@@ -33,7 +35,7 @@ export const Route = createFileRoute("/")({
       if (error != null && typeof error === "object" && "to" in error) {
         throw error;
       }
-      throw redirect({ to: "/login" });
+      throw redirect({ to: "/login", search: { redirect: "/" } });
     }
   },
 });
