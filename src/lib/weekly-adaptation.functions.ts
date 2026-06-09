@@ -208,6 +208,19 @@ export const getMemberWeekContext = createServerFn({ method: "POST" })
         .single();
       if (error) throw new Error(error.message);
       weekRow = created;
+    } else {
+      // Auto-populate empty structure from program (happens when week was created before program was built)
+      const hasContent = (weekRow.structure as WeekStructure)?.days?.some((d) => (d.exercises ?? []).length > 0);
+      if (!hasContent && assignment) {
+        const src = await resolveSourceWeek(assignment.id, targetWeek);
+        if ((src.structure.days ?? []).some((d) => (d.exercises ?? []).length > 0)) {
+          await supabaseAdmin
+            .from("assignment_weeks")
+            .update({ structure: src.structure as unknown as never, based_on_week: src.basedOn })
+            .eq("id", weekRow.id);
+          weekRow = { ...weekRow, structure: src.structure as unknown as never, based_on_week: src.basedOn };
+        }
+      }
     }
 
     // Profile

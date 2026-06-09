@@ -276,7 +276,18 @@ export default function AdapterSemaine() {
   }
 
   if (loading) return <Shell><div style={{ opacity: 0.6, padding: 40 }}>Chargement…</div></Shell>;
-  if (err || !ctx) return <Shell><div style={{ padding: 40, color: "#C44A3A" }}>{err ?? "Erreur"}</div></Shell>;
+  if (err || !ctx) return (
+    <Shell>
+      <div style={{ padding: 40 }}>
+        <div className="cst-mono" style={{ fontSize: 10, letterSpacing: "0.18em", opacity: 0.5, marginBottom: 8 }}>ERREUR · ADAPTER SEMAINE</div>
+        <div style={{ color: "#C44A3A", fontSize: 15, marginBottom: 20 }}>{err ?? "Erreur inconnue"}</div>
+        <div style={{ display: "flex", gap: 10 }}>
+          <button onClick={load} className="cst-btn cst-btn-primary">Réessayer</button>
+          <button onClick={() => navigate({ to: "/coach/membre/$memberId", params: { memberId } })} className="cst-btn cst-btn-ghost-dark">← Retour fiche membre</button>
+        </div>
+      </div>
+    </Shell>
+  );
 
   return (
     <Shell>
