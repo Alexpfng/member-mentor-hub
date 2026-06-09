@@ -334,8 +334,32 @@ export default function AdapterSemaine() {
                       onChange={(e) => updateExo(di, ei, (x) => ({ ...x, name: e.target.value }))}
                       style={{ flex: 1, background: "transparent", border: "none", color: "var(--cst-text)", fontSize: 14, fontWeight: 600 }}
                     />
-                    <input value={String(ex.series ?? "")} onChange={(e) => updateExo(di, ei, (x) => ({ ...x, series: e.target.value }))} placeholder="séries" style={{ width: 60 }} className="cst-input" />
-                    <input value={String(ex.reps ?? "")} onChange={(e) => updateExo(di, ei, (x) => ({ ...x, reps: e.target.value }))} placeholder="reps" style={{ width: 60 }} className="cst-input" />
+                    {ex.block_type === "emom" ? (
+                      <label style={{ display: "flex", flexDirection: "column", gap: 2, alignItems: "center" }}>
+                        <span className="cst-mono" style={{ fontSize: 8, opacity: 0.5, letterSpacing: "0.1em" }}>DURÉE (min)</span>
+                        <input
+                          type="number"
+                          min={1}
+                          max={60}
+                          value={String(ex.series ?? "").replace(/[^0-9]/g, "") || "10"}
+                          onChange={(e) => {
+                            const v = parseInt(e.target.value, 10);
+                            if (!isNaN(v) && v > 0) updateExo(di, ei, (x) => ({ ...x, series: `EMOM${v}'` }));
+                          }}
+                          className="cst-input"
+                          style={{ width: 70, textAlign: "center" }}
+                        />
+                      </label>
+                    ) : (
+                      <input value={String(ex.series ?? "")} onChange={(e) => updateExo(di, ei, (x) => ({ ...x, series: e.target.value }))} placeholder="séries" style={{ width: 60 }} className="cst-input" />
+                    )}
+                    <input
+                      value={String(ex.reps ?? "")}
+                      onChange={(e) => updateExo(di, ei, (x) => ({ ...x, reps: e.target.value }))}
+                      placeholder={ex.block_type === "emom" ? "reps/min" : "reps"}
+                      style={{ width: 60 }}
+                      className="cst-input"
+                    />
                     <input value={ex.charge ?? ""} onChange={(e) => updateExo(di, ei, (x) => ({ ...x, charge: e.target.value }))} placeholder="kg" style={{ width: 70 }} className="cst-input" />
                     <input value={String(ex.rpe_target ?? "")} onChange={(e) => updateExo(di, ei, (x) => ({ ...x, rpe_target: e.target.value }))} placeholder="RPE" style={{ width: 50 }} className="cst-input" />
                     <button onClick={() => setReplaceTarget({ dayIdx: di, exoIdx: ei, ex })} title="Remplacer" style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)", color: "var(--cst-text-soft)", borderRadius: 6, padding: "4px 8px", cursor: "pointer", fontSize: 12 }}>⇄</button>

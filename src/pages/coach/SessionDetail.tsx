@@ -98,6 +98,14 @@ export default function CoachSessionDetail() {
   }
   const totalMediaCount = (allMedia?.length ?? 0) + techniqueVideos.length;
 
+  const exerciseComments = (data as any).exerciseComments as Array<{ id: string; exerciseName: string; content: string; createdAt: string }> | undefined ?? [];
+  const commentsByExo = new Map<string, typeof exerciseComments>();
+  for (const c of exerciseComments) {
+    const key = c.exerciseName?.toLowerCase() ?? "";
+    if (!commentsByExo.has(key)) commentsByExo.set(key, []);
+    commentsByExo.get(key)!.push(c);
+  }
+
   return (
     <div className="cst-screen" style={{ flexDirection: "row" }}>
       <CoachSidebar />
@@ -268,6 +276,24 @@ export default function CoachSessionDetail() {
                                   : <div style={{ width: "100%", height: "100%", background: "#222" }} />}
                                 <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.3)", color: "#fff", fontSize: 20 }}>▶</div>
                               </a>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
+                    {/* Notes/messages de l'athlète via ExerciseThread */}
+                    {(() => {
+                      const cmts = commentsByExo.get(name.toLowerCase()) ?? [];
+                      if (!cmts.length) return null;
+                      return (
+                        <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+                          <div className="cst-mono" style={{ fontSize: 9, opacity: 0.5, letterSpacing: "0.16em", marginBottom: 6 }}>💬 NOTES DE L'ATHLÈTE ({cmts.length})</div>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                            {cmts.map((c) => (
+                              <div key={c.id} style={{ fontSize: 13, fontStyle: "italic", padding: "8px 10px", background: "rgba(255,255,255,0.04)", borderLeft: "2px solid var(--cst-mid-green)", borderRadius: "0 6px 6px 0" }}>
+                                « {c.content} »
+                                <span className="cst-mono" style={{ fontSize: 9, opacity: 0.45, marginLeft: 8, fontStyle: "normal" }}>{timeAgo(c.createdAt)}</span>
+                              </div>
                             ))}
                           </div>
                         </div>

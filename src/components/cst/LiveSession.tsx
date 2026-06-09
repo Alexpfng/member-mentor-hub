@@ -224,24 +224,42 @@ function hasCues(ex?: ProgExercise | null): boolean {
 }
 
 /** Parses EMOM params from series or reps fields.
- * "EMOM3" (no apostrophe) → 3 reps/min, 10 min default
- * "EMOM4'" (apostrophe) → 4 minutes duration
- * "EMOM5' 3" → 5 min, 3 reps/min
+ * Duration formats (coach sets in program):
+ *   "EMOM15'"   → 15 min  (apostrophe droit ou typographique)
+ *   "EMOM15min" → 15 min
+ *   "EMOM15m"   → 15 min
+ *   "EMOM3×15'" → 3 reps/min, 15 min  (× ou x ou /)
+ *   "EMOM3/15'" → 3 reps/min, 15 min
+ * Reps only (durée par défaut 10 min) :
+ *   "EMOM3"     → 3 reps/min, 10 min
  */
 function parseEmom(series: string | null, reps: string | null): { durationMin: number; repsPerMin: number | null } {
-  const src = `${series ?? ""} ${reps ?? ""}`.toLowerCase();
-  // Duration: "emom4'" or "emom 4'"
-  const durMatch = src.match(/emom\s*(\d+)\s*'/);
-  const durationMin = durMatch ? parseInt(durMatch[1], 10) : 10;
-  // Reps per min: "emom3" (no apostrophe) or separate number after duration
-  const repsFromSeries = !durMatch ? series?.match(/emom\s*(\d+)/i)?.[1] : null;
+  // Normalise: apostrophe typographique → droit, minuscule
+  const src = `${series ?? ""} ${reps ?? ""}`.toLowerCase().replace(/[‘’ʼ]/g, "'");
+
+  // Combined "EMOMreps×dur'" or "EMOMreps/dur'" → e.g. "EMOM3×15'" "EMOM3/10min"
+  const combinedMatch = src.match(/emom\s*(\d+)\s*[x×\/]\s*(\d+)\s*(?:'|min\b|m\b)/);
+  if (combinedMatch) {
+    return { durationMin: parseInt(combinedMatch[2], 10), repsPerMin: parseInt(combinedMatch[1], 10) };
+  }
+
+  // Duration-only: "EMOM15'" or "EMOM15min" or "EMOM15m"
+  const durMatch = src.match(/emom\s*(\d+)\s*(?:'|min\b|m\b)/);
+  if (durMatch) {
+    // Reps may come from separate reps field
+    const repsVal = reps?.match(/^(\d+)$/)?.[1] ?? reps?.match(/emom\s*(\d+)\s*reps?/i)?.[1];
+    return { durationMin: parseInt(durMatch[1], 10), repsPerMin: repsVal ? parseInt(repsVal, 10) : null };
+  }
+
+  // Reps-only: "EMOM3" → reps/min, default 10 min
+  const repsFromSeries = series?.match(/emom\s*(\d+)/i)?.[1];
   const repsFromReps = reps?.match(/^(\d+)$/)?.[1] ?? reps?.match(/emom\s*(\d+)\s*reps?/i)?.[1];
   const repsPerMin = repsFromSeries
     ? parseInt(repsFromSeries, 10)
     : repsFromReps
       ? parseInt(repsFromReps, 10)
       : null;
-  return { durationMin, repsPerMin };
+  return { durationMin: 10, repsPerMin };
 }
 
 /* ───────── Types : steps ───────── */

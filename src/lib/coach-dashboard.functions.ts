@@ -221,7 +221,7 @@ export const getSessionDetail = createServerFn({ method: "GET" })
   .inputValidator((d) => z.object({ sessionId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertCoach(context.userId);
-    const [sessR, setsR, fbR, painsR, freeActR, mediaR, techVidR] = await Promise.all([
+    const [sessR, setsR, fbR, painsR, freeActR, mediaR, techVidR, commentsR] = await Promise.all([
       supabaseAdmin.from("sessions").select("id, member_id, program_id, session_label, week_number, day_number, started_at, ended_at, duration_minutes, average_rpe, total_volume_kg, overall_feeling, member_note, coach_seen, status, session_type, free_title, free_category").eq("id", data.sessionId).maybeSingle(),
       supabaseAdmin.from("set_logs").select("exercise_name, set_number, weight_kg, reps, rpe, note, completed, logged_at").eq("session_id", data.sessionId).order("logged_at", { ascending: true }),
       supabaseAdmin.from("exercise_feedbacks").select("exercise_name, block_id, rpe, felt_too_hard, felt_too_easy, could_not_do, member_comment, created_at").eq("session_id", data.sessionId),
@@ -229,6 +229,7 @@ export const getSessionDetail = createServerFn({ method: "GET" })
       supabaseAdmin.from("free_activities").select("id, name, category, series, reps, charge, duration_min, distance_km, elevation_m, rpe, note, order_index").eq("session_id", data.sessionId).order("order_index", { ascending: true }),
       supabaseAdmin.from("session_media").select("id, type, storage_path, thumbnail_path, caption, created_at").eq("session_id", data.sessionId).order("created_at", { ascending: true }),
       supabaseAdmin.from("technique_videos").select("id, exercise_name, storage_path, thumbnail_url, created_at").eq("session_id", data.sessionId).order("created_at", { ascending: true }),
+      supabaseAdmin.from("exercise_comments").select("id, exercise_name, author_role, content, created_at").eq("session_id", data.sessionId).eq("author_role", "member").order("created_at", { ascending: true }),
     ]);
     if (!sessR.data) throw new Error("Séance introuvable");
 
@@ -285,6 +286,12 @@ export const getSessionDetail = createServerFn({ method: "GET" })
       freeActivities: freeActR.data ?? [],
       media: mediaWithUrls,
       techniqueVideos: techVideosWithUrls,
+      exerciseComments: (commentsR.data ?? []).map((c) => ({
+        id: c.id,
+        exerciseName: c.exercise_name as string,
+        content: c.content as string,
+        createdAt: c.created_at as string,
+      })),
     };
   });
 
