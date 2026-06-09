@@ -121,10 +121,11 @@ export default function WeeksManagerPanel({ memberId }: { memberId: string }) {
                 </div>
                 <button
                   onClick={() => openAdapter(w.week_number)}
-                  className="cst-btn cst-btn-ghost-dark cst-btn-sm"
-                  title="Ouvrir l'éditeur"
+                  className={`cst-btn cst-btn-sm ${w.status === "done" ? "cst-btn-ghost-dark" : "cst-btn-primary"}`}
+                  title={w.status === "published" || w.status === "in_progress" ? "Modifier la semaine publiée" : "Ouvrir l'éditeur"}
+                  style={w.status === "done" ? { opacity: 0.5 } : undefined}
                 >
-                  Adapter
+                  {w.status === "published" || w.status === "in_progress" ? "✏ Modifier" : w.status === "done" ? "Consulter" : "Adapter"}
                 </button>
                 <button
                   onClick={() => duplicateTo(w.id, nextWeek)}

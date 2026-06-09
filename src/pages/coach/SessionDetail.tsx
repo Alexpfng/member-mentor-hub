@@ -85,7 +85,18 @@ export default function CoachSessionDetail() {
   const freeCategory = (s as any).free_category as string | null;
   const catIcon = freeCategory === "course" ? "🏃" : freeCategory === "cardio" ? "❤️" : freeCategory === "muscu" ? "🏋️" : freeCategory === "sport" ? "⚽" : "✨";
   const freeActivities = (data as any).freeActivities as Array<{ id: string; name: string; category: string | null; series: number | null; reps: string | null; charge: string | null; duration_min: number | null; distance_km: number | null; elevation_m: number | null; rpe: number | null; note: string | null }> | undefined;
-  const media = (data as any).media as Array<{ id: string; type: "photo" | "video"; url: string | null; thumbnailUrl: string | null; caption: string | null }> | undefined;
+  const allMedia = (data as any).media as Array<{ id: string; type: "photo" | "video"; url: string | null; thumbnailUrl: string | null; caption: string | null; isSessionLevel?: boolean }> | undefined;
+  const sessionMedia = allMedia?.filter((m) => m.isSessionLevel) ?? [];
+  const exerciseMedia = allMedia?.filter((m) => !m.isSessionLevel) ?? [];
+  const techniqueVideos = (data as any).techniqueVideos as Array<{ id: string; exerciseName: string | null; url: string | null; thumbnailUrl: string | null }> | undefined ?? [];
+  // Group technique videos by exercise name
+  const techVidsByExo = new Map<string, typeof techniqueVideos>();
+  for (const v of techniqueVideos) {
+    const key = v.exerciseName?.toLowerCase() ?? "";
+    if (!techVidsByExo.has(key)) techVidsByExo.set(key, []);
+    techVidsByExo.get(key)!.push(v);
+  }
+  const totalMediaCount = (allMedia?.length ?? 0) + techniqueVideos.length;
 
   return (
     <div className="cst-screen" style={{ flexDirection: "row" }}>
@@ -159,31 +170,28 @@ export default function CoachSessionDetail() {
             </div>
           )}
 
-          {/* Médias (photos / vidéos) */}
-          {media && media.length > 0 && (
+          {/* Médias (photos / vidéos) — niveau séance */}
+          {(sessionMedia.length > 0 || exerciseMedia.length > 0 || techniqueVideos.length > 0) && (
             <div>
-              <CSTSectionNum num={isFree ? 3 : 2} label="PHOTOS & VIDÉOS" sub={`${media.length} fichier${media.length > 1 ? "s" : ""}`} />
-              <div style={{ marginTop: 14, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 10 }}>
-                {media.map((m) => (
-                  <a key={m.id} href={m.url ?? "#"} target="_blank" rel="noreferrer" style={{ display: "block", aspectRatio: "1", background: "#111", borderRadius: 8, overflow: "hidden", position: "relative" }}>
-                    {m.type === "video" ? (
-                      m.thumbnailUrl ? (
-                        <img src={m.thumbnailUrl} alt={m.caption || "Vidéo"} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      ) : m.url ? (
-                        <video src={m.url} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      ) : null
-                    ) : m.url ? (
-                      <img src={m.url} alt={m.caption || "Photo"} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    ) : null}
-                    {m.type === "video" && (
-                      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.25)", color: "#fff", fontSize: 28 }}>▶</div>
-                    )}
-                    {m.caption && (
-                      <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: "6px 8px", background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 11 }}>{m.caption}</div>
-                    )}
-                  </a>
-                ))}
-              </div>
+              <CSTSectionNum num={isFree ? 3 : 2} label="PHOTOS & VIDÉOS" sub={`${totalMediaCount} fichier${totalMediaCount > 1 ? "s" : ""}`} />
+
+              {sessionMedia.length > 0 && (
+                <div style={{ marginTop: 14 }}>
+                  <div className="cst-mono" style={{ fontSize: 9, opacity: 0.5, letterSpacing: "0.18em", marginBottom: 8 }}>VIDÉOS GLOBALES SÉANCE</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 10 }}>
+                    {sessionMedia.map((m) => <MediaThumb key={m.id} m={m} />)}
+                  </div>
+                </div>
+              )}
+
+              {exerciseMedia.length > 0 && (
+                <div style={{ marginTop: 14 }}>
+                  <div className="cst-mono" style={{ fontSize: 9, opacity: 0.5, letterSpacing: "0.18em", marginBottom: 8 }}>MÉDIAS PAR EXERCICE</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 10 }}>
+                    {exerciseMedia.map((m) => <MediaThumb key={m.id} m={m} />)}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -244,6 +252,27 @@ export default function CoachSessionDetail() {
                         {fb.member_comment && <div style={{ marginTop: 4, fontStyle: "italic" }}>« {fb.member_comment} »</div>}
                       </div>
                     )}
+                    {/* Technique videos per exercise from ExerciseThread */}
+                    {(() => {
+                      const vids = techVidsByExo.get(name.toLowerCase()) ?? [];
+                      if (!vids.length) return null;
+                      return (
+                        <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+                          <div className="cst-mono" style={{ fontSize: 9, opacity: 0.5, letterSpacing: "0.16em", marginBottom: 6 }}>🎥 VIDÉOS TECHNIQUE ({vids.length})</div>
+                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                            {vids.map((v) => (
+                              <a key={v.id} href={v.url ?? "#"} target="_blank" rel="noreferrer"
+                                style={{ display: "block", width: 80, height: 80, background: "#111", borderRadius: 6, overflow: "hidden", position: "relative", flexShrink: 0 }}>
+                                {v.thumbnailUrl
+                                  ? <img src={v.thumbnailUrl} alt="vidéo technique" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                  : <div style={{ width: "100%", height: "100%", background: "#222" }} />}
+                                <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.3)", color: "#fff", fontSize: 20 }}>▶</div>
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 );
               })}
@@ -272,5 +301,24 @@ function Metric({ label, value }: { label: string; value: string }) {
       <div className="cst-mono" style={{ fontSize: 9, opacity: 0.55, letterSpacing: "0.18em" }}>{label}</div>
       <div className="cst-display" style={{ fontSize: 22, marginTop: 4 }}>{value}</div>
     </div>
+  );
+}
+
+function MediaThumb({ m }: { m: { id: string; type: "photo" | "video"; url: string | null; thumbnailUrl: string | null; caption: string | null; isSessionLevel?: boolean } }) {
+  return (
+    <a href={m.url ?? "#"} target="_blank" rel="noreferrer"
+      style={{ display: "block", aspectRatio: "1", background: "#111", borderRadius: 8, overflow: "hidden", position: "relative" }}>
+      {m.type === "video"
+        ? m.thumbnailUrl
+          ? <img src={m.thumbnailUrl} alt={m.caption || "Vidéo"} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          : m.url ? <video src={m.url} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : null
+        : m.url ? <img src={m.url} alt={m.caption || "Photo"} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : null}
+      {m.type === "video" && (
+        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.25)", color: "#fff", fontSize: 28 }}>▶</div>
+      )}
+      {m.caption && m.caption !== "[SESSION]" && (
+        <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: "6px 8px", background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 11 }}>{m.caption}</div>
+      )}
+    </a>
   );
 }

@@ -19,8 +19,10 @@ import {
   deletePlannedSession,
   markDayRest,
 } from "@/lib/planning.functions";
+import { createFreeSession } from "@/lib/free-session.functions";
 
 const DAY_LABELS = ["LUN", "MAR", "MER", "JEU", "VEN", "SAM", "DIM"];
+const FR_DAYS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
 
 function isoDay(d: Date) {
   return d.toISOString().slice(0, 10);
@@ -94,16 +96,96 @@ function DraggableSession({
   );
 }
 
+/* ── Modal bottom-sheet ── */
+
+type ModalState =
+  | { kind: "empty"; date: string; dayIdx: number }
+  | { kind: "planned"; date: string; dayIdx: number; planned: any }
+  | null;
+
+function Overlay({ onClose }: { onClose: () => void }) {
+  return (
+    <div
+      onClick={onClose}
+      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 40, touchAction: "none" }}
+    />
+  );
+}
+
+function BottomSheet({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{
+      position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 50,
+      background: "var(--cst-dark-green, #1a2e20)",
+      borderTopLeftRadius: 18, borderTopRightRadius: 18,
+      padding: "8px 0 env(safe-area-inset-bottom,16px)",
+      boxShadow: "0 -4px 40px rgba(0,0,0,0.45)",
+      maxHeight: "82vh", overflowY: "auto",
+    }}>
+      <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.18)", margin: "0 auto 16px" }} />
+      {children}
+    </div>
+  );
+}
+
+function ModalTitle({ text }: { text: string }) {
+  return (
+    <div className="font-mono" style={{ fontSize: 10, letterSpacing: "0.18em", opacity: 0.55, padding: "0 20px 8px", textTransform: "uppercase", color: "#fff" }}>
+      {text}
+    </div>
+  );
+}
+
+function SheetBtn({
+  onClick,
+  children,
+  danger,
+  muted,
+  disabled,
+}: {
+  onClick: () => void;
+  children: React.ReactNode;
+  danger?: boolean;
+  muted?: boolean;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      style={{
+        display: "block", width: "100%", textAlign: "left",
+        padding: "14px 20px",
+        background: "transparent",
+        border: "none",
+        borderTop: "1px solid rgba(255,255,255,0.07)",
+        color: danger ? "#E07070" : muted ? "rgba(255,255,255,0.45)" : "#fff",
+        fontSize: 15,
+        cursor: disabled ? "wait" : "pointer",
+        fontFamily: "inherit",
+        opacity: disabled ? 0.5 : 1,
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+/* ── Main component ── */
+
 export default function MemberPlanning() {
   const navigate = useNavigate();
   const listFn = useServerFn(listWeekPlan);
   const upsertFn = useServerFn(upsertPlannedSession);
   const deleteFn = useServerFn(deletePlannedSession);
   const restFn = useServerFn(markDayRest);
+  const createFree = useServerFn(createFreeSession);
 
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
   const [weekOffset, setWeekOffset] = useState<number | undefined>(undefined);
+  const [modal, setModal] = useState<ModalState>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -140,7 +222,6 @@ export default function MemberPlanning() {
 
   const todayISO = isoDay(new Date());
 
-  // Map plannedDate → planned row
   const plannedByDate = useMemo(() => {
     const map = new Map<string, any>();
     (data?.planned ?? []).forEach((p: any) => {
@@ -149,7 +230,6 @@ export default function MemberPlanning() {
     return map;
   }, [data]);
 
-  // Sessions completed/in-progress by date
   const sessionByDate = useMemo(() => {
     const map = new Map<string, any>();
     (data?.sessions ?? []).forEach((s: any) => {
@@ -158,7 +238,6 @@ export default function MemberPlanning() {
     return map;
   }, [data]);
 
-  // Unplanned day defs from program (not already planned and not done)
   const unplanned = useMemo(() => {
     const defs = (data?.dayDefs ?? []) as any[];
     const usedLabels = new Set(
@@ -208,44 +287,119 @@ export default function MemberPlanning() {
     }
   };
 
-  const handlePlanClick = async (date: string) => {
-    if (unplanned.length === 0) {
-      // fallback: propose rest
-      if (confirm("Marquer ce jour comme repos ?")) {
-        await restFn({ data: { weekNumber: data.weekNumber, plannedDate: date } });
-        reload();
-      }
-      return;
-    }
-    const choices = unplanned.map((d: any, i: number) => `${i + 1}. ${d.label}`).join("\n");
-    const choice = prompt(`Planifier une séance le ${date}\n\n${choices}\n\nNuméro :`);
-    if (!choice) return;
-    const idx = Number(choice) - 1;
-    const def = unplanned[idx];
-    if (!def) return;
-    await upsertFn({
-      data: {
-        programId: data.assignment?.program_id ?? null,
-        weekNumber: data.weekNumber,
-        dayLabel: def.label,
-        plannedDate: date,
-      },
-    });
-    reload();
-  };
+  /* ── Modal actions ── */
 
-  const handlePlannedTap = async (p: any) => {
-    const action = prompt(
-      `${p.day_label}\n\n1. Supprimer du planning\n2. Marquer comme repos\n3. Annuler\n\nNuméro :`,
-    );
-    if (action === "1") {
-      await deleteFn({ data: { id: p.id } });
-      reload();
-    } else if (action === "2") {
-      await deleteFn({ data: { id: p.id } });
-      await restFn({ data: { weekNumber: data.weekNumber, plannedDate: p.planned_date } });
-      reload();
+  async function scheduleDayDef(def: any, date: string) {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await upsertFn({
+        data: {
+          programId: data.assignment?.program_id ?? null,
+          weekNumber: data.weekNumber,
+          dayLabel: def.label,
+          plannedDate: date,
+        },
+      });
+      setModal(null);
+      await reload();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erreur");
+    } finally {
+      setBusy(false);
     }
+  }
+
+  async function scheduleRest(date: string) {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await restFn({ data: { weekNumber: data.weekNumber, plannedDate: date } });
+      setModal(null);
+      await reload();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erreur");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function startFreeSession(date: string) {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await upsertFn({
+        data: {
+          programId: null,
+          weekNumber: data.weekNumber,
+          dayLabel: "Séance libre",
+          plannedDate: date,
+        },
+      });
+      const r = (await createFree({ data: {} })) as { sessionId: string };
+      setModal(null);
+      navigate({ to: "/membre/seance-libre/$sessionId", params: { sessionId: r.sessionId } });
+    } catch (e: any) {
+      setBusy(false);
+      toast.error(e?.message ?? "Erreur");
+    }
+  }
+
+  async function deletePlanned(id: string) {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await deleteFn({ data: { id } });
+      setModal(null);
+      await reload();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erreur");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function replaceWithRest(planned: any) {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await deleteFn({ data: { id: planned.id } });
+      await restFn({ data: { weekNumber: data.weekNumber, plannedDate: planned.planned_date } });
+      setModal(null);
+      await reload();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erreur");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function startPlannedNow(planned: any) {
+    setModal(null);
+    navigate({
+      to: "/membre/logger",
+      search: { day: planned.day_label, week: planned.week_number ?? data.weekNumber },
+    });
+  }
+
+  /* ── Day click handler (opens modal) ── */
+
+  function openEmptyDay(date: string) {
+    const dayIdx = weekDates.indexOf(date);
+    setModal({ kind: "empty", date, dayIdx });
+  }
+
+  function openPlannedDay(date: string, planned: any) {
+    const dayIdx = weekDates.indexOf(date);
+    setModal({ kind: "planned", date, dayIdx, planned });
+  }
+
+  /* ── Render ── */
+
+  const frDate = (date: string) => {
+    const d = new Date(date);
+    const dayIdx = weekDates.indexOf(date);
+    return `${FR_DAYS[dayIdx] ?? ""} ${d.getDate()} ${d.toLocaleDateString("fr-FR", { month: "long" })}`;
   };
 
   return (
@@ -291,11 +445,10 @@ export default function MemberPlanning() {
 
         {data && !loading && (
           <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-            {/* Unplanned bag */}
             {unplanned.length > 0 && (
               <div className="mb-4 p-3 rounded-lg border border-dashed border-border bg-muted/30">
                 <div className="text-[10px] font-mono opacity-60 tracking-widest mb-2">
-                  À PLANIFIER · Glisse sur un jour
+                  À PLANIFIER · Glisse sur un jour ou tape sur un jour vide
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {unplanned.map((d: any) => (
@@ -331,12 +484,12 @@ export default function MemberPlanning() {
                         id={`plan-${planned.id}`}
                         label={planned.day_label}
                         status={planned.status}
-                        onTap={() => handlePlannedTap(planned)}
+                        onTap={() => openPlannedDay(date, planned)}
                       />
                     )}
                     {!sess && !planned && (
                       <button
-                        onClick={() => handlePlanClick(date)}
+                        onClick={() => openEmptyDay(date)}
                         className="rounded-md py-1 text-xs opacity-40 hover:opacity-100 border border-dashed border-border"
                       >
                         +
@@ -357,6 +510,63 @@ export default function MemberPlanning() {
           </DndContext>
         )}
       </div>
+
+      {/* ── Modals ── */}
+      {modal && <Overlay onClose={() => !busy && setModal(null)} />}
+
+      {modal?.kind === "empty" && (
+        <BottomSheet>
+          <ModalTitle text={frDate(modal.date)} />
+
+          {unplanned.length > 0 && (
+            <>
+              <div className="font-mono" style={{ fontSize: 9, letterSpacing: "0.16em", padding: "8px 20px 4px", color: "rgba(255,255,255,0.45)", textTransform: "uppercase" }}>
+                Depuis mon programme
+              </div>
+              {unplanned.map((def: any) => (
+                <SheetBtn key={def.label} onClick={() => scheduleDayDef(def, modal.date)} disabled={busy}>
+                  ● {def.label}
+                </SheetBtn>
+              ))}
+            </>
+          )}
+
+          <div className="font-mono" style={{ fontSize: 9, letterSpacing: "0.16em", padding: "12px 20px 4px", color: "rgba(255,255,255,0.45)", textTransform: "uppercase" }}>
+            Autre
+          </div>
+          <SheetBtn onClick={() => startFreeSession(modal.date)} disabled={busy}>
+            ✦ Séance libre hors programme
+          </SheetBtn>
+          <SheetBtn onClick={() => scheduleRest(modal.date)} disabled={busy} muted>
+            — Marquer comme repos
+          </SheetBtn>
+          <SheetBtn onClick={() => setModal(null)} muted>
+            Annuler
+          </SheetBtn>
+        </BottomSheet>
+      )}
+
+      {modal?.kind === "planned" && (
+        <BottomSheet>
+          <ModalTitle text={`${modal.planned.day_label} · ${frDate(modal.date)}`} />
+
+          {(modal.date <= todayISO) && (
+            <SheetBtn onClick={() => startPlannedNow(modal.planned)} disabled={busy}>
+              ▶ Démarrer maintenant
+            </SheetBtn>
+          )}
+          <SheetBtn onClick={() => deletePlanned(modal.planned.id)} disabled={busy} danger>
+            Supprimer du planning
+          </SheetBtn>
+          <SheetBtn onClick={() => replaceWithRest(modal.planned)} disabled={busy} muted>
+            — Remplacer par repos
+          </SheetBtn>
+          <SheetBtn onClick={() => setModal(null)} muted>
+            Annuler
+          </SheetBtn>
+        </BottomSheet>
+      )}
+
       <MemberNav />
     </div>
   );

@@ -296,9 +296,11 @@ export function RPEReferenceSheet({ open, onClose }: { open: boolean; onClose: (
 /* ───────── Tempo ───────── */
 
 export function parseTempo(t?: string | null) {
-  if (!t || t.length < 4) return null;
-  const ch = (i: number): number | "X" =>
-    t[i] === "X" || t[i] === "x" ? "X" : parseInt(t[i]);
+  if (!t) return null;
+  const clean = t.trim().toUpperCase();
+  // Only parse 4-char sequences of digits and 'X' — reject text tempos ("très lent", "explosif"…)
+  if (!/^[\dX]{4}$/.test(clean)) return null;
+  const ch = (i: number): number | "X" => (clean[i] === "X" ? "X" : parseInt(clean[i], 10));
   const bottomPause = ch(1);
   const topPause = ch(3);
   return {
@@ -309,6 +311,15 @@ export function parseTempo(t?: string | null) {
   };
 }
 
+/** Raw tempo display — never shows NaN. For text tempos like "très lent", returns as-is. */
+export function formatTempoRaw(t?: string | null): string | null {
+  if (!t) return null;
+  const p = parseTempo(t);
+  if (p) return `${p.eccentric}·${p.bottomPause}·${p.concentric}·${p.topPause}`;
+  const clean = t.trim();
+  return clean || null;
+}
+
 export function TempoBadge({
   tempo,
   onClick,
@@ -316,8 +327,8 @@ export function TempoBadge({
   tempo?: string | null;
   onClick?: () => void;
 }) {
-  const p = parseTempo(tempo);
-  if (!p) return null;
+  const display = formatTempoRaw(tempo);
+  if (!display) return null;
   return (
     <button
       type="button"
@@ -335,7 +346,7 @@ export function TempoBadge({
       }}
       title="Voir le tempo"
     >
-      {p.eccentric}·{p.bottomPause}·{p.concentric}·{p.topPause}
+      {display}
     </button>
   );
 }

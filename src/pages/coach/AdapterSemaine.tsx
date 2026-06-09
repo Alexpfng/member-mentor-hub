@@ -135,7 +135,12 @@ export default function AdapterSemaine() {
       const c = await fetchCtx({ data: { memberId, weekNumber: search.week } });
       setCtx(c);
       setStructure((c.week.structure as WeekStructure) ?? { days: [] });
-      setMessage(`Nouvelle semaine prête, ${c.member.name.split(" ")[0]}. À toi de jouer 💪`);
+      const isAlreadyPublished = ["published", "in_progress"].includes(c.week.status);
+      setMessage(
+        isAlreadyPublished
+          ? `Mise à jour de ta semaine ${c.week.week_number}, ${c.member.name.split(" ")[0]}. Vérifie les changements 👀`
+          : `Nouvelle semaine prête, ${c.member.name.split(" ")[0]}. À toi de jouer 💪`,
+      );
     } catch (e) {
       setErr((e as Error).message);
     } finally {
@@ -262,6 +267,20 @@ export default function AdapterSemaine() {
           {ctx.week.based_on_week != null && <span style={{ opacity: 0.5, fontSize: 16 }}> · copiée de S{ctx.week.based_on_week}</span>}
         </h1>
 
+        {(ctx.week.status === "published" || ctx.week.status === "in_progress") && (
+          <div style={{ padding: "12px 16px", background: "rgba(212,168,46,0.12)", border: "1px solid rgba(212,168,46,0.35)", borderRadius: 8, marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 16 }}>⚠</span>
+            <div>
+              <div className="cst-mono" style={{ fontSize: 10, color: "#D4A82E", letterSpacing: "0.15em" }}>
+                SEMAINE {ctx.week.status === "in_progress" ? "EN COURS" : "DÉJÀ PUBLIÉE"}
+              </div>
+              <div style={{ fontSize: 12, opacity: 0.85, marginTop: 2 }}>
+                Tes modifications seront visibles par le membre après republication. Un message de notification lui sera envoyé.
+              </div>
+            </div>
+          </div>
+        )}
+
         {ctx.sourceSummary.weekNumber != null && (
           <div className="cst-mono" style={{ fontSize: 11, opacity: 0.7, marginBottom: 20 }}>
             RÉSUMÉ S{ctx.sourceSummary.weekNumber} ·
@@ -370,7 +389,11 @@ export default function AdapterSemaine() {
           <div style={{ display: "flex", gap: 10 }}>
             <button onClick={() => setShowDuplicate(true)} className="cst-btn cst-btn-ghost-dark">Dupliquer vers…</button>
             <button onClick={() => setShowPreview(true)} className="cst-btn cst-btn-ghost-dark">Aperçu membre</button>
-            <button onClick={openPublish} className="cst-btn cst-btn-primary">Publier la semaine {ctx.week.week_number} →</button>
+            <button onClick={openPublish} className="cst-btn cst-btn-primary">
+              {ctx.week.status === "published" || ctx.week.status === "in_progress"
+                ? `Republier la semaine ${ctx.week.week_number} →`
+                : `Publier la semaine ${ctx.week.week_number} →`}
+            </button>
           </div>
         </div>
       </div>
@@ -380,6 +403,7 @@ export default function AdapterSemaine() {
         <PublishModal
           weekNumber={ctx.week.week_number}
           memberName={ctx.member.name}
+          isRepublish={ctx.week.status === "published" || ctx.week.status === "in_progress"}
           changes={changes}
           notify={notify}
           setNotify={setNotify}
@@ -451,6 +475,7 @@ function PreviewModal({ structure, weekNumber, onClose }: { structure: WeekStruc
 function PublishModal(props: {
   weekNumber: number;
   memberName: string;
+  isRepublish?: boolean;
   changes: Array<{ type: string; label: string }>;
   notify: boolean;
   setNotify: (b: boolean) => void;
@@ -463,7 +488,9 @@ function PublishModal(props: {
   return (
     <div onClick={props.onCancel} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 16 }}>
       <div onClick={(e) => e.stopPropagation()} className="cst-screen cst-hatch" style={{ width: 500, maxHeight: "85vh", overflow: "auto", padding: 28, borderRadius: 12 }}>
-        <h2 className="cst-display" style={{ fontSize: 22, marginBottom: 4 }}>Publier la semaine {props.weekNumber}</h2>
+        <h2 className="cst-display" style={{ fontSize: 22, marginBottom: 4 }}>
+          {props.isRepublish ? `Republier la semaine ${props.weekNumber}` : `Publier la semaine ${props.weekNumber}`}
+        </h2>
         <div className="cst-italic" style={{ fontSize: 13, color: "var(--cst-mid-green)", marginBottom: 16 }}>pour {props.memberName}</div>
 
         <div className="cst-mono" style={{ fontSize: 10, opacity: 0.7, marginBottom: 8, letterSpacing: "0.15em" }}>RÉCAP DES CHANGEMENTS</div>
@@ -482,7 +509,7 @@ function PublishModal(props: {
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
           <button onClick={props.onCancel} className="cst-btn cst-btn-ghost-dark" disabled={props.publishing}>Annuler</button>
           <button onClick={props.onPublish} className="cst-btn cst-btn-primary" disabled={props.publishing}>
-            {props.publishing ? "Publication…" : "Publier et envoyer"}
+            {props.publishing ? "Publication…" : props.isRepublish ? "Republier et notifier" : "Publier et envoyer"}
           </button>
         </div>
       </div>

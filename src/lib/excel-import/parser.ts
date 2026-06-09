@@ -150,6 +150,30 @@ function findColumnLayout(ws: XLSX.WorkSheet, range: XLSX.Range): ColumnLayout |
   return null;
 }
 
+/**
+ * In a superset (A1, A2, A3…), series count is defined by the first exercise.
+ * If later exercises have no series value, they inherit from the first in the block.
+ * Never invents a default — only inherits from an explicit value.
+ */
+function propagateBlockSeries(exercises: ImportedExercise[]): void {
+  // Group by block letter (first char of code, e.g. "A" for A1/A2/A3)
+  const groups = new Map<string, ImportedExercise[]>();
+  for (const ex of exercises) {
+    if (!ex.code) continue;
+    const letter = ex.code[0].toUpperCase();
+    if (!groups.has(letter)) groups.set(letter, []);
+    groups.get(letter)!.push(ex);
+  }
+  for (const group of groups.values()) {
+    if (group.length < 2) continue;
+    const blockSeries = group.find((ex) => ex.series != null && ex.series !== "")?.series ?? null;
+    if (!blockSeries) continue;
+    for (const ex of group) {
+      if (!ex.series || ex.series === "") ex.series = blockSeries;
+    }
+  }
+}
+
 function detectBlockType(
   series: string | null,
   reps: string | null,
@@ -261,6 +285,7 @@ function parseWeekSheet(ws: XLSX.WorkSheet, sheetName: string): ImportedWeek | n
   }
 
   week.days = week.days.filter((d) => d.exercises.length > 0);
+  for (const day of week.days) propagateBlockSeries(day.exercises);
   return week;
 }
 

@@ -5,6 +5,7 @@ import MemberNav from "../components/MemberNav";
 import { CSTLogo } from "../components/Atoms";
 import { type ProgExercise } from "../components/cst/ProgramBlocks";
 import { LiveSession } from "../components/cst/LiveSession";
+import { RunningSession, isRunningSession } from "../components/cst/RunningSession";
 
 export const Route = createFileRoute("/_authenticated/membre/seance/$sessionId")({
   component: SeancePage,
@@ -121,7 +122,9 @@ function SeancePage() {
     );
   }
 
-  if (loadError || exercises.length === 0) {
+  const running = isRunningSession(session?.session_label, exercises);
+
+  if ((loadError || exercises.length === 0) && !running) {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--cst-dark-green)", padding: 24 }}>
         <div style={{ maxWidth: 360, textAlign: "center", color: "rgba(255,255,255,0.85)" }}>
@@ -172,14 +175,25 @@ function SeancePage() {
           </div>
 
           <div style={{ flex: 1, paddingBottom: 80, display: "flex", flexDirection: "column" }}>
-            <LiveSession
-              sessionId={sessionId}
-              userId={userId}
-              sessionLabel={session?.session_label ?? null}
-              exercises={exercises}
-              onFinish={finishSession}
-              finishing={finishing}
-            />
+            {running ? (
+              <RunningSession
+                sessionId={sessionId}
+                userId={userId!}
+                sessionLabel={session?.session_label ?? null}
+                exercises={exercises}
+                onFinish={() => navigate({ to: "/membre/historique" })}
+                finishing={finishing}
+              />
+            ) : (
+              <LiveSession
+                sessionId={sessionId}
+                userId={userId}
+                sessionLabel={session?.session_label ?? null}
+                exercises={exercises}
+                onFinish={finishSession}
+                finishing={finishing}
+              />
+            )}
           </div>
 
           <MemberNav />

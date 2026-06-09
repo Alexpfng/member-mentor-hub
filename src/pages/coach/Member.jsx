@@ -239,7 +239,7 @@ export default function CoachMember() {
     }
   }
 
-  const tabs = ['Suivi', 'Programme actuel', 'Historique', 'Vidéos', 'Progression', 'Profil', 'Messages'];
+  const tabs = ['Programme actuel', 'Suivi', 'Historique', 'Vidéos', 'Progression', 'Profil', 'Messages'];
   const [coachUid, setCoachUid] = useState(null);
   useEffect(() => { supabase.auth.getUser().then(({ data }) => setCoachUid(data.user?.id ?? null)); }, []);
 
@@ -355,6 +355,23 @@ export default function CoachMember() {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
               <button className="cst-btn cst-btn-primary cst-btn-sm" onClick={() => navigate({ to: '/coach/messages', search: { partner: memberId } })}>MESSAGE →</button>
+              {data.program && currentWeek && (
+                <button
+                  className="cst-btn cst-btn-primary cst-btn-sm"
+                  style={{ background: 'rgba(212,168,46,0.18)', border: '1px solid rgba(212,168,46,0.5)', color: '#D4A82E' }}
+                  onClick={() => navigate({ to: '/coach/membre/$memberId/adapter', params: { memberId }, search: { week: currentWeek } })}
+                >
+                  ✏ ADAPTER S{String(currentWeek).padStart(2,'0')} →
+                </button>
+              )}
+              {data.program && (
+                <button
+                  className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+                  onClick={() => navigate({ to: '/coach/membre/$memberId/adapter', params: { memberId } })}
+                >
+                  + SEMAINE SUIVANTE
+                </button>
+              )}
             </div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(120px,1fr))', gap: 0, marginTop: 26, borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 18 }}>
@@ -396,10 +413,10 @@ export default function CoachMember() {
         {/* TAB CONTENT */}
         <div style={{ padding: '24px 32px', display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 24 }}>
           <div>
-            {activeTab === 0 && (
+            {activeTab === 1 && (
               <MemberFollowupTab memberId={memberId} />
             )}
-            {activeTab === 1 && (
+            {activeTab === 0 && (
               <>
                 {!data.program ? (
                   <div className="cst-card-dark cst-hatch" style={{ padding: 28, textAlign: 'center' }}>

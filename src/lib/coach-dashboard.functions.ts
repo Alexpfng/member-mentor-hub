@@ -221,13 +221,14 @@ export const getSessionDetail = createServerFn({ method: "GET" })
   .inputValidator((d) => z.object({ sessionId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertCoach(context.userId);
-    const [sessR, setsR, fbR, painsR, freeActR, mediaR] = await Promise.all([
+    const [sessR, setsR, fbR, painsR, freeActR, mediaR, techVidR] = await Promise.all([
       supabaseAdmin.from("sessions").select("id, member_id, program_id, session_label, week_number, day_number, started_at, ended_at, duration_minutes, average_rpe, total_volume_kg, overall_feeling, member_note, coach_seen, status, session_type, free_title, free_category").eq("id", data.sessionId).maybeSingle(),
       supabaseAdmin.from("set_logs").select("exercise_name, set_number, weight_kg, reps, rpe, note, completed, logged_at").eq("session_id", data.sessionId).order("logged_at", { ascending: true }),
       supabaseAdmin.from("exercise_feedbacks").select("exercise_name, block_id, rpe, felt_too_hard, felt_too_easy, could_not_do, member_comment, created_at").eq("session_id", data.sessionId),
       supabaseAdmin.from("pain_reports").select("id, exercise_name, zone, intensity, comment, resolved_at, created_at").eq("session_id", data.sessionId),
       supabaseAdmin.from("free_activities").select("id, name, category, series, reps, charge, duration_min, distance_km, elevation_m, rpe, note, order_index").eq("session_id", data.sessionId).order("order_index", { ascending: true }),
       supabaseAdmin.from("session_media").select("id, type, storage_path, thumbnail_path, caption, created_at").eq("session_id", data.sessionId).order("created_at", { ascending: true }),
+      supabaseAdmin.from("technique_videos").select("id, exercise_name, storage_path, thumbnail_url, created_at").eq("session_id", data.sessionId).order("created_at", { ascending: true }),
     ]);
     if (!sessR.data) throw new Error("Séance introuvable");
 
@@ -239,7 +240,7 @@ export const getSessionDetail = createServerFn({ method: "GET" })
     }
     const { data: prof } = await supabaseAdmin.from("profiles").select("first_name, last_name, email").eq("id", sessR.data.member_id).maybeSingle();
 
-    // Signed URLs for private bucket
+    // Signed URLs for private bucket (session_media)
     const mediaWithUrls = await Promise.all(
       (mediaR.data ?? []).map(async (m) => {
         const [signed, signedThumb] = await Promise.all([
@@ -252,8 +253,22 @@ export const getSessionDetail = createServerFn({ method: "GET" })
           id: m.id,
           type: m.type,
           caption: m.caption,
+          isSessionLevel: m.caption === "[SESSION]",
           url: signed.data?.signedUrl ?? null,
           thumbnailUrl: signedThumb?.data?.signedUrl ?? null,
+        };
+      }),
+    );
+
+    // Signed URLs for technique_videos (per-exercise videos from ExerciseThread)
+    const techVideosWithUrls = await Promise.all(
+      (techVidR.data ?? []).map(async (v) => {
+        const signed = await supabaseAdmin.storage.from("technique-videos").createSignedUrl(v.storage_path, 3600).catch(() => ({ data: null }));
+        return {
+          id: v.id,
+          exerciseName: v.exercise_name,
+          url: (signed as { data: { signedUrl?: string } | null }).data?.signedUrl ?? null,
+          thumbnailUrl: v.thumbnail_url ?? null,
         };
       }),
     );
@@ -267,6 +282,7 @@ export const getSessionDetail = createServerFn({ method: "GET" })
       pains: painsR.data ?? [],
       freeActivities: freeActR.data ?? [],
       media: mediaWithUrls,
+      techniqueVideos: techVideosWithUrls,
     };
   });
 

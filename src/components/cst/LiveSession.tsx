@@ -90,6 +90,28 @@ function isDurationReps(reps?: string | number | null): boolean {
   return /\d+\s*(s|sec|secondes?|"|''|min|m)\b/.test(r) || /\d+\s*['"]/.test(r);
 }
 
+/** Extracts duration in seconds from a reps string. Returns null if not parseable. */
+function parseDurationSeconds(reps?: string | number | null): number | null {
+  if (reps == null) return null;
+  const r = String(reps).toLowerCase().trim();
+  // "30s", "30 sec", "30 secondes"
+  let m = r.match(/(\d+)\s*(s|sec|secondes?)/);
+  if (m) return parseInt(m[1], 10);
+  // "1min", "1 min", "2 minutes"
+  m = r.match(/(\d+)\s*(min|minutes?)/);
+  if (m) return parseInt(m[1], 10) * 60;
+  // "1'30" or "1:30"
+  m = r.match(/(\d+)[:'](\d{2})/);
+  if (m) return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+  return null;
+}
+
+/** Detects timed isometric exercises by name/tempo keywords. */
+function isTimedByName(name: string, tempo?: string | null): boolean {
+  const t = `${name} ${tempo ?? ""}`.toLowerCase();
+  return /gainage|plank|planche|iso\b|hold|tenir|maintien|floating/.test(t);
+}
+
 /** Découpe une cible reps en une cible par série (15/12/10) ou répète une fourchette (10-8) */
 function parseRepsPerSet(repsTarget: string | number | null | undefined, seriesCount: number): string[] {
   const fallback = Array(seriesCount).fill("");
@@ -122,6 +144,55 @@ function extractNumeric(s?: string | null): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/**
+ * Formats a reps value into a human-readable objective string.
+ * Examples:
+ *   "20 / jambes"  → "20 par jambe"
+ *   "40 en tout"   → "40 au total"
+ *   "5 croix/jambes" → "5 croix par jambe"
+ *   "8 - 9"        → "8 à 9 reps"
+ *   "max"          → "maximum de reps"
+ *   "20s / côté"   → "20 secondes par côté"
+ *   "8"            → "8 reps"
+ */
+function formatRepsObjectif(raw: string | number | null | undefined): string | null {
+  if (raw == null || raw === "") return null;
+  const s = String(raw).trim();
+  if (!s || s === "-" || s === "—") return null;
+
+  // Duration per side: "20s / côté"
+  const durSide = s.match(/^(\d+)\s*['"s]?\s*[s]\s*[/\\]\s*(.+)/i);
+  if (durSide) return `${durSide[1]} secondes par ${durSide[2].trim()}`;
+
+  // Per-side reps: "20 / jambe", "6 / côté", "5 croix / jambes"
+  const perSide = s.match(/^(.+?)\s*[/\\]\s*(jambes?|côtés?|cotes?|pieds?|bras|mains?)/i);
+  if (perSide) {
+    const val = perSide[1].trim();
+    const side = perSide[2].replace(/s$/i, "").toLowerCase();
+    return `${val} par ${side}`;
+  }
+
+  // Total: "40 en tout", "40 total"
+  const total = s.match(/^([\d\s]+)\s*(en tout|total)/i);
+  if (total) return `${total[1].trim()} au total`;
+
+  // "max"
+  if (/^max(imum)?$/i.test(s)) return "maximum de reps";
+
+  // Range "8-9" or "8 à 9"
+  const range = s.match(/^(\d+)\s*[-à–]\s*(\d+)$/i);
+  if (range) return `${range[1]} à ${range[2]} reps`;
+
+  // Duration without per-side: "30s", "1min"
+  if (/^\d+\s*(s|sec|secondes?|min|minutes?|'|'')\s*$/.test(s)) return s;
+
+  // Plain number
+  if (/^\d+$/.test(s)) return `${s} reps`;
+
+  // Fallback: return raw value (never appends "REPS" if already has special content)
+  return s;
+}
+
 function formatRelativeDays(iso?: string | null): string {
   if (!iso) return "";
   const diff = Date.now() - new Date(iso).getTime();
@@ -152,6 +223,27 @@ function hasCues(ex?: ProgExercise | null): boolean {
   return !!(ex.coach_notes || ex.tempo || ex.rpe_target || ex.color);
 }
 
+/** Parses EMOM params from series or reps fields.
+ * "EMOM3" (no apostrophe) → 3 reps/min, 10 min default
+ * "EMOM4'" (apostrophe) → 4 minutes duration
+ * "EMOM5' 3" → 5 min, 3 reps/min
+ */
+function parseEmom(series: string | null, reps: string | null): { durationMin: number; repsPerMin: number | null } {
+  const src = `${series ?? ""} ${reps ?? ""}`.toLowerCase();
+  // Duration: "emom4'" or "emom 4'"
+  const durMatch = src.match(/emom\s*(\d+)\s*'/);
+  const durationMin = durMatch ? parseInt(durMatch[1], 10) : 10;
+  // Reps per min: "emom3" (no apostrophe) or separate number after duration
+  const repsFromSeries = !durMatch ? series?.match(/emom\s*(\d+)/i)?.[1] : null;
+  const repsFromReps = reps?.match(/^(\d+)$/)?.[1] ?? reps?.match(/emom\s*(\d+)\s*reps?/i)?.[1];
+  const repsPerMin = repsFromSeries
+    ? parseInt(repsFromSeries, 10)
+    : repsFromReps
+      ? parseInt(repsFromReps, 10)
+      : null;
+  return { durationMin, repsPerMin };
+}
+
 /* ───────── Types : steps ───────── */
 
 type Brief = {
@@ -178,7 +270,16 @@ type WorkSet = {
   nextPreview?: { name: string; setNumber: number; totalSets: number } | null;
 };
 
-type Step = Brief | WorkSet;
+type EmomBlock = {
+  kind: "emom";
+  blockIdx: number;
+  blockLetter?: string;
+  exercise: ProgExercise;
+  durationMin: number;
+  repsPerMin: number | null;
+};
+
+type Step = Brief | WorkSet | EmomBlock;
 
 function buildSteps(exercises: ProgExercise[]): Step[] {
   const blocks = groupBlocks(exercises || []);
@@ -189,6 +290,14 @@ function buildSteps(exercises: ProgExercise[]): Step[] {
     const isSuperset = b.isSuperset;
     const colorOfBlock = asColor(b.exercises[0]?.color);
     const restSec = parseRecupSeconds(b.exercises[0]?.recup, defaultRestFor(colorOfBlock));
+
+    // EMOM blocks get a dedicated timer step — no brief, no sets
+    if (blockType === "emom" && !isSuperset) {
+      const ex = b.exercises[0];
+      const { durationMin, repsPerMin } = parseEmom(ex.series != null ? String(ex.series) : null, ex.reps != null ? String(ex.reps) : null);
+      steps.push({ kind: "emom", blockIdx, blockLetter: b.letter, exercise: ex, durationMin, repsPerMin });
+      return;
+    }
 
     steps.push({
       kind: "brief",
@@ -253,6 +362,45 @@ function buildSteps(exercises: ProgExercise[]): Step[] {
   return steps;
 }
 
+/* ───────── Session persistence helpers ───────── */
+
+const STORAGE_KEY = (id: string) => `cst_session_${id}`;
+
+type SessionSnapshot = {
+  sessionId: string;
+  stepIdx: number;
+  phase: "intro" | "step" | "rest" | "recap";
+  savedByStep: Record<number, { weight: number | null; reps: number | null; rpe: number | null; exo: string }>;
+  startedAt: number;
+  updatedAt: number;
+};
+
+function loadSnapshot(sessionId: string): SessionSnapshot | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY(sessionId));
+    if (!raw) return null;
+    const snap = JSON.parse(raw) as SessionSnapshot;
+    if (snap.sessionId !== sessionId) return null;
+    return snap;
+  } catch {
+    return null;
+  }
+}
+
+function saveSnapshot(snap: SessionSnapshot) {
+  try {
+    localStorage.setItem(STORAGE_KEY(snap.sessionId), JSON.stringify(snap));
+  } catch {
+    /* storage quota exceeded — ignore */
+  }
+}
+
+function clearSnapshot(sessionId: string) {
+  try {
+    localStorage.removeItem(STORAGE_KEY(sessionId));
+  } catch { /* ignore */ }
+}
+
 /* ───────── Main component ───────── */
 
 type Props = {
@@ -266,10 +414,13 @@ type Props = {
 
 export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFinish, finishing }: Props) {
   const steps = useMemo(() => buildSteps(exercises), [exercises]);
-  const totalWorkSets = useMemo(() => steps.filter((s) => s.kind === "set").length, [steps]);
+  const totalWorkSets = useMemo(() => steps.filter((s) => s.kind === "set" || s.kind === "emom").length, [steps]);
 
-  const [phase, setPhase] = useState<"intro" | "step" | "rest" | "recap">("intro");
-  const [stepIdx, setStepIdx] = useState(0);
+  // Restore from localStorage on first render
+  const snap = useMemo(() => loadSnapshot(sessionId), [sessionId]);
+
+  const [phase, setPhase] = useState<"intro" | "step" | "rest" | "recap">(snap?.phase ?? "intro");
+  const [stepIdx, setStepIdx] = useState(snap?.stepIdx ?? 0);
   const [logging, setLogging] = useState<null | {
     weight: string;
     reps: string;
@@ -285,16 +436,19 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
   const [showVideo, setShowVideo] = useState<ProgExercise | null>(null);
   const [showCues, setShowCues] = useState<ProgExercise | null>(null);
   const [showQuitConfirm, setShowQuitConfirm] = useState(false);
+  const [showResumeNotice, setShowResumeNotice] = useState(!!snap && Object.keys(snap.savedByStep).length > 0);
+  /** For timed exercises: tracks whether the countdown has been completed */
+  const [timedDone, setTimedDone] = useState(false);
 
   /** Saisies par stepIdx — conservées si on revient en arrière, écrasées si on re-valide. */
   const [savedByStep, setSavedByStep] = useState<
     Record<number, { weight: number | null; reps: number | null; rpe: number | null; exo: string }>
-  >({});
+  >(snap?.savedByStep ?? {});
 
   /** Historique de la dernière séance pour le même exercice. */
   const [lastByExo, setLastByExo] = useState<LastByExo>({});
 
-  const startedAtRef = useRef<number>(Date.now());
+  const startedAtRef = useRef<number>(snap?.startedAt ?? Date.now());
 
   // Charger l'historique pour pré-remplissage intelligent
   useEffect(() => {
@@ -357,12 +511,27 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
     };
   }, [userId, exercises]);
 
+  // Persist progress to localStorage after every meaningful state change
+  useEffect(() => {
+    if (phase === "intro" && Object.keys(savedByStep).length === 0) return;
+    if (phase === "recap") return; // recap = finished, will be cleared by onFinish
+    saveSnapshot({
+      sessionId,
+      stepIdx,
+      phase,
+      savedByStep,
+      startedAt: startedAtRef.current,
+      updatedAt: Date.now(),
+    });
+  }, [sessionId, stepIdx, phase, savedByStep]);
+
   const current = steps[stepIdx];
   const completedWorkSets = useMemo(() => Object.keys(savedByStep).length, [savedByStep]);
 
   function goNext() {
     setLogging(null);
     setValidationError(null);
+    setTimedDone(false);
     if (stepIdx >= steps.length - 1) {
       setPhase("recap");
       return;
@@ -528,6 +697,14 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
     const pct = totalWorkSets ? (completedWorkSets / totalWorkSets) * 100 : 0;
     return (
       <div style={{ padding: "16px 18px 8px", display: "flex", flexDirection: "column", gap: 8 }}>
+        {showResumeNotice && (
+          <div style={{ padding: "8px 12px", background: "rgba(45,90,53,0.22)", border: "1px solid rgba(45,90,53,0.55)", borderRadius: 8, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+            <span className="cst-mono" style={{ fontSize: 10, color: "rgba(255,255,255,0.85)", letterSpacing: "0.1em" }}>
+              ⏸ SÉANCE REPRISE · {completedWorkSets} série{completedWorkSets > 1 ? "s" : ""} conservée{completedWorkSets > 1 ? "s" : ""}
+            </span>
+            <button onClick={() => setShowResumeNotice(false)} style={{ background: "none", border: 0, color: "rgba(255,255,255,0.5)", fontSize: 14, cursor: "pointer", padding: "0 4px" }}>×</button>
+          </div>
+        )}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
           <button
             onClick={handleHeaderBack}
@@ -729,7 +906,9 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
                 QUITTER LA SÉANCE ?
               </h3>
               <p style={{ margin: 0, fontSize: 13, lineHeight: 1.5, color: "rgba(255,255,255,0.8)" }}>
-                Tes données sont sauvegardées, tu pourras reprendre où tu en étais depuis ton tableau de bord.
+                Si tu <strong>continues</strong>, tes séries déjà loggées sont conservées — tu reprends exactement où tu en étais.
+                <br /><br />
+                Si tu <strong>quittes / abandonnes</strong>, la progression est effacée.
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 6 }}>
                 <button
@@ -740,11 +919,11 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
                   CONTINUER LA SÉANCE
                 </button>
                 <button
-                  onClick={navigateToMember}
+                  onClick={() => { clearSnapshot(sessionId); navigateToMember(); }}
                   className="cst-btn cst-btn-ghost-dark"
                   style={{ width: "100%", padding: "12px 0", fontSize: 12 }}
                 >
-                  QUITTER
+                  QUITTER (ABANDONNER)
                 </button>
               </div>
             </div>
@@ -844,7 +1023,7 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
     return (
       <div style={shellStyle}>
         {renderHeader()}
-        <div style={{ padding: "0 22px 24px", display: "flex", flexDirection: "column", gap: 18, flex: 1 }}>
+        <div style={{ padding: "0 22px 24px", display: "flex", flexDirection: "column", gap: 18, flex: 1, overflowY: "auto" }}>
           <div>
             <span className="cst-mono" style={{ fontSize: 10, opacity: 0.5, letterSpacing: "0.2em" }}>
               ★ TERMINÉ
@@ -863,7 +1042,7 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
           </div>
           <div
             className="cst-scroll"
-            style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4 }}
+            style={{ maxHeight: 180, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4 }}
           >
             {savedList.map((l, i) => (
               <div
@@ -881,8 +1060,12 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
               </div>
             ))}
           </div>
+
+          {/* Session-level video share */}
+          <SessionMediaUploader sessionId={sessionId} userId={userId} />
+
           <button
-            onClick={onFinish}
+            onClick={() => { clearSnapshot(sessionId); onFinish(); }}
             disabled={finishing}
             className="cst-btn cst-btn-primary"
             style={{ width: "100%", padding: "18px 0", fontSize: 14, opacity: finishing ? 0.6 : 1 }}
@@ -925,6 +1108,41 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
   }
 
   const canGoPrevBlock = current.blockIdx > 0;
+
+  /* ───────── EMOM step ───────── */
+
+  if (current.kind === "emom") {
+    return (
+      <div style={shellStyle}>
+        {renderHeader()}
+        <EmomScreen
+          key={`emom-${stepIdx}`}
+          exercise={current.exercise}
+          durationMin={current.durationMin}
+          repsPerMin={current.repsPerMin}
+          sessionId={sessionId}
+          onFinish={(logs) => {
+            // Persist EMOM result as a single "set_log" entry
+            supabase.from("set_logs").insert({
+              session_id: sessionId,
+              exercise_name: current.exercise.name,
+              set_number: 1,
+              reps: logs.reduce((s, l) => s + l, 0),
+              rpe: null,
+              completed: true,
+            }).then(() => {});
+            setSavedByStep((m) => ({
+              ...m,
+              [stepIdx]: { exo: current.exercise.name, weight: null, reps: logs.reduce((s, l) => s + l, 0), rpe: null },
+            }));
+            goNext();
+          }}
+          onPain={() => setPainFor(current.exercise.name)}
+        />
+        {renderOverlays()}
+      </div>
+    );
+  }
 
   if (current.kind === "brief") {
     const blockColor = asColor(current.exercises[0]?.color);
@@ -1020,7 +1238,7 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
                   </span>
                   <span>
                     <span style={{ opacity: 0.5 }}>REPS </span>
-                    {ex.reps ?? "—"}
+                    {ex.reps != null ? (formatRepsObjectif(ex.reps) ?? String(ex.reps)) : "—"}
                   </span>
                   {ex.charge && !bodyweight && (
                     <span>
@@ -1131,6 +1349,8 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
   const accent = colorHex(exColor) || "var(--cst-mid-green)";
   const bodyweight = isBodyweight(setStep.exercise.charge);
   const durationMode = isDurationReps(setStep.exercise.reps);
+  const isTimed = durationMode || isTimedByName(setStep.exercise.name, setStep.exercise.tempo);
+  const timedSecs = parseDurationSeconds(setStep.exercise.reps);
 
   // Cible reps par série (placeholder)
   const repTargets = parseRepsPerSet(setStep.exercise.reps, setStep.totalSets);
@@ -1228,10 +1448,7 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
           </div>
           <div className="cst-mono" style={{ fontSize: 11, opacity: 0.8, marginTop: 8 }}>
             {repPlaceholder && (
-              <>
-                OBJECTIF {repPlaceholder}
-                {durationMode ? "" : " REPS"}
-              </>
+              <>OBJECTIF {formatRepsObjectif(repPlaceholder) ?? repPlaceholder}</>
             )}
             {setStep.exercise.rpe_target && <> @ RPE {setStep.exercise.rpe_target}</>}
           </div>
@@ -1254,13 +1471,27 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
           onCues={() => setShowCues(setStep.exercise)}
         />
 
-        {!logging && (
+        {isTimed && timedSecs && !timedDone && (
+          <TimedSetScreen
+            key={`timed-${stepIdx}`}
+            seconds={timedSecs}
+            label={formatRepsObjectif(setStep.exercise.reps) ?? `${timedSecs}s`}
+            onDone={() => {
+              setTimedDone(true);
+              // Pre-fill the reps field with actual duration for logging
+              const defaults = computeDefaults(setStep);
+              setLogging({ ...defaults, reps: String(timedSecs) });
+            }}
+          />
+        )}
+
+        {(!isTimed || !timedSecs || timedDone) && !logging && (
           <button
             onClick={startLogging}
             className="cst-btn cst-btn-primary"
             style={{ width: "100%", padding: "18px 0", fontSize: 14, marginTop: 4 }}
           >
-            ✓ SÉRIE TERMINÉE — LOGGER
+            {isTimed ? "✓ CHRONO TERMINÉ — LOGGER LE RPE" : "✓ SÉRIE TERMINÉE — LOGGER"}
           </button>
         )}
 
@@ -1609,6 +1840,329 @@ function RestScreen({
   );
 }
 
+/* ───────── EMOM screen — minute-by-minute guided timer ───────── */
+
+function EmomScreen({
+  exercise,
+  durationMin,
+  repsPerMin,
+  sessionId,
+  onFinish,
+  onPain,
+}: {
+  exercise: ProgExercise;
+  durationMin: number;
+  repsPerMin: number | null;
+  sessionId: string;
+  onFinish: (repsByMinute: number[]) => void;
+  onPain: () => void;
+}) {
+  const totalSec = durationMin * 60;
+  const [elapsed, setElapsed] = useState(0);
+  const [running, setRunning] = useState(false);
+  const [done, setDone] = useState(false);
+  const [rpe, setRpe] = useState<number | null>(null);
+  const [repsByMinute, setRepsByMinute] = useState<number[]>(Array(durationMin).fill(repsPerMin ?? 0));
+  const doneFiredRef = useRef(false);
+
+  const currentMinute = Math.floor(elapsed / 60); // 0-indexed current minute
+  const secInMinute = elapsed % 60;
+  const secLeftInMinute = 59 - secInMinute;
+
+  useEffect(() => {
+    if (!running || elapsed >= totalSec) return;
+    const t = setTimeout(() => setElapsed((e) => e + 1), 1000);
+    return () => clearTimeout(t);
+  }, [running, elapsed, totalSec]);
+
+  useEffect(() => {
+    if (elapsed >= totalSec && running && !doneFiredRef.current) {
+      doneFiredRef.current = true;
+      setRunning(false);
+      setDone(true);
+      try {
+        if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+          (navigator as Navigator & { vibrate: (p: number | number[]) => boolean }).vibrate([300, 100, 300, 100, 600]);
+        }
+      } catch { /* ignore */ }
+    }
+  }, [elapsed, totalSec, running]);
+
+  // Vibrate at start of each minute
+  const prevMinRef = useRef(-1);
+  useEffect(() => {
+    if (!running || currentMinute === prevMinRef.current) return;
+    prevMinRef.current = currentMinute;
+    if (currentMinute > 0) {
+      try {
+        if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+          (navigator as Navigator & { vibrate: (p: number | number[]) => boolean }).vibrate([150, 50, 150]);
+        }
+      } catch { /* ignore */ }
+    }
+  }, [currentMinute, running]);
+
+  const totalProgress = totalSec > 0 ? elapsed / totalSec : 0;
+  const minuteProgress = secInMinute / 60;
+  const radiusTotal = 90;
+  const radiusMin = 64;
+  const circTotal = 2 * Math.PI * radiusTotal;
+  const circMin = 2 * Math.PI * radiusMin;
+
+  if (!done) {
+    return (
+      <div style={{ padding: "0 22px 24px", display: "flex", flexDirection: "column", gap: 14, flex: 1, overflowY: "auto" }}>
+        <div>
+          <span className="cst-mono" style={{ fontSize: 10, opacity: 0.55, letterSpacing: "0.22em" }}>
+            EMOM · {exercise.code && `${exercise.code} · `}{durationMin} MIN
+            {repsPerMin ? ` · ${repsPerMin} REPS/MIN` : ""}
+          </span>
+          <h2 className="cst-display" style={{ margin: "4px 0 0", fontSize: 22, color: "#fff" }}>
+            {exercise.name.toUpperCase()}
+          </h2>
+        </div>
+
+        <div style={{ position: "relative", width: 220, height: 220, alignSelf: "center" }}>
+          <svg width="220" height="220" viewBox="0 0 220 220">
+            {/* Outer ring: total progress */}
+            <circle cx="110" cy="110" r={radiusTotal} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
+            <circle cx="110" cy="110" r={radiusTotal} fill="none" stroke="#3A8A4D" strokeWidth="8"
+              strokeDasharray={circTotal} strokeDashoffset={circTotal * (1 - totalProgress)}
+              strokeLinecap="round" transform="rotate(-90 110 110)"
+              style={{ transition: "stroke-dashoffset 1s linear" }} />
+            {/* Inner ring: minute progress */}
+            <circle cx="110" cy="110" r={radiusMin} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="6" />
+            <circle cx="110" cy="110" r={radiusMin} fill="none"
+              stroke={secLeftInMinute < 10 ? "#C9483A" : "#D4A53B"}
+              strokeWidth="6"
+              strokeDasharray={circMin} strokeDashoffset={circMin * (1 - minuteProgress)}
+              strokeLinecap="round" transform="rotate(-90 110 110)"
+              style={{ transition: "stroke-dashoffset 1s linear" }} />
+          </svg>
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column" }}>
+            {!running && elapsed === 0 ? (
+              <span className="cst-mono" style={{ fontSize: 13, opacity: 0.6, textAlign: "center" }}>PRÊT</span>
+            ) : (
+              <>
+                <span className="cst-mono" style={{ fontSize: 11, opacity: 0.5 }}>MIN {currentMinute + 1} / {durationMin}</span>
+                <span className="cst-display" style={{ fontSize: 44, color: "#fff", lineHeight: 1 }}>
+                  0:{String(secLeftInMinute).padStart(2, "0")}
+                </span>
+                <span className="cst-mono" style={{ fontSize: 10, opacity: 0.5 }}>dans la minute</span>
+              </>
+            )}
+          </div>
+        </div>
+
+        {running && repsPerMin != null && (
+          <div style={{ padding: "14px 16px", background: "rgba(45,90,53,0.18)", border: "1px solid rgba(45,90,53,0.45)", borderRadius: 10, textAlign: "center" }}>
+            {secInMinute < 15 ? (
+              <span className="cst-display" style={{ fontSize: 18, color: "#6EAB76" }}>
+                FAIS {repsPerMin} REPS MAINTENANT
+              </span>
+            ) : (
+              <span className="cst-mono" style={{ fontSize: 11, opacity: 0.7 }}>
+                repos · prochain signal dans {secLeftInMinute}s
+              </span>
+            )}
+          </div>
+        )}
+
+        <div style={{ display: "flex", gap: 8 }}>
+          <button
+            onClick={() => setRunning((r) => !r)}
+            className="cst-btn cst-btn-primary"
+            style={{ flex: 2, padding: "14px 0" }}
+          >
+            {running ? "⏸ PAUSE" : elapsed === 0 ? "▶ DÉMARRER" : "▶ REPRENDRE"}
+          </button>
+          <button
+            onClick={() => { setDone(true); setRunning(false); }}
+            className="cst-btn cst-btn-ghost-dark"
+            style={{ flex: 1, padding: "14px 0", fontSize: 11 }}
+          >
+            ARRÊTER
+          </button>
+        </div>
+
+        {/* Minute-by-minute log */}
+        {elapsed > 0 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <span className="cst-mono" style={{ fontSize: 9, opacity: 0.5, letterSpacing: "0.18em" }}>REPS PAR MINUTE</span>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 4 }}>
+              {repsByMinute.slice(0, Math.min(currentMinute + 1, durationMin)).map((r, i) => (
+                <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                  <span className="cst-mono" style={{ fontSize: 8, opacity: 0.4 }}>{i + 1}</span>
+                  <input
+                    type="number"
+                    value={r}
+                    onChange={(e) => {
+                      const v = parseInt(e.target.value, 10);
+                      setRepsByMinute((prev) => {
+                        const next = [...prev];
+                        next[i] = isNaN(v) ? 0 : v;
+                        return next;
+                      });
+                    }}
+                    className="cst-input"
+                    style={{ width: "100%", padding: "6px 4px", fontSize: 14, textAlign: "center", minHeight: 36 }}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <button onClick={onPain} className="cst-btn cst-btn-sm" style={{ alignSelf: "flex-start", background: "rgba(192,57,43,0.15)", border: "1px solid rgba(192,57,43,0.5)", color: "#ff8a7a" }}>
+          🔴 Signaler une douleur
+        </button>
+      </div>
+    );
+  }
+
+  // Finished — RPE recap
+  const totalReps = repsByMinute.reduce((s, r) => s + r, 0);
+  return (
+    <div style={{ padding: "0 22px 24px", display: "flex", flexDirection: "column", gap: 16, flex: 1, overflowY: "auto" }}>
+      <div>
+        <span className="cst-mono" style={{ fontSize: 10, opacity: 0.55, letterSpacing: "0.22em" }}>✓ EMOM TERMINÉ</span>
+        <h2 className="cst-display" style={{ margin: "4px 0 0", fontSize: 22, color: "#fff" }}>
+          {exercise.name.toUpperCase()}
+        </h2>
+        <div className="cst-mono" style={{ fontSize: 12, opacity: 0.7, marginTop: 4 }}>
+          {durationMin} min · {totalReps} reps au total
+        </div>
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <span className="cst-mono" style={{ fontSize: 10, opacity: 0.6, letterSpacing: "0.18em" }}>RPE GLOBAL SUR CET EMOM</span>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 4 }}>
+          {[1,2,3,4,5,6,7,8,9,10].map((v) => {
+            const on = rpe === v;
+            const hue = v >= 9 ? "#C9483A" : v >= 7 ? "#D4A53B" : "#3A8A4D";
+            return (
+              <button key={v} onClick={() => setRpe(v)} className="cst-mono" style={{ padding: "12px 0", borderRadius: 6, border: `1px solid ${on ? hue : "rgba(255,255,255,0.12)"}`, background: on ? `${hue}33` : "transparent", color: on ? "#fff" : "rgba(255,255,255,0.7)", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>
+                {v}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <button
+        onClick={() => onFinish(repsByMinute)}
+        disabled={rpe == null}
+        className="cst-btn cst-btn-primary"
+        style={{ width: "100%", padding: "16px 0", fontSize: 14, opacity: rpe == null ? 0.5 : 1 }}
+      >
+        VALIDER L'EMOM →
+      </button>
+    </div>
+  );
+}
+
+/* ───────── Timed set countdown (gainage, plank, iso, etc.) ───────── */
+
+function TimedSetScreen({
+  seconds,
+  label,
+  onDone,
+}: {
+  seconds: number;
+  label: string;
+  onDone: () => void;
+}) {
+  const [remaining, setRemaining] = useState(seconds);
+  const [running, setRunning] = useState(false);
+  const [finished, setFinished] = useState(false);
+  const totalRef = useRef(seconds);
+  const doneFiredRef = useRef(false);
+
+  useEffect(() => {
+    if (!running || remaining <= 0) return;
+    const t = setTimeout(() => setRemaining((r) => r - 1), 1000);
+    return () => clearTimeout(t);
+  }, [remaining, running]);
+
+  useEffect(() => {
+    if (remaining <= 0 && running && !doneFiredRef.current) {
+      doneFiredRef.current = true;
+      setRunning(false);
+      setFinished(true);
+      try {
+        if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+          (navigator as Navigator & { vibrate: (p: number | number[]) => boolean }).vibrate([200, 80, 200, 80, 400]);
+        }
+      } catch { /* ignore */ }
+    }
+  }, [remaining, running]);
+
+  const pct = totalRef.current > 0 ? remaining / totalRef.current : 0;
+  const radius = 80;
+  const circ = 2 * Math.PI * radius;
+  const off = circ * (1 - pct);
+  const color = pct > 0.5 ? "#3A8A4D" : pct > 0.2 ? "#D4A53B" : "#C9483A";
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
+      <div className="cst-mono" style={{ fontSize: 10, opacity: 0.65, letterSpacing: "0.2em" }}>
+        ⏱ {label.toUpperCase()}
+      </div>
+
+      <div style={{ position: "relative", width: 200, height: 200 }}>
+        <svg width="200" height="200" viewBox="0 0 200 200">
+          <circle cx="100" cy="100" r={radius} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="8" />
+          <circle
+            cx="100" cy="100" r={radius} fill="none" stroke={color} strokeWidth="8"
+            strokeDasharray={circ} strokeDashoffset={off} strokeLinecap="round"
+            transform="rotate(-90 100 100)"
+            style={{ transition: "stroke-dashoffset 1s linear, stroke 0.3s" }}
+          />
+        </svg>
+        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column" }}>
+          {finished ? (
+            <span className="cst-display" style={{ fontSize: 40, color: "#3A8A4D" }}>✓</span>
+          ) : (
+            <>
+              <span className="cst-display" style={{ fontSize: 52, color: "#fff", lineHeight: 1 }}>
+                {Math.max(0, Math.floor(remaining / 60))}:{String(Math.max(0, remaining % 60)).padStart(2, "0")}
+              </span>
+              <span className="cst-mono" style={{ fontSize: 10, opacity: 0.5, marginTop: 4 }}>
+                / {totalRef.current}s
+              </span>
+            </>
+          )}
+        </div>
+      </div>
+
+      {!finished && (
+        <div style={{ display: "flex", gap: 8, width: "100%" }}>
+          <button
+            onClick={() => setRunning((r) => !r)}
+            className="cst-btn cst-btn-primary"
+            style={{ flex: 2, padding: "14px 0" }}
+          >
+            {running ? "⏸ PAUSE" : remaining === seconds ? "▶ DÉMARRER" : "▶ REPRENDRE"}
+          </button>
+          <button
+            onClick={() => { setFinished(true); setRunning(false); }}
+            className="cst-btn cst-btn-ghost-dark"
+            style={{ flex: 1, padding: "14px 0", fontSize: 11 }}
+          >
+            SKIP
+          </button>
+        </div>
+      )}
+
+      {finished && (
+        <button onClick={onDone} className="cst-btn cst-btn-primary" style={{ width: "100%", padding: "16px 0", fontSize: 14 }}>
+          ✓ TERMINÉ — NOTER LE RPE →
+        </button>
+      )}
+    </div>
+  );
+}
+
 /* ───────── Atoms ───────── */
 
 function Stat({ label, value }: { label: string; value: string }) {
@@ -1742,6 +2296,95 @@ function CuesActionBar({
           📋 CONSIGNES
         </button>
       )}
+    </div>
+  );
+}
+
+/* ───────── Session-level media uploader (end of session) ───────── */
+
+function SessionMediaUploader({ sessionId, userId }: { sessionId: string; userId: string }) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploaded, setUploaded] = useState<string[]>([]); // display names
+  const [progress, setProgress] = useState(0);
+
+  async function handleFiles(files: FileList | null) {
+    if (!files || !files.length) return;
+    setUploading(true);
+    setProgress(0);
+    const names: string[] = [];
+    try {
+      let i = 0;
+      for (const file of Array.from(files)) {
+        const isVideo = file.type.startsWith("video/");
+        const ext = (file.name.match(/\.([a-zA-Z0-9]+)$/)?.[1] ?? "bin").toLowerCase();
+        const path = `${userId}/${sessionId}/session-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+        const { error } = await supabase.storage
+          .from("session-media")
+          .upload(path, file, { contentType: file.type, upsert: false });
+        if (error) throw error;
+        await supabase.from("session_media").insert({
+          session_id: sessionId,
+          member_id: userId,
+          type: isVideo ? "video" : "photo",
+          storage_path: path,
+          caption: "[SESSION]", // marks session-level media for coach view
+        });
+        names.push(file.name);
+        i += 1;
+        setProgress(Math.round((i / files.length) * 100));
+      }
+      setUploaded((prev) => [...prev, ...names]);
+    } catch (e) {
+      console.error("Session media upload failed", e);
+    } finally {
+      setUploading(false);
+      setProgress(0);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
+
+  return (
+    <div style={{ padding: "14px 16px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.10)", borderRadius: 10, display: "flex", flexDirection: "column", gap: 10 }}>
+      <div className="cst-mono" style={{ fontSize: 10, opacity: 0.65, letterSpacing: "0.18em" }}>
+        🎥 PARTAGER DES VIDÉOS DE LA SÉANCE
+      </div>
+      <div style={{ fontSize: 12, opacity: 0.7, lineHeight: 1.4 }}>
+        En plus des vidéos par exercice, partage ici des vidéos ou photos globales sur ta séance. Ouvre le sélecteur de fichiers — pas de caméra en direct.
+      </div>
+
+      {uploaded.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          {uploaded.map((name, i) => (
+            <div key={i} className="cst-mono" style={{ fontSize: 10, opacity: 0.8, padding: "4px 8px", background: "rgba(45,90,53,0.18)", borderRadius: 4 }}>
+              ✓ {name}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {uploading && (
+        <div className="cst-mono" style={{ fontSize: 10, opacity: 0.6 }}>ENVOI… {progress}%</div>
+      )}
+
+      <button
+        type="button"
+        onClick={() => fileRef.current?.click()}
+        disabled={uploading}
+        className="cst-btn cst-btn-ghost-dark"
+        style={{ fontSize: 12, padding: "10px 0" }}
+      >
+        + PARTAGER UNE VIDÉO / PHOTO
+      </button>
+
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*,video/*"
+        multiple
+        style={{ display: "none" }}
+        onChange={(e) => handleFiles(e.target.files)}
+      />
     </div>
   );
 }
@@ -1997,3 +2640,4 @@ function CuesModal({
     </div>
   );
 }
+
