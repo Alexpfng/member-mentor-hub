@@ -263,7 +263,9 @@ export const getSessionDetail = createServerFn({ method: "GET" })
     // Signed URLs for technique_videos (per-exercise videos from ExerciseThread)
     const techVideosWithUrls = await Promise.all(
       (techVidR.data ?? []).map(async (v) => {
-        const signed = await supabaseAdmin.storage.from("technique-videos").createSignedUrl(v.storage_path, 3600).catch(() => ({ data: null }));
+        const signed = v.storage_path
+          ? await supabaseAdmin.storage.from("technique-videos").createSignedUrl(v.storage_path, 3600).catch(() => ({ data: null }))
+          : { data: null };
         return {
           id: v.id,
           exerciseName: v.exercise_name,
