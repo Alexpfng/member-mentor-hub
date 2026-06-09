@@ -343,8 +343,26 @@ export default function AdapterSemaine() {
 
         {/* Jours */}
         {(structure.days ?? []).length === 0 && (
-          <div className="cst-card-dark" style={{ padding: 30, textAlign: "center", opacity: 0.7 }}>
-            Aucun jour. La semaine source est vide — ajoute un jour ou demande la duplication d'une semaine antérieure.
+          <div className="cst-card-dark" style={{ padding: 28, textAlign: "center" }}>
+            <div className="cst-display" style={{ fontSize: 18, marginBottom: 8 }}>Semaine vide</div>
+            <div style={{ fontSize: 13, opacity: 0.65, marginBottom: 20, lineHeight: 1.5 }}>
+              Cette semaine n'a pas encore de séances.<br />
+              Commence en ajoutant un jour, ou génère depuis les séances passées.
+            </div>
+            <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+              <button
+                onClick={() => setStructure((s) => ({ ...s, days: [{ label: "Jour 1", exercises: [] }] }))}
+                className="cst-btn cst-btn-primary"
+              >
+                + Ajouter un premier jour
+              </button>
+              <button
+                onClick={() => navigate({ to: "/coach/membre/$memberId", params: { memberId } })}
+                className="cst-btn cst-btn-ghost-dark"
+              >
+                ← Retour fiche membre
+              </button>
+            </div>
           </div>
         )}
 

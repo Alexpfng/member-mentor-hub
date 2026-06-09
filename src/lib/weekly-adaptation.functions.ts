@@ -152,7 +152,7 @@ export const getMemberWeekContext = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await requireCoach(context.userId);
 
-    // Active assignment
+    // Active assignment (optional — only needed to create a brand-new week)
     const { data: assignment } = await supabaseAdmin
       .from("assignments")
       .select("id, program_id, start_date, programs(name, duration_weeks, structure)")
@@ -161,33 +161,36 @@ export const getMemberWeekContext = createServerFn({ method: "POST" })
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (!assignment) throw new Error("Aucun programme actif pour ce membre.");
 
-    // Determine target week: arg or last published + 1
+    // Determine target week: arg or last week in history + 1 (search by member_id)
     let targetWeek = data.weekNumber;
     if (targetWeek == null) {
       const { data: last } = await supabaseAdmin
         .from("assignment_weeks")
         .select("week_number")
-        .eq("assignment_id", assignment.id)
-        .eq("status", "published")
+        .eq("member_id", data.memberId)
+        .in("status", ["published", "in_progress", "done"])
         .order("week_number", { ascending: false })
         .limit(1)
         .maybeSingle();
-      targetWeek = (last?.week_number ?? -1) + 1;
-      if (targetWeek === 0) targetWeek = 1; // assume first week is "1"
+      targetWeek = (last?.week_number ?? 0) + 1;
+      if (targetWeek === 0) targetWeek = 1;
     }
 
-    // Find existing draft/published row
+    // Find existing row by member + week number (NOT filtered by current assignment)
     const { data: existing } = await supabaseAdmin
       .from("assignment_weeks")
       .select("*")
-      .eq("assignment_id", assignment.id)
+      .eq("member_id", data.memberId)
       .eq("week_number", targetWeek)
+      .order("created_at", { ascending: false })
+      .limit(1)
       .maybeSingle();
 
     let weekRow = existing;
     if (!weekRow) {
+      // Need active assignment to create a new week
+      if (!assignment) throw new Error("Aucun programme actif pour ce membre. Assigne d'abord un programme.");
       const src = await resolveSourceWeek(assignment.id, targetWeek);
       const { data: created, error } = await supabaseAdmin
         .from("assignment_weeks")
@@ -240,13 +243,22 @@ export const getMemberWeekContext = createServerFn({ method: "POST" })
       painCount = count ?? 0;
     }
 
+    // Resolve program name/weeks — prefer active assignment, fallback to week's own program
+    let programName = (assignment as { programs?: { name?: string } } | null)?.programs?.name ?? null;
+    let durationWeeks = (assignment as { programs?: { duration_weeks?: number } } | null)?.programs?.duration_weeks ?? null;
+    if (!programName && weekRow.program_id) {
+      const { data: prog } = await supabaseAdmin.from("programs").select("name, duration_weeks").eq("id", weekRow.program_id).maybeSingle();
+      programName = prog?.name ?? null;
+      durationWeeks = prog?.duration_weeks ?? null;
+    }
+
     return {
       week: weekRow,
       assignment: {
-        id: assignment.id,
-        program_id: assignment.program_id,
-        program_name: (assignment as { programs?: { name?: string } }).programs?.name ?? "Programme",
-        duration_weeks: (assignment as { programs?: { duration_weeks?: number } }).programs?.duration_weeks ?? null,
+        id: assignment?.id ?? weekRow.assignment_id,
+        program_id: assignment?.program_id ?? weekRow.program_id,
+        program_name: programName ?? "Programme",
+        duration_weeks: durationWeeks,
       },
       member: {
         id: data.memberId,
