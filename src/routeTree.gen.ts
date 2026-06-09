@@ -44,6 +44,7 @@ import { Route as AuthenticatedCoachSeanceSessionIdRouteImport } from './routes/
 import { Route as AuthenticatedCoachProgrammesIdRouteImport } from './routes/_authenticated.coach.programmes.$id'
 import { Route as AuthenticatedCoachMembreMemberIdRouteImport } from './routes/_authenticated.coach.membre.$memberId'
 import { Route as AuthenticatedCoachBuilderIdRouteImport } from './routes/_authenticated.coach.builder.$id'
+import { Route as AuthenticatedCoachMembreMemberIdIndexRouteImport } from './routes/_authenticated.coach.membre.$memberId.index'
 import { Route as AuthenticatedCoachMembreMemberIdAdapterRouteImport } from './routes/_authenticated.coach.membre.$memberId.adapter'
 
 const SignupRoute = SignupRouteImport.update({
@@ -246,6 +247,12 @@ const AuthenticatedCoachBuilderIdRoute =
     path: '/$id',
     getParentRoute: () => AuthenticatedCoachBuilderRoute,
   } as any)
+const AuthenticatedCoachMembreMemberIdIndexRoute =
+  AuthenticatedCoachMembreMemberIdIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedCoachMembreMemberIdRoute,
+  } as any)
 const AuthenticatedCoachMembreMemberIdAdapterRoute =
   AuthenticatedCoachMembreMemberIdAdapterRouteImport.update({
     id: '/adapter',
@@ -289,6 +296,7 @@ export interface FileRoutesByFullPath {
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/coach/membre/$memberId/adapter': typeof AuthenticatedCoachMembreMemberIdAdapterRoute
+  '/coach/membre/$memberId/': typeof AuthenticatedCoachMembreMemberIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -315,7 +323,6 @@ export interface FileRoutesByTo {
   '/coach': typeof AuthenticatedCoachIndexRoute
   '/membre': typeof AuthenticatedMembreIndexRoute
   '/coach/builder/$id': typeof AuthenticatedCoachBuilderIdRoute
-  '/coach/membre/$memberId': typeof AuthenticatedCoachMembreMemberIdRouteWithChildren
   '/coach/programmes/$id': typeof AuthenticatedCoachProgrammesIdRoute
   '/coach/seance/$sessionId': typeof AuthenticatedCoachSeanceSessionIdRoute
   '/membre/carnet/$week': typeof AuthenticatedMembreCarnetWeekRoute
@@ -326,6 +333,7 @@ export interface FileRoutesByTo {
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/coach/membre/$memberId/adapter': typeof AuthenticatedCoachMembreMemberIdAdapterRoute
+  '/coach/membre/$memberId': typeof AuthenticatedCoachMembreMemberIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -365,6 +373,7 @@ export interface FileRoutesById {
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/_authenticated/coach/membre/$memberId/adapter': typeof AuthenticatedCoachMembreMemberIdAdapterRoute
+  '/_authenticated/coach/membre/$memberId/': typeof AuthenticatedCoachMembreMemberIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -404,6 +413,7 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
     | '/coach/membre/$memberId/adapter'
+    | '/coach/membre/$memberId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -430,7 +440,6 @@ export interface FileRouteTypes {
     | '/coach'
     | '/membre'
     | '/coach/builder/$id'
-    | '/coach/membre/$memberId'
     | '/coach/programmes/$id'
     | '/coach/seance/$sessionId'
     | '/membre/carnet/$week'
@@ -441,6 +450,7 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
     | '/coach/membre/$memberId/adapter'
+    | '/coach/membre/$memberId'
   id:
     | '__root__'
     | '/'
@@ -479,6 +489,7 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
     | '/_authenticated/coach/membre/$memberId/adapter'
+    | '/_authenticated/coach/membre/$memberId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -741,6 +752,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCoachBuilderIdRouteImport
       parentRoute: typeof AuthenticatedCoachBuilderRoute
     }
+    '/_authenticated/coach/membre/$memberId/': {
+      id: '/_authenticated/coach/membre/$memberId/'
+      path: '/'
+      fullPath: '/coach/membre/$memberId/'
+      preLoaderRoute: typeof AuthenticatedCoachMembreMemberIdIndexRouteImport
+      parentRoute: typeof AuthenticatedCoachMembreMemberIdRoute
+    }
     '/_authenticated/coach/membre/$memberId/adapter': {
       id: '/_authenticated/coach/membre/$memberId/adapter'
       path: '/adapter'
@@ -795,12 +813,15 @@ const AuthenticatedMembreCarnetRouteWithChildren =
 
 interface AuthenticatedCoachMembreMemberIdRouteChildren {
   AuthenticatedCoachMembreMemberIdAdapterRoute: typeof AuthenticatedCoachMembreMemberIdAdapterRoute
+  AuthenticatedCoachMembreMemberIdIndexRoute: typeof AuthenticatedCoachMembreMemberIdIndexRoute
 }
 
 const AuthenticatedCoachMembreMemberIdRouteChildren: AuthenticatedCoachMembreMemberIdRouteChildren =
   {
     AuthenticatedCoachMembreMemberIdAdapterRoute:
       AuthenticatedCoachMembreMemberIdAdapterRoute,
+    AuthenticatedCoachMembreMemberIdIndexRoute:
+      AuthenticatedCoachMembreMemberIdIndexRoute,
   }
 
 const AuthenticatedCoachMembreMemberIdRouteWithChildren =
@@ -882,3 +903,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
