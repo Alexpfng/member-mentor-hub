@@ -1,4 +1,4 @@
-import { createStart, createMiddleware } from "@tanstack/start-client-core";
+import { createStart, createMiddleware } from "@tanstack/react-start";
 
 import { renderErrorPage } from "./lib/error-page";
 import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
