@@ -10,8 +10,12 @@ export const Route = createFileRoute("/_authenticated")({
     if (typeof window === "undefined") return;
 
     try {
-      const { data, error } = await supabase.auth.getUser();
-      if (!error && data.user) return;
+      // getSession() reads the persisted session from localStorage (no network),
+      // so it is reliable on a cold load / direct URL / full reload — unlike
+      // getUser() which makes a network call that may not be ready yet and
+      // would wrongly bounce the user to /login.
+      const { data } = await supabase.auth.getSession();
+      if (data.session?.user) return;
     } catch {
       // fall through
     }
@@ -35,17 +39,22 @@ function AuthenticatedLayout() {
     let cancelled = false;
     (async () => {
       try {
-        const { data: userData } = await supabase.auth.getUser();
-        if (cancelled || !userData.user) return;
+        const { data: sessionData } = await supabase.auth.getSession();
+        const user = sessionData.session?.user;
+        if (cancelled || !user) return;
 
-        const { data: roleRow } = await supabase
+        const { data: roleRow, error: roleErr } = await supabase
           .from("user_roles")
           .select("role")
-          .eq("user_id", userData.user.id)
+          .eq("user_id", user.id)
           .maybeSingle();
         if (cancelled) return;
 
-        const role = (roleRow?.role as "coach" | "member" | null) ?? "member";
+        // Only redirect on a DEFINITE role mismatch. If the role lookup failed
+        // or returned nothing, do NOT bounce — server functions still enforce
+        // access, and a transient null role must never kick a coach off /coach.
+        const role = roleErr ? null : (roleRow?.role as "coach" | "member" | null);
+        if (!role) return;
         const path = router.state.location.pathname;
 
         if (role === "coach" && path.startsWith("/membre")) {
