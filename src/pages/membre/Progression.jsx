@@ -4,6 +4,15 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianG
 import MemberNav from "../../components/MemberNav";
 import { CSTSectionNum, CSTDuoTitle } from "../../components/Atoms";
 import { getMemberProgression, listMyExercises, getMyExerciseProgression } from "@/lib/member-stats.functions";
+import { supabase } from "@/integrations/supabase/client";
+
+const MEASURE_FIELDS = [
+  ["waist_cm", "Taille"],
+  ["hips_cm", "Hanches"],
+  ["chest_cm", "Poitrine"],
+  ["arm_cm", "Bras"],
+  ["thigh_cm", "Cuisse"],
+];
 
 export default function Progression() {
   const fetchProgression = useServerFn(getMemberProgression);
@@ -15,6 +24,14 @@ export default function Progression() {
   const [selected, setSelected] = useState("");
   const [exData, setExData] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // ─ Suivi corporel (mensurations + photos) — P2
+  const [userId, setUserId] = useState(null);
+  const [measures, setMeasures] = useState([]);
+  const [form, setForm] = useState({ waist_cm: "", hips_cm: "", chest_cm: "", arm_cm: "", thigh_cm: "", note: "" });
+  const [savingMeasure, setSavingMeasure] = useState(false);
+  const [photos, setPhotos] = useState([]);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -42,6 +59,70 @@ export default function Progression() {
       }
     })();
   }, [selected]);
+
+  // Charge mensurations + photos (dégrade en silence si la migration P2 n'est pas encore appliquée)
+  async function loadEvolution(uid) {
+    if (!uid) return;
+    const { data: m } = await supabase
+      .from("body_measurements").select("*").eq("member_id", uid).order("date", { ascending: false }).limit(12);
+    setMeasures(m ?? []);
+    const { data: ph } = await supabase
+      .from("progress_photos").select("*").eq("member_id", uid).order("date", { ascending: false }).limit(24);
+    const signed = await Promise.all(
+      (ph ?? []).map(async (p) => {
+        const { data: s } = await supabase.storage.from("progress-photos").createSignedUrl(p.storage_path, 3600);
+        return { ...p, url: s?.signedUrl ?? null };
+      }),
+    );
+    setPhotos(signed);
+  }
+
+  useEffect(() => {
+    (async () => {
+      const { data: u } = await supabase.auth.getUser();
+      const uid = u?.user?.id ?? null;
+      setUserId(uid);
+      try { await loadEvolution(uid); } catch { /* tables/bucket pas encore créés */ }
+    })();
+  }, []);
+
+  const num = (s) => (s.trim() === "" ? null : Number(s.replace(",", ".")));
+
+  async function saveMeasurement() {
+    if (!userId) return;
+    setSavingMeasure(true);
+    const row = {
+      member_id: userId,
+      date: new Date().toISOString().slice(0, 10),
+      waist_cm: num(form.waist_cm), hips_cm: num(form.hips_cm), chest_cm: num(form.chest_cm),
+      arm_cm: num(form.arm_cm), thigh_cm: num(form.thigh_cm), note: form.note.trim() || null,
+    };
+    const { error } = await supabase.from("body_measurements").insert(row);
+    if (error) { alert(error.message); setSavingMeasure(false); return; }
+    setForm({ waist_cm: "", hips_cm: "", chest_cm: "", arm_cm: "", thigh_cm: "", note: "" });
+    try { await loadEvolution(userId); } catch { /* ignore */ }
+    setSavingMeasure(false);
+  }
+
+  async function uploadPhoto(file) {
+    if (!userId || !file) return;
+    setUploadingPhoto(true);
+    const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+    const path = `${userId}/${Date.now()}.${ext}`;
+    const { error: upErr } = await supabase.storage.from("progress-photos").upload(path, file, { upsert: false });
+    if (upErr) { alert(upErr.message); setUploadingPhoto(false); return; }
+    const { error: insErr } = await supabase.from("progress_photos").insert({ member_id: userId, storage_path: path, date: new Date().toISOString().slice(0, 10) });
+    if (insErr) alert(insErr.message);
+    try { await loadEvolution(userId); } catch { /* ignore */ }
+    setUploadingPhoto(false);
+  }
+
+  async function deletePhoto(p) {
+    if (!window.confirm("Supprimer cette photo ?")) return;
+    await supabase.from("progress_photos").delete().eq("id", p.id);
+    await supabase.storage.from("progress-photos").remove([p.storage_path]);
+    try { await loadEvolution(userId); } catch { /* ignore */ }
+  }
 
   const totalSessions = data?.totalSessions ?? 0;
   const totalVolumeT = data ? Math.round(Number(data.totalVolume) / 100) / 10 : 0; // tonnes
@@ -168,6 +249,91 @@ export default function Progression() {
                     </div>
                   </div>
                 )}
+
+                {/* Suivi corporel — mensurations */}
+                <div style={{ marginTop: 24 }}>
+                  <CSTSectionNum num={6} label="SUIVI CORPOREL" sub="MENSURATIONS (CM)" />
+                  <div className="cst-card-dark" style={{ marginTop: 12, padding: 14 }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+                      {MEASURE_FIELDS.map(([key, label]) => (
+                        <div key={key}>
+                          <div className="cst-mono" style={{ fontSize: 9, opacity: 0.55, letterSpacing: "0.12em", marginBottom: 4 }}>{label.toUpperCase()}</div>
+                          <input
+                            value={form[key]}
+                            onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
+                            inputMode="decimal"
+                            placeholder="—"
+                            style={{ width: "100%", padding: "8px 10px", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 6, color: "#fff", fontSize: 14, boxSizing: "border-box" }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <input
+                      value={form.note}
+                      onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
+                      placeholder="Note (optionnel)"
+                      style={{ width: "100%", marginTop: 8, padding: "8px 10px", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 6, color: "#fff", fontSize: 13, boxSizing: "border-box" }}
+                    />
+                    <button
+                      onClick={saveMeasurement}
+                      disabled={savingMeasure || !userId}
+                      className="cst-btn cst-btn-primary cst-btn-sm"
+                      style={{ width: "100%", marginTop: 10 }}
+                    >
+                      {savingMeasure ? "ENREGISTREMENT…" : "ENREGISTRER MES MENSURATIONS"}
+                    </button>
+                  </div>
+                  {measures.length > 0 && (
+                    <div className="cst-col" style={{ gap: 6, marginTop: 10 }}>
+                      {measures.map((m) => {
+                        const parts = MEASURE_FIELDS.filter(([k]) => m[k] != null).map(([k, l]) => `${l} ${m[k]}`);
+                        return (
+                          <div key={m.id} className="cst-card-dark" style={{ padding: "10px 12px", display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
+                            <span className="cst-mono" style={{ fontSize: 10, opacity: 0.6 }}>{new Date(m.date).toLocaleDateString("fr-FR")}</span>
+                            <span style={{ fontSize: 12, opacity: 0.9, textAlign: "right" }}>{parts.join(" · ") || (m.note ? "" : "—")}{m.note ? ` · « ${m.note} »` : ""}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Photos d'évolution */}
+                <div style={{ marginTop: 24 }}>
+                  <CSTSectionNum num={7} label="PHOTOS D'ÉVOLUTION" sub="PRIVÉ · VISIBLE PAR TON COACH" />
+                  <label
+                    className="cst-btn cst-btn-ghost-dark"
+                    style={{ display: "block", textAlign: "center", marginTop: 12, cursor: uploadingPhoto ? "wait" : "pointer", opacity: uploadingPhoto || !userId ? 0.6 : 1 }}
+                  >
+                    {uploadingPhoto ? "ENVOI…" : "📷 AJOUTER UNE PHOTO"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={uploadingPhoto || !userId}
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadPhoto(f); e.target.value = ""; }}
+                      style={{ display: "none" }}
+                    />
+                  </label>
+                  {photos.length > 0 && (
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginTop: 12 }}>
+                      {photos.map((p) => (
+                        <div key={p.id} style={{ position: "relative", aspectRatio: "3/4", borderRadius: 8, overflow: "hidden", background: "#111" }}>
+                          {p.url ? <img src={p.url} alt="évolution" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : null}
+                          <span style={{ position: "absolute", left: 0, bottom: 0, right: 0, padding: "3px 6px", background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 9, fontFamily: "var(--cst-mono)" }}>
+                            {new Date(p.date).toLocaleDateString("fr-FR")}
+                          </span>
+                          <button
+                            onClick={() => deletePhoto(p)}
+                            aria-label="Supprimer"
+                            style={{ position: "absolute", top: 4, right: 4, width: 24, height: 24, borderRadius: "50%", border: "none", background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 13, cursor: "pointer", lineHeight: 1 }}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
                 {prs.length === 0 && exercises.length === 0 && (
                   <div className="cst-card-dark" style={{ marginTop: 24, padding: 22, textAlign: "center" }}>
