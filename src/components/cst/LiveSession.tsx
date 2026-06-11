@@ -1132,7 +1132,14 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
           <SessionMediaUploader sessionId={sessionId} userId={userId} />
 
           <button
-            onClick={() => { clearSnapshot(sessionId); onFinish(); }}
+            onClick={async () => {
+              try {
+                await onFinish();
+                clearSnapshot(sessionId); // seulement si la fin a réussi
+              } catch {
+                /* échec déjà signalé (toast) ; on garde le snapshot pour réessayer */
+              }
+            }}
             disabled={finishing}
             className="cst-btn cst-btn-primary"
             style={{ width: "100%", padding: "18px 0", fontSize: 14, opacity: finishing ? 0.6 : 1 }}

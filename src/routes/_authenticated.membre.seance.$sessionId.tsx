@@ -7,6 +7,7 @@ import { type ProgExercise } from "../components/cst/ProgramBlocks";
 import { LiveSession } from "../components/cst/LiveSession";
 import { RunningSession, isRunningSession } from "../components/cst/RunningSession";
 import { computeSessionDurationMin } from "@/lib/format";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/membre/seance/$sessionId")({
   component: SeancePage,
@@ -110,6 +111,8 @@ function SeancePage() {
       navigate({ to: "/membre/historique" });
     } catch (err) {
       console.error("[finishSession]", err);
+      toast.error("Impossible de terminer la séance. Vérifie ta connexion et réessaie.");
+      throw err; // propage : l'appelant garde l'état de reprise (snapshot) pour réessayer
     } finally {
       setFinishing(false);
     }
