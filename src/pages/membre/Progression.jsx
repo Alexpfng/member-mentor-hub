@@ -5,6 +5,9 @@ import MemberNav from "../../components/MemberNav";
 import { CSTSectionNum, CSTDuoTitle } from "../../components/Atoms";
 import { getMemberProgression, listMyExercises, getMyExerciseProgression } from "@/lib/member-stats.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
+import { ConfirmDialog } from "../../components/cst/ConfirmDialog";
 
 const MEASURE_FIELDS = [
   ["waist_cm", "Taille"],
@@ -32,6 +35,8 @@ export default function Progression() {
   const [savingMeasure, setSavingMeasure] = useState(false);
   const [photos, setPhotos] = useState([]);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [photoToDelete, setPhotoToDelete] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     (async () => {
@@ -90,6 +95,11 @@ export default function Progression() {
 
   async function saveMeasurement() {
     if (!userId) return;
+    const hasAnyMeasure = MEASURE_FIELDS.some(([key]) => form[key].trim() !== "");
+    if (!hasAnyMeasure) {
+      toast.error("Renseigne au moins une mesure.");
+      return;
+    }
     setSavingMeasure(true);
     const row = {
       member_id: userId,
@@ -98,10 +108,11 @@ export default function Progression() {
       arm_cm: num(form.arm_cm), thigh_cm: num(form.thigh_cm), note: form.note.trim() || null,
     };
     const { error } = await supabase.from("body_measurements").insert(row);
-    if (error) { alert(error.message); setSavingMeasure(false); return; }
+    if (error) { toast.error("Enregistrement impossible. Réessaie."); setSavingMeasure(false); return; }
     setForm({ waist_cm: "", hips_cm: "", chest_cm: "", arm_cm: "", thigh_cm: "", note: "" });
     try { await loadEvolution(userId); } catch { /* ignore */ }
     setSavingMeasure(false);
+    toast.success("Mensuration enregistrée ✓");
   }
 
   async function uploadPhoto(file) {
@@ -110,18 +121,20 @@ export default function Progression() {
     const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
     const path = `${userId}/${Date.now()}.${ext}`;
     const { error: upErr } = await supabase.storage.from("progress-photos").upload(path, file, { upsert: false });
-    if (upErr) { alert(upErr.message); setUploadingPhoto(false); return; }
+    if (upErr) { toast.error("Envoi de la photo impossible. Réessaie."); setUploadingPhoto(false); return; }
     const { error: insErr } = await supabase.from("progress_photos").insert({ member_id: userId, storage_path: path, date: new Date().toISOString().slice(0, 10) });
-    if (insErr) alert(insErr.message);
+    if (insErr) { toast.error("La photo n'a pas pu être enregistrée."); setUploadingPhoto(false); return; }
     try { await loadEvolution(userId); } catch { /* ignore */ }
     setUploadingPhoto(false);
+    toast.success("Photo ajoutée ✓");
   }
 
   async function deletePhoto(p) {
-    if (!window.confirm("Supprimer cette photo ?")) return;
-    await supabase.from("progress_photos").delete().eq("id", p.id);
+    const { error: delErr } = await supabase.from("progress_photos").delete().eq("id", p.id);
     await supabase.storage.from("progress-photos").remove([p.storage_path]);
+    if (delErr) { toast.error("Suppression impossible. Réessaie."); return; }
     try { await loadEvolution(userId); } catch { /* ignore */ }
+    toast.success("Photo supprimée");
   }
 
   const totalSessions = data?.totalSessions ?? 0;
@@ -142,9 +155,15 @@ export default function Progression() {
       <div style={{ maxWidth: 480, margin: "0 auto", display: "flex", flexDirection: "column", minHeight: "100vh" }}>
         <div className="cst-screen" style={{ flex: 1, display: "flex", flexDirection: "column" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "18px 22px 8px" }}>
-            <span style={{ fontSize: 18, opacity: 0.7 }}>←</span>
+            <button
+              onClick={() => navigate({ to: "/membre" })}
+              aria-label="Retour à l'accueil"
+              style={{ background: "none", border: "none", color: "#fff", fontSize: 18, opacity: 0.7, cursor: "pointer", padding: 0, lineHeight: 1 }}
+            >
+              ←
+            </button>
             <span className="cst-mono" style={{ color: "#fff" }}>PROGRESSION</span>
-            <span style={{ fontSize: 18, opacity: 0.7 }}>⌕</span>
+            <span style={{ width: 18 }} aria-hidden="true" />
           </div>
 
           <div className="cst-scroll" style={{ flex: 1, padding: "0 22px 90px" }}>
@@ -323,7 +342,7 @@ export default function Progression() {
                             {new Date(p.date).toLocaleDateString("fr-FR")}
                           </span>
                           <button
-                            onClick={() => deletePhoto(p)}
+                            onClick={() => setPhotoToDelete(p)}
                             aria-label="Supprimer"
                             style={{ position: "absolute", top: 4, right: 4, width: 24, height: 24, borderRadius: "50%", border: "none", background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 13, cursor: "pointer", lineHeight: 1 }}
                           >
@@ -332,6 +351,11 @@ export default function Progression() {
                         </div>
                       ))}
                     </div>
+                  )}
+                  {photos.length === 0 && (
+                    <p style={{ marginTop: 10, fontSize: 12, opacity: 0.5, textAlign: "center" }}>
+                      Aucune photo pour l'instant.
+                    </p>
                   )}
                 </div>
 
@@ -349,6 +373,16 @@ export default function Progression() {
           <MemberNav />
         </div>
       </div>
+
+      <ConfirmDialog
+        open={!!photoToDelete}
+        title="Supprimer cette photo ?"
+        message="Cette action est définitive."
+        confirmLabel="Supprimer"
+        danger
+        onCancel={() => setPhotoToDelete(null)}
+        onConfirm={() => { const p = photoToDelete; setPhotoToDelete(null); if (p) deletePhoto(p); }}
+      />
     </div>
   );
 }
