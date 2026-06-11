@@ -150,7 +150,7 @@ function YouTubeButton({ id, url }: { id?: string | null; url?: string | null })
   );
 }
 
-function ExerciseRow({ ex, threadSlot }: { ex: ProgExercise; threadSlot?: (ex: ProgExercise) => React.ReactNode }) {
+function ExerciseRow({ ex, threadSlot, onExerciseClick }: { ex: ProgExercise; threadSlot?: (ex: ProgExercise) => React.ReactNode; onExerciseClick?: (ex: ProgExercise) => void }) {
   return (
     <div
       style={{
@@ -173,6 +173,25 @@ function ExerciseRow({ ex, threadSlot }: { ex: ProgExercise; threadSlot?: (ex: P
         )}
         <span style={{ fontWeight: 600, fontSize: 14, flex: 1, minWidth: 0 }}>{ex.name}</span>
         <YouTubeButton id={ex.youtube_id} url={ex.youtube_url} />
+        {onExerciseClick && (
+          <button
+            onClick={() => onExerciseClick(ex)}
+            style={{
+              background: "var(--cst-mid-green)",
+              border: "none",
+              color: "#fff",
+              fontFamily: "var(--cst-mono)",
+              fontSize: 10,
+              letterSpacing: "0.1em",
+              padding: "5px 9px",
+              borderRadius: 6,
+              cursor: "pointer",
+              flexShrink: 0,
+            }}
+          >
+            ALLER →
+          </button>
+        )}
       </div>
       <div
         className="cst-mono"
@@ -214,9 +233,11 @@ function ExerciseRow({ ex, threadSlot }: { ex: ProgExercise; threadSlot?: (ex: P
 export function ProgramBlocks({
   exercises,
   threadSlot,
+  onExerciseClick,
 }: {
   exercises: ProgExercise[];
   threadSlot?: (ex: ProgExercise) => React.ReactNode;
+  onExerciseClick?: (ex: ProgExercise) => void;
 }) {
   const blocks = groupBlocks(exercises || []);
   if (blocks.length === 0) {
@@ -256,7 +277,7 @@ export function ProgramBlocks({
               </div>
             )}
             {b.exercises.map((ex, j) => (
-              <ExerciseRow key={j} ex={ex} threadSlot={threadSlot} />
+              <ExerciseRow key={j} ex={ex} threadSlot={threadSlot} onExerciseClick={onExerciseClick} />
             ))}
           </div>
         );

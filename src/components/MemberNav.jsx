@@ -10,6 +10,7 @@ const items = [
   { id: "prog", icon: "📋", label: "Programme", path: "/membre/programme" },
   { id: "plan", icon: "📅", label: "Planning", path: "/membre/planning" },
   { id: "carn", icon: "📖", label: "Carnet", path: "/membre/carnet" },
+  { id: "progr", icon: "📈", label: "Progrès", path: "/membre/progression" },
   { id: "msgs", icon: "💬", label: "Messages", path: "/membre/messages" },
   { id: "profile", icon: "👤", label: "Profil", path: "/membre/profil" },
 ];

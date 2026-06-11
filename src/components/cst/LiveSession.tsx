@@ -719,6 +719,23 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
 
   /* ───────── Header (avec bouton retour permanent) ───────── */
 
+  // Saut direct vers un exercice depuis l'aperçu (ex. machine prise → faire un autre exo).
+  // On ne réordonne PAS les étapes (les saisies restent indexées par étape) : on navigue seulement.
+  function jumpToExercise(name: string) {
+    const idx = steps.findIndex((s) =>
+      s.kind === "set" || s.kind === "emom"
+        ? s.exercise.name === name
+        : s.kind === "brief"
+          ? s.exercises.some((e) => e.name === name)
+          : false,
+    );
+    setShowOverview(false);
+    if (idx < 0) return;
+    if (phase === "intro") startedAtRef.current = Date.now();
+    setStepIdx(idx);
+    setPhase("step");
+  }
+
   function renderHeader() {
     const pct = totalWorkSets ? (completedWorkSets / totalWorkSets) * 100 : 0;
     return (
@@ -756,9 +773,30 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
           >
             — {sessionLabel?.toUpperCase() || "SÉANCE"}
           </span>
-          <span className="cst-mono" style={{ fontSize: 10, opacity: 0.6 }}>
-            {completedWorkSets}/{totalWorkSets}
-          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span className="cst-mono" style={{ fontSize: 10, opacity: 0.6 }}>
+              {completedWorkSets}/{totalWorkSets}
+            </span>
+            <button
+              onClick={() => setShowOverview(true)}
+              aria-label="Voir toute la séance"
+              title="Voir toute la séance"
+              className="cst-mono"
+              style={{
+                background: "transparent",
+                border: "1px solid rgba(255,255,255,0.18)",
+                color: "rgba(255,255,255,0.85)",
+                borderRadius: 6,
+                padding: "6px 10px",
+                fontSize: 13,
+                cursor: "pointer",
+                minWidth: 44,
+                minHeight: 32,
+              }}
+            >
+              ☰
+            </button>
+          </div>
         </div>
         <div style={{ height: 4, borderRadius: 2, background: "rgba(255,255,255,0.08)", overflow: "hidden" }}>
           <div
@@ -844,7 +882,10 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
                   ×
                 </button>
               </div>
-              <ProgramBlocks exercises={exercises} />
+              <p className="cst-mono" style={{ fontSize: 9, opacity: 0.5, letterSpacing: "0.14em", margin: "0 0 10px" }}>
+                Touche « ALLER → » pour faire un exercice tout de suite (ex. machine déjà prise).
+              </p>
+              <ProgramBlocks exercises={exercises} onExerciseClick={(ex) => jumpToExercise(ex.name)} />
             </div>
           </div>
         )}
