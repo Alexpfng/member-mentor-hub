@@ -31,14 +31,63 @@ function ytId(ex: Ex): string | null {
   const m = ex.youtube_url.match(/(?:v=|\/shorts\/|youtu\.be\/|\/embed\/)([A-Za-z0-9_-]{11})/);
   return m ? m[1] : null;
 }
+const ytThumb = (id: string) => `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+const accentOf = (ex: Ex) => COLOR_MAP[(ex.color || "").toLowerCase()] || "var(--cst-mid-green)";
+
+// Vignette d'exercice : miniature vidéo si dispo, sinon placeholder coloré.
+function Tile({ ex, onClick }: { ex: Ex; onClick: () => void }) {
+  const vid = ytId(ex);
+  const [imgOk, setImgOk] = useState(true);
+  const accent = accentOf(ex);
+  const showImg = vid && imgOk;
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        display: "block",
+        textAlign: "left",
+        padding: 0,
+        border: "1px solid rgba(255,255,255,0.08)",
+        borderRadius: 12,
+        overflow: "hidden",
+        background: "rgba(255,255,255,0.03)",
+        cursor: "pointer",
+        width: "100%",
+      }}
+    >
+      <div style={{ position: "relative", width: "100%", aspectRatio: "1", background: showImg ? "#111" : `linear-gradient(135deg, ${accent}33, rgba(0,0,0,0.4))` }}>
+        {showImg ? (
+          <img
+            src={ytThumb(vid!)}
+            alt=""
+            onError={() => setImgOk(false)}
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        ) : (
+          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 34, opacity: 0.85 }}>🏋️</div>
+        )}
+        {/* pastille couleur d'intensité */}
+        <span style={{ position: "absolute", top: 8, left: 8, width: 10, height: 10, borderRadius: "50%", background: accent, boxShadow: "0 0 0 2px rgba(0,0,0,0.4)" }} />
+        {/* badge play si vidéo */}
+        {vid && (
+          <span style={{ position: "absolute", bottom: 8, right: 8, width: 26, height: 26, borderRadius: "50%", background: "rgba(0,0,0,0.6)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>▶</span>
+        )}
+        {/* dégradé bas pour lisibilité du nom */}
+        <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: "18px 10px 8px", background: "linear-gradient(to top, rgba(0,0,0,0.8), transparent)" }}>
+          <span style={{ color: "#fff", fontSize: 12, fontWeight: 700, lineHeight: 1.2, display: "block", textShadow: "0 1px 2px rgba(0,0,0,0.6)" }}>{ex.name}</span>
+        </div>
+      </div>
+    </button>
+  );
+}
 
 export default function Bibliotheque() {
   const fetchLib = useServerFn(listLibraryForMember);
   const [items, setItems] = useState<Ex[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [openVideo, setOpenVideo] = useState<string | null>(null);
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [filter, setFilter] = useState("Tout");
+  const [active, setActive] = useState<Ex | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -52,28 +101,23 @@ export default function Bibliotheque() {
     })();
   }, [fetchLib]);
 
-  const groups = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    const filtered = items.filter(
-      (e) => !q || e.name.toLowerCase().includes(q) || (e.muscle_group || "").toLowerCase().includes(q),
-    );
-    const map = new Map<string, Ex[]>();
-    for (const e of filtered) {
-      const key = e.muscle_group?.trim() || "Autres";
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(e);
-    }
-    return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
-  }, [items, search]);
+  const groupsList = useMemo(() => {
+    const set = new Set<string>();
+    for (const e of items) set.add(e.muscle_group?.trim() || "Autres");
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [items]);
 
-  function toggle(group: string) {
-    setExpanded((prev) => {
-      const n = new Set(prev);
-      if (n.has(group)) n.delete(group);
-      else n.add(group);
-      return n;
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return items.filter((e) => {
+      const grp = e.muscle_group?.trim() || "Autres";
+      if (filter !== "Tout" && grp !== filter) return false;
+      if (q && !e.name.toLowerCase().includes(q) && !grp.toLowerCase().includes(q)) return false;
+      return true;
     });
-  }
+  }, [items, search, filter]);
+
+  const activeVid = active ? ytId(active) : null;
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--cst-dark-green)" }}>
@@ -84,7 +128,7 @@ export default function Bibliotheque() {
               BIBLIOTHÈQUE <span style={{ color: "var(--cst-mid-green)" }}>EXERCICES</span>
             </h1>
             <p style={{ margin: "6px 0 0", fontSize: 12, opacity: 0.7 }}>
-              Revois les consignes et les vidéos quand tu veux, par partie du corps.
+              Touche un exercice pour voir la vidéo et les consignes.
             </p>
             <input
               value={search}
@@ -93,144 +137,98 @@ export default function Bibliotheque() {
               className="cst-input"
               style={{ width: "100%", marginTop: 12, padding: "10px 12px", fontSize: 14 }}
             />
+            {/* Pastilles de filtre par partie du corps */}
+            <div style={{ display: "flex", gap: 6, overflowX: "auto", marginTop: 10, paddingBottom: 4, WebkitOverflowScrolling: "touch" }}>
+              {["Tout", ...groupsList].map((g) => {
+                const on = filter === g;
+                return (
+                  <button
+                    key={g}
+                    onClick={() => setFilter(g)}
+                    className="cst-mono"
+                    style={{
+                      flexShrink: 0,
+                      fontSize: 10,
+                      letterSpacing: "0.1em",
+                      padding: "6px 12px",
+                      borderRadius: 999,
+                      border: `1px solid ${on ? "var(--cst-mid-green)" : "rgba(255,255,255,0.15)"}`,
+                      background: on ? "var(--cst-mid-green)" : "transparent",
+                      color: "#fff",
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {g.toUpperCase()}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-          <div className="cst-scroll" style={{ flex: 1, padding: "0 22px 90px" }}>
+
+          <div className="cst-scroll" style={{ flex: 1, padding: "8px 22px 90px" }}>
             {loading ? (
               <div style={{ padding: 24, opacity: 0.6 }}>Chargement…</div>
-            ) : groups.length === 0 ? (
+            ) : filtered.length === 0 ? (
               <div style={{ padding: 24, opacity: 0.6, fontSize: 13 }}>Aucun exercice trouvé.</div>
             ) : (
-              groups.map(([group, exos]) => {
-                const open = expanded.has(group) || !!search.trim();
-                return (
-                  <div key={group} style={{ marginTop: 14 }}>
-                    <button
-                      onClick={() => toggle(group)}
-                      style={{
-                        width: "100%",
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        background: "rgba(255,255,255,0.04)",
-                        border: "1px solid rgba(255,255,255,0.08)",
-                        borderRadius: 8,
-                        padding: "10px 12px",
-                        color: "#fff",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <span className="cst-mono" style={{ fontSize: 11, letterSpacing: "0.16em" }}>
-                        {group.toUpperCase()} · {exos.length}
-                      </span>
-                      <span style={{ opacity: 0.5 }}>{open ? "▾" : "▸"}</span>
-                    </button>
-                    {open && (
-                      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8 }}>
-                        {exos.map((ex) => {
-                          const vid = ytId(ex);
-                          return (
-                            <div
-                              key={ex.id}
-                              style={{
-                                background: "rgba(255,255,255,0.03)",
-                                border: "1px solid rgba(255,255,255,0.07)",
-                                borderRadius: 10,
-                                padding: "12px 14px",
-                              }}
-                            >
-                              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                                <span
-                                  style={{
-                                    width: 10,
-                                    height: 10,
-                                    borderRadius: "50%",
-                                    background: COLOR_MAP[(ex.color || "").toLowerCase()] || "#666",
-                                    flexShrink: 0,
-                                  }}
-                                />
-                                <span style={{ fontWeight: 600, fontSize: 14, flex: 1, minWidth: 0 }}>{ex.name}</span>
-                                {vid && (
-                                  <button
-                                    onClick={() => setOpenVideo(vid)}
-                                    style={{
-                                      background: "transparent",
-                                      border: "1px solid rgba(255,255,255,0.18)",
-                                      color: "#fff",
-                                      fontFamily: "var(--cst-mono)",
-                                      fontSize: 10,
-                                      padding: "4px 8px",
-                                      borderRadius: 6,
-                                      cursor: "pointer",
-                                      flexShrink: 0,
-                                    }}
-                                  >
-                                    ▶ VIDÉO
-                                  </button>
-                                )}
-                              </div>
-                              {(ex.equipement || ex.default_tempo) && (
-                                <div className="cst-mono" style={{ fontSize: 10, opacity: 0.6, marginTop: 6 }}>
-                                  {ex.equipement || ""}
-                                  {ex.equipement && ex.default_tempo ? " · " : ""}
-                                  {ex.default_tempo ? `tempo ${ex.default_tempo}` : ""}
-                                </div>
-                              )}
-                              {ex.coach_notes && (
-                                <div
-                                  style={{
-                                    fontSize: 12,
-                                    opacity: 0.85,
-                                    fontStyle: "italic",
-                                    marginTop: 8,
-                                    background: "rgba(45,90,53,0.08)",
-                                    borderLeft: "2px solid var(--cst-mid-green)",
-                                    padding: "6px 10px",
-                                    borderRadius: 3,
-                                  }}
-                                >
-                                  {ex.coach_notes}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }}>
+                {filtered.map((ex) => (
+                  <Tile key={ex.id} ex={ex} onClick={() => setActive(ex)} />
+                ))}
+              </div>
             )}
           </div>
         </div>
       </div>
-      {openVideo && (
+
+      {/* Fiche détail */}
+      {active && (
         <div
-          onClick={() => setOpenVideo(null)}
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.85)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 300,
-            padding: 16,
-          }}
+          onClick={() => setActive(null)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", backdropFilter: "blur(4px)", zIndex: 300, display: "flex", alignItems: "flex-end", justifyContent: "center", padding: 12 }}
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{ width: "min(880px, 100%)", aspectRatio: "16/9", background: "#000", borderRadius: 8, overflow: "hidden" }}
+            style={{ width: "100%", maxWidth: 460, maxHeight: "88vh", overflowY: "auto", background: "#1B2E1F", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "16px 16px 0 0", padding: 18 }}
           >
-            <iframe
-              src={`https://www.youtube.com/embed/${openVideo}?autoplay=1`}
-              title="Démo"
-              allow="autoplay; encrypted-media"
-              allowFullScreen
-              style={{ width: "100%", height: "100%", border: 0 }}
-            />
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+              <span style={{ width: 12, height: 12, borderRadius: "50%", background: accentOf(active), flexShrink: 0 }} />
+              <h2 className="cst-display" style={{ margin: 0, fontSize: 20, color: "#fff", flex: 1 }}>{active.name}</h2>
+              <button onClick={() => setActive(null)} style={{ background: "none", border: 0, color: "#fff", fontSize: 22, cursor: "pointer", lineHeight: 1 }}>×</button>
+            </div>
+
+            {activeVid ? (
+              <div style={{ width: "100%", aspectRatio: "16/9", background: "#000", borderRadius: 10, overflow: "hidden" }}>
+                <iframe
+                  src={`https://www.youtube.com/embed/${activeVid}`}
+                  title={active.name}
+                  allow="autoplay; encrypted-media"
+                  allowFullScreen
+                  style={{ width: "100%", height: "100%", border: 0 }}
+                />
+              </div>
+            ) : (
+              <div style={{ width: "100%", aspectRatio: "16/9", borderRadius: 10, background: `linear-gradient(135deg, ${accentOf(active)}33, rgba(0,0,0,0.4))`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40 }}>🏋️</div>
+            )}
+
+            <div className="cst-mono" style={{ fontSize: 10, opacity: 0.6, marginTop: 12, letterSpacing: "0.1em" }}>
+              {(active.muscle_group || "Autres").toUpperCase()}
+              {active.equipement ? ` · ${active.equipement}` : ""}
+              {active.default_tempo ? ` · TEMPO ${active.default_tempo}` : ""}
+            </div>
+
+            {active.coach_notes ? (
+              <div style={{ fontSize: 13, opacity: 0.9, lineHeight: 1.5, marginTop: 12, background: "rgba(45,90,53,0.12)", borderLeft: "2px solid var(--cst-mid-green)", padding: "10px 12px", borderRadius: 4 }}>
+                {active.coach_notes}
+              </div>
+            ) : (
+              <div style={{ fontSize: 12, opacity: 0.5, marginTop: 12 }}>Pas de consigne pour cet exercice.</div>
+            )}
           </div>
         </div>
       )}
+
       <MemberNav />
     </div>
   );
