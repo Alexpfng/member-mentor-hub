@@ -6,6 +6,7 @@ import { CSTSectionNum } from "../../components/Atoms";
 import {
   listPrograms,
   duplicateProgram,
+  deleteProgram,
   listMembers,
   assignProgram,
 } from "@/lib/coach.functions";
@@ -114,6 +115,7 @@ export default function ProgrammesPage() {
   const navigate = useNavigate();
   const listFn = useServerFn(listPrograms);
   const dupFn = useServerFn(duplicateProgram);
+  const delFn = useServerFn(deleteProgram);
   const seedFn = useServerFn(seedColosmartData);
   const listMembersFn = useServerFn(listMembers);
   const [programs, setPrograms] = useState<Program[]>([]);
@@ -147,6 +149,17 @@ export default function ProgrammesPage() {
     try {
       await dupFn({ data: { id: p.id } });
       notify(`Programme dupliqué.`);
+      reload();
+    } catch (ex: any) {
+      alert(ex?.message || "Erreur");
+    }
+  }
+
+  async function handleDelete(p: Program) {
+    if (!window.confirm(`Supprimer définitivement le programme « ${p.name} » ?\nCette action est irréversible.`)) return;
+    try {
+      await delFn({ data: { id: p.id } });
+      notify("Programme supprimé.");
       reload();
     } catch (ex: any) {
       alert(ex?.message || "Erreur");
@@ -276,6 +289,14 @@ export default function ProgrammesPage() {
                     onClick={() => handleDuplicate(p)}
                   >
                     DUPLIQUER
+                  </button>
+                  <button
+                    className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+                    onClick={() => handleDelete(p)}
+                    style={{ color: "#C56A60", borderColor: "rgba(197,106,96,0.45)" }}
+                    title="Supprimer le programme"
+                  >
+                    SUPPRIMER
                   </button>
                   <button
                     className="cst-btn cst-btn-primary cst-btn-sm"

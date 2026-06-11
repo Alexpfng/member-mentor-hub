@@ -794,6 +794,15 @@ export const deleteProgram = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertCoach(context.userId);
+    // Bloque si le programme est encore actif chez un membre (évite de lui retirer son programme en cours)
+    const { count } = await supabaseAdmin
+      .from("assignments")
+      .select("id", { count: "exact", head: true })
+      .eq("program_id", data.id)
+      .eq("active", true);
+    if (count && count > 0) {
+      throw new Error(`Programme actif chez ${count} membre(s) — change leur programme avant de le supprimer.`);
+    }
     await supabaseAdmin.from("assignments").delete().eq("program_id", data.id);
     const { error } = await supabaseAdmin
       .from("programs")

@@ -33,6 +33,7 @@ import { Route as AuthenticatedCoachInvitationsRouteImport } from './routes/_aut
 import { Route as AuthenticatedCoachImportRouteImport } from './routes/_authenticated.coach.import'
 import { Route as AuthenticatedCoachExercicesRouteImport } from './routes/_authenticated.coach.exercices'
 import { Route as AuthenticatedCoachBuilderRouteImport } from './routes/_authenticated.coach.builder'
+import { Route as AuthenticatedCoachProgrammesIndexRouteImport } from './routes/_authenticated.coach.programmes.index'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
@@ -183,6 +184,12 @@ const AuthenticatedCoachBuilderRoute =
     path: '/coach/builder',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedCoachProgrammesIndexRoute =
+  AuthenticatedCoachProgrammesIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedCoachProgrammesRoute,
+  } as any)
 const LovableEmailQueueProcessRoute =
   LovableEmailQueueProcessRouteImport.update({
     id: '/lovable/email/queue/process',
@@ -295,6 +302,7 @@ export interface FileRoutesByFullPath {
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/coach/programmes/': typeof AuthenticatedCoachProgrammesIndexRoute
   '/coach/membre/$memberId/adapter': typeof AuthenticatedCoachMembreMemberIdAdapterRoute
   '/coach/membre/$memberId/': typeof AuthenticatedCoachMembreMemberIdIndexRoute
 }
@@ -309,7 +317,6 @@ export interface FileRoutesByTo {
   '/coach/import': typeof AuthenticatedCoachImportRoute
   '/coach/invitations': typeof AuthenticatedCoachInvitationsRoute
   '/coach/messages': typeof AuthenticatedCoachMessagesRoute
-  '/coach/programmes': typeof AuthenticatedCoachProgrammesRouteWithChildren
   '/coach/running': typeof AuthenticatedCoachRunningRoute
   '/membre/carnet': typeof AuthenticatedMembreCarnetRouteWithChildren
   '/membre/commencer': typeof AuthenticatedMembreCommencerRoute
@@ -332,6 +339,7 @@ export interface FileRoutesByTo {
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/coach/programmes': typeof AuthenticatedCoachProgrammesIndexRoute
   '/coach/membre/$memberId/adapter': typeof AuthenticatedCoachMembreMemberIdAdapterRoute
   '/coach/membre/$memberId': typeof AuthenticatedCoachMembreMemberIdIndexRoute
 }
@@ -372,6 +380,7 @@ export interface FileRoutesById {
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/_authenticated/coach/programmes/': typeof AuthenticatedCoachProgrammesIndexRoute
   '/_authenticated/coach/membre/$memberId/adapter': typeof AuthenticatedCoachMembreMemberIdAdapterRoute
   '/_authenticated/coach/membre/$memberId/': typeof AuthenticatedCoachMembreMemberIdIndexRoute
 }
@@ -412,6 +421,7 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
+    | '/coach/programmes/'
     | '/coach/membre/$memberId/adapter'
     | '/coach/membre/$memberId/'
   fileRoutesByTo: FileRoutesByTo
@@ -426,7 +436,6 @@ export interface FileRouteTypes {
     | '/coach/import'
     | '/coach/invitations'
     | '/coach/messages'
-    | '/coach/programmes'
     | '/coach/running'
     | '/membre/carnet'
     | '/membre/commencer'
@@ -449,6 +458,7 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
+    | '/coach/programmes'
     | '/coach/membre/$memberId/adapter'
     | '/coach/membre/$memberId'
   id:
@@ -488,6 +498,7 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
+    | '/_authenticated/coach/programmes/'
     | '/_authenticated/coach/membre/$memberId/adapter'
     | '/_authenticated/coach/membre/$memberId/'
   fileRoutesById: FileRoutesById
@@ -675,6 +686,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCoachBuilderRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/coach/programmes/': {
+      id: '/_authenticated/coach/programmes/'
+      path: '/'
+      fullPath: '/coach/programmes/'
+      preLoaderRoute: typeof AuthenticatedCoachProgrammesIndexRouteImport
+      parentRoute: typeof AuthenticatedCoachProgrammesRoute
+    }
     '/lovable/email/queue/process': {
       id: '/lovable/email/queue/process'
       path: '/lovable/email/queue/process'
@@ -785,11 +803,14 @@ const AuthenticatedCoachBuilderRouteWithChildren =
 
 interface AuthenticatedCoachProgrammesRouteChildren {
   AuthenticatedCoachProgrammesIdRoute: typeof AuthenticatedCoachProgrammesIdRoute
+  AuthenticatedCoachProgrammesIndexRoute: typeof AuthenticatedCoachProgrammesIndexRoute
 }
 
 const AuthenticatedCoachProgrammesRouteChildren: AuthenticatedCoachProgrammesRouteChildren =
   {
     AuthenticatedCoachProgrammesIdRoute: AuthenticatedCoachProgrammesIdRoute,
+    AuthenticatedCoachProgrammesIndexRoute:
+      AuthenticatedCoachProgrammesIndexRoute,
   }
 
 const AuthenticatedCoachProgrammesRouteWithChildren =
