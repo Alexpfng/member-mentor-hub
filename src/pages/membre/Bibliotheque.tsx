@@ -72,9 +72,9 @@ function Tile({ ex, onClick }: { ex: Ex; onClick: () => void }) {
         {vid && (
           <span style={{ position: "absolute", bottom: 8, right: 8, width: 26, height: 26, borderRadius: "50%", background: "rgba(0,0,0,0.6)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>▶</span>
         )}
-        {/* dégradé bas pour lisibilité du nom */}
-        <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: "18px 10px 8px", background: "linear-gradient(to top, rgba(0,0,0,0.8), transparent)" }}>
-          <span style={{ color: "#fff", fontSize: 12, fontWeight: 700, lineHeight: 1.2, display: "block", textShadow: "0 1px 2px rgba(0,0,0,0.6)" }}>{ex.name}</span>
+        {/* bandeau sombre franc pour que le nom reste BLANC et lisible sur toute photo (même fond clair) */}
+        <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: "30px 10px 9px", background: "linear-gradient(to top, rgba(0,0,0,0.94) 0%, rgba(0,0,0,0.82) 55%, transparent 100%)" }}>
+          <span style={{ color: "#fff", fontSize: 12, fontWeight: 700, lineHeight: 1.25, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", textShadow: "0 1px 3px rgba(0,0,0,0.95)" }}>{ex.name}</span>
         </div>
       </div>
     </button>
