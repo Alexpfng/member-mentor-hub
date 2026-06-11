@@ -621,6 +621,9 @@ export default function BuilderNew({ programIdParam }: { programIdParam?: string
   const [level, setLevel] = useState('Intermédiaire');
   const [programNotes, setProgramNotes] = useState('');
   const [programId, setProgramId] = useState<string | undefined>(programIdParam);
+  // En édition : true seulement une fois le programme existant chargé. Empêche
+  // d'écraser un programme par une structure vide si le chargement a échoué (auth, etc.).
+  const [loadedExisting, setLoadedExisting] = useState(!programIdParam);
 
   // Structure
   const [weeks, setWeeks] = useState<Week[]>([makeWeek()]);
@@ -800,6 +803,12 @@ export default function BuilderNew({ programIdParam }: { programIdParam?: string
 
   // ─ Save
   const handleSave = async (): Promise<string | null> => {
+    // Sécurité : en édition, ne jamais sauvegarder tant que le programme existant
+    // n'a pas été chargé — sinon on écraserait sa structure par une structure vide.
+    if (programIdParam && !loadedExisting) {
+      toast.error("Programme non chargé — recharge la page avant d'enregistrer (pour ne pas écraser le contenu existant).");
+      return null;
+    }
     setSaving(true);
     try {
       const r = await saveFn({ data: {
@@ -842,8 +851,9 @@ export default function BuilderNew({ programIdParam }: { programIdParam?: string
         const ws = structureToWeeks(p.structure);
         setWeeks(ws);
         setActiveWeekIdx(0);
+        setLoadedExisting(true);
       } catch (e: any) {
-        toast.error(e?.message || 'Impossible de charger le programme');
+        toast.error(`${e?.message || 'Impossible de charger le programme'} — recharge la page avant de modifier (le contenu existant ne sera pas écrasé).`);
       }
     })();
   }, [programIdParam]);

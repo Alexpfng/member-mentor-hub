@@ -17,7 +17,9 @@ export default function NotificationBell() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const name = `coach:notif:${Date.now()}`;
+    // suffixe aléatoire : CoachSidebar monte 2 NotificationBell (desktop + drawer),
+    // un nom basé seulement sur Date.now() entrait en collision → '.on after subscribe()'
+    const name = `coach:notif:${Date.now()}-${Math.random().toString(36).slice(2)}`;
     let ch: ReturnType<typeof supabase.channel> | null = null;
     try {
       ch = supabase
