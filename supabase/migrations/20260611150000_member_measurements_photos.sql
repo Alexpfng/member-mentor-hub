@@ -16,10 +16,14 @@ CREATE TABLE IF NOT EXISTS public.body_measurements (
 );
 ALTER TABLE public.body_measurements ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Member manages own measurements" ON public.body_measurements
-  FOR ALL USING (auth.uid() = member_id) WITH CHECK (auth.uid() = member_id);
-CREATE POLICY "Coach views measurements" ON public.body_measurements
-  FOR SELECT USING (public.has_role(auth.uid(), 'coach'::app_role));
+DO $$ BEGIN
+  CREATE POLICY "Member manages own measurements" ON public.body_measurements
+    FOR ALL USING (auth.uid() = member_id) WITH CHECK (auth.uid() = member_id);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN
+  CREATE POLICY "Coach views measurements" ON public.body_measurements
+    FOR SELECT USING (public.has_role(auth.uid(), 'coach'::app_role));
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 CREATE INDEX IF NOT EXISTS body_measurements_member_idx ON public.body_measurements(member_id, date);
 
@@ -34,10 +38,14 @@ CREATE TABLE IF NOT EXISTS public.progress_photos (
 );
 ALTER TABLE public.progress_photos ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Member manages own progress photos" ON public.progress_photos
-  FOR ALL USING (auth.uid() = member_id) WITH CHECK (auth.uid() = member_id);
-CREATE POLICY "Coach views progress photos" ON public.progress_photos
-  FOR SELECT USING (public.has_role(auth.uid(), 'coach'::app_role));
+DO $$ BEGIN
+  CREATE POLICY "Member manages own progress photos" ON public.progress_photos
+    FOR ALL USING (auth.uid() = member_id) WITH CHECK (auth.uid() = member_id);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN
+  CREATE POLICY "Coach views progress photos" ON public.progress_photos
+    FOR SELECT USING (public.has_role(auth.uid(), 'coach'::app_role));
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 CREATE INDEX IF NOT EXISTS progress_photos_member_idx ON public.progress_photos(member_id, date);
 
