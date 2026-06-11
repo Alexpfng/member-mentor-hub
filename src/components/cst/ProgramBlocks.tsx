@@ -73,8 +73,8 @@ export function groupBlocks(exercises: ProgExercise[]): Block[] {
   const blocks: Block[] = [];
   let current: Block | null = null;
   for (const ex of exercises) {
-    const letter = ex.code?.match(/^([A-H])/)?.[1];
-    const hasNumber = /^[A-H]\d/.test(ex.code || "");
+    const letter = ex.code?.match(/^([A-Z])/)?.[1];
+    const hasNumber = /^[A-Z]\d/.test(ex.code || "");
     if (!current || current.letter !== letter || !letter) {
       current = { letter, exercises: [ex], isSuperset: hasNumber };
       blocks.push(current);
@@ -228,7 +228,8 @@ export function ProgramBlocks({
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       {blocks.map((b, i) => {
         const firstType = b.exercises[0]?.block_type;
-        const badge = b.isSuperset && firstType !== "emom" ? "SUPERSET" : blockBadge(firstType);
+        // Type explicite (EMOM/CIRCUIT/AMRAP…) prioritaire ; sinon « SUPERSET » si bloc enchaîné.
+        const badge = blockBadge(firstType) ?? (b.isSuperset ? "SUPERSET" : null);
         return (
           <div
             key={i}

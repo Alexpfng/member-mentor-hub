@@ -251,15 +251,18 @@ function parseEmom(series: string | null, reps: string | null): { durationMin: n
     return { durationMin: parseInt(durMatch[1], 10), repsPerMin: repsVal ? parseInt(repsVal, 10) : null };
   }
 
-  // Reps-only: "EMOM3" → reps/min, default 10 min
+  // Type EMOM explicite (sélecteur builder) : durée = champ Séries (nb de minutes),
+  // reps/min = champ Reps — y compris alterné « 3/4 » (paires/impaires).
   const repsFromSeries = series?.match(/emom\s*(\d+)/i)?.[1];
-  const repsFromReps = reps?.match(/^(\d+)$/)?.[1] ?? reps?.match(/emom\s*(\d+)\s*reps?/i)?.[1];
+  const repsAlt = reps?.match(/^\s*(\d+)\s*\/\s*\d+\s*$/)?.[1];
+  const repsFromReps = reps?.match(/^(\d+)$/)?.[1] ?? repsAlt ?? reps?.match(/emom\s*(\d+)\s*reps?/i)?.[1];
   const repsPerMin = repsFromSeries
     ? parseInt(repsFromSeries, 10)
     : repsFromReps
       ? parseInt(repsFromReps, 10)
       : null;
-  return { durationMin: 10, repsPerMin };
+  const durFromSeries = series?.match(/^\s*(\d+)\s*(?:'|min|m)?\s*$/i)?.[1];
+  return { durationMin: durFromSeries ? parseInt(durFromSeries, 10) : 10, repsPerMin };
 }
 
 /* ───────── Types : steps ───────── */
@@ -295,6 +298,8 @@ type EmomBlock = {
   exercise: ProgExercise;
   durationMin: number;
   repsPerMin: number | null;
+  repsLabel: string | null;   // reps affichées telles quelles (ex. "3/4")
+  alternating: boolean;       // reps alternées paires/impaires
 };
 
 type Step = Brief | WorkSet | EmomBlock;
@@ -313,7 +318,10 @@ function buildSteps(exercises: ProgExercise[]): Step[] {
     if (blockType === "emom" && !isSuperset) {
       const ex = b.exercises[0];
       const { durationMin, repsPerMin } = parseEmom(ex.series != null ? String(ex.series) : null, ex.reps != null ? String(ex.reps) : null);
-      steps.push({ kind: "emom", blockIdx, blockLetter: b.letter, exercise: ex, durationMin, repsPerMin });
+      const repsRaw = ex.reps != null ? String(ex.reps).trim() : "";
+      const altMatch = repsRaw.match(/^(\d+)\s*\/\s*(\d+)$/);
+      const repsLabel = altMatch ? `${altMatch[1]}/${altMatch[2]}` : (repsPerMin != null ? String(repsPerMin) : null);
+      steps.push({ kind: "emom", blockIdx, blockLetter: b.letter, exercise: ex, durationMin, repsPerMin, repsLabel, alternating: !!altMatch });
       return;
     }
 
@@ -1138,6 +1146,8 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
           exercise={current.exercise}
           durationMin={current.durationMin}
           repsPerMin={current.repsPerMin}
+          repsLabel={current.repsLabel}
+          alternating={current.alternating}
           sessionId={sessionId}
           onFinish={(logs) => {
             // Persist EMOM result as a single "set_log" entry
@@ -1864,6 +1874,8 @@ function EmomScreen({
   exercise,
   durationMin,
   repsPerMin,
+  repsLabel,
+  alternating,
   sessionId,
   onFinish,
   onPain,
@@ -1871,6 +1883,8 @@ function EmomScreen({
   exercise: ProgExercise;
   durationMin: number;
   repsPerMin: number | null;
+  repsLabel?: string | null;
+  alternating?: boolean;
   sessionId: string;
   onFinish: (repsByMinute: number[]) => void;
   onPain: () => void;
@@ -1933,11 +1947,16 @@ function EmomScreen({
         <div>
           <span className="cst-mono" style={{ fontSize: 10, opacity: 0.55, letterSpacing: "0.22em" }}>
             EMOM · {exercise.code && `${exercise.code} · `}{durationMin} MIN
-            {repsPerMin ? ` · ${repsPerMin} REPS/MIN` : ""}
+            {repsLabel ? ` · ${repsLabel} REPS/MIN` : repsPerMin ? ` · ${repsPerMin} REPS/MIN` : ""}
           </span>
           <h2 className="cst-display" style={{ margin: "4px 0 0", fontSize: 22, color: "#fff" }}>
             {exercise.name.toUpperCase()}
           </h2>
+          {alternating && (
+            <div className="cst-mono" style={{ fontSize: 10, opacity: 0.6, marginTop: 4, color: "#D4A53B" }}>
+              ↔ {repsLabel} : minutes paires {repsLabel?.split("/")[0]} reps · impaires {repsLabel?.split("/")[1]} reps
+            </div>
+          )}
         </div>
 
         <div style={{ position: "relative", width: 220, height: 220, alignSelf: "center" }}>

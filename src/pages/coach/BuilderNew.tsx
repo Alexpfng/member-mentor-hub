@@ -27,6 +27,18 @@ interface LibraryExercise {
   youtube_url?: string;
 }
 
+type BlockType = 'standard' | 'emom' | 'amrap' | 'circuit' | 'dropset' | 'iso' | 'ladder';
+
+const BLOCK_TYPES: { value: BlockType; label: string }[] = [
+  { value: 'standard', label: 'Standard' },
+  { value: 'emom', label: 'EMOM' },
+  { value: 'amrap', label: 'AMRAP' },
+  { value: 'circuit', label: 'Circuit' },
+  { value: 'dropset', label: 'Dropset' },
+  { value: 'iso', label: 'Isométrie' },
+  { value: 'ladder', label: 'Ladder' },
+];
+
 interface ProgramExercise {
   uid: string;
   name: string;
@@ -39,7 +51,9 @@ interface ProgramExercise {
   rpe: number;
   youtube_url: string;
   notes: string;
-  superset_with?: string;
+  block_type?: BlockType;
+  // true => même bloc que l'exercice précédent (enchaînement / superset / circuit)
+  chained?: boolean;
 }
 
 interface Day {
@@ -122,11 +136,13 @@ const NAME_TO_EMOJI: Record<string, ExColor> = { red: '🔴', green: '🟢', yel
 
 // ─── CANONICAL <-> BUILDER MAPPING ───────────────────────────────────────────
 // Canonical shape lives in programs.structure and is read by ProgramBlocks.
-function exToCanonical(ex: ProgramExercise) {
+function exToCanonical(ex: ProgramExercise, code?: string) {
   return {
+    code: code ?? null,
     name: ex.name,
     color: EMOJI_TO_NAME[ex.color] ?? null,
     category: ex.category,
+    block_type: ex.block_type && ex.block_type !== 'standard' ? ex.block_type : null,
     series: ex.sets,
     reps: ex.reps,
     charge: ex.weight,
@@ -135,8 +151,31 @@ function exToCanonical(ex: ProgramExercise) {
     coach_notes: ex.notes,
     youtube_url: ex.youtube_url || null,
     youtube_id: extractYTId(ex.youtube_url || '') || null,
-    superset_with: ex.superset_with ?? null,
   };
+}
+
+// Convertit les exercices d'une journée en forme canonique, en générant les
+// codes A1/A2… pour les blocs enchaînés (lus par ProgramBlocks/LiveSession).
+function dayExercisesToCanonical(exs: ProgramExercise[]) {
+  // Regroupe les exercices consécutifs : un nouveau bloc démarre dès qu'un
+  // exercice n'est pas « enchaîné avec le précédent ».
+  const blocks: ProgramExercise[][] = [];
+  for (const ex of exs) {
+    if (ex.chained && blocks.length > 0) blocks[blocks.length - 1].push(ex);
+    else blocks.push([ex]);
+  }
+  const out: ReturnType<typeof exToCanonical>[] = [];
+  let groupLetterIdx = 0; // seules les vraies multi-exercices reçoivent une lettre
+  for (const block of blocks) {
+    if (block.length > 1) {
+      const letter = String.fromCharCode(65 + (groupLetterIdx % 26));
+      groupLetterIdx++;
+      block.forEach((ex, i) => out.push(exToCanonical(ex, `${letter}${i + 1}`)));
+    } else {
+      out.push(exToCanonical(block[0]));
+    }
+  }
+  return out;
 }
 function canonicalToEx(c: any): ProgramExercise {
   const name = String(c.name ?? 'Exercice');
@@ -154,8 +193,21 @@ function canonicalToEx(c: any): ProgramExercise {
     rpe: typeof c.rpe_target === 'number' ? c.rpe_target : Number(c.rpe_target) || 7,
     youtube_url: c.youtube_url || (c.youtube_id ? `https://www.youtube.com/watch?v=${c.youtube_id}` : ''),
     notes: c.coach_notes || '',
-    superset_with: c.superset_with || undefined,
+    block_type: (c.block_type as BlockType) || undefined,
   };
+}
+
+// Reconstruit les exercices builder d'une journée + leur flag `chained` à partir
+// des codes canoniques (A1/A2 partagent une lettre => enchaînés).
+function canonicalDayToExercises(cExs: any[]): ProgramExercise[] {
+  let prevLetter: string | null = null;
+  return (Array.isArray(cExs) ? cExs : []).map((c) => {
+    const ex = canonicalToEx(c);
+    const letter = typeof c.code === 'string' ? (c.code.match(/^([A-Z])\d/)?.[1] ?? null) : null;
+    ex.chained = !!(letter && letter === prevLetter);
+    prevLetter = letter; // exercice non groupé (sans code numéroté) => réinitialise
+    return ex;
+  });
 }
 function structureToWeeks(structure: any): Week[] {
   const ws = structure?.weeks;
@@ -166,7 +218,7 @@ function structureToWeeks(structure: any): Week[] {
       id: uid(),
       name: String(d.label || d.name || 'JOUR').toUpperCase(),
       type: (d.type as Day['type']) || 'Entraînement',
-      exercises: (Array.isArray(d.exercises) ? d.exercises : []).map(canonicalToEx),
+      exercises: canonicalDayToExercises(d.exercises),
     })),
   }));
 }
@@ -178,7 +230,7 @@ function weeksToStructure(weeks: Week[]) {
         number: di + 1,
         label: d.name,
         type: d.type,
-        exercises: d.exercises.map(exToCanonical),
+        exercises: dayExercisesToCanonical(d.exercises),
       })),
     })),
   };
@@ -201,10 +253,10 @@ interface PopoverProps {
   ex: ProgramExercise;
   onChange: (ex: ProgramExercise) => void;
   onClose: () => void;
-  dayExercises: ProgramExercise[];
+  canChain: boolean; // true s'il existe un exercice avant celui-ci dans la journée
 }
 
-function QuickConfig({ ex, onChange, onClose, dayExercises }: PopoverProps) {
+function QuickConfig({ ex, onChange, onClose, canChain }: PopoverProps) {
   const [local, setLocal] = useState(ex);
   const [ytThumbUrl, setYtThumbUrl] = useState(() => {
     const id = extractYTId(ex.youtube_url);
@@ -221,8 +273,6 @@ function QuickConfig({ ex, onChange, onClose, dayExercises }: PopoverProps) {
     if (id) { setYtThumbUrl(ytThumb(id)); setYtError(''); }
     else { setYtThumbUrl(''); setYtError(url.length > 5 ? 'Lien YouTube invalide' : ''); }
   };
-
-  const others = dayExercises.filter(e => e.uid !== ex.uid);
 
   return (
     <div style={{
@@ -321,15 +371,26 @@ function QuickConfig({ ex, onChange, onClose, dayExercises }: PopoverProps) {
           )}
         </div>
 
-        {/* Superset */}
-        {others.length > 0 && (
-          <div>
-            <label style={{ fontFamily: 'var(--cst-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--cst-text-muted)', marginBottom: 4, display: 'block' }}>Superset avec</label>
-            <select className="cst-input" value={local.superset_with ?? ''} onChange={e => set('superset_with', e.target.value || undefined)} style={{ padding: '8px 12px' }}>
-              <option value="">Aucun</option>
-              {others.map(o => <option key={o.uid} value={o.uid}>{o.name}</option>)}
-            </select>
-          </div>
+        {/* Type de bloc */}
+        <div>
+          <label style={{ fontFamily: 'var(--cst-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--cst-text-muted)', marginBottom: 4, display: 'block' }}>Type de bloc</label>
+          <select className="cst-input" value={local.block_type ?? 'standard'} onChange={e => set('block_type', e.target.value as BlockType)} style={{ padding: '8px 12px' }}>
+            {BLOCK_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+          </select>
+          {local.block_type === 'emom' && (
+            <p style={{ margin: '6px 0 0', fontSize: 10, color: 'var(--cst-text-muted)', fontFamily: 'var(--cst-mono)', letterSpacing: '0.05em' }}>
+              SÉRIES = nb de minutes · REPS = reps/min (ex. « 3/4 » = paires 3 / impaires 4)
+            </p>
+          )}
+        </div>
+
+        {/* Enchaînement (superset / circuit) */}
+        {canChain && (
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', padding: '8px 0' }}>
+            <input type="checkbox" checked={!!local.chained} onChange={e => set('chained', e.target.checked)} style={{ width: 16, height: 16, accentColor: 'var(--cst-mid-green)' }} />
+            <span style={{ fontSize: 12, color: 'var(--cst-text)' }}>⛓ Enchaîner avec l'exercice précédent</span>
+            <span style={{ fontSize: 10, color: 'var(--cst-text-muted)', fontFamily: 'var(--cst-mono)' }}>(A1, A2…)</span>
+          </label>
         )}
 
         {/* Notes */}
@@ -370,8 +431,14 @@ function SortableExCard({ ex, onEdit, onDelete }: { ex: ProgramExercise; onEdit:
       }}>⠿</span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+          {ex.chained && <span title="Enchaîné avec l'exercice précédent" style={{ fontSize: 11, color: 'var(--cst-mid-green)' }}>⛓</span>}
           <span style={{ fontSize: 12 }}>{ex.color}</span>
           <span style={{ fontSize: 12, fontWeight: 600, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ex.name}</span>
+          {ex.block_type && ex.block_type !== 'standard' && (
+            <span style={{ fontFamily: 'var(--cst-mono)', fontSize: 8, letterSpacing: '0.1em', color: 'var(--cst-mid-green)', border: '1px solid rgba(45,90,53,0.5)', borderRadius: 3, padding: '1px 4px', flexShrink: 0 }}>
+              {ex.block_type.toUpperCase()}
+            </span>
+          )}
         </div>
         <div style={{ fontFamily: 'var(--cst-mono)', fontSize: 9, color: 'var(--cst-text-muted)' }}>
           {ex.sets}×{ex.reps}{ex.weight ? ` · ${ex.weight}` : ''} · {ex.rest} · RPE {ex.rpe}
@@ -466,7 +533,7 @@ function DayColumn({
 
       {/* Quick config popover */}
       {editingEx && (
-        <QuickConfig ex={editingEx} dayExercises={day.exercises}
+        <QuickConfig ex={editingEx} canChain={day.exercises.findIndex(e => e.uid === editingEx.uid) > 0}
           onChange={ex => onUpdateExercise(day.id, ex)}
           onClose={() => setEditingEx(null)} />
       )}
@@ -1015,7 +1082,7 @@ export default function BuilderNew({ programIdParam }: { programIdParam?: string
       {pendingPopover && (
         <QuickConfig
           ex={pendingPopover.ex}
-          dayExercises={currentWeek.days.find(d => d.id === pendingPopover.dayId)?.exercises ?? []}
+          canChain={(currentWeek.days.find(d => d.id === pendingPopover.dayId)?.exercises.findIndex(e => e.uid === pendingPopover.ex.uid) ?? -1) > 0}
           onChange={ex => updateExercise(pendingPopover.dayId, ex)}
           onClose={() => setPendingPopover(null)}
         />
