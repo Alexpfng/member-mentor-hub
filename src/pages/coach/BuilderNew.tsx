@@ -853,13 +853,15 @@ export default function BuilderNew({ programIdParam }: { programIdParam?: string
     (async () => {
       try {
         const r: any = await listExFn();
-        const dbExs: LibraryExercise[] = (r.exercises || []).map((e: any) => ({
-          id: e.id,
-          name: e.name,
-          category: (String(e.category || 'PUSH').toUpperCase() as Category),
-          color: (NAME_TO_EMOJI[String(e.color || '').toLowerCase()] || '🟢') as ExColor,
-          youtube_url: e.youtube_url || undefined,
-        }));
+        const dbExs: LibraryExercise[] = (r.exercises || [])
+          .filter((e: any) => !e.is_archived) // les exos archivés (triés dans la Bibliothèque) n'apparaissent plus ici
+          .map((e: any) => ({
+            id: e.id,
+            name: e.name,
+            category: (String(e.category || 'PUSH').toUpperCase() as Category),
+            color: (NAME_TO_EMOJI[String(e.color || '').toLowerCase()] || '🟢') as ExColor,
+            youtube_url: e.youtube_url || undefined,
+          }));
         if (dbExs.length > 0) setLibExercises(dbExs);
       } catch { /* fallback to BASE_LIBRARY */ }
     })();

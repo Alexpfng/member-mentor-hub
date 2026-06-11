@@ -73,6 +73,8 @@ export default function Exercices() {
   const [filterPattern, setFilterPattern] = useState<Set<string>>(new Set());
   const [showArchived, setShowArchived] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   const [editing, setEditing] = useState<Partial<Exercise> | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -188,6 +190,36 @@ export default function Exercices() {
       await reload();
     } catch (e) {
       toast.error((e as Error).message || "Erreur");
+    }
+  }
+
+  function toggleSelect(id: string) {
+    setSelected((prev) => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id); else n.add(id);
+      return n;
+    });
+  }
+  function toggleSelectAllVisible() {
+    setSelected((prev) => {
+      if (filtered.length > 0 && filtered.every((e) => prev.has(e.id))) {
+        const n = new Set(prev); filtered.forEach((e) => n.delete(e.id)); return n;
+      }
+      const n = new Set(prev); filtered.forEach((e) => n.add(e.id)); return n;
+    });
+  }
+  async function bulkArchive(archived: boolean) {
+    if (!selected.size) return;
+    setBulkBusy(true);
+    try {
+      await Promise.all(Array.from(selected).map((id) => archiveFn({ data: { id, is_archived: archived } })));
+      toast.success(`${selected.size} exercice(s) ${archived ? "archivé(s)" : "désarchivé(s)"}`);
+      setSelected(new Set());
+      await reload();
+    } catch (e) {
+      toast.error((e as Error).message || "Erreur");
+    } finally {
+      setBulkBusy(false);
     }
   }
 
@@ -308,6 +340,16 @@ export default function Exercices() {
           </label>
         </div>
 
+        {/* Barre d'action en masse */}
+        {selected.size > 0 && (
+          <div style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", padding: "10px 14px", background: "rgba(45,90,53,0.12)", border: "1px solid var(--cst-mid-green)", borderRadius: 10 }}>
+            <span className="cst-mono" style={{ fontSize: 12, color: "var(--cst-text)", letterSpacing: "0.1em" }}>{selected.size} SÉLECTIONNÉ(S)</span>
+            <button onClick={() => bulkArchive(true)} disabled={bulkBusy} style={btnPrimary}>{bulkBusy ? "…" : "Archiver la sélection"}</button>
+            {showArchived && <button onClick={() => bulkArchive(false)} disabled={bulkBusy} style={btnGhost}>Désarchiver</button>}
+            <button onClick={() => setSelected(new Set())} style={btnGhost}>Annuler</button>
+          </div>
+        )}
+
         {/* List */}
         <div
           style={{
@@ -318,6 +360,17 @@ export default function Exercices() {
             overflow: "hidden",
           }}
         >
+          {!loading && filtered.length > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 16px", borderBottom: "1px solid var(--cst-hairline)" }}>
+              <input
+                type="checkbox"
+                checked={filtered.length > 0 && filtered.every((e) => selected.has(e.id))}
+                onChange={toggleSelectAllVisible}
+                aria-label="Tout sélectionner"
+              />
+              <span className="cst-mono" style={{ fontSize: 10, color: "var(--cst-text-muted)", letterSpacing: "0.16em" }}>TOUT SÉLECTIONNER (VISIBLE)</span>
+            </div>
+          )}
           {loading ? (
             <div style={{ padding: 32, textAlign: "center", color: "var(--cst-text-muted)" }}>Chargement…</div>
           ) : filtered.length === 0 ? (
@@ -341,12 +394,18 @@ export default function Exercices() {
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "16px minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) 80px auto",
+                      gridTemplateColumns: "24px 16px minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) 80px auto",
                       gap: 12,
                       padding: "12px 16px",
                       alignItems: "center",
                     }}
                   >
+                    <input
+                      type="checkbox"
+                      checked={selected.has(ex.id)}
+                      onChange={() => toggleSelect(ex.id)}
+                      aria-label={`Sélectionner ${ex.name}`}
+                    />
                     <span
                       title={meta?.label || code}
                       style={{
