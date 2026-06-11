@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { computeSessionDurationMin } from "./format";
 
 const FREE_CATEGORIES = ["muscu", "course", "cardio", "sport", "mobilite", "autre"] as const;
 
@@ -104,11 +105,8 @@ export const finishFreeSession = createServerFn({ method: "POST" })
     if (!sess) throw new Error("Séance introuvable");
 
     const endedAt = new Date();
-    let durationMin: number | null = null;
-    if (sess.started_at) {
-      const ms = endedAt.getTime() - new Date(sess.started_at).getTime();
-      durationMin = Math.max(0, Math.round(ms / 60000));
-    }
+    // Durée bornée : null si séance laissée ouverte (>4 h) → pas de « 4172 min ».
+    const durationMin = computeSessionDurationMin(sess.started_at, endedAt);
 
     const { error } = await supabaseAdmin
       .from("sessions")

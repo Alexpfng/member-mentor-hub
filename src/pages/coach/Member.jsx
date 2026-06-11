@@ -106,6 +106,7 @@ import { VideoReviewPanel } from '../../components/coach/VideoReviewPanel';
 import MemberFollowupTab from '../../components/coach/MemberFollowupTab';
 import WeeksManagerPanel from '../../components/coach/WeeksManagerPanel';
 import { supabase } from '@/integrations/supabase/client';
+import { sanitizeDurationMin } from '@/lib/format';
 
 function daysBetween(a, b) {
   return Math.floor((b.getTime() - a.getTime()) / 86400000);
@@ -471,7 +472,7 @@ export default function CoachMember() {
                             <div className="cst-mono" style={{ width: 56, fontSize: 10 }}>J{String(dayNum).padStart(2, '0')}</div>
                             <div className="cst-col" style={{ flex: 1, gap: 2, minWidth: 0 }}>
                               <span className="cst-display" style={{ fontSize: 16 }}>{(d.name || d.label || `Jour ${dayNum}`).toUpperCase()}</span>
-                              <span style={{ fontSize: 11, opacity: 0.55 }}>{(d.exercises?.length || 0)} exercices{s?.duration_minutes ? ` · ${s.duration_minutes} min` : ''}{s?.average_rpe ? ` · RPE ${Number(s.average_rpe).toFixed(1)}` : ''}</span>
+                              <span style={{ fontSize: 11, opacity: 0.55 }}>{(d.exercises?.length || 0)} exercices{sanitizeDurationMin(s?.duration_minutes) ? ` · ${sanitizeDurationMin(s?.duration_minutes)} min` : ''}{s?.average_rpe ? ` · RPE ${Number(s.average_rpe).toFixed(1)}` : ''}</span>
                             </div>
                             <CSTStatus kind={kind} />
                           </div>
@@ -496,7 +497,7 @@ export default function CoachMember() {
                       <div className="cst-col" style={{ flex: 1, gap: 2 }}>
                         <span className="cst-display" style={{ fontSize: 15 }}>{(s.session_label || `S${s.week_number || '-'} · J${s.day_number || '-'}`).toUpperCase()}</span>
                         <span style={{ fontSize: 11, opacity: 0.55 }}>
-                          {s.duration_minutes ? `${s.duration_minutes} min` : '—'}{s.average_rpe ? ` · RPE ${Number(s.average_rpe).toFixed(1)}` : ''}
+                          {sanitizeDurationMin(s.duration_minutes) ? `${sanitizeDurationMin(s.duration_minutes)} min` : '—'}{s.average_rpe ? ` · RPE ${Number(s.average_rpe).toFixed(1)}` : ''}
                         </span>
                       </div>
                       <CSTStatus kind={statusKind(s.status)} />

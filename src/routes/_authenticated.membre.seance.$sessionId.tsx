@@ -6,6 +6,7 @@ import { CSTLogo } from "../components/Atoms";
 import { type ProgExercise } from "../components/cst/ProgramBlocks";
 import { LiveSession } from "../components/cst/LiveSession";
 import { RunningSession, isRunningSession } from "../components/cst/RunningSession";
+import { computeSessionDurationMin } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/membre/seance/$sessionId")({
   component: SeancePage,
@@ -94,8 +95,8 @@ function SeancePage() {
         if (l.weight_kg && l.reps) totalVol += Number(l.weight_kg) * l.reps;
         if (l.rpe != null) { rpeSum += l.rpe; rpeCount += 1; }
       });
-      const startedAt = session?.started_at ? new Date(session.started_at).getTime() : Date.now();
-      const duration = Math.max(1, Math.round((Date.now() - startedAt) / 60000));
+      // Durée bornée : null si pas de début connu ou séance laissée ouverte (>4 h).
+      const duration = computeSessionDurationMin(session?.started_at);
 
       const { error: updateErr } = await supabase.from("sessions").update({
         ended_at: new Date().toISOString(),

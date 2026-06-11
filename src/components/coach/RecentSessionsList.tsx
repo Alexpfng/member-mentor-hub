@@ -2,7 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { getRecentSessions } from "@/lib/coach-dashboard.functions";
-import { timeAgo } from "@/lib/format";
+import { timeAgo, sanitizeDurationMin } from "@/lib/format";
 import { CSTAvatar } from "@/components/Atoms";
 
 export default function RecentSessionsList() {
@@ -41,7 +41,7 @@ export default function RecentSessionsList() {
                 <span className="cst-mono" style={{ fontSize: 10, opacity: 0.55, marginLeft: "auto" }}>{timeAgo(s.endedAt)}</span>
               </div>
               <div style={{ display: "flex", gap: 14, marginTop: 6, fontSize: 12, opacity: 0.85, flexWrap: "wrap" }}>
-                <span>⏱ {s.durationMinutes ?? "—"} min</span>
+                <span>⏱ {sanitizeDurationMin(s.durationMinutes) ?? "—"} min</span>
                 <span>⚡ RPE {s.averageRpe != null ? Number(s.averageRpe).toFixed(1) : "—"}</span>
                 {s.painCount > 0 && <span style={{ color: "#ff8a7a" }}>🔴 {s.painCount} douleur{s.painCount > 1 ? "s" : ""}</span>}
               </div>

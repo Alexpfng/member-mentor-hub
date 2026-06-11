@@ -11,6 +11,7 @@ import { WeightLogDialog } from "../../components/cst/WeightLogDialog";
 import { usePRConfetti } from "@/hooks/usePRConfetti";
 import { getMemberDashboard } from "@/lib/member-stats.functions";
 import { listWeekPlan, upsertPlannedSession } from "@/lib/planning.functions";
+import { sanitizeDurationMin } from "@/lib/format";
 
 const today = new Date();
 const todayISO = today.toISOString().slice(0, 10);
@@ -252,7 +253,7 @@ export default function MemberDashboard() {
                   <span className="cst-mono" style={{ fontSize: 9, color: "var(--cst-mid-green)" }}>✓ SÉANCE DU JOUR TERMINÉE</span>
                   <div className="cst-display" style={{ fontSize: 20, marginTop: 8 }}>{todaySession.session_label ?? "SÉANCE LIBRE"}</div>
                   <div style={{ fontSize: 12, opacity: 0.55, marginTop: 4 }}>
-                    {todaySession.duration_minutes ? `${todaySession.duration_minutes} min` : "Durée non enregistrée"}
+                    {sanitizeDurationMin(todaySession.duration_minutes) ? `${sanitizeDurationMin(todaySession.duration_minutes)} min` : "Durée non enregistrée"}
                   </div>
                 </>
               ) : todayPlanned ? (

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import MemberNav from '../../components/MemberNav';
 import { CSTSectionNum, CSTDuoTitle } from '../../components/Atoms';
+import { sanitizeDurationMin } from '@/lib/format';
 
 const MONTH_LABELS = [
   'JANVIER', 'FÉVRIER', 'MARS', 'AVRIL', 'MAI', 'JUIN',
@@ -189,7 +190,8 @@ export default function Historique() {
                       const prs = prsBySession[s.id] ?? [];
                       const subParts = [];
                       if (typeof exCount === 'number' && exCount > 0) subParts.push(`${exCount} ex`);
-                      if (s.duration_minutes) subParts.push(`${s.duration_minutes} min`);
+                      const dMin = sanitizeDurationMin(s.duration_minutes);
+                      if (dMin) subParts.push(`${dMin} min`);
                       if (s.average_rpe != null) subParts.push(`RPE ${Number(s.average_rpe).toFixed(1)}`);
                       else if (s.total_volume_kg != null && Number(s.total_volume_kg) > 0) {
                         subParts.push(`${Math.round(Number(s.total_volume_kg))} kg`);

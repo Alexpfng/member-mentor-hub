@@ -6,7 +6,7 @@ import CoachSidebar from "@/components/CoachSidebar";
 import { CSTSectionNum } from "@/components/Atoms";
 import { getSessionDetail, markSessionSeen, setSessionCoachNote } from "@/lib/coach-dashboard.functions";
 import { resolvePainReport } from "@/lib/pain-reports.functions";
-import { timeAgo } from "@/lib/format";
+import { timeAgo, sanitizeDurationMin } from "@/lib/format";
 import { toast } from "sonner";
 import { ExerciseThread } from "@/components/cst/ExerciseThread";
 import { supabase } from "@/integrations/supabase/client";
@@ -129,7 +129,7 @@ export default function CoachSessionDetail() {
         <div style={{ padding: "24px 32px", display: "flex", flexDirection: "column", gap: 20 }}>
           {/* Résumé */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
-            <Metric label="DURÉE" value={`${s.duration_minutes ?? "—"} min`} />
+            <Metric label="DURÉE" value={`${sanitizeDurationMin(s.duration_minutes) ?? "—"} min`} />
             <Metric label="RPE MOYEN" value={s.average_rpe != null ? Number(s.average_rpe).toFixed(1) : "—"} />
             {!isFree && <Metric label="VOLUME TOTAL" value={s.total_volume_kg != null ? `${Math.round(Number(s.total_volume_kg))} kg` : "—"} />}
             <Metric label="RESSENTI" value={s.overall_feeling != null ? `${s.overall_feeling}/5` : "—"} />
