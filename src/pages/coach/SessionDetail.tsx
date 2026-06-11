@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -21,6 +21,7 @@ export default function CoachSessionDetail() {
   const fetchDetail = useServerFn(getSessionDetail);
   const markSeen = useServerFn(markSessionSeen);
   const resolve = useServerFn(resolvePainReport);
+  const [lightbox, setLightbox] = useState<{ type: "photo" | "video"; url: string | null; caption: string | null } | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["coach", "session", sessionId],
@@ -187,7 +188,7 @@ export default function CoachSessionDetail() {
                 <div style={{ marginTop: 14 }}>
                   <div className="cst-mono" style={{ fontSize: 9, opacity: 0.5, letterSpacing: "0.18em", marginBottom: 8 }}>VIDÉOS GLOBALES SÉANCE</div>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 10 }}>
-                    {sessionMedia.map((m) => <MediaThumb key={m.id} m={m} />)}
+                    {sessionMedia.map((m) => <MediaThumb key={m.id} m={m} onOpen={setLightbox} />)}
                   </div>
                 </div>
               )}
@@ -196,7 +197,7 @@ export default function CoachSessionDetail() {
                 <div style={{ marginTop: 14 }}>
                   <div className="cst-mono" style={{ fontSize: 9, opacity: 0.5, letterSpacing: "0.18em", marginBottom: 8 }}>MÉDIAS PAR EXERCICE</div>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 10 }}>
-                    {exerciseMedia.map((m) => <MediaThumb key={m.id} m={m} />)}
+                    {exerciseMedia.map((m) => <MediaThumb key={m.id} m={m} onOpen={setLightbox} />)}
                   </div>
                 </div>
               )}
@@ -269,13 +270,13 @@ export default function CoachSessionDetail() {
                           <div className="cst-mono" style={{ fontSize: 9, opacity: 0.5, letterSpacing: "0.16em", marginBottom: 6 }}>🎥 VIDÉOS TECHNIQUE ({vids.length})</div>
                           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                             {vids.map((v) => (
-                              <a key={v.id} href={v.url ?? "#"} target="_blank" rel="noreferrer"
-                                style={{ display: "block", width: 80, height: 80, background: "#111", borderRadius: 6, overflow: "hidden", position: "relative", flexShrink: 0 }}>
+                              <button key={v.id} type="button" onClick={() => setLightbox({ type: "video", url: v.url, caption: "Vidéo technique" })}
+                                style={{ display: "block", width: 80, height: 80, background: "#111", borderRadius: 6, overflow: "hidden", position: "relative", flexShrink: 0, border: "none", padding: 0, cursor: "pointer" }}>
                                 {v.thumbnailUrl
                                   ? <img src={v.thumbnailUrl} alt="vidéo technique" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                                   : <div style={{ width: "100%", height: "100%", background: "#222" }} />}
                                 <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.3)", color: "#fff", fontSize: 20 }}>▶</div>
-                              </a>
+                              </button>
                             ))}
                           </div>
                         </div>
@@ -317,6 +318,7 @@ export default function CoachSessionDetail() {
           <div style={{ fontSize: 11, opacity: 0.5, fontFamily: "var(--cst-mono)" }}>Terminée {timeAgo(s.ended_at)}</div>
         </div>
       </div>
+      <MediaLightbox media={lightbox} onClose={() => setLightbox(null)} />
     </div>
   );
 }
@@ -330,10 +332,10 @@ function Metric({ label, value }: { label: string; value: string }) {
   );
 }
 
-function MediaThumb({ m }: { m: { id: string; type: "photo" | "video"; url: string | null; thumbnailUrl: string | null; caption: string | null; isSessionLevel?: boolean } }) {
+function MediaThumb({ m, onOpen }: { m: { id: string; type: "photo" | "video"; url: string | null; thumbnailUrl: string | null; caption: string | null; isSessionLevel?: boolean }; onOpen: (media: { type: "photo" | "video"; url: string | null; caption: string | null }) => void }) {
   return (
-    <a href={m.url ?? "#"} target="_blank" rel="noreferrer"
-      style={{ display: "block", aspectRatio: "1", background: "#111", borderRadius: 8, overflow: "hidden", position: "relative" }}>
+    <button type="button" onClick={() => onOpen({ type: m.type, url: m.url, caption: m.caption })}
+      style={{ display: "block", width: "100%", aspectRatio: "1", background: "#111", borderRadius: 8, overflow: "hidden", position: "relative", border: "none", padding: 0, cursor: "pointer" }}>
       {m.type === "video"
         ? m.thumbnailUrl
           ? <img src={m.thumbnailUrl} alt={m.caption || "Vidéo"} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -345,6 +347,35 @@ function MediaThumb({ m }: { m: { id: string; type: "photo" | "video"; url: stri
       {m.caption && m.caption !== "[SESSION]" && (
         <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: "6px 8px", background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 11 }}>{m.caption}</div>
       )}
-    </a>
+    </button>
+  );
+}
+
+function MediaLightbox({ media, onClose }: { media: { type: "photo" | "video"; url: string | null; caption: string | null } | null; onClose: () => void }) {
+  useEffect(() => {
+    if (!media) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = prevOverflow; };
+  }, [media, onClose]);
+
+  if (!media || !media.url) return null;
+  return (
+    <div onClick={onClose} role="dialog" aria-modal="true"
+      style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,0.92)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+      <button type="button" onClick={onClose} aria-label="Fermer"
+        style={{ position: "absolute", top: 16, right: 16, width: 44, height: 44, borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.15)", color: "#fff", fontSize: 22, lineHeight: 1, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+      <div onClick={(e) => e.stopPropagation()}
+        style={{ maxWidth: "100%", maxHeight: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+        {media.type === "video"
+          ? <video src={media.url} controls autoPlay style={{ maxWidth: "100%", maxHeight: "85vh", borderRadius: 8 }} />
+          : <img src={media.url} alt={media.caption || "Photo"} style={{ maxWidth: "100%", maxHeight: "85vh", objectFit: "contain", borderRadius: 8 }} />}
+        {media.caption && media.caption !== "[SESSION]" && (
+          <div style={{ color: "#fff", fontSize: 13, opacity: 0.85, textAlign: "center", maxWidth: 600 }}>{media.caption}</div>
+        )}
+      </div>
+    </div>
   );
 }
