@@ -361,6 +361,14 @@ export default function MemberDashboard() {
               CHOISIR UNE AUTRE SÉANCE →
             </button>
 
+            <button
+              className="cst-btn cst-btn-ghost-dark"
+              onClick={() => navigate("/membre/bibliotheque")}
+              style={{ width: "100%", marginTop: 8, fontSize: 11 }}
+            >
+              📚 BIBLIOTHÈQUE D'EXERCICES →
+            </button>
+
 
 
             {/* Week strip */}

@@ -7,6 +7,22 @@ function isoDay(d: Date) {
   return d.toISOString().slice(0, 10);
 }
 
+// Bibliothèque d'exercices côté membre (lecture seule) : consignes + vidéos à revoir
+// hors séance, groupées par partie du corps. Exclut les exercices archivés.
+export const listLibraryForMember = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const { data, error } = await supabaseAdmin
+      .from("exercises")
+      .select("id, name, muscle_group, category, intensity_code, color, default_tempo, equipement, coach_notes, youtube_url, youtube_id, movement_patterns")
+      .or("is_archived.is.null,is_archived.eq.false")
+      .order("muscle_group", { ascending: true })
+      .order("name", { ascending: true })
+      .limit(2000);
+    if (error) throw new Error(error.message);
+    return { exercises: data ?? [] };
+  });
+
 export const getMemberDashboard = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {

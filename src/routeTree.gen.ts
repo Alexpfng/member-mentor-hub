@@ -26,6 +26,7 @@ import { Route as AuthenticatedMembreLoggerRouteImport } from './routes/_authent
 import { Route as AuthenticatedMembreHistoriqueRouteImport } from './routes/_authenticated.membre.historique'
 import { Route as AuthenticatedMembreCommencerRouteImport } from './routes/_authenticated.membre.commencer'
 import { Route as AuthenticatedMembreCarnetRouteImport } from './routes/_authenticated.membre.carnet'
+import { Route as AuthenticatedMembreBibliothequeRouteImport } from './routes/_authenticated.membre.bibliotheque'
 import { Route as AuthenticatedCoachRunningRouteImport } from './routes/_authenticated.coach.running'
 import { Route as AuthenticatedCoachProgrammesRouteImport } from './routes/_authenticated.coach.programmes'
 import { Route as AuthenticatedCoachMessagesRouteImport } from './routes/_authenticated.coach.messages'
@@ -141,6 +142,12 @@ const AuthenticatedMembreCarnetRoute =
   AuthenticatedMembreCarnetRouteImport.update({
     id: '/membre/carnet',
     path: '/membre/carnet',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedMembreBibliothequeRoute =
+  AuthenticatedMembreBibliothequeRouteImport.update({
+    id: '/membre/bibliotheque',
+    path: '/membre/bibliotheque',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedCoachRunningRoute =
@@ -287,6 +294,7 @@ export interface FileRoutesByFullPath {
   '/coach/messages': typeof AuthenticatedCoachMessagesRoute
   '/coach/programmes': typeof AuthenticatedCoachProgrammesRouteWithChildren
   '/coach/running': typeof AuthenticatedCoachRunningRoute
+  '/membre/bibliotheque': typeof AuthenticatedMembreBibliothequeRoute
   '/membre/carnet': typeof AuthenticatedMembreCarnetRouteWithChildren
   '/membre/commencer': typeof AuthenticatedMembreCommencerRoute
   '/membre/historique': typeof AuthenticatedMembreHistoriqueRoute
@@ -325,6 +333,7 @@ export interface FileRoutesByTo {
   '/coach/invitations': typeof AuthenticatedCoachInvitationsRoute
   '/coach/messages': typeof AuthenticatedCoachMessagesRoute
   '/coach/running': typeof AuthenticatedCoachRunningRoute
+  '/membre/bibliotheque': typeof AuthenticatedMembreBibliothequeRoute
   '/membre/carnet': typeof AuthenticatedMembreCarnetRouteWithChildren
   '/membre/commencer': typeof AuthenticatedMembreCommencerRoute
   '/membre/historique': typeof AuthenticatedMembreHistoriqueRoute
@@ -366,6 +375,7 @@ export interface FileRoutesById {
   '/_authenticated/coach/messages': typeof AuthenticatedCoachMessagesRoute
   '/_authenticated/coach/programmes': typeof AuthenticatedCoachProgrammesRouteWithChildren
   '/_authenticated/coach/running': typeof AuthenticatedCoachRunningRoute
+  '/_authenticated/membre/bibliotheque': typeof AuthenticatedMembreBibliothequeRoute
   '/_authenticated/membre/carnet': typeof AuthenticatedMembreCarnetRouteWithChildren
   '/_authenticated/membre/commencer': typeof AuthenticatedMembreCommencerRoute
   '/_authenticated/membre/historique': typeof AuthenticatedMembreHistoriqueRoute
@@ -408,6 +418,7 @@ export interface FileRouteTypes {
     | '/coach/messages'
     | '/coach/programmes'
     | '/coach/running'
+    | '/membre/bibliotheque'
     | '/membre/carnet'
     | '/membre/commencer'
     | '/membre/historique'
@@ -446,6 +457,7 @@ export interface FileRouteTypes {
     | '/coach/invitations'
     | '/coach/messages'
     | '/coach/running'
+    | '/membre/bibliotheque'
     | '/membre/carnet'
     | '/membre/commencer'
     | '/membre/historique'
@@ -486,6 +498,7 @@ export interface FileRouteTypes {
     | '/_authenticated/coach/messages'
     | '/_authenticated/coach/programmes'
     | '/_authenticated/coach/running'
+    | '/_authenticated/membre/bibliotheque'
     | '/_authenticated/membre/carnet'
     | '/_authenticated/membre/commencer'
     | '/_authenticated/membre/historique'
@@ -646,6 +659,13 @@ declare module '@tanstack/react-router' {
       path: '/membre/carnet'
       fullPath: '/membre/carnet'
       preLoaderRoute: typeof AuthenticatedMembreCarnetRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/membre/bibliotheque': {
+      id: '/_authenticated/membre/bibliotheque'
+      path: '/membre/bibliotheque'
+      fullPath: '/membre/bibliotheque'
+      preLoaderRoute: typeof AuthenticatedMembreBibliothequeRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/coach/running': {
@@ -878,6 +898,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedCoachMessagesRoute: typeof AuthenticatedCoachMessagesRoute
   AuthenticatedCoachProgrammesRoute: typeof AuthenticatedCoachProgrammesRouteWithChildren
   AuthenticatedCoachRunningRoute: typeof AuthenticatedCoachRunningRoute
+  AuthenticatedMembreBibliothequeRoute: typeof AuthenticatedMembreBibliothequeRoute
   AuthenticatedMembreCarnetRoute: typeof AuthenticatedMembreCarnetRouteWithChildren
   AuthenticatedMembreCommencerRoute: typeof AuthenticatedMembreCommencerRoute
   AuthenticatedMembreHistoriqueRoute: typeof AuthenticatedMembreHistoriqueRoute
@@ -904,6 +925,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCoachProgrammesRoute:
     AuthenticatedCoachProgrammesRouteWithChildren,
   AuthenticatedCoachRunningRoute: AuthenticatedCoachRunningRoute,
+  AuthenticatedMembreBibliothequeRoute: AuthenticatedMembreBibliothequeRoute,
   AuthenticatedMembreCarnetRoute: AuthenticatedMembreCarnetRouteWithChildren,
   AuthenticatedMembreCommencerRoute: AuthenticatedMembreCommencerRoute,
   AuthenticatedMembreHistoriqueRoute: AuthenticatedMembreHistoriqueRoute,
