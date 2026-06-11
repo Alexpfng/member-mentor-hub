@@ -4,10 +4,12 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import CoachSidebar from "@/components/CoachSidebar";
 import { CSTSectionNum } from "@/components/Atoms";
-import { getSessionDetail, markSessionSeen } from "@/lib/coach-dashboard.functions";
+import { getSessionDetail, markSessionSeen, setSessionCoachNote } from "@/lib/coach-dashboard.functions";
 import { resolvePainReport } from "@/lib/pain-reports.functions";
 import { timeAgo } from "@/lib/format";
 import { toast } from "sonner";
+import { ExerciseThread } from "@/components/cst/ExerciseThread";
+import { supabase } from "@/integrations/supabase/client";
 
 type ProgExo = { code?: string; name?: string; series?: string | number; reps?: string | number; charge?: string; rpe_target?: string | number; recup?: string };
 type ProgBlock = { letter?: string; type?: string; isSuperset?: boolean; exercises?: ProgExo[] };
@@ -22,6 +24,10 @@ export default function CoachSessionDetail() {
   const markSeen = useServerFn(markSessionSeen);
   const resolve = useServerFn(resolvePainReport);
   const [lightbox, setLightbox] = useState<{ type: "photo" | "video"; url: string | null; caption: string | null } | null>(null);
+  const saveCoachNoteFn = useServerFn(setSessionCoachNote);
+  const [coachUserId, setCoachUserId] = useState<string | null>(null);
+  const [coachNote, setCoachNote] = useState("");
+  const [savingNote, setSavingNote] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["coach", "session", sessionId],
@@ -33,6 +39,22 @@ export default function CoachSessionDetail() {
       markSeen({ data: { sessionId } }).then(() => qc.invalidateQueries({ queryKey: ["coach"] })).catch(() => {});
     }
   }, [data, sessionId, markSeen, qc]);
+
+  useEffect(() => { supabase.auth.getUser().then(({ data: u }) => setCoachUserId(u.user?.id ?? null)); }, []);
+  useEffect(() => { if (data?.session) setCoachNote((data.session as { coach_note?: string | null }).coach_note ?? ""); }, [data]);
+
+  async function handleSaveCoachNote() {
+    setSavingNote(true);
+    try {
+      await saveCoachNoteFn({ data: { sessionId, note: coachNote } });
+      toast.success("Mot du coach enregistré (visible par le membre)");
+      qc.invalidateQueries({ queryKey: ["coach", "session", sessionId] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur");
+    } finally {
+      setSavingNote(false);
+    }
+  }
 
   const blockForExo = useMemo(() => {
     const map = new Map<string, ProgExo & { blockLetter?: string }>();
@@ -90,22 +112,7 @@ export default function CoachSessionDetail() {
   const sessionMedia = allMedia?.filter((m) => m.isSessionLevel) ?? [];
   const exerciseMedia = allMedia?.filter((m) => !m.isSessionLevel) ?? [];
   const techniqueVideos = (data as any).techniqueVideos as Array<{ id: string; exerciseName: string | null; url: string | null; thumbnailUrl: string | null }> | undefined ?? [];
-  // Group technique videos by exercise name
-  const techVidsByExo = new Map<string, typeof techniqueVideos>();
-  for (const v of techniqueVideos) {
-    const key = v.exerciseName?.toLowerCase() ?? "";
-    if (!techVidsByExo.has(key)) techVidsByExo.set(key, []);
-    techVidsByExo.get(key)!.push(v);
-  }
   const totalMediaCount = (allMedia?.length ?? 0) + techniqueVideos.length;
-
-  const exerciseComments = (data as any).exerciseComments as Array<{ id: string; exerciseName: string; content: string; createdAt: string }> | undefined ?? [];
-  const commentsByExo = new Map<string, typeof exerciseComments>();
-  for (const c of exerciseComments) {
-    const key = c.exerciseName?.toLowerCase() ?? "";
-    if (!commentsByExo.has(key)) commentsByExo.set(key, []);
-    commentsByExo.get(key)!.push(c);
-  }
 
   return (
     <div className="cst-screen" style={{ flexDirection: "row" }}>
@@ -261,45 +268,12 @@ export default function CoachSessionDetail() {
                         {fb.member_comment && <div style={{ marginTop: 4, fontStyle: "italic" }}>« {fb.member_comment} »</div>}
                       </div>
                     )}
-                    {/* Technique videos per exercise from ExerciseThread */}
-                    {(() => {
-                      const vids = techVidsByExo.get(name.toLowerCase()) ?? [];
-                      if (!vids.length) return null;
-                      return (
-                        <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-                          <div className="cst-mono" style={{ fontSize: 9, opacity: 0.5, letterSpacing: "0.16em", marginBottom: 6 }}>🎥 VIDÉOS TECHNIQUE ({vids.length})</div>
-                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                            {vids.map((v) => (
-                              <button key={v.id} type="button" onClick={() => setLightbox({ type: "video", url: v.url, caption: "Vidéo technique" })}
-                                style={{ display: "block", width: 80, height: 80, background: "#111", borderRadius: 6, overflow: "hidden", position: "relative", flexShrink: 0, border: "none", padding: 0, cursor: "pointer" }}>
-                                {v.thumbnailUrl
-                                  ? <img src={v.thumbnailUrl} alt="vidéo technique" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                                  : <div style={{ width: "100%", height: "100%", background: "#222" }} />}
-                                <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.3)", color: "#fff", fontSize: 20 }}>▶</div>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })()}
-                    {/* Notes/messages de l'athlète via ExerciseThread */}
-                    {(() => {
-                      const cmts = commentsByExo.get(name.toLowerCase()) ?? [];
-                      if (!cmts.length) return null;
-                      return (
-                        <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-                          <div className="cst-mono" style={{ fontSize: 9, opacity: 0.5, letterSpacing: "0.16em", marginBottom: 6 }}>💬 NOTES DE L'ATHLÈTE ({cmts.length})</div>
-                          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                            {cmts.map((c) => (
-                              <div key={c.id} style={{ fontSize: 13, fontStyle: "italic", padding: "8px 10px", background: "rgba(255,255,255,0.04)", borderLeft: "2px solid var(--cst-mid-green)", borderRadius: "0 6px 6px 0" }}>
-                                « {c.content} »
-                                <span className="cst-mono" style={{ fontSize: 9, opacity: 0.45, marginLeft: 8, fontStyle: "normal" }}>{timeAgo(c.createdAt)}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })()}
+                    {/* Échange en contexte (notes athlète + vidéos technique + réponse coach) */}
+                    {coachUserId && (
+                      <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+                        <ExerciseThread sessionId={sessionId} exerciseName={name} userId={coachUserId} viewerRole="coach" />
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -307,6 +281,23 @@ export default function CoachSessionDetail() {
             </div>
           </div>
           )}
+
+          <div className="cst-card-dark" style={{ padding: 16 }}>
+            <div className="cst-mono" style={{ fontSize: 9, opacity: 0.55, letterSpacing: "0.16em", marginBottom: 8 }}>💬 MOT DU COACH SUR LA SÉANCE · VISIBLE PAR LE MEMBRE</div>
+            <textarea
+              value={coachNote}
+              onChange={(e) => setCoachNote(e.target.value)}
+              rows={3}
+              placeholder="Ex. ta moyenne BPM est trop haute, vise plutôt ~140 bpm — ton allure 7'30/km est bonne pour le moment, on construit la base."
+              className="cst-input"
+              style={{ width: "100%", resize: "vertical", fontFamily: "var(--cst-ui)", padding: "10px 12px", fontSize: 13 }}
+            />
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
+              <button className="cst-btn cst-btn-primary cst-btn-sm" onClick={handleSaveCoachNote} disabled={savingNote}>
+                {savingNote ? "…" : "Enregistrer le mot du coach"}
+              </button>
+            </div>
+          </div>
 
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             <button className="cst-btn cst-btn-primary" onClick={() => navigate({ to: "/coach/membre/$memberId/adapter", params: { memberId: s.member_id }, search: s.week_number ? { week: s.week_number + 1 } : {} })}>
