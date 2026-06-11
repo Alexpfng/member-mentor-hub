@@ -36,6 +36,10 @@ export default function FreeActivityDialog({ open, defaultCategory, initial, onC
   const [series, setSeries] = useState("");
   const [reps, setReps] = useState("");
   const [charge, setCharge] = useState("");
+  // Mode « par série » : permet une charge/reps différentes par série (montée en gamme),
+  // sérialisé dans les champs reps/charge existants ("12 / 10 / 8", "40 / 45 / 50") — pas de changement de schéma.
+  const [bySeries, setBySeries] = useState(false);
+  const [sets, setSets] = useState<{ reps: string; charge: string }[]>([{ reps: "", charge: "" }]);
   const [distance, setDistance] = useState("");
   const [duration, setDuration] = useState("");
   const [elevation, setElevation] = useState("");
@@ -50,6 +54,19 @@ export default function FreeActivityDialog({ open, defaultCategory, initial, onC
     setSeries(initial?.series != null ? String(initial.series) : "");
     setReps(initial?.reps ?? "");
     setCharge(initial?.charge ?? "");
+    // Re-détecte un format « par série » à l'édition
+    {
+      const rP = (initial?.reps ?? "").split("/").map((x) => x.trim());
+      const cP = (initial?.charge ?? "").split("/").map((x) => x.trim());
+      if (rP.length > 1 || cP.length > 1) {
+        const n = Math.max(rP.length, cP.length);
+        setBySeries(true);
+        setSets(Array.from({ length: n }, (_, i) => ({ reps: rP[i] ?? "", charge: cP[i] ?? "" })));
+      } else {
+        setBySeries(false);
+        setSets([{ reps: initial?.reps ?? "", charge: initial?.charge ?? "" }]);
+      }
+    }
     setDistance(initial?.distance_km != null ? String(initial.distance_km) : "");
     setDuration(initial?.duration_min != null ? String(initial.duration_min) : "");
     setElevation(initial?.elevation_m != null ? String(initial.elevation_m) : "");
@@ -71,13 +88,17 @@ export default function FreeActivityDialog({ open, defaultCategory, initial, onC
   async function handle() {
     if (!name.trim()) return;
     setSubmitting(true);
+    // En mode « par série », sérialise chaque série (reps/charge) en chaîne "a / b / c"
+    const repsOut = bySeries ? sets.map((s) => s.reps.trim() || "–").join(" / ") : reps.trim() || null;
+    const chargeOut = bySeries ? sets.map((s) => s.charge.trim() || "–").join(" / ") : charge.trim() || null;
+    const seriesOut = bySeries ? sets.length : intOrNull(series);
     try {
       await onSubmit({
         name: name.trim(),
         category,
-        series: intOrNull(series),
-        reps: reps.trim() || null,
-        charge: charge.trim() || null,
+        series: seriesOut,
+        reps: repsOut,
+        charge: chargeOut,
         distance_km: numOrNull(distance),
         duration_min: intOrNull(duration),
         elevation_m: intOrNull(elevation),
@@ -141,17 +162,79 @@ export default function FreeActivityDialog({ open, defaultCategory, initial, onC
         </Field>
 
         {isMuscu && (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
-            <Field label="Séries">
-              <input value={series} onChange={(e) => setSeries(e.target.value)} inputMode="numeric" style={inputStyle} placeholder="4" />
-            </Field>
-            <Field label="Reps">
-              <input value={reps} onChange={(e) => setReps(e.target.value)} style={inputStyle} placeholder="8" />
-            </Field>
-            <Field label="Charge">
-              <input value={charge} onChange={(e) => setCharge(e.target.value)} style={inputStyle} placeholder="80 kg" />
-            </Field>
-          </div>
+          <>
+            <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+              <input
+                type="checkbox"
+                checked={bySeries}
+                onChange={(e) => {
+                  const on = e.target.checked;
+                  setBySeries(on);
+                  if (on && sets.length <= 1) {
+                    const n = intOrNull(series) || 3;
+                    setSets(Array.from({ length: Math.max(2, n) }, () => ({ reps: reps.trim(), charge: charge.trim() })));
+                  }
+                }}
+                style={{ width: 16, height: 16, accentColor: "var(--cst-mid-green)" }}
+              />
+              <span style={{ fontSize: 12 }}>Détailler par série (montée en gamme, charges différentes…)</span>
+            </label>
+
+            {!bySeries ? (
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+                <Field label="Séries">
+                  <input value={series} onChange={(e) => setSeries(e.target.value)} inputMode="numeric" style={inputStyle} placeholder="4" />
+                </Field>
+                <Field label="Reps">
+                  <input value={reps} onChange={(e) => setReps(e.target.value)} style={inputStyle} placeholder="8" />
+                </Field>
+                <Field label="Charge">
+                  <input value={charge} onChange={(e) => setCharge(e.target.value)} style={inputStyle} placeholder="80 kg" />
+                </Field>
+              </div>
+            ) : (
+              <Field label="Détail par série">
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <div className="cst-mono" style={{ display: "grid", gridTemplateColumns: "28px 1fr 1fr 28px", gap: 6, fontSize: 9, opacity: 0.55, letterSpacing: "0.1em" }}>
+                    <span>S</span><span>REPS</span><span>CHARGE</span><span />
+                  </div>
+                  {sets.map((s, i) => (
+                    <div key={i} style={{ display: "grid", gridTemplateColumns: "28px 1fr 1fr 28px", gap: 6, alignItems: "center" }}>
+                      <span className="cst-mono" style={{ fontSize: 12, opacity: 0.7, textAlign: "center" }}>{i + 1}</span>
+                      <input
+                        value={s.reps}
+                        onChange={(e) => setSets((p) => p.map((x, j) => (j === i ? { ...x, reps: e.target.value } : x)))}
+                        style={inputStyle}
+                        placeholder="12"
+                      />
+                      <input
+                        value={s.charge}
+                        onChange={(e) => setSets((p) => p.map((x, j) => (j === i ? { ...x, charge: e.target.value } : x)))}
+                        style={inputStyle}
+                        placeholder="40 kg"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setSets((p) => (p.length > 1 ? p.filter((_, j) => j !== i) : p))}
+                        aria-label="Retirer la série"
+                        style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.15)", color: "#C56A60", borderRadius: 6, cursor: "pointer", height: 34 }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setSets((p) => [...p, { reps: p[p.length - 1]?.reps ?? "", charge: p[p.length - 1]?.charge ?? "" }])}
+                    className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+                    style={{ marginTop: 2 }}
+                  >
+                    + Ajouter une série
+                  </button>
+                </div>
+              </Field>
+            )}
+          </>
         )}
 
         {isCardio && (
