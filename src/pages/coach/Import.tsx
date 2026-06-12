@@ -480,10 +480,9 @@ export default function ExcelImport() {
                   ["ATHLÈTE", parsed.metadata.athlete || "—"],
                   ["OBJECTIF", parsed.metadata.objective || "—"],
                   ["SEMAINES", String(parsed.stats.weeks)],
-                  ["SÉANCES", String(parsed.stats.days)],
+                  ["SÉANCES/SEM", String(parsed.weeks[0]?.days?.length ?? 0)],
                   ["EXERCICES", String(parsed.stats.exercises)],
                   ["VIDÉOS", String(parsed.stats.videos)],
-                  ["COULEURS", `${parsed.stats.colored}/${parsed.stats.exercises}`],
                 ].map(([k, v]) => (
                   <div
                     key={k}
@@ -499,23 +498,6 @@ export default function ExcelImport() {
                   </div>
                 ))}
               </div>
-
-              {parsed.stats.uncolored > 0 && (
-                <div
-                  style={{
-                    marginTop: 12,
-                    padding: "8px 12px",
-                    background: "rgba(212,168,46,0.12)",
-                    border: "1px solid rgba(212,168,46,0.35)",
-                    borderRadius: 6,
-                    fontSize: 12,
-                    color: "#FFD966",
-                  }}
-                >
-                  ⚠ {parsed.stats.uncolored} exercice(s) sans code couleur — tu pourras les ajuster
-                  dans le Builder.
-                </div>
-              )}
             </div>
 
             {/* Column mapping (read-only display of detected layout) */}
