@@ -713,6 +713,14 @@ export default function BuilderNew({ programIdParam }: { programIdParam?: string
     setActiveWeekIdx(weeks.length);
   };
 
+  const addDay = () => {
+    const n = (weeks[activeWeekIdx]?.days.length ?? 0) + 1;
+    updateWeeks(ws => ws.map((w, wi) => wi !== activeWeekIdx ? w : {
+      ...w,
+      days: [...w.days, makeDay(`SÉANCE ${n}`)],
+    }));
+  };
+
   const duplicateWeek = (idx: number) => {
     const src = weeks[idx];
     if (!src) return;
@@ -1036,7 +1044,7 @@ export default function BuilderNew({ programIdParam }: { programIdParam?: string
                     title="Dupliquer la semaine"
                     style={{
                       padding: '4px 6px', border: 'none', background: 'transparent',
-                      color: 'rgba(255,255,255,0.45)', cursor: 'pointer', fontSize: 12,
+                      color: '#4A8BC4', cursor: 'pointer', fontSize: 14, fontWeight: 700,
                     }}
                   >⎘</button>
                   {weeks.length > 1 && (
@@ -1076,6 +1084,17 @@ export default function BuilderNew({ programIdParam }: { programIdParam?: string
                 />
               </DroppableDayWrapper>
             ))}
+            <button
+              onClick={addDay}
+              title="Ajouter une séance"
+              style={{
+                flex: '0 0 auto', alignSelf: 'flex-start', minWidth: 150,
+                border: '1px dashed rgba(255,255,255,0.2)', borderRadius: 10,
+                background: 'transparent', color: 'rgba(255,255,255,0.45)',
+                fontFamily: 'var(--cst-mono)', fontSize: 11, letterSpacing: '0.1em',
+                cursor: 'pointer', padding: '18px 14px',
+              }}
+            >+ SÉANCE</button>
           </div>
         </div>
 
