@@ -39,13 +39,17 @@ export const getDashboardMetrics = createServerFn({ method: "GET" })
 
     const weekStart = startOfWeek().toISOString();
     const sevenDaysAgo = daysAgo(7).toISOString();
+    // Séance « en retard » : planifiée, jamais faite, date dépassée de 3+ jours (fenêtre 30 j).
+    const lateCutoff = daysAgo(3).toISOString().slice(0, 10);
+    const lateFloor = daysAgo(30).toISOString().slice(0, 10);
 
-    const [sessionsWeek, painUnresolved, msgsUnread, videosUnreviewed, sessionsUnseen] = await Promise.all([
+    const [sessionsWeek, painUnresolved, msgsUnread, videosUnreviewed, sessionsUnseen, latePlanned] = await Promise.all([
       supabaseAdmin.from("sessions").select("id, member_id, status", { count: "exact", head: false }).gte("started_at", weekStart),
       supabaseAdmin.from("pain_reports").select("id", { count: "exact", head: true }).is("resolved_at", null),
       supabaseAdmin.from("messages").select("id", { count: "exact", head: true }).eq("to_id", context.userId).eq("read", false),
       supabaseAdmin.from("technique_videos").select("id", { count: "exact", head: true }).eq("coach_reviewed", false),
       supabaseAdmin.from("sessions").select("id", { count: "exact", head: true }).eq("coach_seen", false).eq("status", "completed"),
+      supabaseAdmin.from("planned_sessions").select("id", { count: "exact", head: true }).eq("status", "planned").not("planned_date", "is", null).gte("planned_date", lateFloor).lte("planned_date", lateCutoff),
     ]);
 
     // adhérence 7j : seulement séances de PROGRAMME (les libres ne faussent pas l'adhérence)
@@ -60,8 +64,76 @@ export const getDashboardMetrics = createServerFn({ method: "GET" })
       activeMembers: memberIds.length,
       sessionsThisWeek: sessionsWeek.count || 0,
       toTreat,
+      late: latePlanned.count || 0,
       adherence7d: adherence,
     };
+  });
+
+/* ---------- Séances en retard (planifiées, non faites, 3+ jours de retard) ---------- */
+
+export const getLateSessions = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertCoach(context.userId);
+    const members = await listCoachMembers();
+    const nameOf = new Map(
+      members.map((m) => [m.user_id, [m.first_name, m.last_name].filter(Boolean).join(" ") || m.email || "Membre"]),
+    );
+
+    const cutoff = daysAgo(3).toISOString().slice(0, 10);
+    const floor = daysAgo(30).toISOString().slice(0, 10);
+    const { data } = await supabaseAdmin
+      .from("planned_sessions")
+      .select("id, member_id, day_label, planned_date, week_number")
+      .eq("status", "planned")
+      .not("planned_date", "is", null)
+      .gte("planned_date", floor)
+      .lte("planned_date", cutoff)
+      .order("planned_date", { ascending: true })
+      .limit(60);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return (data ?? []).map((p) => {
+      const d = new Date(`${p.planned_date}T00:00:00`);
+      const daysLate = Math.max(0, Math.round((today.getTime() - d.getTime()) / 86400000));
+      return {
+        id: p.id,
+        memberId: p.member_id,
+        memberName: nameOf.get(p.member_id) || "Membre",
+        dayLabel: p.day_label,
+        plannedDate: p.planned_date,
+        weekNumber: p.week_number,
+        daysLate,
+      };
+    });
+  });
+
+/* Relance d'un coaché en retard : envoie un message du coach vers le membre. */
+export const remindLateMember = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        memberId: z.string().uuid(),
+        dayLabel: z.string().max(120).optional().nullable(),
+        plannedDate: z.string().max(10).optional().nullable(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertCoach(context.userId);
+    const dateTxt = data.plannedDate
+      ? new Date(`${data.plannedDate}T00:00:00`).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" })
+      : null;
+    const content = `Salut ! Ta séance${data.dayLabel ? ` « ${data.dayLabel} »` : ""}${dateTxt ? ` prévue le ${dateTxt}` : ""} n'est pas encore faite — où en es-tu ? Dis-moi si on doit l'adapter 💪`;
+    const { error } = await supabaseAdmin.from("messages").insert({
+      from_id: context.userId,
+      to_id: data.memberId,
+      content,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });
 
 export const getPriorityFeed = createServerFn({ method: "GET" })

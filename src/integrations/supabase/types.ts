@@ -980,6 +980,7 @@ export type Database = {
           member_id: string
           member_note: string | null
           overall_feeling: number | null
+          planned_exercises: Json | null
           program_id: string | null
           session_label: string | null
           session_type: string
@@ -1003,6 +1004,7 @@ export type Database = {
           member_id: string
           member_note?: string | null
           overall_feeling?: number | null
+          planned_exercises?: Json | null
           program_id?: string | null
           session_label?: string | null
           session_type?: string
@@ -1026,6 +1028,7 @@ export type Database = {
           member_id?: string
           member_note?: string | null
           overall_feeling?: number | null
+          planned_exercises?: Json | null
           program_id?: string | null
           session_label?: string | null
           session_type?: string

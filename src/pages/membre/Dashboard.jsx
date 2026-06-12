@@ -346,9 +346,9 @@ export default function MemberDashboard() {
                   <button
                     className="cst-btn cst-btn-primary"
                     style={{ width: "100%" }}
-                    onClick={() => navigate("/membre/commencer")}
+                    onClick={() => navigate(assignment ? "/membre/commencer" : "/membre/composer")}
                   >
-                    {assignment ? "COMMENCER →" : "DÉMARRER UNE SÉANCE LIBRE →"}
+                    {assignment ? "COMMENCER →" : "CRÉER MA SÉANCE →"}
                   </button>
                 </>
               )}
@@ -360,6 +360,14 @@ export default function MemberDashboard() {
               style={{ width: "100%", marginTop: 10, fontSize: 11 }}
             >
               CHOISIR UNE AUTRE SÉANCE →
+            </button>
+
+            <button
+              className="cst-btn cst-btn-ghost-dark"
+              onClick={() => navigate("/membre/composer")}
+              style={{ width: "100%", marginTop: 8, fontSize: 11 }}
+            >
+              ✏️ CRÉER MA SÉANCE →
             </button>
 
             <button

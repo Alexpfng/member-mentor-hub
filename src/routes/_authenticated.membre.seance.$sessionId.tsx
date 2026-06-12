@@ -1,6 +1,8 @@
 import { createFileRoute, useNavigate, useParams } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { notifyCoachComposedSession } from "@/lib/composed-session.functions";
 import MemberNav from "../components/MemberNav";
 import { CSTLogo } from "../components/Atoms";
 import { type ProgExercise } from "../components/cst/ProgramBlocks";
@@ -22,6 +24,8 @@ type SessionRow = {
   day_number: number | null;
   started_at: string | null;
   status: string | null;
+  session_type: string | null;
+  planned_exercises: ProgExercise[] | null;
 };
 
 type ProgramStructure = {
@@ -39,6 +43,7 @@ type ProgramStructure = {
 function SeancePage() {
   const { sessionId } = useParams({ from: "/_authenticated/membre/seance/$sessionId" });
   const navigate = useNavigate();
+  const notifyCoach = useServerFn(notifyCoachComposedSession);
   const [session, setSession] = useState<SessionRow | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [exercises, setExercises] = useState<ProgExercise[]>([]);
@@ -71,6 +76,12 @@ function SeancePage() {
             sessionId, programId: s.program_id, week: w, day: d, label: s.session_label,
           });
         }
+      } else if (s?.planned_exercises) {
+        // Séance auto-composée par le membre (session_type 'self') : les exercices
+        // planifiés sont portés par la séance elle-même.
+        const planned = (s.planned_exercises as ProgExercise[] | null) ?? [];
+        if (planned.length) exos = planned;
+        else resolutionError = "Cette séance ne contient aucun exercice.";
       } else if (s) {
         resolutionError = "Cette séance n'est rattachée à aucun programme.";
       } else {
@@ -107,6 +118,11 @@ function SeancePage() {
         duration_minutes: duration,
       }).eq("id", sessionId);
       if (updateErr) throw new Error(updateErr.message);
+
+      // Séance auto-composée : prévenir le coach (non-bloquant).
+      if (session?.session_type === "self") {
+        await notifyCoach({ data: { sessionId } }).catch(() => {});
+      }
 
       navigate({ to: "/membre/historique" });
     } catch (err) {
