@@ -441,7 +441,10 @@ function SortableExCard({ ex, onEdit, onDelete }: { ex: ProgramExercise; onEdit:
           )}
         </div>
         <div style={{ fontFamily: 'var(--cst-mono)', fontSize: 9, color: 'var(--cst-text-muted)' }}>
-          {ex.sets}×{ex.reps}{ex.weight ? ` · ${ex.weight}` : ''} · {ex.rest} · RPE {ex.rpe}
+          {ex.sets}×{ex.reps}{ex.weight ? ` · ${ex.weight}` : ''} · {ex.rest} ·{' '}
+          <span style={{ color: ex.rpe >= 9 ? '#C0392B' : ex.rpe >= 7 ? '#E07B39' : 'var(--cst-mid-green)' }}>
+            RPE {ex.rpe}
+          </span>
         </div>
         {ytId && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 4 }}>

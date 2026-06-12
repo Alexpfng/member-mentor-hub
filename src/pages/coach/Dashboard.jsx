@@ -7,10 +7,7 @@ import { CSTSectionNum, CSTDuoTitle, CSTBandWords } from '../../components/Atoms
 import { listMembers, listPrograms } from '@/lib/coach.functions';
 import { createInvitation } from '@/lib/invitations.functions';
 import { seedColosmartData } from '@/lib/seed.functions';
-import { getDashboardMetrics, getLateSessions, remindLateMember } from '@/lib/coach-dashboard.functions';
-import PriorityFeed from '@/components/coach/PriorityFeed';
-import RecentSessionsList from '@/components/coach/RecentSessionsList';
-import MembersTable from '@/components/coach/MembersTable';
+import { getDashboardMetrics } from '@/lib/coach-dashboard.functions';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 
@@ -127,20 +124,6 @@ function CoachDashboardInner() {
 
   const seedFn = useServerFn(seedColosmartData);
   const { data: metrics } = useQuery({ queryKey: ['coach', 'metrics'], queryFn: () => metricsFn() });
-  const lateFn = useServerFn(getLateSessions);
-  const remindFn = useServerFn(remindLateMember);
-  const { data: lateItems } = useQuery({ queryKey: ['coach', 'late-sessions'], queryFn: () => lateFn() });
-  const [remindedIds, setRemindedIds] = useState(() => new Set());
-
-  async function remind(item) {
-    try {
-      await remindFn({ data: { memberId: item.memberId, dayLabel: item.dayLabel, plannedDate: item.plannedDate } });
-      setRemindedIds((s) => new Set([...s, item.id]));
-    } catch (e) {
-      console.error('[remind]', e);
-    }
-  }
-
   async function reload() {
     try {
       const [m, p] = await Promise.all([listMembersFn(), listProgramsFn()]);
@@ -184,18 +167,13 @@ function CoachDashboardInner() {
   const dateLabel = `${['DIM','LUN','MAR','MER','JEU','VEN','SAM'][now.getDay()]}. ${now.getDate()} ${MONTHS[now.getMonth()]} · ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
   const monthLabel = `${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
 
-  const lateCount = metrics?.late ?? (lateItems?.length ?? 0);
+  const lateCount = metrics?.late ?? 0;
   const kpis = [
-    [String(metrics?.activeMembers ?? realMembers.length).padStart(2, '0'), 'COACHÉS ACTIFS', 'sec-membres'],
-    [String(metrics?.sessionsThisWeek ?? 0).padStart(2, '0'), 'SÉANCES CETTE SEMAINE', 'sec-membres'],
-    [String(lateCount).padStart(2, '0'), 'SÉANCES EN RETARD', 'sec-late'],
-    [metrics?.adherence7d != null ? `${metrics.adherence7d}%` : '—', 'ADHÉRENCE 7J', 'sec-membres'],
+    [String(metrics?.activeMembers ?? realMembers.length).padStart(2, '0'), 'COACHÉS ACTIFS', '/coach/membres'],
+    [String(metrics?.sessionsThisWeek ?? 0).padStart(2, '0'), 'SÉANCES CETTE SEMAINE', '/coach/membres'],
+    [String(lateCount).padStart(2, '0'), 'SÉANCES EN RETARD', '/coach/retards'],
+    [metrics?.adherence7d != null ? `${metrics.adherence7d}%` : '—', 'ADHÉRENCE 7J', '/coach/membres'],
   ];
-
-  const scrollToSection = (id) => {
-    const el = document.getElementById(id);
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
 
   return (
     <div className="cst-screen" style={{ flexDirection: 'row' }}>
@@ -237,8 +215,8 @@ function CoachDashboardInner() {
               role="button"
               tabIndex={0}
               title="Voir le détail"
-              onClick={() => scrollToSection(anchor)}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') scrollToSection(anchor); }}
+              onClick={() => navigate({ to: anchor })}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate({ to: anchor }); }}
               style={{ ...metricCard, cursor: 'pointer' }}
             >
               <span className="cst-mono" style={{ fontSize: 9 }}>★ {String(i+1).padStart(2,'0')}</span>
@@ -250,82 +228,15 @@ function CoachDashboardInner() {
           ))}
         </div>
 
-        {/* Séances en retard : planifiées, jamais commencées, 3+ jours de retard */}
-        <div id="sec-late" style={{ padding: '8px 32px 0' }}>
-          <div style={{ marginBottom: 14 }}>
-            <CSTSectionNum num={2} label="SÉANCES EN RETARD" sub={lateCount > 0 ? `${lateCount} À RELANCER` : 'PERSONNE EN RETARD'} />
-          </div>
-          {(lateItems ?? []).length === 0 ? (
-            <div className="cst-card-dark" style={{ padding: 18, fontSize: 13, opacity: 0.65 }}>
-              Personne en retard — tous tes coachés sont à jour ✅
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {(lateItems ?? []).map((it) => {
-                const sent = remindedIds.has(it.id);
-                return (
-                  <div key={it.id} className="cst-card-dark" style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-                    <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#E07B39', flexShrink: 0 }} />
-                    <div style={{ flex: 1, minWidth: 180 }}>
-                      <div style={{ fontWeight: 600, fontSize: 14 }}>{it.memberName}</div>
-                      <div className="cst-mono" style={{ fontSize: 10, opacity: 0.65, marginTop: 2 }}>
-                        {(it.dayLabel || 'SÉANCE').toUpperCase()} · PRÉVUE LE {new Date(`${it.plannedDate}T00:00:00`).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}
-                      </div>
-                    </div>
-                    <span className="cst-mono" style={{ fontSize: 10, color: '#E07B39', letterSpacing: '0.1em' }}>
-                      +{it.daysLate} J DE RETARD
-                    </span>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <button
-                        className="cst-btn cst-btn-primary cst-btn-sm"
-                        disabled={sent}
-                        style={{ opacity: sent ? 0.55 : 1 }}
-                        onClick={() => remind(it)}
-                      >
-                        {sent ? '✓ RELANCÉ' : 'RELANCER →'}
-                      </button>
-                      <button
-                        className="cst-btn cst-btn-ghost-dark cst-btn-sm"
-                        onClick={() => navigate({ to: '/coach/membre/$memberId', params: { memberId: it.memberId } })}
-                      >
-                        FICHE
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Two-column: Priority feed + Recent sessions */}
-        <div style={{ padding: '24px 32px 8px', display: 'grid', gridTemplateColumns: 'minmax(0, 1.2fr) minmax(0, 1fr)', gap: 24 }}>
-          <div id="sec-priority">
-            <div style={{ marginBottom: 14 }}>
-              <CSTSectionNum num={3} label="À TRAITER EN PRIORITÉ" sub={metrics?.toTreat ? `${metrics.toTreat} ITEMS` : 'TOUT EST À JOUR'} />
-            </div>
-            <PriorityFeed />
-          </div>
-          <div id="sec-recent">
-            <div style={{ marginBottom: 14 }}>
-              <CSTSectionNum num={4} label="SÉANCES RÉCENTES" sub="TEMPS RÉEL" />
-            </div>
-            <RecentSessionsList />
-          </div>
-        </div>
-
-        {/* Members overview */}
-        <div id="sec-membres" style={{ padding: '24px 32px 32px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-            <CSTSectionNum num={5} label="MES COACHÉS" sub={`${realMembers.length} INSCRITS`} />
-            <button className="cst-btn cst-btn-primary cst-btn-sm" onClick={() => setShowInvite(true)}>+ INVITER</button>
-          </div>
-          {realMembers.length === 0 ? (
-            <div className="cst-card-dark" style={{ padding: 32, textAlign: 'center', opacity: 0.7 }}>
-              Aucun coaché pour l'instant. <span style={{ color: 'var(--cst-mid-green)', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => setShowInvite(true)}>Inviter le premier →</span>
-            </div>
-          ) : (
-            <MembersTable />
+        {/* Quick nav to detail pages */}
+        <div style={{ padding: '0 32px 24px', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <button className="cst-btn cst-btn-ghost-dark" onClick={() => navigate({ to: '/coach/membres' })}>
+            MES COACHÉS →
+          </button>
+          {lateCount > 0 && (
+            <button className="cst-btn" style={{ background: 'rgba(224,123,57,0.12)', border: '1px solid rgba(224,123,57,0.4)', color: '#E07B39' }} onClick={() => navigate({ to: '/coach/retards' })}>
+              {lateCount} SÉANCE{lateCount > 1 ? 'S' : ''} EN RETARD →
+            </button>
           )}
         </div>
 

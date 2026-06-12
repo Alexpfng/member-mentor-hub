@@ -71,6 +71,7 @@ export const getDashboardMetrics = createServerFn({ method: "GET" })
 
 /* ---------- Séances en retard (planifiées, non faites, 3+ jours de retard) ---------- */
 
+// Returns late sessions grouped by member, with done/total ratio in the same 30-day window.
 export const getLateSessions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -82,31 +83,71 @@ export const getLateSessions = createServerFn({ method: "GET" })
 
     const cutoff = daysAgo(3).toISOString().slice(0, 10);
     const floor = daysAgo(30).toISOString().slice(0, 10);
-    const { data } = await supabaseAdmin
-      .from("planned_sessions")
-      .select("id, member_id, day_label, planned_date, week_number")
-      .eq("status", "planned")
-      .not("planned_date", "is", null)
-      .gte("planned_date", floor)
-      .lte("planned_date", cutoff)
-      .order("planned_date", { ascending: true })
-      .limit(60);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const todayStr = today.toISOString().slice(0, 10);
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return (data ?? []).map((p) => {
+    const [{ data: lateRows }, { data: allRows }] = await Promise.all([
+      supabaseAdmin
+        .from("planned_sessions")
+        .select("id, member_id, day_label, planned_date, week_number")
+        .eq("status", "planned")
+        .not("planned_date", "is", null)
+        .gte("planned_date", floor)
+        .lte("planned_date", cutoff)
+        .order("planned_date", { ascending: true })
+        .limit(200),
+      supabaseAdmin
+        .from("planned_sessions")
+        .select("id, member_id, status, planned_date")
+        .not("planned_date", "is", null)
+        .gte("planned_date", floor)
+        .lte("planned_date", todayStr)
+        .limit(500),
+    ]);
+
+    // Per-member totals (done vs all that should have been done by today)
+    const totals = new Map<string, { total: number; done: number }>();
+    for (const r of allRows ?? []) {
+      const e = totals.get(r.member_id) ?? { total: 0, done: 0 };
+      e.total++;
+      if (r.status === "done") e.done++;
+      totals.set(r.member_id, e);
+    }
+
+    // Group late sessions by member
+    type LateGroup = {
+      memberId: string;
+      memberName: string;
+      lateCount: number;
+      doneCount: number;
+      totalPlanned: number;
+      maxDaysLate: number;
+      sessions: Array<{ id: string; dayLabel: string; plannedDate: string; daysLate: number }>;
+    };
+    const grouped = new Map<string, LateGroup>();
+    for (const p of lateRows ?? []) {
       const d = new Date(`${p.planned_date}T00:00:00`);
       const daysLate = Math.max(0, Math.round((today.getTime() - d.getTime()) / 86400000));
-      return {
-        id: p.id,
-        memberId: p.member_id,
-        memberName: nameOf.get(p.member_id) || "Membre",
-        dayLabel: p.day_label,
-        plannedDate: p.planned_date,
-        weekNumber: p.week_number,
-        daysLate,
-      };
-    });
+      const existing = grouped.get(p.member_id);
+      const t = totals.get(p.member_id) ?? { total: 0, done: 0 };
+      if (!existing) {
+        grouped.set(p.member_id, {
+          memberId: p.member_id,
+          memberName: nameOf.get(p.member_id) || "Membre",
+          lateCount: 1,
+          doneCount: t.done,
+          totalPlanned: t.total,
+          maxDaysLate: daysLate,
+          sessions: [{ id: p.id, dayLabel: p.day_label ?? "", plannedDate: p.planned_date ?? "", daysLate }],
+        });
+      } else {
+        existing.lateCount++;
+        existing.maxDaysLate = Math.max(existing.maxDaysLate, daysLate);
+        existing.sessions.push({ id: p.id, dayLabel: p.day_label ?? "", plannedDate: p.planned_date ?? "", daysLate });
+      }
+    }
+
+    return Array.from(grouped.values()).sort((a, b) => b.maxDaysLate - a.maxDaysLate);
   });
 
 /* Relance d'un coaché en retard : envoie un message du coach vers le membre. */
@@ -116,17 +157,16 @@ export const remindLateMember = createServerFn({ method: "POST" })
     z
       .object({
         memberId: z.string().uuid(),
-        dayLabel: z.string().max(120).optional().nullable(),
-        plannedDate: z.string().max(10).optional().nullable(),
+        lateCount: z.number().int().min(1).optional().nullable(),
       })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
     await assertCoach(context.userId);
-    const dateTxt = data.plannedDate
-      ? new Date(`${data.plannedDate}T00:00:00`).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" })
-      : null;
-    const content = `Salut ! Ta séance${data.dayLabel ? ` « ${data.dayLabel} »` : ""}${dateTxt ? ` prévue le ${dateTxt}` : ""} n'est pas encore faite — où en es-tu ? Dis-moi si on doit l'adapter 💪`;
+    const n = data.lateCount ?? 1;
+    const content = n > 1
+      ? `Salut ! Tu as ${n} séances planifiées qui ne sont pas encore faites — où en es-tu ? Dis-moi si on doit les adapter ou reporter 💪`
+      : `Salut ! Tu as une séance planifiée qui n'est pas encore faite — où en es-tu ? Dis-moi si on doit l'adapter 💪`;
     const { error } = await supabaseAdmin.from("messages").insert({
       from_id: context.userId,
       to_id: data.memberId,
