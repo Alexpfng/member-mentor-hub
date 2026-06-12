@@ -242,9 +242,9 @@ export default function Exercices() {
   const showSeedButton = !loading && items.filter((i) => !i.is_archived).length < 100;
 
   return (
-    <div className="cst-row" style={{ minHeight: "100vh", background: "var(--cst-bg)" }}>
+    <div className="cst-screen" style={{ flexDirection: "row" }}>
       <CoachSidebar />
-      <div style={{ flex: 1, padding: "32px 28px 96px", minWidth: 0 }}>
+      <div className="cst-scroll" style={{ flex: 1, padding: "32px 28px 96px", minWidth: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
           <h1 className="cst-display" style={{ fontSize: 32, margin: 0, color: "var(--cst-text)" }}>
             Bibliothèque

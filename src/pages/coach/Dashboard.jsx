@@ -172,11 +172,16 @@ function CoachDashboardInner() {
   const monthLabel = `${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
 
   const kpis = [
-    [String(metrics?.activeMembers ?? realMembers.length).padStart(2, '0'), 'COACHÉS ACTIFS'],
-    [String(metrics?.sessionsThisWeek ?? 0).padStart(2, '0'), 'SÉANCES CETTE SEMAINE'],
-    [String(metrics?.toTreat ?? 0).padStart(2, '0'), 'À TRAITER'],
-    [metrics?.adherence7d != null ? `${metrics.adherence7d}%` : '—', 'ADHÉRENCE 7J'],
+    [String(metrics?.activeMembers ?? realMembers.length).padStart(2, '0'), 'COACHÉS ACTIFS', 'sec-membres'],
+    [String(metrics?.sessionsThisWeek ?? 0).padStart(2, '0'), 'SÉANCES CETTE SEMAINE', 'sec-recent'],
+    [String(metrics?.toTreat ?? 0).padStart(2, '0'), 'À TRAITER', 'sec-priority'],
+    [metrics?.adherence7d != null ? `${metrics.adherence7d}%` : '—', 'ADHÉRENCE 7J', 'sec-membres'],
   ];
+
+  const scrollToSection = (id) => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   return (
     <div className="cst-screen" style={{ flexDirection: 'row' }}>
@@ -211,26 +216,35 @@ function CoachDashboardInner() {
 
         {/* Metrics */}
         <div style={{ padding: '24px 32px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
-          {kpis.map(([n, l], i) => (
-            <div key={i} className="cst-hatch" style={metricCard}>
+          {kpis.map(([n, l, anchor], i) => (
+            <div
+              key={i}
+              className="cst-hatch"
+              role="button"
+              tabIndex={0}
+              title="Voir le détail"
+              onClick={() => scrollToSection(anchor)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') scrollToSection(anchor); }}
+              style={{ ...metricCard, cursor: 'pointer' }}
+            >
               <span className="cst-mono" style={{ fontSize: 9 }}>★ {String(i+1).padStart(2,'0')}</span>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                 <span style={{ fontFamily: 'var(--cst-display)', fontWeight: 800, fontSize: 56, lineHeight: 0.9, color: i === 2 && metrics?.toTreat > 0 ? '#E07B39' : '#fff' }}>{n}</span>
               </div>
-              <span className="cst-mono" style={{ fontSize: 9, letterSpacing: '0.22em' }}>{l}</span>
+              <span className="cst-mono" style={{ fontSize: 9, letterSpacing: '0.22em' }}>{l} →</span>
             </div>
           ))}
         </div>
 
         {/* Two-column: Priority feed + Recent sessions */}
         <div style={{ padding: '8px 32px', display: 'grid', gridTemplateColumns: 'minmax(0, 1.2fr) minmax(0, 1fr)', gap: 24 }}>
-          <div>
+          <div id="sec-priority">
             <div style={{ marginBottom: 14 }}>
               <CSTSectionNum num={2} label="À TRAITER EN PRIORITÉ" sub={metrics?.toTreat ? `${metrics.toTreat} ITEMS` : 'TOUT EST À JOUR'} />
             </div>
             <PriorityFeed />
           </div>
-          <div>
+          <div id="sec-recent">
             <div style={{ marginBottom: 14 }}>
               <CSTSectionNum num={3} label="SÉANCES RÉCENTES" sub="TEMPS RÉEL" />
             </div>
@@ -239,7 +253,7 @@ function CoachDashboardInner() {
         </div>
 
         {/* Members overview */}
-        <div style={{ padding: '24px 32px 32px' }}>
+        <div id="sec-membres" style={{ padding: '24px 32px 32px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
             <CSTSectionNum num={4} label="MES COACHÉS" sub={`${realMembers.length} INSCRITS`} />
             <button className="cst-btn cst-btn-primary cst-btn-sm" onClick={() => setShowInvite(true)}>+ INVITER</button>
