@@ -170,7 +170,7 @@ function CoachDashboardInner() {
   const lateCount = metrics?.late ?? 0;
   const kpis = [
     [String(metrics?.activeMembers ?? realMembers.length).padStart(2, '0'), 'COACHÉS ACTIFS', '/coach/membres'],
-    [String(metrics?.sessionsThisWeek ?? 0).padStart(2, '0'), 'SÉANCES CETTE SEMAINE', '/coach/membres'],
+    [String(metrics?.sessionsThisWeek ?? 0).padStart(2, '0'), 'SÉANCES CETTE SEMAINE', '/coach/seances'],
     [String(lateCount).padStart(2, '0'), 'SÉANCES EN RETARD', '/coach/retards'],
     [metrics?.adherence7d != null ? `${metrics.adherence7d}%` : '—', 'ADHÉRENCE 7J', '/coach/membres'],
   ];
@@ -232,6 +232,9 @@ function CoachDashboardInner() {
         <div style={{ padding: '0 32px 24px', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           <button className="cst-btn cst-btn-ghost-dark" onClick={() => navigate({ to: '/coach/membres' })}>
             MES COACHÉS →
+          </button>
+          <button className="cst-btn cst-btn-ghost-dark" onClick={() => navigate({ to: '/coach/seances' })}>
+            SÉANCES →
           </button>
           {lateCount > 0 && (
             <button className="cst-btn" style={{ background: 'rgba(224,123,57,0.12)', border: '1px solid rgba(224,123,57,0.4)', color: '#E07B39' }} onClick={() => navigate({ to: '/coach/retards' })}>

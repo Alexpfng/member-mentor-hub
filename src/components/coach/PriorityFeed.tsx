@@ -16,7 +16,27 @@ export default function PriorityFeed() {
   if (isLoading) {
     return <div className="cst-card-dark" style={{ padding: 20, opacity: 0.6 }}>Chargement…</div>;
   }
-  const items = data ?? [];
+  // Group high_rpe items by sessionId → 1 card per session instead of 1 per exercise
+  const rawItems = data ?? [];
+  type RpeGroup = { type: 'high_rpe_group'; id: string; sessionId: string; memberId: string; memberName: string; maxRpe: number; exercises: { name: string; rpe: number }[]; createdAt: string; priority: number };
+  const rpeGroupMap = new Map<string, RpeGroup>();
+  const items: (typeof rawItems[number] | RpeGroup)[] = [];
+  for (const it of rawItems) {
+    if (it.type === 'high_rpe') {
+      if (!rpeGroupMap.has(it.sessionId)) {
+        const g: RpeGroup = { type: 'high_rpe_group', id: `rpe-${it.sessionId}`, sessionId: it.sessionId, memberId: it.memberId, memberName: it.memberName, maxRpe: it.rpe, exercises: [{ name: it.exerciseName, rpe: it.rpe }], createdAt: it.createdAt, priority: it.priority };
+        rpeGroupMap.set(it.sessionId, g);
+        items.push(g);
+      } else {
+        const g = rpeGroupMap.get(it.sessionId)!;
+        g.maxRpe = Math.max(g.maxRpe, it.rpe);
+        g.exercises.push({ name: it.exerciseName, rpe: it.rpe });
+      }
+    } else {
+      items.push(it);
+    }
+  }
+
   if (items.length === 0) {
     return (
       <div className="cst-card-dark" style={{ padding: 22, textAlign: "center" }}>
@@ -63,16 +83,24 @@ export default function PriorityFeed() {
             </div>
           );
         }
-        if (it.type === "high_rpe") {
+        if (it.type === "high_rpe_group") {
           return (
             <div key={it.id} style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 8, ...common }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <span style={{ fontSize: 18 }}>🟠</span>
-                <span className="cst-mono" style={{ fontSize: 10, letterSpacing: "0.18em", color: "#E07B39" }}>RPE ÉLEVÉ · {it.rpe}/10</span>
+                <span className="cst-mono" style={{ fontSize: 10, letterSpacing: "0.18em", color: "#E07B39" }}>RPE ÉLEVÉ · {it.maxRpe}/10</span>
+                <span className="cst-mono" style={{ fontSize: 9, opacity: 0.55 }}>{it.exercises.length} EXERCICE{it.exercises.length > 1 ? 'S' : ''}</span>
                 <span className="cst-mono" style={{ fontSize: 10, opacity: 0.55, marginLeft: "auto" }}>{timeAgo(it.createdAt)}</span>
               </div>
               <div style={{ fontSize: 13 }}>
-                <strong>{it.memberName}</strong> · {it.exerciseName}
+                <strong>{it.memberName}</strong>
+              </div>
+              <div style={{ fontSize: 11, opacity: 0.7, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {it.exercises.map((e, i) => (
+                  <span key={i} style={{ background: 'rgba(224,123,57,0.1)', border: '1px solid rgba(224,123,57,0.25)', borderRadius: 4, padding: '2px 7px' }}>
+                    {e.name} <span style={{ color: '#E07B39' }}>{e.rpe}</span>
+                  </span>
+                ))}
               </div>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" onClick={() => navigate({ to: "/coach/seance/$sessionId", params: { sessionId: it.sessionId } })}>Voir la séance</button>
@@ -112,6 +140,8 @@ export default function PriorityFeed() {
             </div>
           );
         }
+        if (it.type !== "message") return null;
+        const msgContent = (it as unknown as { content: string }).content;
         return (
           <div key={it.id} style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 8, ...common }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -120,7 +150,7 @@ export default function PriorityFeed() {
               <span className="cst-mono" style={{ fontSize: 10, opacity: 0.55, marginLeft: "auto" }}>{timeAgo(it.createdAt)}</span>
             </div>
             <div style={{ fontSize: 13 }}><strong>{it.memberName}</strong></div>
-            <div style={{ fontSize: 12, opacity: 0.8, fontStyle: "italic" }}>« {it.content.slice(0, 140)}{it.content.length > 140 ? "…" : ""} »</div>
+            <div style={{ fontSize: 12, opacity: 0.8, fontStyle: "italic" }}>« {msgContent.slice(0, 140)}{msgContent.length > 140 ? "…" : ""} »</div>
             <div style={{ display: "flex", gap: 6 }}>
               <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" onClick={() => navigate({ to: "/coach/messages" })}>Répondre</button>
             </div>
