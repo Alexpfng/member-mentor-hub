@@ -273,7 +273,7 @@ export default function Progression() {
                 <div style={{ marginTop: 24 }}>
                   <CSTSectionNum num={6} label="SUIVI CORPOREL" sub="MENSURATIONS (CM)" />
                   <div className="cst-card-dark" style={{ marginTop: 12, padding: 14 }}>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 8 }}>
                       {MEASURE_FIELDS.map(([key, label]) => (
                         <div key={key}>
                           <div className="cst-mono" style={{ fontSize: 9, opacity: 0.55, letterSpacing: "0.12em", marginBottom: 4 }}>{label.toUpperCase()}</div>
@@ -334,7 +334,7 @@ export default function Progression() {
                     />
                   </label>
                   {photos.length > 0 && (
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginTop: 12 }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 8, marginTop: 12 }}>
                       {photos.map((p) => (
                         <div key={p.id} style={{ position: "relative", aspectRatio: "3/4", borderRadius: 8, overflow: "hidden", background: "#111" }}>
                           {p.url ? <img src={p.url} alt="évolution" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : null}

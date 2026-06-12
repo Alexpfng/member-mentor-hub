@@ -434,7 +434,7 @@ export default function MemberDashboard() {
             </div>
 
             {/* Stats */}
-            <div style={{ marginTop: 18, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            <div style={{ marginTop: 18, display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8 }}>
               <div className="cst-card-dark" style={{ padding: 14 }}>
                 <span className="cst-mono" style={{ fontSize: 9 }}>ADHÉRENCE · SEMAINE</span>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginTop: 6 }}>
@@ -504,7 +504,7 @@ export default function MemberDashboard() {
             )}
 
             {/* Quick links */}
-            <div style={{ marginTop: 14, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            <div style={{ marginTop: 14, display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8 }}>
               <button
                 className="cst-btn cst-btn-ghost-dark"
                 onClick={() => navigate("/membre/programme")}

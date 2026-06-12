@@ -172,7 +172,7 @@ export default function Bibliotheque() {
             ) : filtered.length === 0 ? (
               <div style={{ padding: 24, opacity: 0.6, fontSize: 13 }}>Aucun exercice trouvé.</div>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }}>
                 {filtered.map((ex) => (
                   <Tile key={ex.id} ex={ex} onClick={() => setActive(ex)} />
                 ))}

@@ -12,6 +12,23 @@ html {
   -webkit-overflow-scrolling: touch;
 }
 
+/* ── GARDE-FOU GLOBAL ANTI-DÉBORDEMENT (tous formats, desktop inclus) ──
+   Empêche tout glissement / barre de scroll horizontale au niveau page.
+   overflow-x: clip n'ouvre pas de conteneur de scroll → ne casse pas les
+   éléments position: sticky (au contraire de overflow-x: hidden). */
+html,
+body {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+.cst-screen,
+main,
+section {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
 @media (max-width: 767px) {
   body {
     font-size: 15px;

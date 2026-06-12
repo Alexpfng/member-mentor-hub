@@ -69,7 +69,7 @@ export default function MemberProgramme() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#111' }}>
-      <div style={{ width: 390, minHeight: 780, position: 'relative' }}>
+      <div style={{ width: '100%', maxWidth: 390, minHeight: 780, position: 'relative' }}>
         <div className="cst-screen cst-hatch" style={{ minHeight: 780 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 22px 8px' }}>
             <span style={{ fontSize: 18, opacity: 0.7 }}>←</span>

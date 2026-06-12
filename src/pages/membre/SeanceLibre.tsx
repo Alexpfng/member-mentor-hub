@@ -234,7 +234,7 @@ export default function SeanceLibre() {
               <div className="cst-mono" style={{ fontSize: 9, opacity: 0.55, letterSpacing: "0.18em", marginBottom: 8 }}>
                 TYPE DE SÉANCE
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 6 }}>
                 {CATS.map((c) => (
                   <button
                     key={c.key}
@@ -377,7 +377,7 @@ export default function SeanceLibre() {
               <div className="cst-mono" style={{ fontSize: 9, opacity: 0.55, letterSpacing: "0.18em", marginBottom: 8 }}>
                 RESSENTI
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 6 }}>
                 {FEELINGS.map((f) => (
                   <button
                     key={f.value}
@@ -406,7 +406,7 @@ export default function SeanceLibre() {
               <div className="cst-mono" style={{ fontSize: 9, opacity: 0.55, letterSpacing: "0.18em", marginBottom: 8 }}>
                 RPE GLOBAL {rpe != null ? `· ${rpe}/10` : ""}
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(10, 1fr)", gap: 3 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(10, minmax(0, 1fr))", gap: 3 }}>
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
                   <button
                     key={n}
