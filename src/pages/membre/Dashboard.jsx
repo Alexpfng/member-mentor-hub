@@ -375,7 +375,7 @@ export default function MemberDashboard() {
             {/* Week strip */}
             <div style={{ marginTop: 22 }}>
               <CSTSectionNum num={2} label="MA SEMAINE" sub={`${doneSessions} / 5 SÉANCES`} />
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 6, marginTop: 12 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: 6, marginTop: 12 }}>
                 {weekDates.map((date, i) => {
                   const sess = weekSessions.find((s) => s.date === date);
                   const planned = plannedByDate.get(date);
@@ -389,6 +389,8 @@ export default function MemberDashboard() {
                       key={date}
                       style={{
                         padding: "10px 4px",
+                        minWidth: 0,
+                        overflow: "hidden",
                         textAlign: "center",
                         borderRadius: 8,
                         background: isToday ? "var(--cst-mid-green)" : "rgba(255,255,255,0.03)",

@@ -295,7 +295,7 @@ html.theme-light {
 .cst-gap-12 { gap: 12px; } .cst-gap-16 { gap: 16px; } .cst-gap-20 { gap: 20px; }
 .cst-gap-24 { gap: 24px; } .cst-gap-32 { gap: 32px; }
 
-.cst-scroll { overflow-y: auto; }
+.cst-scroll { overflow-y: auto; overflow-x: hidden; }
 .cst-scroll::-webkit-scrollbar { display: none; }
 .cst-scroll { -ms-overflow-style: none; scrollbar-width: none; }
 
