@@ -459,26 +459,48 @@ export default function CoachMember() {
                       </div>
                     )}
                     <WeeksManagerPanel memberId={memberId} />
-                    <div className="cst-col" style={{ gap: 10 }}>
-                      {weekDays.length === 0 && (
-                        <div className="cst-card-dark" style={{ padding: 18, opacity: 0.6, fontSize: 12 }}>Pas de jours définis pour cette semaine.</div>
-                      )}
-                      {weekDays.map((d, i) => {
-                        const dayNum = d.day_number || i + 1;
-                        const s = sessionByDay.get(`${currentWeek}-${dayNum}`);
-                        const kind = s ? statusKind(s.status) : 'coming';
-                        return (
-                          <div key={i} className="cst-card-dark cst-hatch" style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 18 }}>
-                            <div className="cst-mono" style={{ width: 56, fontSize: 10 }}>J{String(dayNum).padStart(2, '0')}</div>
-                            <div className="cst-col" style={{ flex: 1, gap: 2, minWidth: 0 }}>
-                              <span className="cst-display" style={{ fontSize: 16 }}>{(d.name || d.label || `Jour ${dayNum}`).toUpperCase()}</span>
-                              <span style={{ fontSize: 11, opacity: 0.55 }}>{(d.exercises?.length || 0)} exercices{sanitizeDurationMin(s?.duration_minutes) ? ` · ${sanitizeDurationMin(s?.duration_minutes)} min` : ''}{s?.average_rpe ? ` · RPE ${Number(s.average_rpe).toFixed(1)}` : ''}</span>
-                            </div>
-                            <CSTStatus kind={kind} />
+                    {/* Recap semaine precedente */}
+                    {(() => {
+                      const prevWeek = (currentWeek || 1) - 1;
+                      const prevSessions = prevWeek > 0
+                        ? data.sessions.filter((s) => s.week_number === prevWeek)
+                        : [];
+                      const recentFallback = prevWeek <= 0
+                        ? data.sessions.filter((s) => s.status === 'done').slice(0, 5)
+                        : [];
+                      const toShow = prevSessions.length > 0 ? prevSessions : recentFallback;
+                      const label = prevWeek > 0 ? `RECAP S${String(prevWeek).padStart(2, '0')}` : 'DERNIERES SEANCES';
+                      const sub = prevWeek > 0 ? 'SEMAINE PRECEDENTE' : 'ACTIVITE RECENTE';
+                      return (
+                        <div style={{ marginTop: 16 }}>
+                          <CSTSectionNum num={2} label={label} sub={sub} />
+                          <div className="cst-col" style={{ gap: 8, marginTop: 10 }}>
+                            {toShow.length === 0 ? (
+                              <div className="cst-card-dark" style={{ padding: 16, opacity: 0.6, fontSize: 12 }}>
+                                Aucune seance effectuee la semaine {prevWeek > 0 ? prevWeek : 'precedente'}.
+                              </div>
+                            ) : toShow.map((s) => {
+                              const kind = statusKind(s.status);
+                              const rpe = s.average_rpe != null ? Number(s.average_rpe) : null;
+                              const rpeColor = rpe == null ? 'inherit' : rpe >= 9 ? '#C0392B' : rpe >= 7 ? '#E07B39' : '#5BA85A';
+                              return (
+                                <div key={s.id} className="cst-card-dark cst-hatch" style={{ padding: '12px 18px', display: 'flex', alignItems: 'center', gap: 18 }}>
+                                  <div className="cst-mono" style={{ width: 56, fontSize: 10 }}>J{String(s.day_number || '-').padStart(2, '0')}</div>
+                                  <div className="cst-col" style={{ flex: 1, gap: 2, minWidth: 0 }}>
+                                    <span className="cst-display" style={{ fontSize: 15 }}>{(s.session_label || `Jour ${s.day_number || '?'}`).toUpperCase()}</span>
+                                    <span style={{ fontSize: 11, opacity: 0.75 }}>
+                                      {sanitizeDurationMin(s.duration_minutes) ? `${sanitizeDurationMin(s.duration_minutes)} min` : '--'}
+                                      {rpe != null && <span style={{ color: rpeColor, fontWeight: 700 }}> · RPE {rpe.toFixed(1)}</span>}
+                                    </span>
+                                  </div>
+                                  <CSTStatus kind={kind} />
+                                </div>
+                              );
+                            })}
                           </div>
-                        );
-                      })}
-                    </div>
+                        </div>
+                      );
+                    })()}
                   </>
                 )}
               </>
