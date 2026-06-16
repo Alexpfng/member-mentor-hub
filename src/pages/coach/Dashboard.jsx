@@ -256,6 +256,27 @@ function CoachDashboardInner() {
             </div>
           </div>
         )}
+
+        {/* Légende intensités */}
+        <div className="cst-card-dark" style={{ padding: 14, marginTop: 24, margin: '0 32px 32px' }}>
+          <div className="cst-mono" style={{ fontSize: 9, letterSpacing: "0.15em", opacity: 0.5, marginBottom: 10 }}>
+            LÉGENDE DES INTENSITÉS
+          </div>
+          <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+            {[
+              { color: "#C44A3A", label: "Force / Épuisant" },
+              { color: "#5BA85A", label: "Isolation" },
+              { color: "#D4A82E", label: "Explosivité" },
+              { color: "#E8D44A", label: "Mobilité" },
+              { color: "#4A8BC4", label: "Technique" },
+            ].map(({ color, label }) => (
+              <div key={label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: "50%", background: color, flexShrink: 0 }} />
+                <span style={{ fontSize: 11, opacity: 0.8 }}>{label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

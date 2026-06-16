@@ -5118,5 +5118,25 @@
   "tempo_defaut": "2010",
   "youtube_url": "https://www.youtube.com/shorts/uexTkvxwMGM",
   "consignes": "Garde buste parallèle au sol, l'angle du coude est relativement ouvert"
+ },
+ {
+  "id": "hip-thrust",
+  "nom": "Hip Thrust",
+  "categorie": "Renforcement",
+  "muscle_group": "Fessiers",
+  "equipement": "Barre / Banc",
+  "tempo_defaut": "2-1-2-1",
+  "youtube_url": null,
+  "consignes": "Dos appuyé sur le banc, barre sur les hanches. Pousse les hanches vers le haut en contractant les fessiers. Contrôle la descente."
+ },
+ {
+  "id": "abduction-machine",
+  "nom": "Abduction Machine",
+  "categorie": "Renforcement",
+  "muscle_group": "Fessiers",
+  "equipement": "Machine",
+  "tempo_defaut": "2-1-2-0",
+  "youtube_url": null,
+  "consignes": "Assis sur la machine, pousse les jambes vers l'extérieur de façon contrôlée. Contracte les fessiers en fin de mouvement. Reviens lentement."
  }
 ]

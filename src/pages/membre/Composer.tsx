@@ -16,6 +16,8 @@ type Ex = {
   youtube_id: string | null;
 };
 
+type SetRow = { reps: string; charge: string };
+
 type Picked = {
   uid: string;
   name: string;
@@ -23,9 +25,7 @@ type Picked = {
   tempo: string | null;
   youtube_url: string | null;
   youtube_id: string | null;
-  series: string;
-  reps: string;
-  charge: string;
+  sets: SetRow[];
   rpe_target: string;
 };
 
@@ -33,6 +33,7 @@ const COLOR_MAP: Record<string, string> = {
   red: "#C44A3A",
   green: "#5BA85A",
   yellow: "#D4A82E",
+  lime: "#E8D44A",
   blue: "#4A8BC4",
 };
 const accentOf = (c: string | null) => COLOR_MAP[(c || "").toLowerCase()] || "var(--cst-mid-green)";
@@ -91,9 +92,11 @@ export default function Composer() {
         tempo: ex.default_tempo,
         youtube_url: ex.youtube_url,
         youtube_id: ex.youtube_id,
-        series: "3",
-        reps: "8-12",
-        charge: "",
+        sets: [
+          { reps: "8-12", charge: "" },
+          { reps: "8-12", charge: "" },
+          { reps: "8-12", charge: "" },
+        ],
         rpe_target: "",
       },
     ]);
@@ -103,6 +106,15 @@ export default function Composer() {
     setPicked((p) => p.map((x) => (x.uid === uid ? { ...x, ...patch } : x)));
 
   const removePicked = (uid: string) => setPicked((p) => p.filter((x) => x.uid !== uid));
+
+  const addSet = (uid: string) =>
+    setPicked((p) => p.map((x) => x.uid === uid ? { ...x, sets: [...x.sets, { reps: "", charge: "" }] } : x));
+
+  const removeSet = (uid: string, idx: number) =>
+    setPicked((p) => p.map((x) => x.uid === uid && x.sets.length > 1 ? { ...x, sets: x.sets.filter((_, i) => i !== idx) } : x));
+
+  const updateSet = (uid: string, idx: number, patch: Partial<SetRow>) =>
+    setPicked((p) => p.map((x) => x.uid === uid ? { ...x, sets: x.sets.map((s, i) => i === idx ? { ...s, ...patch } : s) } : x));
 
   const move = (uid: string, dir: -1 | 1) =>
     setPicked((p) => {
@@ -121,9 +133,9 @@ export default function Composer() {
       const exercises = picked.map((p) => ({
         name: p.name,
         color: p.color,
-        series: p.series.trim() || null,
-        reps: p.reps.trim() || null,
-        charge: p.charge.trim() || null,
+        series: String(p.sets.length),
+        reps: p.sets.map((s) => s.reps || "—").join(" / "),
+        charge: p.sets.map((s) => s.charge || "PDC").join(" / "),
         tempo: p.tempo || null,
         rpe_target: p.rpe_target.trim() || null,
         youtube_url: p.youtube_url || null,
@@ -190,11 +202,45 @@ export default function Composer() {
                       <button onClick={() => move(p.uid, 1)} disabled={idx === picked.length - 1} title="Descendre" style={iconBtn(idx === picked.length - 1)}>↓</button>
                       <button onClick={() => removePicked(p.uid)} title="Retirer" style={{ ...iconBtn(false), color: "rgba(255,120,120,0.8)" }}>✕</button>
                     </div>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 6, marginTop: 10 }}>
-                      <Field label="SÉRIES" value={p.series} onChange={(v) => updatePicked(p.uid, { series: v })} />
-                      <Field label="REPS" value={p.reps} onChange={(v) => updatePicked(p.uid, { reps: v })} />
-                      <Field label="CHARGE" value={p.charge} onChange={(v) => updatePicked(p.uid, { charge: v })} />
-                      <Field label="RPE" value={p.rpe_target} onChange={(v) => updatePicked(p.uid, { rpe_target: v })} />
+                    <div style={{ marginTop: 10 }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "24px 1fr 1fr 24px", gap: 4, marginBottom: 4 }}>
+                        <span />
+                        <span className="cst-mono" style={{ fontSize: 9, opacity: 0.45, letterSpacing: "0.12em" }}>REPS</span>
+                        <span className="cst-mono" style={{ fontSize: 9, opacity: 0.45, letterSpacing: "0.12em" }}>KG / PDC</span>
+                        <span />
+                      </div>
+                      {p.sets.map((s, si) => (
+                        <div key={si} style={{ display: "grid", gridTemplateColumns: "24px 1fr 1fr 24px", gap: 4, marginBottom: 4, alignItems: "center" }}>
+                          <span className="cst-mono" style={{ fontSize: 10, opacity: 0.4, textAlign: "center" }}>S{si + 1}</span>
+                          <input
+                            className="cst-input"
+                            value={s.reps}
+                            onChange={(e) => updateSet(p.uid, si, { reps: e.target.value })}
+                            placeholder="8-12"
+                            style={{ padding: "6px 8px", fontSize: 13 }}
+                          />
+                          <input
+                            className="cst-input"
+                            value={s.charge}
+                            onChange={(e) => updateSet(p.uid, si, { charge: e.target.value })}
+                            placeholder="PDC / kg"
+                            style={{ padding: "6px 8px", fontSize: 13 }}
+                          />
+                          {p.sets.length > 1 ? (
+                            <button onClick={() => removeSet(p.uid, si)} style={{ background: "transparent", border: "none", color: "rgba(255,100,100,0.6)", cursor: "pointer", fontSize: 14, padding: 0 }}>✕</button>
+                          ) : <span />}
+                        </div>
+                      ))}
+                      <button
+                        onClick={() => addSet(p.uid)}
+                        className="cst-mono"
+                        style={{ marginTop: 4, background: "transparent", border: "1px dashed rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.45)", borderRadius: 6, padding: "4px 10px", fontSize: 10, cursor: "pointer", width: "100%", letterSpacing: "0.1em" }}
+                      >
+                        + SÉRIE
+                      </button>
+                      <div style={{ marginTop: 8 }}>
+                        <Field label="RPE CIBLE" value={p.rpe_target} onChange={(v) => updatePicked(p.uid, { rpe_target: v })} />
+                      </div>
                     </div>
                   </div>
                 ))}

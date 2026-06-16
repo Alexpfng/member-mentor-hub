@@ -421,24 +421,6 @@ export default function AdapterSemaine() {
     setStructure((s) => ({ ...s, days: [...(s.days ?? []), emptySession(s.days?.length ?? 0)] }));
   }
 
-  function applyGlobalProgression(mode: "identical" | "plus2_5" | "plus5" | "deload") {
-    if (mode === "identical") return;
-    const factor = mode === "plus2_5" ? 1.025 : mode === "plus5" ? 1.05 : 0.6;
-    setStructure((s) => {
-      const days = (s.days ?? []).map((d) => ({
-        ...d,
-        exercises: (d.exercises ?? []).map((e) => {
-          if ((e.color ?? "").toLowerCase() !== "red") return e;
-          const fb = ctx?.feedback?.[e.name];
-          if (fb?.pain) return e; // protect injured
-          const next = nextChargeDelta(e.charge, factor - 1);
-          return next ? { ...e, charge: next } : e;
-        }),
-      }));
-      return { ...s, days };
-    });
-  }
-
   async function openPublish() {
     if (!ctx?.week.id) return;
     try {
@@ -527,19 +509,6 @@ export default function AdapterSemaine() {
             {ctx.sourceSummary.painCount > 0 ? `${ctx.sourceSummary.painCount} douleur(s) signalée(s)` : "aucune douleur"}
           </div>
         )}
-
-        {/* Progression globale */}
-        <div className="cst-card-dark" style={{ padding: 14, marginBottom: 20 }}>
-          <div className="cst-mono" style={{ fontSize: 10, letterSpacing: "0.15em", opacity: 0.6, marginBottom: 8 }}>
-            PROGRESSION GLOBALE (exos force, hors douleur)
-          </div>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <button className="cst-btn cst-btn-sm cst-btn-ghost-dark" onClick={() => applyGlobalProgression("identical")}>Identique</button>
-            <button className="cst-btn cst-btn-sm cst-btn-ghost-dark" onClick={() => applyGlobalProgression("plus2_5")}>+2,5% force</button>
-            <button className="cst-btn cst-btn-sm cst-btn-ghost-dark" onClick={() => applyGlobalProgression("plus5")}>+5% force</button>
-            <button className="cst-btn cst-btn-sm cst-btn-ghost-dark" onClick={() => applyGlobalProgression("deload")}>Déload −40%</button>
-          </div>
-        </div>
 
         {/* Séances */}
         {(structure.days ?? []).length === 0 && (
