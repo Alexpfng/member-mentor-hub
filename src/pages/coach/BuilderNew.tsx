@@ -954,7 +954,7 @@ export default function BuilderNew({ programIdParam }: { programIdParam?: string
             </div>
           </div>
 
-          <div className="cst-scroll" style={{ flex: 1, padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div className="cst-scroll-visible" style={{ flex: 1, padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 4 }}>
             {filteredLib.map(ex => (
               <LibraryItem key={ex.id} exercise={ex} />
             ))}
@@ -1071,7 +1071,7 @@ export default function BuilderNew({ programIdParam }: { programIdParam?: string
           </div>
 
           {/* Day columns */}
-          <div className="cst-scroll" style={{ flex: 1, padding: 16, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+          <div className="cst-scroll-visible" style={{ flex: 1, padding: 16, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
             {currentWeek.days.map((day) => (
               <DroppableDayWrapper key={day.id} dayId={day.id} overId={overId}>
                 <DayColumn
