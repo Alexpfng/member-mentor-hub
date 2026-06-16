@@ -620,10 +620,15 @@ export default function AdapterSemaine() {
                       <div className="cst-mono" style={{ fontSize: 10, opacity: 0.6, display: "flex", gap: 8, flexWrap: "wrap" }}>
                         <span>{ex.block_type === "emom" ? String(ex.series ?? "EMOM") : `${ex.series ?? "—"}×${ex.reps ?? "—"}`}</span>
                         {ex.charge && <span>{ex.charge}kg</span>}
-                        {ex.rpe_target != null && ex.rpe_target !== "" && <span>RPE {ex.rpe_target}</span>}
+                        {ex.rpe_target != null && ex.rpe_target !== "" && <span>RPE cible {ex.rpe_target}</span>}
                         {ex.tempo && <span>⏱{ex.tempo}</span>}
                       </div>
-                      {ex.coach_notes && <div style={{ fontSize: 10, opacity: 0.5, fontStyle: "italic", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>“{ex.coach_notes}”</div>}
+                      {fb?.rpe != null && (
+                        <div className="cst-mono" style={{ fontSize: 10, fontWeight: 700, color: fb.rpe >= 9 ? '#C0392B' : fb.rpe >= 7 ? '#E07B39' : '#5BA85A' }}>
+                          S{ctx.sourceSummary.weekNumber ?? "?"} · RPE réel {fb.rpe}
+                        </div>
+                      )}
+                      {ex.coach_notes && <div style={{ fontSize: 10, opacity: 0.5, fontStyle: "italic", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>"{ex.coach_notes}"</div>}
                     </button>
                   );
                 })}
