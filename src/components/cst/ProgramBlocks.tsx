@@ -150,7 +150,97 @@ function YouTubeButton({ id, url }: { id?: string | null; url?: string | null })
   );
 }
 
+function isCardioExercise(ex: ProgExercise): boolean {
+  if (ex.block_type === "cardio") return true;
+  const rpe = String(ex.rpe_target ?? "").trim();
+  if (rpe && isNaN(Number(rpe)) && rpe.length > 3) return true;
+  return false;
+}
+
+function CardioRow({ ex, threadSlot, onExerciseClick }: { ex: ProgExercise; threadSlot?: (ex: ProgExercise) => React.ReactNode; onExerciseClick?: (ex: ProgExercise) => void }) {
+  const consignes = isNaN(Number(String(ex.rpe_target ?? "").trim())) ? ex.rpe_target : null;
+  const col = exCardColor(ex.color);
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "minmax(0,1fr)",
+        gap: 8,
+        padding: "10px 12px",
+        borderTop: "1px solid rgba(255,255,255,0.06)",
+        ...(col ? { borderLeft: `3px solid ${col}`, background: `${col}0a` } : {}),
+      }}
+    >
+      {/* Nom + boutons */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        {colorDot(ex.color)}
+        {ex.code && (
+          <span className="cst-mono" style={{ fontSize: 11, opacity: 0.7, minWidth: 24 }}>
+            {ex.code}
+          </span>
+        )}
+        <span style={{ fontWeight: 600, fontSize: 14, flex: 1, minWidth: 0 }}>{ex.name}</span>
+        <YouTubeButton id={ex.youtube_id} url={ex.youtube_url} />
+        {onExerciseClick && (
+          <button
+            onClick={() => onExerciseClick(ex)}
+            style={{
+              background: "var(--cst-mid-green)", border: "none", color: "#fff",
+              fontFamily: "var(--cst-mono)", fontSize: 10, letterSpacing: "0.1em",
+              padding: "5px 9px", borderRadius: 6, cursor: "pointer", flexShrink: 0,
+            }}
+          >
+            ALLER →
+          </button>
+        )}
+      </div>
+      {/* Métriques compactes */}
+      <div className="cst-mono" style={{ fontSize: 11, opacity: 0.85, display: "flex", gap: 16, flexWrap: "wrap" }}>
+        {ex.tempo && <span><span style={{ opacity: 0.5 }}>DURÉE </span>{val(ex.tempo)}</span>}
+        {ex.charge && <span><span style={{ opacity: 0.5 }}>INTENSITÉ </span>{val(ex.charge)}</span>}
+        {ex.reps && <span><span style={{ opacity: 0.5 }}>FRÉQUENCE </span>{val(ex.reps)}</span>}
+        {ex.recup && <span><span style={{ opacity: 0.5 }}>RÉCUP </span>{val(ex.recup)}</span>}
+      </div>
+      {/* Objectif / Consignes */}
+      {(consignes || ex.coach_notes) && (
+        <div
+          style={{
+            background: "rgba(45,90,53,0.10)",
+            border: "1px solid rgba(45,90,53,0.25)",
+            borderLeft: "3px solid var(--cst-mid-green)",
+            borderRadius: 4,
+            padding: "8px 12px",
+            fontSize: 13,
+          }}
+        >
+          {consignes && (
+            <div style={{ fontWeight: 600, marginBottom: ex.coach_notes ? 4 : 0 }}>
+              <span className="cst-mono" style={{ fontSize: 9, opacity: 0.6, letterSpacing: "0.14em" }}>OBJECTIF / CONSIGNES<br /></span>
+              {String(consignes)}
+            </div>
+          )}
+          {ex.coach_notes && (
+            <div style={{ fontSize: 12, opacity: 0.75, fontStyle: "italic" }}>{ex.coach_notes}</div>
+          )}
+        </div>
+      )}
+      {threadSlot && threadSlot(ex)}
+    </div>
+  );
+}
+
+const EXERCISE_COLOR_MAP: Record<string, string> = {
+  red: "#C44A3A", green: "#5BA85A", yellow: "#D4A82E", blue: "#4A8BC4",
+};
+function exCardColor(c?: string | null): string {
+  return EXERCISE_COLOR_MAP[(c || "").toLowerCase()] || "";
+}
+
 function ExerciseRow({ ex, threadSlot, onExerciseClick }: { ex: ProgExercise; threadSlot?: (ex: ProgExercise) => React.ReactNode; onExerciseClick?: (ex: ProgExercise) => void }) {
+  if (isCardioExercise(ex)) {
+    return <CardioRow ex={ex} threadSlot={threadSlot} onExerciseClick={onExerciseClick} />;
+  }
+  const col = exCardColor(ex.color);
   return (
     <div
       style={{
@@ -159,6 +249,7 @@ function ExerciseRow({ ex, threadSlot, onExerciseClick }: { ex: ProgExercise; th
         gap: 6,
         padding: "10px 12px",
         borderTop: "1px solid rgba(255,255,255,0.06)",
+        ...(col ? { borderLeft: `3px solid ${col}`, background: `${col}0a` } : {}),
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>

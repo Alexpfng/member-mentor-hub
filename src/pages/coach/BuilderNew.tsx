@@ -27,10 +27,11 @@ interface LibraryExercise {
   youtube_url?: string;
 }
 
-type BlockType = 'standard' | 'emom' | 'amrap' | 'circuit' | 'dropset' | 'iso' | 'ladder';
+type BlockType = 'standard' | 'emom' | 'amrap' | 'circuit' | 'dropset' | 'iso' | 'ladder' | 'cardio';
 
 const BLOCK_TYPES: { value: BlockType; label: string }[] = [
-  { value: 'standard', label: 'Standard' },
+  { value: 'standard', label: 'Standard (muscu)' },
+  { value: 'cardio', label: 'Cardio / Endurance' },
   { value: 'emom', label: 'EMOM' },
   { value: 'amrap', label: 'AMRAP' },
   { value: 'circuit', label: 'Circuit' },
@@ -303,40 +304,62 @@ function QuickConfig({ ex, onChange, onClose, canChain }: PopoverProps) {
           ✎ MODIFIE POUR CE PROGRAMME — Pour renommer dans toute la bibliothèque, va dans Bibliothèque.
         </p>
 
-        {/* Séries / Reps / Charge */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
-          {[['Séries', 'sets', 'number'], ['Reps', 'reps', 'text'], ['Charge', 'weight', 'text']].map(([label, key, type]) => (
-            <div key={key}>
-              <label style={{ fontFamily: 'var(--cst-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--cst-text-muted)', marginBottom: 4, display: 'block' }}>{label}</label>
-              <input className="cst-input" type={type} value={(local as any)[key]}
-                onChange={e => set(key as any, type === 'number' ? Number(e.target.value) : e.target.value)}
-                style={{ padding: '8px 12px', fontSize: 14 }} />
-            </div>
-          ))}
-        </div>
+        {/* Séries / Reps / Charge — ou Durée / Fréquence / Intensité pour cardio */}
+        {local.block_type === 'cardio' ? (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+            {[['Durée', 'tempo', 'text'], ['Fréquence (RPM/BPM)', 'reps', 'text'], ['Intensité (W/allure)', 'weight', 'text']].map(([label, key]) => (
+              <div key={key}>
+                <label style={{ fontFamily: 'var(--cst-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--cst-text-muted)', marginBottom: 4, display: 'block' }}>{label}</label>
+                <input className="cst-input" type="text" value={(local as any)[key] ?? ''}
+                  onChange={e => set(key as any, e.target.value)}
+                  style={{ padding: '8px 12px', fontSize: 14 }} />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+            {[['Séries', 'sets', 'number'], ['Reps', 'reps', 'text'], ['Charge', 'weight', 'text']].map(([label, key, type]) => (
+              <div key={key}>
+                <label style={{ fontFamily: 'var(--cst-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--cst-text-muted)', marginBottom: 4, display: 'block' }}>{label}</label>
+                <input className="cst-input" type={type} value={(local as any)[key]}
+                  onChange={e => set(key as any, type === 'number' ? Number(e.target.value) : e.target.value)}
+                  style={{ padding: '8px 12px', fontSize: 14 }} />
+              </div>
+            ))}
+          </div>
+        )}
 
-        {/* Tempo / Récup */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        {/* Récup + RPE (muscu) ou Récup seul + Consignes (cardio) */}
+        {local.block_type === 'cardio' ? (
           <div>
             <label style={{ fontFamily: 'var(--cst-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--cst-text-muted)', marginBottom: 4, display: 'block' }}>Récup</label>
             <select className="cst-input" value={local.rest} onChange={e => set('rest', e.target.value)} style={{ padding: '8px 12px' }}>
               {REST_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
             </select>
           </div>
-          <div>
-            <label style={{ fontFamily: 'var(--cst-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--cst-text-muted)', marginBottom: 4, display: 'block' }}>RPE cible</label>
-            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-              {[1,2,3,4,5,6,7,8,9,10].map(n => (
-                <button key={n} onClick={() => set('rpe', n)} style={{
-                  width: 30, height: 30, borderRadius: 4, border: '1px solid',
-                  borderColor: local.rpe === n ? 'var(--cst-mid-green)' : 'var(--cst-card-border)',
-                  background: local.rpe === n ? 'var(--cst-mid-green)' : 'transparent',
-                  color: local.rpe === n ? '#fff' : 'var(--cst-text)', fontSize: 11, cursor: 'pointer',
-                }}>{n}</button>
-              ))}
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div>
+              <label style={{ fontFamily: 'var(--cst-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--cst-text-muted)', marginBottom: 4, display: 'block' }}>Récup</label>
+              <select className="cst-input" value={local.rest} onChange={e => set('rest', e.target.value)} style={{ padding: '8px 12px' }}>
+                {REST_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={{ fontFamily: 'var(--cst-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--cst-text-muted)', marginBottom: 4, display: 'block' }}>RPE cible</label>
+              <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                  <button key={n} onClick={() => set('rpe', n)} style={{
+                    width: 30, height: 30, borderRadius: 4, border: '1px solid',
+                    borderColor: local.rpe === n ? 'var(--cst-mid-green)' : 'var(--cst-card-border)',
+                    background: local.rpe === n ? 'var(--cst-mid-green)' : 'transparent',
+                    color: local.rpe === n ? '#fff' : 'var(--cst-text)', fontSize: 11, cursor: 'pointer',
+                  }}>{n}</button>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Couleur */}
         <div>

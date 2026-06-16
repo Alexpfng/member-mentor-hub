@@ -600,14 +600,16 @@ export default function AdapterSemaine() {
                 {(day.exercises ?? []).map((ex, ei) => {
                   const fb = ctx.feedback[ex.name];
                   const sugg = suggestFor(ex, fb);
+                  const cardColor = COLOR_MAP[(ex.color || "").toLowerCase()]?.bg || "#555";
                   return (
                     <button
                       key={ei}
                       onClick={() => setEditTarget({ dayIdx: di, exoIdx: ei })}
                       style={{
                         textAlign: "left", cursor: "pointer", width: "100%",
-                        background: "rgba(255,255,255,0.03)",
-                        border: sugg ? "1px solid rgba(212,168,46,0.5)" : "1px solid rgba(255,255,255,0.07)",
+                        background: `${cardColor}0d`,
+                        border: sugg ? "1px solid rgba(212,168,46,0.5)" : `1px solid ${cardColor}40`,
+                        borderLeft: `3px solid ${cardColor}`,
                         borderRadius: 8, padding: "9px 10px", color: "var(--cst-text)",
                         display: "flex", flexDirection: "column", gap: 4,
                       }}

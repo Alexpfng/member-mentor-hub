@@ -49,7 +49,8 @@ export const getDashboardMetrics = createServerFn({ method: "GET" })
       supabaseAdmin.from("messages").select("id", { count: "exact", head: true }).eq("to_id", context.userId).eq("read", false),
       supabaseAdmin.from("technique_videos").select("id", { count: "exact", head: true }).eq("coach_reviewed", false),
       supabaseAdmin.from("sessions").select("id", { count: "exact", head: true }).eq("coach_seen", false).eq("status", "completed"),
-      supabaseAdmin.from("planned_sessions").select("id", { count: "exact", head: true }).eq("status", "planned").not("planned_date", "is", null).gte("planned_date", lateFloor).lte("planned_date", lateCutoff),
+      // Fetch with created_at so we can exclude retroactive entries (planned_date < created_at = coach entered old session today)
+      supabaseAdmin.from("planned_sessions").select("id, planned_date, created_at").eq("status", "planned").not("planned_date", "is", null).gte("planned_date", lateFloor).lte("planned_date", lateCutoff),
     ]);
 
     // adhérence 7j : seulement séances de PROGRAMME (les libres ne faussent pas l'adhérence)
@@ -59,12 +60,14 @@ export const getDashboardMetrics = createServerFn({ method: "GET" })
     const adherence = total > 0 ? Math.round((done / total) * 100) : 0;
 
     const toTreat = (painUnresolved.count || 0) + (msgsUnread.count || 0) + (videosUnreviewed.count || 0) + (sessionsUnseen.count || 0);
+    // Exclude retroactive entries: planned_date < created_at date → coach entered them after the fact
+    const lateCount = (latePlanned.data ?? []).filter((r) => r.planned_date! >= r.created_at.slice(0, 10)).length;
 
     return {
       activeMembers: memberIds.length,
       sessionsThisWeek: sessionsWeek.count || 0,
       toTreat,
-      late: latePlanned.count || 0,
+      late: lateCount,
       adherence7d: adherence,
     };
   });
@@ -86,10 +89,10 @@ export const getLateSessions = createServerFn({ method: "GET" })
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const todayStr = today.toISOString().slice(0, 10);
 
-    const [{ data: lateRows }, { data: allRows }] = await Promise.all([
+    const [{ data: lateRowsRaw }, { data: allRows }] = await Promise.all([
       supabaseAdmin
         .from("planned_sessions")
-        .select("id, member_id, day_label, planned_date, week_number")
+        .select("id, member_id, day_label, planned_date, week_number, created_at")
         .eq("status", "planned")
         .not("planned_date", "is", null)
         .gte("planned_date", floor)
@@ -105,7 +108,10 @@ export const getLateSessions = createServerFn({ method: "GET" })
         .limit(500),
     ]);
 
-    // Per-member totals (done vs all that should have been done by today)
+    // Exclude retroactive entries: created AFTER planned_date → coach entered old sessions today
+    const lateRows = (lateRowsRaw ?? []).filter((r) => r.planned_date! >= r.created_at.slice(0, 10));
+
+    // Per-member totals (done vs all that should have been done by today, also excluding retroactive)
     const totals = new Map<string, { total: number; done: number }>();
     for (const r of allRows ?? []) {
       const e = totals.get(r.member_id) ?? { total: 0, done: 0 };
