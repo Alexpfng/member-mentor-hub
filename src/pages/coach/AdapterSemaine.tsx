@@ -620,11 +620,19 @@ export default function AdapterSemaine() {
                         <ColorDot c={ex.color} />
                         <span style={{ flex: 1, fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ex.name}</span>
                         {sugg && <span title="Suggestion d'après les retours" style={{ fontSize: 11 }}>{sugg.type === "pain" ? "🔴" : "⚠"}</span>}
+                        <span className="cst-mono" style={{
+                          fontSize: 10, fontWeight: 700, flexShrink: 0,
+                          background: (ex.rpe_target != null && ex.rpe_target !== "") ? `${cardColor}33` : "rgba(255,255,255,0.06)",
+                          border: `1px solid ${(ex.rpe_target != null && ex.rpe_target !== "") ? cardColor + "66" : "rgba(255,255,255,0.12)"}`,
+                          borderRadius: 5, padding: "2px 7px",
+                          color: (ex.rpe_target != null && ex.rpe_target !== "") ? cardColor : "rgba(255,255,255,0.35)",
+                        }}>
+                          RPE {ex.rpe_target != null && ex.rpe_target !== "" ? ex.rpe_target : "—"}
+                        </span>
                       </div>
                       <div className="cst-mono" style={{ fontSize: 10, opacity: 0.6, display: "flex", gap: 8, flexWrap: "wrap" }}>
                         <span>{ex.block_type === "emom" ? String(ex.series ?? "EMOM") : `${ex.series ?? "—"}×${ex.reps ?? "—"}`}</span>
                         {ex.charge && <span>{/^pdc$/i.test(ex.charge.trim()) ? "PDC" : `${ex.charge}kg`}</span>}
-                        {ex.rpe_target != null && ex.rpe_target !== "" && <span>RPE cible {ex.rpe_target}</span>}
                         {ex.tempo && <span>⏱{ex.tempo}</span>}
                       </div>
                       {fb?.rpe != null && (
