@@ -54,6 +54,8 @@ export default function Invitations() {
           email: email.trim() || null,
         },
       });
+      const sentEmail = res.email_sent;
+      const hadEmail = !!email.trim();
       setEmail("");
       await load();
       try {
@@ -61,8 +63,14 @@ export default function Invitations() {
         setCopied(res.invitation.token);
         setTimeout(() => setCopied(null), 1500);
       } catch {}
-      setNotice("Lien d'invitation généré et copié dans le presse-papiers.");
-      setTimeout(() => setNotice(null), 4000);
+      setNotice(
+        sentEmail
+          ? "Lien généré et email envoyé au client ✓"
+          : hadEmail
+          ? "Lien généré et copié — l'email n'a pas pu être envoyé, transmets le lien manuellement."
+          : "Lien d'invitation généré et copié dans le presse-papiers."
+      );
+      setTimeout(() => setNotice(null), 5000);
     } catch (e: any) {
       setErr(e?.message || "Erreur lors de la création.");
     } finally {

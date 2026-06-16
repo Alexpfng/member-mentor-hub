@@ -7,7 +7,6 @@ import {
   Head,
   Heading,
   Html,
-  Link,
   Preview,
   Text,
 } from '@react-email/components'
@@ -16,33 +15,33 @@ interface InviteEmailProps {
   siteName: string
   siteUrl: string
   confirmationUrl: string
+  coachName?: string
 }
 
 export const InviteEmail = ({
   siteName,
-  siteUrl,
   confirmationUrl,
+  coachName,
 }: InviteEmailProps) => (
-  <Html lang="en" dir="ltr">
+  <Html lang="fr" dir="ltr">
     <Head />
-    <Preview>You've been invited to join {siteName}</Preview>
+    <Preview>Ton coach t'invite à rejoindre {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>You've been invited</Heading>
+        <Heading style={h1}>Tu as été invité(e) 🎯</Heading>
         <Text style={text}>
-          You've been invited to join{' '}
-          <Link href={siteUrl} style={link}>
-            <strong>{siteName}</strong>
-          </Link>
-          . Click the button below to accept the invitation and create your
-          account.
+          {coachName ? `${coachName} t'` : "Ton coach t'"}invite à rejoindre{' '}
+          <strong>{siteName}</strong>, l'application de suivi d'entraînement personnalisé.
+        </Text>
+        <Text style={text}>
+          Clique sur le bouton ci-dessous pour créer ton compte et accéder à ton programme.
+          Ce lien est valable <strong>14 jours</strong> et utilisable une seule fois.
         </Text>
         <Button style={button} href={confirmationUrl}>
-          Accept Invitation
+          Rejoindre ColoSmart Training →
         </Button>
         <Text style={footer}>
-          If you weren't expecting this invitation, you can safely ignore this
-          email.
+          Si tu ne t'attendais pas à cette invitation, tu peux ignorer cet email.
         </Text>
       </Container>
     </Body>
@@ -51,27 +50,28 @@ export const InviteEmail = ({
 
 export default InviteEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
+const main = { backgroundColor: '#0e1f12', fontFamily: 'Arial, sans-serif' }
+const container = { padding: '32px 28px', maxWidth: '520px', margin: '0 auto', backgroundColor: '#142518', borderRadius: '12px' }
 const h1 = {
   fontSize: '22px',
   fontWeight: 'bold' as const,
-  color: '#000000',
-  margin: '0 0 20px',
+  color: '#ffffff',
+  margin: '0 0 16px',
 }
 const text = {
   fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
+  color: '#b0c4b4',
+  lineHeight: '1.6',
+  margin: '0 0 18px',
 }
-const link = { color: 'inherit', textDecoration: 'underline' }
 const button = {
-  backgroundColor: '#000000',
+  backgroundColor: '#2D5A35',
   color: '#ffffff',
   fontSize: '14px',
+  fontWeight: 'bold' as const,
   borderRadius: '8px',
-  padding: '12px 20px',
+  padding: '14px 24px',
   textDecoration: 'none',
+  display: 'inline-block',
 }
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
+const footer = { fontSize: '12px', color: '#666', margin: '28px 0 0' }
