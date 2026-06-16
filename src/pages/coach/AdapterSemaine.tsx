@@ -279,7 +279,7 @@ function ExoEditModal({
             : field("SÉRIES", <input value={String(ex.series ?? "")} onChange={(e) => onChange((x) => ({ ...x, series: e.target.value }))} className="cst-input" />)}
           {field(ex.block_type === "emom" ? "REPS/MIN" : "REPS", <input value={String(ex.reps ?? "")} onChange={(e) => onChange((x) => ({ ...x, reps: e.target.value }))} className="cst-input" />)}
           {field("CHARGE (kg)", <input value={ex.charge ?? ""} onChange={(e) => onChange((x) => ({ ...x, charge: e.target.value }))} className="cst-input" />)}
-          {field("RPE CIBLE", <input value={String(ex.rpe_target ?? "")} onChange={(e) => onChange((x) => ({ ...x, rpe_target: e.target.value }))} className="cst-input" />)}
+          {field("RPE", <input value={String(ex.rpe_target ?? "")} onChange={(e) => onChange((x) => ({ ...x, rpe_target: e.target.value }))} className="cst-input" />)}
           {field("TEMPO", <input value={ex.tempo ?? ""} onChange={(e) => onChange((x) => ({ ...x, tempo: e.target.value || null }))} placeholder="3-1-2" className="cst-input" />)}
           {field("RÉCUP", <input value={ex.recup ?? ""} onChange={(e) => onChange((x) => ({ ...x, recup: e.target.value || null }))} placeholder="90s" className="cst-input" />)}
         </div>
@@ -419,6 +419,17 @@ export default function AdapterSemaine() {
   }
   function addDay() {
     setStructure((s) => ({ ...s, days: [...(s.days ?? []), emptySession(s.days?.length ?? 0)] }));
+  }
+
+  function resetAllRpe() {
+    if (!window.confirm("Effacer tous les RPE de cette semaine ?")) return;
+    setStructure((s) => ({
+      ...s,
+      days: (s.days ?? []).map((day) => ({
+        ...day,
+        exercises: (day.exercises ?? []).map((ex) => ({ ...ex, rpe_target: null })),
+      })),
+    }));
   }
 
   async function openPublish() {
@@ -641,6 +652,7 @@ export default function AdapterSemaine() {
             {savedAt ? `✓ Sauvegardé ${new Date(savedAt).toLocaleTimeString("fr-FR")}` : "—"}
           </div>
           <div style={{ display: "flex", gap: 10 }}>
+            <button onClick={resetAllRpe} className="cst-btn cst-btn-ghost-dark" title="Effacer tous les RPE de la semaine">Réinitialiser les RPE</button>
             <button onClick={() => setShowDuplicate(true)} className="cst-btn cst-btn-ghost-dark">Dupliquer vers…</button>
             <button onClick={() => setShowPreview(true)} className="cst-btn cst-btn-ghost-dark">Aperçu membre</button>
             <button onClick={openPublish} className="cst-btn cst-btn-primary">
