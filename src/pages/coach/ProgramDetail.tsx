@@ -43,7 +43,7 @@ export default function ProgramDetail() {
   return (
     <div className="cst-screen" style={{ flexDirection: "row" }}>
       <CoachSidebar />
-      <div className="cst-col cst-scroll" style={{ flex: 1, minWidth: 0 }}>
+      <div className="cst-col cst-scroll-visible" style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{
             display: "flex",

@@ -181,7 +181,7 @@ export default function ProgrammesPage() {
           }}
         />
       )}
-      <div className="cst-col cst-scroll" style={{ flex: 1, minWidth: 0 }}>
+      <div className="cst-col cst-scroll-visible" style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{
             display: "flex",

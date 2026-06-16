@@ -21,6 +21,7 @@ const COLOR_MAP: Record<string, string> = {
   red: "#C44A3A",
   green: "#5BA85A",
   yellow: "#D4A82E",
+  lime: "#E8D44A",
   blue: "#4A8BC4",
 };
 
@@ -230,7 +231,7 @@ function CardioRow({ ex, threadSlot, onExerciseClick }: { ex: ProgExercise; thre
 }
 
 const EXERCISE_COLOR_MAP: Record<string, string> = {
-  red: "#C44A3A", green: "#5BA85A", yellow: "#D4A82E", blue: "#4A8BC4",
+  red: "#C44A3A", green: "#5BA85A", yellow: "#D4A82E", lime: "#E8D44A", blue: "#4A8BC4",
 };
 function exCardColor(c?: string | null): string {
   return EXERCISE_COLOR_MAP[(c || "").toLowerCase()] || "";
@@ -296,7 +297,7 @@ function ExerciseRow({ ex, threadSlot, onExerciseClick }: { ex: ProgExercise; th
       >
         <span><span style={{ opacity: 0.5 }}>SÉRIES </span>{val(ex.series)}</span>
         <span><span style={{ opacity: 0.5 }}>REPS </span>{val(ex.reps)}</span>
-        <span><span style={{ opacity: 0.5 }}>CHARGE </span>{val(ex.charge)}</span>
+        <span><span style={{ opacity: 0.5 }}>CHARGE </span>{/^pdc$/i.test(String(ex.charge ?? "").trim()) ? "PDC" : val(ex.charge)}</span>
         <span><span style={{ opacity: 0.5 }}>TEMPO </span>{val(ex.tempo)}</span>
         <span><span style={{ opacity: 0.5 }}>RÉCUP </span>{val(ex.recup)}</span>
         <span><span style={{ opacity: 0.5 }}>RPE </span>{val(ex.rpe_target)}</span>

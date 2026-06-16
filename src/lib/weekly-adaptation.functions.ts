@@ -264,6 +264,15 @@ export const getMemberWeekContext = createServerFn({ method: "POST" })
       durationWeeks = prog?.duration_weeks ?? null;
     }
 
+    // Max week number that already exists for this member (to prevent nav into unborn weeks)
+    const { data: allWeeks } = await supabaseAdmin
+      .from("assignment_weeks")
+      .select("week_number")
+      .eq("member_id", data.memberId);
+    const maxWeekNumber = allWeeks?.length
+      ? Math.max(...allWeeks.map((w) => w.week_number))
+      : weekRow.week_number;
+
     return {
       week: weekRow,
       assignment: {
@@ -278,6 +287,7 @@ export const getMemberWeekContext = createServerFn({ method: "POST" })
       },
       feedback,
       sourceSummary: { adherence, avgRpe, painCount, weekNumber: weekRow.based_on_week },
+      maxWeekNumber,
     };
   });
 

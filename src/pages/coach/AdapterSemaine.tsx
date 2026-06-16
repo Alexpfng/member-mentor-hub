@@ -108,9 +108,10 @@ function suggestFor(ex: ProgExercise, fb: Feedback | undefined): Suggestion | nu
 }
 
 const COLOR_MAP: Record<string, { bg: string; label: string }> = {
-  red: { bg: "#C44A3A", label: "Force" },
-  green: { bg: "#5BA85A", label: "Cardio" },
-  yellow: { bg: "#D4A82E", label: "Mobilité" },
+  red: { bg: "#C44A3A", label: "Force / Épuisant" },
+  green: { bg: "#5BA85A", label: "Isolation" },
+  yellow: { bg: "#D4A82E", label: "Explosivité" },
+  lime: { bg: "#E8D44A", label: "Mobilité" },
   blue: { bg: "#4A8BC4", label: "Technique" },
 };
 
@@ -150,8 +151,9 @@ function emptySession(index: number): DayStructure {
 function libColorToKey(c: string | null | undefined): string {
   const v = (c || "").toLowerCase();
   if (["red", "rouge", "force"].some((k) => v.includes(k))) return "red";
-  if (["green", "vert", "cardio"].some((k) => v.includes(k))) return "green";
-  if (["yellow", "jaune", "mobil"].some((k) => v.includes(k))) return "yellow";
+  if (["green", "vert", "isol"].some((k) => v.includes(k))) return "green";
+  if (["lime", "clair", "mobil"].some((k) => v.includes(k))) return "lime";
+  if (["yellow", "jaune", "explo"].some((k) => v.includes(k))) return "yellow";
   if (["blue", "bleu", "tech"].some((k) => v.includes(k))) return "blue";
   return "green";
 }
@@ -283,7 +285,7 @@ function ExoEditModal({
         </div>
 
         <div style={{ marginBottom: 12 }}>
-          {field("NOTE POUR LE MEMBRE", <input value={ex.coach_notes ?? ""} onChange={(e) => onChange((x) => ({ ...x, coach_notes: e.target.value || null }))} placeholder="Consigne technique…" className="cst-input" style={{ width: "100%" }} />)}
+          {field("NOTE POUR LE MEMBRE", <textarea value={ex.coach_notes ?? ""} onChange={(e) => onChange((x) => ({ ...x, coach_notes: e.target.value || null }))} placeholder="Consigne technique…" className="cst-input" rows={4} style={{ width: "100%", resize: "vertical", minHeight: 90 }} />)}
         </div>
 
         <div style={{ marginBottom: 18 }}>
@@ -488,7 +490,7 @@ export default function AdapterSemaine() {
               ← S{String(ctx.week.week_number - 1).padStart(2, "0")}
             </button>
           )}
-          {ctx && (
+          {ctx && ctx.week.week_number < ctx.maxWeekNumber && (
             <button onClick={() => navigate({ to: "/coach/membre/$memberId/adapter", params: { memberId }, search: { week: ctx.week.week_number + 1 } })} className="cst-mono" style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.6)", borderRadius: 6, padding: "4px 10px", fontSize: 10, cursor: "pointer" }}>
               S{String(ctx.week.week_number + 1).padStart(2, "0")} →
             </button>
@@ -621,7 +623,7 @@ export default function AdapterSemaine() {
                       </div>
                       <div className="cst-mono" style={{ fontSize: 10, opacity: 0.6, display: "flex", gap: 8, flexWrap: "wrap" }}>
                         <span>{ex.block_type === "emom" ? String(ex.series ?? "EMOM") : `${ex.series ?? "—"}×${ex.reps ?? "—"}`}</span>
-                        {ex.charge && <span>{ex.charge}kg</span>}
+                        {ex.charge && <span>{/^pdc$/i.test(ex.charge.trim()) ? "PDC" : `${ex.charge}kg`}</span>}
                         {ex.rpe_target != null && ex.rpe_target !== "" && <span>RPE cible {ex.rpe_target}</span>}
                         {ex.tempo && <span>⏱{ex.tempo}</span>}
                       </div>
