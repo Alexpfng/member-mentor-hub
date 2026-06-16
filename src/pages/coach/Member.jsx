@@ -1,7 +1,13 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
+import AssignmentTimingFields from '@/components/coach/AssignmentTimingFields';
+import { deriveAssignmentStartDate } from '@/lib/assignment-start';
 
 function normalize(s) {
   return (s || '').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function todayISO() {
+  return new Date().toISOString().slice(0, 10);
 }
 
 function ProgramPicker({ programs, excludeId, placeholder = 'Rechercher un programme…', disabled, onPick, size = 'md' }) {
@@ -97,6 +103,64 @@ function ProgramPicker({ programs, excludeId, placeholder = 'Rechercher un progr
     </div>
   );
 }
+
+function AssignProgramModal({ program, busy, defaultWeek, onClose, onConfirm }) {
+  const [startDate, setStartDate] = useState(todayISO());
+  const [startWeek, setStartWeek] = useState(() => Math.max(1, Math.min(defaultWeek || 1, program.duration_weeks || 1)));
+  const effectiveStartDate = deriveAssignmentStartDate(startDate, startWeek);
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.65)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 120,
+        padding: 16,
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="cst-screen cst-hatch"
+        style={{ width: 440, padding: 24, borderRadius: 12, display: 'flex', flexDirection: 'column', gap: 14 }}
+      >
+        <div className="cst-display" style={{ fontSize: 22 }}>ASSIGNER</div>
+        <div className="cst-italic" style={{ fontSize: 13, color: 'var(--cst-mid-green)' }}>{program.name}</div>
+        <AssignmentTimingFields
+          durationWeeks={program.duration_weeks}
+          startDate={startDate}
+          onStartDateChange={setStartDate}
+          startWeek={startWeek}
+          onStartWeekChange={setStartWeek}
+          effectiveStartDate={effectiveStartDate}
+        />
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            type="button"
+            onClick={onClose}
+            className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+            style={{ flex: 1 }}
+          >
+            ANNULER
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => onConfirm(program.id, effectiveStartDate)}
+            className="cst-btn cst-btn-primary cst-btn-sm"
+            style={{ flex: 1 }}
+          >
+            {busy ? 'ASSIGNATION…' : 'ASSIGNER →'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { useServerFn } from '@tanstack/react-start';
 import CoachSidebar from '../../components/CoachSidebar';
@@ -150,6 +214,7 @@ export default function CoachMember() {
   const [savingNotes, setSavingNotes] = useState(false);
   const [programs, setPrograms] = useState([]);
   const [assignBusy, setAssignBusy] = useState(false);
+  const [assignProgramChoice, setAssignProgramChoice] = useState(null);
   const [form, setForm] = useState(null);
   const [savingForm, setSavingForm] = useState(false);
   const [formSaved, setFormSaved] = useState(false);
@@ -227,11 +292,12 @@ export default function CoachMember() {
     }
   }
 
-  async function handleAssign(programId) {
+  async function confirmAssign(programId, startDate) {
     if (!programId) return;
     setAssignBusy(true);
     try {
-      await assignFn({ data: { member_id: memberId, program_id: programId } });
+      await assignFn({ data: { member_id: memberId, program_id: programId, start_date: startDate } });
+      setAssignProgramChoice(null);
       await reload();
     } catch (ex) {
       alert(ex?.message || 'Erreur');
@@ -307,6 +373,20 @@ export default function CoachMember() {
     return items.slice(0, 4);
   }, [data]);
 
+  function handleAssign(programId) {
+    if (!programId) return;
+    const pickedProgram = programs.find((program) => program.id === programId);
+    if (!pickedProgram) return;
+    const maxWeeks = Math.max(1, pickedProgram.duration_weeks || 1);
+    const suggestedWeek = Math.max(1, Math.min(currentWeek || 1, maxWeeks));
+    setAssignProgramChoice({
+      id: pickedProgram.id,
+      name: pickedProgram.name,
+      duration_weeks: pickedProgram.duration_weeks || 1,
+      defaultWeek: suggestedWeek,
+    });
+  }
+
   if (loading) {
     return (
       <div className="cst-screen" style={{ flexDirection: 'row' }}>
@@ -334,6 +414,15 @@ export default function CoachMember() {
   return (
     <div className="cst-screen" style={{ flexDirection: 'row' }}>
       <CoachSidebar />
+      {assignProgramChoice && (
+        <AssignProgramModal
+          program={assignProgramChoice}
+          busy={assignBusy}
+          defaultWeek={assignProgramChoice.defaultWeek}
+          onClose={() => setAssignProgramChoice(null)}
+          onConfirm={confirmAssign}
+        />
+      )}
       <div className="cst-col cst-scroll" style={{ flex: 1, minWidth: 0 }}>
         {/* Breadcrumb */}
         <div style={{ padding: '20px 32px 0', display: 'flex', alignItems: 'center', gap: 8 }}>

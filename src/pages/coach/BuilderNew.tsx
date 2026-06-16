@@ -12,6 +12,8 @@ import { useServerFn } from '@tanstack/react-start';
 import { saveProgram, getProgram, listExercises, saveExercise } from '@/lib/coach.functions';
 import CoachSidebar from '../../components/CoachSidebar';
 import { toast } from 'sonner';
+import AssignmentTimingFields from '@/components/coach/AssignmentTimingFields';
+import { deriveAssignmentStartDate } from '@/lib/assignment-start';
 
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
@@ -569,11 +571,13 @@ function DayColumn({
 
 // ─── ASSIGN MODAL ─────────────────────────────────────────────────────────────
 
-function AssignModal({ programId, onClose }: { programId: string; onClose: () => void }) {
+function AssignModal({ programId, durationWeeks, onClose }: { programId: string; durationWeeks: number; onClose: () => void }) {
   const [members, setMembers] = useState<any[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
+  const [startWeek, setStartWeek] = useState(1);
   const [loading, setLoading] = useState(false);
+  const effectiveStartDate = deriveAssignmentStartDate(startDate, startWeek);
 
   useEffect(() => {
     import('@/lib/coach.functions').then(({ listMembers }) => {
@@ -587,7 +591,13 @@ function AssignModal({ programId, onClose }: { programId: string; onClose: () =>
     if (!selected.size) return;
     setLoading(true);
     const { assignProgram } = await import('@/lib/coach.functions');
-    await Promise.all(Array.from(selected).map(mid => assignProgram({ data: { member_id: mid, program_id: programId, start_date: startDate } })));
+    await Promise.all(Array.from(selected).map(mid => assignProgram({
+      data: {
+        member_id: mid,
+        program_id: programId,
+        start_date: effectiveStartDate,
+      },
+    })));
     toast.success(`Programme assigné à ${selected.size} membre(s) !`);
     setLoading(false);
     onClose();
@@ -616,10 +626,14 @@ function AssignModal({ programId, onClose }: { programId: string; onClose: () =>
             </div>
           ))}
         </div>
-        <div>
-          <label style={{ fontFamily: 'var(--cst-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--cst-text-muted)', marginBottom: 4, display: 'block' }}>Date de début</label>
-          <input className="cst-input" type="date" value={startDate} onChange={e => setStartDate(e.target.value)} style={{ padding: '8px 12px' }} />
-        </div>
+        <AssignmentTimingFields
+          durationWeeks={durationWeeks}
+          startDate={startDate}
+          onStartDateChange={setStartDate}
+          startWeek={startWeek}
+          onStartWeekChange={setStartWeek}
+          effectiveStartDate={effectiveStartDate}
+        />
         <div style={{ display: 'flex', gap: 10 }}>
           <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" onClick={onClose}>ANNULER</button>
           <button className="cst-btn cst-btn-primary" style={{ flex: 1, opacity: loading ? 0.7 : 1 }} disabled={loading || !selected.size} onClick={assign}>
@@ -1146,7 +1160,7 @@ export default function BuilderNew({ programIdParam }: { programIdParam?: string
       )}
 
       {/* Assign modal */}
-      {showAssign && programId && <AssignModal programId={programId} onClose={() => setShowAssign(false)} />}
+      {showAssign && programId && <AssignModal programId={programId} durationWeeks={weeks.length} onClose={() => setShowAssign(false)} />}
     </div>
   );
 }

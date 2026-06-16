@@ -5,8 +5,10 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import CoachSidebar from "../../components/CoachSidebar";
 import { CSTSectionNum } from "../../components/Atoms";
+import AssignmentTimingFields from "@/components/coach/AssignmentTimingFields";
 import { parseExcelFile, type ParsedExcel, type ImportedExercise } from "@/lib/excel-import/parser";
 import { saveProgram, listMembers, assignProgram } from "@/lib/coach.functions";
+import { deriveAssignmentStartDate } from "@/lib/assignment-start";
 
 const COLOR_DOT: Record<string, string> = {
   red: "#C44A3A",
@@ -153,10 +155,12 @@ function Dropzone({ onFile, busy }: { onFile: (f: File) => void; busy: boolean }
 function AssignDialog({
   programId,
   programName,
+  durationWeeks,
   onClose,
 }: {
   programId: string;
   programName: string;
+  durationWeeks: number | null;
   onClose: () => void;
 }) {
   const listMembersFn = useServerFn(listMembers);
@@ -168,7 +172,9 @@ function AssignDialog({
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
   const [startDate, setStartDate] = useState(nextMondayISO());
+  const [startWeek, setStartWeek] = useState(1);
   const [saving, setSaving] = useState(false);
+  const effectiveStartDate = deriveAssignmentStartDate(startDate, startWeek);
 
   const members = useMemo(() => {
     const arr = data?.members ?? [];
@@ -186,7 +192,13 @@ function AssignDialog({
     }
     setSaving(true);
     try {
-      await assignFn({ data: { program_id: programId, member_id: selected, start_date: startDate } });
+      await assignFn({
+        data: {
+          program_id: programId,
+          member_id: selected,
+          start_date: effectiveStartDate,
+        },
+      });
       toast.success("Programme assigné.");
       onClose();
     } catch (e: any) {
@@ -276,22 +288,14 @@ function AssignDialog({
             );
           })}
         </div>
-        <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <span className="cst-mono" style={{ fontSize: 10, opacity: 0.6 }}>DATE DE DÉBUT</span>
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            style={{
-              padding: "8px 10px",
-              background: "rgba(255,255,255,0.05)",
-              border: "1px solid rgba(255,255,255,0.12)",
-              borderRadius: 6,
-              color: "#fff",
-              fontSize: 13,
-            }}
-          />
-        </label>
+        <AssignmentTimingFields
+          durationWeeks={durationWeeks}
+          startDate={startDate}
+          onStartDateChange={setStartDate}
+          startWeek={startWeek}
+          onStartWeekChange={setStartWeek}
+          effectiveStartDate={effectiveStartDate}
+        />
         <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
           <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" style={{ flex: 1 }} onClick={onClose}>
             ANNULER
@@ -319,7 +323,7 @@ export default function ExcelImport() {
   const [parsed, setParsed] = useState<ParsedExcel | null>(null);
   const [programName, setProgramName] = useState("");
   const [saving, setSaving] = useState(false);
-  const [savedProgram, setSavedProgram] = useState<{ id: string; name: string } | null>(null);
+  const [savedProgram, setSavedProgram] = useState<{ id: string; name: string; durationWeeks: number | null } | null>(null);
   const [assignOpen, setAssignOpen] = useState(false);
 
   const handleFile = useCallback(async (f: File) => {
@@ -370,7 +374,11 @@ export default function ExcelImport() {
           },
         },
       });
-      setSavedProgram({ id: r.program.id, name: r.program.name });
+      setSavedProgram({
+        id: r.program.id,
+        name: r.program.name,
+        durationWeeks: r.program.duration_weeks ?? parsed?.stats.weeks ?? null,
+      });
       toast.success("Programme enregistré.");
     } catch (e: any) {
       toast.error(e?.message || "Échec de l'enregistrement");
@@ -654,6 +662,7 @@ export default function ExcelImport() {
         <AssignDialog
           programId={savedProgram.id}
           programName={savedProgram.name}
+          durationWeeks={savedProgram.durationWeeks}
           onClose={() => setAssignOpen(false)}
         />
       )}

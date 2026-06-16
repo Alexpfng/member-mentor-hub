@@ -11,6 +11,8 @@ import {
   assignProgram,
 } from "@/lib/coach.functions";
 import { seedColosmartData } from "@/lib/seed.functions";
+import AssignmentTimingFields from "@/components/coach/AssignmentTimingFields";
+import { deriveAssignmentStartDate } from "@/lib/assignment-start";
 
 type Program = {
   id: string;
@@ -23,6 +25,10 @@ type Program = {
 };
 
 type Member = { id: string; first_name: string | null; last_name: string | null; email: string | null };
+
+function todayISO(): string {
+  return new Date().toISOString().slice(0, 10);
+}
 
 function AssignModal({
   program,
@@ -37,11 +43,20 @@ function AssignModal({
 }) {
   const assignFn = useServerFn(assignProgram);
   const [busy, setBusy] = useState<string | null>(null);
+  const [startDate, setStartDate] = useState(todayISO());
+  const [startWeek, setStartWeek] = useState(1);
+  const effectiveStartDate = deriveAssignmentStartDate(startDate, startWeek);
 
   async function pick(memberId: string) {
     setBusy(memberId);
     try {
-      await assignFn({ data: { member_id: memberId, program_id: program.id } });
+      await assignFn({
+        data: {
+          member_id: memberId,
+          program_id: program.id,
+          start_date: effectiveStartDate,
+        },
+      });
       const m = members.find((x) => x.id === memberId);
       const label = [m?.first_name, m?.last_name].filter(Boolean).join(" ") || m?.email || "membre";
       onDone(`« ${program.name} » assigné à ${label}.`);
@@ -82,7 +97,15 @@ function AssignModal({
             Aucun adhérent à assigner. Invite d'abord un membre depuis le tableau de bord.
           </div>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <AssignmentTimingFields
+              durationWeeks={program.duration_weeks}
+              startDate={startDate}
+              onStartDateChange={setStartDate}
+              startWeek={startWeek}
+              onStartWeekChange={setStartWeek}
+              effectiveStartDate={effectiveStartDate}
+            />
             {members.map((m) => {
               const name = [m.first_name, m.last_name].filter(Boolean).join(" ") || m.email || "—";
               return (
