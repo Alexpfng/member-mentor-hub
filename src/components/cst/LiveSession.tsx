@@ -655,6 +655,23 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
     setPhase(steps.length ? "step" : "intro");
   }
 
+  // H2 : passer à l'exercice suivant (machine prise) — on pourra y revenir via le navigateur
+  function goNextBlock() {
+    setLogging(null);
+    setValidationError(null);
+    setTimedDone(false);
+    if (!current) return;
+    const currentBlockIdx = current.blockIdx;
+    for (let i = stepIdx + 1; i < steps.length; i++) {
+      if (steps[i].blockIdx > currentBlockIdx) {
+        setStepIdx(i);
+        setPhase("step");
+        return;
+      }
+    }
+    setPhase("recap");
+  }
+
   function handleHeaderBack() {
     if (phase === "intro") {
       if (Object.keys(savedByStep).length > 0) setShowQuitConfirm(true);
@@ -1228,6 +1245,7 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
   }
 
   const canGoPrevBlock = current.blockIdx > 0;
+  const canGoNextBlock = steps.some((s) => s.blockIdx > current.blockIdx);
 
   /* ───────── EMOM step ───────── */
 
@@ -1764,6 +1782,17 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
               VALIDER {setStep.restAfter ? "→ REPOS" : setStep.isLastSetOfExercise ? "→ EXO SUIVANT" : "→ SUIVANT"}
             </button>
           </div>
+        )}
+
+        {canGoNextBlock && (
+          <button
+            onClick={goNextBlock}
+            className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+            style={{ width: "100%", borderStyle: "dashed", opacity: 0.9 }}
+            title="Machine prise ? Passe à l'exercice suivant — tu reviendras via ☰ en haut"
+          >
+            ⤼ Passer cet exercice (j'y reviens via ☰)
+          </button>
         )}
 
         <div style={{ display: "flex", gap: 8 }}>
