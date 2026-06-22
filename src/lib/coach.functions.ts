@@ -182,7 +182,43 @@ export const assignProgram = createServerFn({ method: "POST" })
       .select()
       .single();
     if (error) throw new Error(error.message);
+    // Nettoie le planning non démarré de l'ancien programme pour qu'il ne « fuite »
+    // pas dans le nouveau (les séances planned/rest sont régénérées par le nouveau programme).
+    await supabaseAdmin
+      .from("planned_sessions")
+      .delete()
+      .eq("member_id", data.member_id)
+      .in("status", ["planned", "rest"])
+      .neq("program_id", data.program_id);
     return { assignment: row };
+  });
+
+const removeProgramSchema = z.object({ member_id: z.string().uuid() });
+
+/** Retire le programme actuel d'un membre : désactive l'assignation active et
+ *  nettoie le planning non démarré + les adaptations de semaine non publiées. */
+export const removeMemberProgram = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => removeProgramSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertCoach(context.userId);
+    await supabaseAdmin
+      .from("assignments")
+      .update({ active: false })
+      .eq("member_id", data.member_id)
+      .eq("active", true);
+    // Garde l'historique (done/skipped) ; supprime seulement le planning à venir.
+    await supabaseAdmin
+      .from("planned_sessions")
+      .delete()
+      .eq("member_id", data.member_id)
+      .in("status", ["planned", "rest"]);
+    await supabaseAdmin
+      .from("assignment_weeks")
+      .delete()
+      .eq("member_id", data.member_id)
+      .eq("status", "draft");
+    return { ok: true };
   });
 
 // ─── MESSAGES ────────────────────────────────────────────────────────────────

@@ -42,12 +42,14 @@ export const listWeekPlan = createServerFn({ method: "GET" })
     const weekDef = weeks[weekNumber] ?? null;
     const dayDefs = weekDef?.days ?? [];
 
-    // Existing planned_sessions for that week
+    // Existing planned_sessions for that week — scopé au programme actif pour
+    // éviter que le planning d'un ancien programme « fuite » (on garde les nulls par compat).
     const { data: planned } = await supabaseAdmin
       .from("planned_sessions")
       .select("*")
       .eq("member_id", context.userId)
-      .eq("week_number", weekNumber);
+      .eq("week_number", weekNumber)
+      .or(`program_id.eq.${assignment.program_id},program_id.is.null`);
 
     // Completed sessions for the week
     const startISO = weekStart.toISOString().slice(0, 10);

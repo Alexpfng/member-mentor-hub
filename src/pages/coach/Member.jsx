@@ -165,7 +165,7 @@ import { useNavigate, useParams } from '@tanstack/react-router';
 import { useServerFn } from '@tanstack/react-start';
 import CoachSidebar from '../../components/CoachSidebar';
 import { CSTSectionNum, CSTAvatar, CSTStatus } from '../../components/Atoms';
-import { getMemberDetail, updateMemberNotes, updateMemberProfile, assignProgram, listPrograms } from '@/lib/coach.functions';
+import { getMemberDetail, updateMemberNotes, updateMemberProfile, assignProgram, removeMemberProgram, listPrograms } from '@/lib/coach.functions';
 import { VideoReviewPanel } from '../../components/coach/VideoReviewPanel';
 import MemberFollowupTab from '../../components/coach/MemberFollowupTab';
 import WeeksManagerPanel from '../../components/coach/WeeksManagerPanel';
@@ -204,6 +204,7 @@ export default function CoachMember() {
   const saveProfileFn = useServerFn(updateMemberProfile);
   const listProgramsFn = useServerFn(listPrograms);
   const assignFn = useServerFn(assignProgram);
+  const removeFn = useServerFn(removeMemberProgram);
 
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
@@ -298,6 +299,21 @@ export default function CoachMember() {
     try {
       await assignFn({ data: { member_id: memberId, program_id: programId, start_date: startDate } });
       setAssignProgramChoice(null);
+      await reload();
+    } catch (ex) {
+      alert(ex?.message || 'Erreur');
+    } finally {
+      setAssignBusy(false);
+    }
+  }
+
+  async function handleRemoveProgram() {
+    if (!data?.program) return;
+    const who = data.profile?.first_name || fullName;
+    if (!window.confirm(`Retirer « ${data.program.name} » de ${who} ?\n\nLe planning à venir sera effacé (l'historique des séances déjà faites est conservé). Tu pourras assigner un nouveau programme ensuite.`)) return;
+    setAssignBusy(true);
+    try {
+      await removeFn({ data: { member_id: memberId } });
       await reload();
     } catch (ex) {
       alert(ex?.message || 'Erreur');
@@ -540,6 +556,14 @@ export default function CoachMember() {
                           onPick={handleAssign}
                           size="sm"
                         />
+                        <button
+                          onClick={handleRemoveProgram}
+                          disabled={assignBusy}
+                          className="cst-btn cst-btn-sm"
+                          style={{ marginTop: 8, width: '100%', background: 'transparent', border: '1px solid rgba(196,74,58,0.4)', color: '#C44A3A', cursor: assignBusy ? 'default' : 'pointer' }}
+                        >
+                          ⌫ Retirer le programme
+                        </button>
                       </div>
                     </div>
                     {data.program.duration_weeks && (
