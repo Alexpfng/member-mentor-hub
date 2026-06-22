@@ -93,8 +93,11 @@ const BASE_LIBRARY: LibraryExercise[] = [
 ];
 
 const REST_OPTIONS = ['0s','30s','45s','1 min','1min30','2 min','2min30','3 min','4 min','5 min'];
-const COLORS: ExColor[] = ['🔴','🟢','🟡','🔵','🟠'];
-const COLOR_HEX: Record<ExColor, string> = { '🔴': '#C56A60', '🟢': '#7AAB7E', '🟡': '#E2C36B', '🔵': '#6FA3C4', '🟠': '#E07B39' };
+// La 5e pastille (clé interne '🟠') représente la couleur « lime » = mobilité (jaune clair),
+// rendue en pastille de couleur (et non en glyphe) → cohérent avec « Adapter la semaine ».
+const COLORS: ExColor[] = ['🔴','🟢','🟡','🟠','🔵'];
+const COLOR_HEX: Record<ExColor, string> = { '🔴': '#C56A60', '🟢': '#7AAB7E', '🟡': '#E2C36B', '🟠': '#E8D44A', '🔵': '#6FA3C4' };
+const COLOR_LABEL: Record<ExColor, string> = { '🔴': 'Force / Épuisant', '🟢': 'Isolation', '🟡': 'Explosivité', '🟠': 'Mobilité', '🔵': 'Technique' };
 
 // ─── YOUTUBE UTILS ─────────────────────────────────────────────────────────────
 
@@ -134,8 +137,8 @@ function makeExercise(lib: LibraryExercise): ProgramExercise {
 }
 
 // ─── COLOR MAPPING ────────────────────────────────────────────────────────────
-const EMOJI_TO_NAME: Record<string, string> = { '🔴': 'red', '🟢': 'green', '🟡': 'yellow', '🔵': 'blue', '🟠': 'orange' };
-const NAME_TO_EMOJI: Record<string, ExColor> = { red: '🔴', green: '🟢', yellow: '🟡', blue: '🔵', orange: '🟠' };
+const EMOJI_TO_NAME: Record<string, string> = { '🔴': 'red', '🟢': 'green', '🟡': 'yellow', '🟠': 'lime', '🔵': 'blue' };
+const NAME_TO_EMOJI: Record<string, ExColor> = { red: '🔴', green: '🟢', yellow: '🟡', lime: '🟠', orange: '🟠', blue: '🔵' };
 
 // ─── CANONICAL <-> BUILDER MAPPING ───────────────────────────────────────────
 // Canonical shape lives in programs.structure and is read by ProgramBlocks.
@@ -368,11 +371,13 @@ function QuickConfig({ ex, onChange, onClose, canChain }: PopoverProps) {
           <label style={{ fontFamily: 'var(--cst-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--cst-text-muted)', marginBottom: 4, display: 'block' }}>Couleur</label>
           <div style={{ display: 'flex', gap: 8 }}>
             {COLORS.map(c => (
-              <button key={c} onClick={() => set('color', c)} style={{
-                width: 36, height: 36, borderRadius: 8, fontSize: 20, cursor: 'pointer',
-                border: local.color === c ? '2px solid var(--cst-mid-green)' : '1px solid var(--cst-card-border)',
-                background: 'transparent',
-              }}>{c}</button>
+              <button key={c} onClick={() => set('color', c)} title={COLOR_LABEL[c]} aria-label={COLOR_LABEL[c]} style={{
+                width: 32, height: 32, borderRadius: '50%', cursor: 'pointer',
+                border: local.color === c ? '2px solid var(--cst-text)' : '1px solid var(--cst-card-border)',
+                outline: local.color === c ? '2px solid var(--cst-mid-green)' : 'none',
+                outlineOffset: 1,
+                background: COLOR_HEX[c],
+              }} />
             ))}
           </div>
         </div>
@@ -1014,7 +1019,7 @@ export default function BuilderNew({ programIdParam }: { programIdParam?: string
                   {['PUSH','PULL','LEGS','CORE','CARDIO'].map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
                 <div style={{ display: 'flex', gap: 4 }}>
-                  {COLORS.map(c => <button key={c} onClick={() => setNewExColor(c)} style={{ flex: 1, fontSize: 18, background: newExColor === c ? 'rgba(45,90,53,0.3)' : 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 4, cursor: 'pointer' }}>{c}</button>)}
+                  {COLORS.map(c => <button key={c} onClick={() => setNewExColor(c)} title={COLOR_LABEL[c]} aria-label={COLOR_LABEL[c]} style={{ flex: 1, height: 28, background: COLOR_HEX[c], border: newExColor === c ? '2px solid var(--cst-mid-green)' : '1px solid rgba(255,255,255,0.1)', borderRadius: 4, cursor: 'pointer' }} />)}
                 </div>
                 <input className="cst-input" placeholder="YouTube URL (optionnel)" value={newExYT} onChange={e => setNewExYT(e.target.value)} style={{ padding: '6px 10px', fontSize: 12 }} />
                 <div style={{ display: 'flex', gap: 6 }}>
