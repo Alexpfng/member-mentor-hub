@@ -81,6 +81,7 @@ function isBodyweight(charge?: string | null): boolean {
   const c = String(charge).toLowerCase().trim();
   if (!c) return false;
   if (c === "-" || c === "—" || c === "/") return true;
+  if (c === "bb" || c === "bw") return true; // raccourcis « bodyweight »
   return BODYWEIGHT_KEYWORDS.some((k) => c.includes(k));
 }
 
@@ -110,6 +111,49 @@ function parseDurationSeconds(reps?: string | number | null): number | null {
 function isTimedByName(name: string, tempo?: string | null): boolean {
   const t = `${name} ${tempo ?? ""}`.toLowerCase();
   return /gainage|plank|planche|iso\b|hold|tenir|maintien|floating/.test(t);
+}
+
+/** True if a timed exercise is performed per side/leg → one chrono per side.
+ *  Ex: "30s/côté", "30s par jambe", "30s/jambe", "20s chaque côté". */
+function isPerSide(reps?: string | number | null): boolean {
+  if (reps == null) return false;
+  const r = String(reps).toLowerCase();
+  return /(c[ôo]t[ée]|jambe|\bbras\b|\bpied|\bside\b|each\s+(leg|side|arm))/.test(r);
+}
+
+/** Strips accents and lowercases for robust keyword matching. */
+function normKey(s?: string | null): string {
+  return String(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+}
+
+/** True if the exercise NAME denotes a unilateral movement (one leg/arm at a time)
+ *  → its timed holds should run one chrono per side even without a "/côté" marker. */
+function isUnilateralByName(name?: string | null): boolean {
+  const n = normKey(name);
+  return /(fente|split\s*squat|bulgare|pistol|unilat|step[\s-]?up|side\s*plank|lateral|une\s+jambe|single[\s-]?leg)/.test(n);
+}
+
+/** Picks the round-label word for a per-side timed exercise (JAMBE / BRAS / PIED / CÔTÉ). */
+function sideWord(reps?: string | number | null, name?: string | null): string {
+  const r = normKey(`${reps ?? ""} ${name ?? ""}`);
+  if (/jambe|\bleg|fente|squat|bulgare|pistol|step/.test(r)) return "JAMBE";
+  if (/bras|\barm/.test(r)) return "BRAS";
+  if (/pied|foot/.test(r)) return "PIED";
+  return "CÔTÉ";
+}
+
+/** Number of consecutive chronos for a timed set.
+ *  - explicit multiplier "2×30s" / "2x30s" → that many rounds
+ *  - per-side text ("30s/côté", "…par jambe") OR unilateral exercise name → 2 rounds
+ *  - otherwise → 1 round */
+function parseTimedRounds(reps?: string | number | null, name?: string | null): number {
+  const r = String(reps ?? "").toLowerCase().trim();
+  const m = r.match(/^(\d+)\s*[x×*]\s*\d/);
+  if (m) {
+    const n = parseInt(m[1], 10);
+    if (n >= 1 && n <= 10) return n;
+  }
+  return isPerSide(reps) || isUnilateralByName(name) ? 2 : 1;
 }
 
 /** Découpe une cible reps en une cible par série (15/12/10) ou répète une fourchette (10-8) */
@@ -1342,6 +1386,7 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
                       fontSize: 12,
                       opacity: 0.85,
                       fontStyle: "italic",
+                      whiteSpace: "pre-wrap",
                       background: "rgba(45,90,53,0.10)",
                       borderLeft: "2px solid var(--cst-mid-green)",
                       padding: "6px 10px",
@@ -1427,6 +1472,11 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
   const durationMode = isDurationReps(setStep.exercise.reps);
   const isTimed = durationMode || isTimedByName(setStep.exercise.name, setStep.exercise.tempo);
   const timedSecs = parseDurationSeconds(setStep.exercise.reps);
+  const timedRounds = isTimed ? parseTimedRounds(setStep.exercise.reps, setStep.exercise.name) : 1;
+  const timedSideLabel =
+    isPerSide(setStep.exercise.reps) || isUnilateralByName(setStep.exercise.name)
+      ? sideWord(setStep.exercise.reps, setStep.exercise.name)
+      : "TOUR";
 
   // Cible reps par série (placeholder)
   const repTargets = parseRepsPerSet(setStep.exercise.reps, setStep.totalSets);
@@ -1552,6 +1602,8 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
             key={`timed-${stepIdx}`}
             seconds={timedSecs}
             label={formatRepsObjectif(setStep.exercise.reps) ?? `${timedSecs}s`}
+            rounds={timedRounds}
+            sideLabel={timedSideLabel}
             onDone={() => {
               setTimedDone(true);
               // Pre-fill the reps field with actual duration for logging
@@ -2151,17 +2203,25 @@ function EmomScreen({
 function TimedSetScreen({
   seconds,
   label,
+  rounds = 1,
+  sideLabel = "TOUR",
   onDone,
 }: {
   seconds: number;
   label: string;
+  rounds?: number;
+  sideLabel?: string;
   onDone: () => void;
 }) {
   const [remaining, setRemaining] = useState(seconds);
   const [running, setRunning] = useState(false);
   const [finished, setFinished] = useState(false);
+  const [roundIdx, setRoundIdx] = useState(0); // 0-based current round (e.g. côté 1, côté 2)
   const totalRef = useRef(seconds);
   const doneFiredRef = useRef(false);
+
+  const multi = rounds > 1;
+  const isLastRound = roundIdx >= rounds - 1;
 
   useEffect(() => {
     if (!running || remaining <= 0) return;
@@ -2182,6 +2242,15 @@ function TimedSetScreen({
     }
   }, [remaining, running]);
 
+  // Démarre le chrono du côté suivant (enchaîné, prêt à partir).
+  function startNextRound() {
+    doneFiredRef.current = false;
+    setRoundIdx((i) => i + 1);
+    setRemaining(seconds);
+    setFinished(false);
+    setRunning(true);
+  }
+
   const pct = totalRef.current > 0 ? remaining / totalRef.current : 0;
   const radius = 80;
   const circ = 2 * Math.PI * radius;
@@ -2193,6 +2262,23 @@ function TimedSetScreen({
       <div className="cst-mono" style={{ fontSize: 10, opacity: 0.65, letterSpacing: "0.2em" }}>
         ⏱ {label.toUpperCase()}
       </div>
+
+      {multi && (
+        <div
+          className="cst-mono"
+          style={{
+            fontSize: 12,
+            letterSpacing: "0.18em",
+            color: "#fff",
+            padding: "4px 12px",
+            borderRadius: 999,
+            background: "rgba(255,255,255,0.08)",
+            border: "1px solid rgba(255,255,255,0.15)",
+          }}
+        >
+          {sideLabel} {roundIdx + 1} / {rounds}
+        </div>
+      )}
 
       <div style={{ position: "relative", width: 200, height: 200 }}>
         <svg width="200" height="200" viewBox="0 0 200 200">
@@ -2239,7 +2325,13 @@ function TimedSetScreen({
         </div>
       )}
 
-      {finished && (
+      {finished && !isLastRound && (
+        <button onClick={startNextRound} className="cst-btn cst-btn-primary" style={{ width: "100%", padding: "16px 0", fontSize: 14 }}>
+          ✓ {sideLabel} {roundIdx + 1} OK — {sideLabel} {roundIdx + 2} →
+        </button>
+      )}
+
+      {finished && isLastRound && (
         <button onClick={onDone} className="cst-btn cst-btn-primary" style={{ width: "100%", padding: "16px 0", fontSize: 14 }}>
           ✓ TERMINÉ — NOTER LE RPE →
         </button>
@@ -2705,6 +2797,7 @@ function CuesModal({
               fontSize: 13,
               lineHeight: 1.55,
               fontStyle: "italic",
+              whiteSpace: "pre-wrap",
               background: "rgba(45,90,53,0.12)",
               borderLeft: "2px solid var(--cst-mid-green)",
               padding: "10px 12px",

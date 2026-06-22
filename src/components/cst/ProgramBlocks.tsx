@@ -50,6 +50,15 @@ function val(v: unknown): string {
   return s;
 }
 
+/** Charges au poids du corps (raccourcis coach / imports) → affichées « PDC », jamais suffixées « kg ». */
+export const BW_CHARGE = /^(pdc|bb|bw|poids du corps|pds de corps|corps|bodyweight|[-—/])$/i;
+export function fmtCharge(charge?: string | null): string {
+  const c = String(charge ?? "").trim();
+  if (!c) return "—";
+  if (BW_CHARGE.test(c)) return "PDC";
+  return /^[\d.,]+$/.test(c) ? `${val(c)}kg` : c; // "kg" uniquement si numérique
+}
+
 function blockBadge(type?: string | null): string | null {
   if (!type) return null;
   const t = type.toLowerCase();
@@ -198,7 +207,7 @@ function CardioRow({ ex, threadSlot, onExerciseClick }: { ex: ProgExercise; thre
       {/* Métriques compactes */}
       <div className="cst-mono" style={{ fontSize: 11, opacity: 0.85, display: "flex", gap: 16, flexWrap: "wrap" }}>
         {ex.tempo && <span><span style={{ opacity: 0.5 }}>DURÉE </span>{val(ex.tempo)}</span>}
-        {ex.charge && <span><span style={{ opacity: 0.5 }}>INTENSITÉ </span>{val(ex.charge)}</span>}
+        {ex.charge && <span><span style={{ opacity: 0.5 }}>INTENSITÉ </span>{fmtCharge(ex.charge)}</span>}
         {ex.reps && <span><span style={{ opacity: 0.5 }}>FRÉQUENCE </span>{val(ex.reps)}</span>}
         {ex.recup && <span><span style={{ opacity: 0.5 }}>RÉCUP </span>{val(ex.recup)}</span>}
       </div>
@@ -221,7 +230,7 @@ function CardioRow({ ex, threadSlot, onExerciseClick }: { ex: ProgExercise; thre
             </div>
           )}
           {ex.coach_notes && (
-            <div style={{ fontSize: 12, opacity: 0.75, fontStyle: "italic" }}>{ex.coach_notes}</div>
+            <div style={{ fontSize: 12, opacity: 0.75, fontStyle: "italic", whiteSpace: "pre-wrap" }}>{ex.coach_notes}</div>
           )}
         </div>
       )}
@@ -297,7 +306,7 @@ function ExerciseRow({ ex, threadSlot, onExerciseClick }: { ex: ProgExercise; th
       >
         <span><span style={{ opacity: 0.5 }}>SÉRIES </span>{val(ex.series)}</span>
         <span><span style={{ opacity: 0.5 }}>REPS </span>{val(ex.reps)}</span>
-        <span><span style={{ opacity: 0.5 }}>CHARGE </span>{/^pdc$/i.test(String(ex.charge ?? "").trim()) ? "PDC" : val(ex.charge)}</span>
+        <span><span style={{ opacity: 0.5 }}>CHARGE </span>{fmtCharge(ex.charge)}</span>
         <span><span style={{ opacity: 0.5 }}>TEMPO </span>{val(ex.tempo)}</span>
         <span><span style={{ opacity: 0.5 }}>RÉCUP </span>{val(ex.recup)}</span>
         <span><span style={{ opacity: 0.5 }}>RPE </span>{val(ex.rpe_target)}</span>
@@ -308,6 +317,7 @@ function ExerciseRow({ ex, threadSlot, onExerciseClick }: { ex: ProgExercise; th
             fontSize: 12,
             opacity: 0.75,
             fontStyle: "italic",
+            whiteSpace: "pre-wrap",
             background: "rgba(45,90,53,0.08)",
             borderLeft: "2px solid var(--cst-mid-green)",
             padding: "6px 10px",

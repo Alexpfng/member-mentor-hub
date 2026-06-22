@@ -285,7 +285,18 @@ function ExoEditModal({
         </div>
 
         <div style={{ marginBottom: 12 }}>
-          {field("NOTE POUR LE MEMBRE", <textarea value={ex.coach_notes ?? ""} onChange={(e) => onChange((x) => ({ ...x, coach_notes: e.target.value || null }))} placeholder="Consigne technique…" className="cst-input" rows={4} style={{ width: "100%", resize: "vertical", minHeight: 90 }} />)}
+          {field("NOTE POUR LE MEMBRE", <textarea value={ex.coach_notes ?? ""} onChange={(e) => onChange((x) => ({ ...x, coach_notes: e.target.value || null }))} placeholder="Consigne technique… (Entrée = nouvelle ligne)" className="cst-input" rows={7} style={{ width: "100%", resize: "vertical", minHeight: 150, lineHeight: 1.5, whiteSpace: "pre-wrap" }} />)}
+        </div>
+
+        <div style={{ marginBottom: 12 }}>
+          {field("VIDÉO (YouTube)",
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <input value={ex.youtube_url ?? ""} onChange={(e) => onChange((x) => ({ ...x, youtube_url: e.target.value || null }))} placeholder="Coller un lien YouTube…" className="cst-input" style={{ flex: 1, minWidth: 0 }} />
+              {ex.youtube_url && (
+                <a href={ex.youtube_url} target="_blank" rel="noreferrer" className="cst-btn cst-btn-ghost-dark cst-btn-sm" style={{ whiteSpace: "nowrap", textDecoration: "none" }}>▶ Voir</a>
+              )}
+            </div>
+          )}
         </div>
 
         <div style={{ marginBottom: 18 }}>
@@ -598,7 +609,7 @@ export default function AdapterSemaine() {
                     >
                       <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
                         <ColorDot c={ex.color} />
-                        <span style={{ flex: 1, fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ex.name}</span>
+                        <span style={{ flex: 1, fontSize: 13, fontWeight: 600, whiteSpace: "normal", overflowWrap: "anywhere", lineHeight: 1.3 }}>{ex.name}</span>
                         {sugg && <span title="Suggestion d'après les retours" style={{ fontSize: 11 }}>{sugg.type === "pain" ? "🔴" : "⚠"}</span>}
                         <span className="cst-mono" style={{
                           fontSize: 10, fontWeight: 700, flexShrink: 0,
@@ -612,7 +623,7 @@ export default function AdapterSemaine() {
                       </div>
                       <div className="cst-mono" style={{ fontSize: 10, opacity: 0.6, display: "flex", gap: 8, flexWrap: "wrap" }}>
                         <span>{ex.block_type === "emom" ? String(ex.series ?? "EMOM") : `${ex.series ?? "—"}×${ex.reps ?? "—"}`}</span>
-                        {ex.charge && <span>{/^pdc$/i.test(ex.charge.trim()) ? "PDC" : `${ex.charge}kg`}</span>}
+                        {ex.charge && <span>{/^(pdc|bb|bw|poids du corps|pds de corps|corps|bodyweight|[-—/])$/i.test(ex.charge.trim()) ? "PDC" : /^[\d.,]+$/.test(ex.charge.trim()) ? `${ex.charge.trim()}kg` : ex.charge.trim()}</span>}
                         {ex.tempo && <span>⏱{ex.tempo}</span>}
                       </div>
                       {fb?.rpe != null && (

@@ -421,8 +421,8 @@ function QuickConfig({ ex, onChange, onClose, canChain }: PopoverProps) {
         {/* Notes */}
         <div>
           <label style={{ fontFamily: 'var(--cst-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--cst-text-muted)', marginBottom: 4, display: 'block' }}>Notes coach</label>
-          <textarea className="cst-input" rows={3} placeholder="Omoplate serrées, descente contrôlée 3s…" value={local.notes}
-            onChange={e => set('notes', e.target.value)} style={{ resize: 'none', fontFamily: 'var(--cst-ui)', padding: '8px 12px' }} />
+          <textarea className="cst-input" rows={6} placeholder="Omoplate serrées, descente contrôlée 3s… (Entrée = nouvelle ligne)" value={local.notes}
+            onChange={e => set('notes', e.target.value)} style={{ resize: 'vertical', minHeight: 130, lineHeight: 1.5, whiteSpace: 'pre-wrap', fontFamily: 'var(--cst-ui)', padding: '8px 12px' }} />
         </div>
 
         {/* CTA */}
@@ -458,7 +458,7 @@ function SortableExCard({ ex, onEdit, onDelete }: { ex: ProgramExercise; onEdit:
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
           {ex.chained && <span title="Enchaîné avec l'exercice précédent" style={{ fontSize: 11, color: 'var(--cst-mid-green)' }}>⛓</span>}
           <span style={{ fontSize: 12 }}>{ex.color}</span>
-          <span style={{ fontSize: 12, fontWeight: 600, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ex.name}</span>
+          <span style={{ fontSize: 12, fontWeight: 600, color: '#fff', whiteSpace: 'normal', overflowWrap: 'anywhere', lineHeight: 1.3 }}>{ex.name}</span>
           {ex.block_type && ex.block_type !== 'standard' && (
             <span style={{ fontFamily: 'var(--cst-mono)', fontSize: 8, letterSpacing: '0.1em', color: 'var(--cst-mid-green)', border: '1px solid rgba(45,90,53,0.5)', borderRadius: 3, padding: '1px 4px', flexShrink: 0 }}>
               {ex.block_type.toUpperCase()}
