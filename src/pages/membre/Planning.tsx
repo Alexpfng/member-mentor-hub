@@ -239,13 +239,25 @@ export default function MemberPlanning() {
   }, [data]);
 
   const unplanned = useMemo(() => {
-    const defs = (data?.dayDefs ?? []) as any[];
-    const usedLabels = new Set(
-      (data?.planned ?? []).map((p: any) => p.day_label).concat(
-        (data?.sessions ?? []).map((s: any) => s.session_label).filter(Boolean),
-      ),
-    );
-    return defs.filter((d) => d.type !== "Repos" && !usedLabels.has(d.label));
+    const defs = (data?.dayDefs ?? []).filter((d: any) => d.type !== "Repos") as any[];
+    // Déduplication PAR OCCURRENCE (et non par label) : si une séance est définie
+    // plusieurs fois avec le même libellé, on n'en masque qu'une par séance déjà
+    // planifiée/faite — sinon un jour disparaissait à tort (bug Brice : 2 affichées sur 3).
+    const usedCount = new Map<string, number>();
+    [
+      ...(data?.planned ?? []).map((p: any) => p.day_label),
+      ...(data?.sessions ?? []).map((s: any) => s.session_label).filter(Boolean),
+    ].forEach((l: string) => usedCount.set(l, (usedCount.get(l) ?? 0) + 1));
+    const result: any[] = [];
+    for (const d of defs) {
+      const remaining = usedCount.get(d.label) ?? 0;
+      if (remaining > 0) {
+        usedCount.set(d.label, remaining - 1); // consomme une occurrence déjà planifiée
+        continue;
+      }
+      result.push(d);
+    }
+    return result;
   }, [data]);
 
   const handleDragEnd = async (e: DragEndEvent) => {
