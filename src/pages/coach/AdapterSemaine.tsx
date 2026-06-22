@@ -237,6 +237,9 @@ function ExoEditModal({
   onDelete: () => void;
   onClose: () => void;
 }) {
+  // Ne ferme la modale que si le clic COMMENCE et FINIT sur le fond : évite la
+  // fermeture intempestive quand on sélectionne du texte et qu'on relâche hors du champ.
+  const overlayDownRef = useRef(false);
   const field = (label: string, node: React.ReactNode) => (
     <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
       <span className="cst-mono" style={{ fontSize: 9, opacity: 0.5, letterSpacing: "0.1em" }}>{label}</span>
@@ -244,7 +247,11 @@ function ExoEditModal({
     </label>
   );
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 120, padding: 16 }}>
+    <div
+      onMouseDown={(e) => { overlayDownRef.current = e.target === e.currentTarget; }}
+      onClick={(e) => { if (overlayDownRef.current && e.target === e.currentTarget) onClose(); }}
+      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 120, padding: 16 }}
+    >
       <div onClick={(e) => e.stopPropagation()} className="cst-screen cst-hatch" style={{ width: 440, maxHeight: "88vh", overflowY: "auto", padding: 22, borderRadius: 12 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
           <ColorDot c={ex.color} />

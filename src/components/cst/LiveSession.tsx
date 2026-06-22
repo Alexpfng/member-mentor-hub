@@ -21,7 +21,7 @@ import {
 
 function asColor(c?: string | null): ExerciseColor {
   const v = (c || "").toLowerCase();
-  if (v === "red" || v === "green" || v === "yellow" || v === "blue") return v;
+  if (v === "red" || v === "green" || v === "yellow" || v === "lime" || v === "blue") return v;
   return null;
 }
 
@@ -56,6 +56,7 @@ function defaultRestFor(color: ExerciseColor): number {
   if (color === "red") return 180;
   if (color === "green") return 90;
   if (color === "yellow") return 150;
+  if (color === "lime") return 60;
   if (color === "blue") return 60;
   return 120;
 }
@@ -1071,7 +1072,7 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
               CODE COULEUR (clique pour détails)
             </span>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-              {(["red", "green", "yellow", "blue"] as const).map((c) => (
+              {(["red", "green", "yellow", "lime", "blue"] as const).map((c) => (
                 <button
                   key={c}
                   onClick={() => setShowColor(c)}
@@ -1094,6 +1095,7 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
                   {c === "red" && "Force"}
                   {c === "green" && "Isolation"}
                   {c === "yellow" && "Explosif"}
+                  {c === "lime" && "Mobilité"}
                   {c === "blue" && "Prévention"}
                 </button>
               ))}
@@ -2662,7 +2664,7 @@ function CuesModal({
   if (!exercise) return null;
   const color = (() => {
     const v = (exercise.color || "").toLowerCase();
-    if (v === "red" || v === "green" || v === "yellow" || v === "blue") return v as ExerciseColor;
+    if (v === "red" || v === "green" || v === "yellow" || v === "lime" || v === "blue") return v as ExerciseColor;
     return null;
   })();
   return (

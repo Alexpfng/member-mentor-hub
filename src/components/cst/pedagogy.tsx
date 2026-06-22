@@ -6,12 +6,13 @@ import { useEffect, useState } from "react";
 
 /* ───────── Color codes ───────── */
 
-export type ExerciseColor = "red" | "green" | "yellow" | "blue" | null | undefined;
+export type ExerciseColor = "red" | "green" | "yellow" | "lime" | "blue" | null | undefined;
 
 const COLOR_HEX: Record<NonNullable<ExerciseColor>, string> = {
   red: "#C9483A",
   green: "#3A8A4D",
   yellow: "#D4A53B",
+  lime: "#E8D44A",
   blue: "#3E7AA8",
 };
 
@@ -36,6 +37,12 @@ const COLOR_META: Record<
     subtitle: "Qualité avant quantité",
     rule: "Concentre-toi sur le temps de contact au sol et l'intention. Saute haut, réagis vite. JAMAIS d'échec.",
     rpeTarget: "RPE 6-7. Réduis les reps si la vitesse baisse.",
+  },
+  lime: {
+    title: "MOBILITÉ",
+    subtitle: "Amplitude et contrôle articulaire",
+    rule: "Cherche l'amplitude maximale contrôlée. Mouvements lents, sans à-coups, respiration ample. Jamais de douleur.",
+    rpeTarget: "RPE 3-5. Priorité à l'amplitude, pas à la charge.",
   },
   blue: {
     title: "PRÉVENTION / GAINAGE",
@@ -179,6 +186,7 @@ const RPE_GUIDANCE: Record<NonNullable<ExerciseColor>, string> = {
   red: "🔴 Force : 1-2 reps en réserve — vise RPE 7-8",
   green: "🟢 Isolation : 1 rep en réserve max — approche l'échec",
   yellow: "🟡 Explosif : qualité > quantité — jamais d'échec",
+  lime: "🟢 Mobilité : amplitude max contrôlée — RPE 3-5, jamais de douleur",
   blue: "🔵 Prévention : contrôle total — pas de fatigue excessive",
 };
 

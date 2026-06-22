@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { listExercises } from "@/lib/exercises.functions";
 import { replaceExercise } from "@/lib/weekly-adaptation.functions";
@@ -47,6 +47,7 @@ export default function ReplaceExerciseModal({
   const [picked, setPicked] = useState<Exercise | null>(null);
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
+  const overlayDownRef = useRef(false); // ferme seulement si clic commencé ET fini sur le fond
 
   useEffect(() => {
     listFn()
@@ -92,7 +93,8 @@ export default function ReplaceExerciseModal({
 
   return (
     <div
-      onClick={onClose}
+      onMouseDown={(e) => { overlayDownRef.current = e.target === e.currentTarget; }}
+      onClick={(e) => { if (overlayDownRef.current && e.target === e.currentTarget) onClose(); }}
       style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 16 }}
     >
       <div

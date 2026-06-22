@@ -31,32 +31,32 @@ html, body, #root {
 /* ---- DEFAULT = DARK (brand) ---- */
 :root,
 html.theme-dark {
-  --cst-bg:                 #1B2E1F;
-  --cst-bg-elev:            #16261A;
+  --cst-bg:                 #19291C;
+  --cst-bg-elev:            #142118;
   --cst-text:               #FFFFFF;
   --cst-text-strong:        #FFFFFF;
-  --cst-text-soft:          rgba(255,255,255,0.72);
-  --cst-text-muted:         #8FA095;
-  --cst-text-accent:        #6EAB76;
+  --cst-text-soft:          rgba(255,255,255,0.86);
+  --cst-text-muted:         #B2C3B8;
+  --cst-text-accent:        #93CB9B;
 
-  --cst-card-bg:            #243029;
-  --cst-card-border:        rgba(255,255,255,0.10);
-  --cst-hairline:           rgba(255,255,255,0.06);
+  --cst-card-bg:            #2A382F;
+  --cst-card-border:        rgba(255,255,255,0.16);
+  --cst-hairline:           rgba(255,255,255,0.10);
 
-  --cst-input-bg:           rgba(0,0,0,0.18);
-  --cst-input-border:       rgba(255,255,255,0.12);
-  --cst-input-placeholder:  rgba(255,255,255,0.35);
+  --cst-input-bg:           rgba(0,0,0,0.22);
+  --cst-input-border:       rgba(255,255,255,0.22);
+  --cst-input-placeholder:  rgba(255,255,255,0.48);
 
-  --cst-btn-ghost-border:   rgba(255,255,255,0.35);
+  --cst-btn-ghost-border:   rgba(255,255,255,0.42);
   --cst-btn-ghost-color:    #FFFFFF;
 
   --cst-hatch-color:        rgba(255,255,255,0.035);
   --cst-overlay:            rgba(0,0,0,0.5);
 
   --cst-shadow-card:        0 1px 2px rgba(0,0,0,0.25);
-  --cst-tag-bg:             rgba(255,255,255,0.06);
-  --cst-tag-text:           rgba(255,255,255,0.7);
-  --cst-accent-bg:          rgba(45,90,53,0.18);
+  --cst-tag-bg:             rgba(255,255,255,0.10);
+  --cst-tag-text:           rgba(255,255,255,0.85);
+  --cst-accent-bg:          rgba(45,90,53,0.22);
 }
 
 /* ---- LIGHT ---- */
