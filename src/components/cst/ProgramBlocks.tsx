@@ -353,6 +353,10 @@ export function ProgramBlocks({
         const firstType = b.exercises[0]?.block_type;
         // Type explicite (EMOM/CIRCUIT/AMRAP…) prioritaire ; sinon « SUPERSET » si bloc enchaîné.
         const badge = blockBadge(firstType) ?? (b.isSuperset ? "SUPERSET" : null);
+        // Récup du tour = dernière récup renseignée du bloc (prise après le dernier exo enchaîné)
+        const supersetRest = b.isSuperset
+          ? ([...b.exercises].reverse().map((e) => e.recup).find((r) => r != null && String(r).trim() !== "") ?? null)
+          : null;
         return (
           <div
             key={i}
@@ -381,6 +385,21 @@ export function ProgramBlocks({
             {b.exercises.map((ex, j) => (
               <ExerciseRow key={j} ex={ex} threadSlot={threadSlot} onExerciseClick={onExerciseClick} />
             ))}
+            {b.isSuperset && (
+              <div
+                className="cst-mono"
+                style={{
+                  fontSize: 11,
+                  color: "var(--cst-text-muted)",
+                  padding: "8px 12px",
+                  background: "rgba(45,90,53,0.06)",
+                  borderTop: "1px solid rgba(255,255,255,0.05)",
+                }}
+              >
+                ↻ Enchaîner sans repos entre les exercices
+                {supersetRest ? ` · récup ${val(supersetRest)} après le tour` : ""}
+              </div>
+            )}
           </div>
         );
       })}

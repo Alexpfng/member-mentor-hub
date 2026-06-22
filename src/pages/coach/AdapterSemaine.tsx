@@ -408,6 +408,20 @@ export default function AdapterSemaine() {
       return { ...s, days };
     });
   }
+  // Réordonne un exercice dans sa séance (dir = -1 monter, +1 descendre)
+  function moveExo(dayIdx: number, exoIdx: number, dir: -1 | 1) {
+    setStructure((s) => {
+      const days = [...(s.days ?? [])];
+      const day = { ...days[dayIdx] };
+      const exos = [...(day.exercises ?? [])];
+      const j = exoIdx + dir;
+      if (j < 0 || j >= exos.length) return s;
+      [exos[exoIdx], exos[j]] = [exos[j], exos[exoIdx]];
+      day.exercises = exos;
+      days[dayIdx] = day;
+      return { ...s, days };
+    });
+  }
   function addExoFromLibrary(dayIdx: number, lib: LibExercise) {
     setStructure((s) => {
       const days = [...(s.days ?? [])];
@@ -601,12 +615,13 @@ export default function AdapterSemaine() {
                   const fb = ctx.feedback[ex.name];
                   const sugg = suggestFor(ex, fb);
                   const cardColor = COLOR_MAP[(ex.color || "").toLowerCase()]?.bg || "#555";
+                  const lastIdx = (day.exercises?.length ?? 1) - 1;
                   return (
+                    <div key={ei} style={{ display: "flex", gap: 4, alignItems: "stretch" }}>
                     <button
-                      key={ei}
                       onClick={() => setEditTarget({ dayIdx: di, exoIdx: ei })}
                       style={{
-                        textAlign: "left", cursor: "pointer", width: "100%",
+                        textAlign: "left", cursor: "pointer", flex: 1, minWidth: 0,
                         background: `${cardColor}0d`,
                         border: sugg ? "1px solid rgba(212,168,46,0.5)" : `1px solid ${cardColor}40`,
                         borderLeft: `3px solid ${cardColor}`,
@@ -640,6 +655,11 @@ export default function AdapterSemaine() {
                       )}
                       {ex.coach_notes && <div style={{ fontSize: 10, opacity: 0.5, fontStyle: "italic", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>"{ex.coach_notes}"</div>}
                     </button>
+                    <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", gap: 3 }}>
+                      <button onClick={() => moveExo(di, ei, -1)} disabled={ei === 0} title="Monter" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", color: "var(--cst-text)", borderRadius: 5, width: 28, padding: "5px 0", fontSize: 12, lineHeight: 1, cursor: ei === 0 ? "default" : "pointer", opacity: ei === 0 ? 0.25 : 0.85 }}>↑</button>
+                      <button onClick={() => moveExo(di, ei, 1)} disabled={ei === lastIdx} title="Descendre" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", color: "var(--cst-text)", borderRadius: 5, width: 28, padding: "5px 0", fontSize: 12, lineHeight: 1, cursor: ei === lastIdx ? "default" : "pointer", opacity: ei === lastIdx ? 0.25 : 0.85 }}>↓</button>
+                    </div>
+                    </div>
                   );
                 })}
 
