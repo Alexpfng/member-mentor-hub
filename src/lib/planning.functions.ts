@@ -13,14 +13,15 @@ function frDate(iso: string | null | undefined): string {
 async function notifyCoachPlanning(memberId: string, content: string) {
   try {
     const [{ data: assignment }, { data: profile }] = await Promise.all([
-      supabaseAdmin.from("assignments").select("coach_id").eq("member_id", memberId).eq("active", true).maybeSingle(),
+      supabaseAdmin.from("assignments").select("program_id, programs(coach_id)").eq("member_id", memberId).eq("active", true).maybeSingle(),
       supabaseAdmin.from("profiles").select("first_name, last_name").eq("id", memberId).maybeSingle(),
     ]);
-    if (!assignment?.coach_id) return;
+    const coachId = (assignment as any)?.programs?.coach_id as string | undefined;
+    if (!coachId) return;
     const name = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || "Le membre";
     await supabaseAdmin.from("messages").insert({
       from_id: memberId,
-      to_id: assignment.coach_id,
+      to_id: coachId,
       content: `${name} ${content}`,
     });
   } catch {
