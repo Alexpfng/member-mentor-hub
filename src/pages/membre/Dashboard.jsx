@@ -124,7 +124,7 @@ export default function MemberDashboard() {
   const dayDefs = (plan?.dayDefs ?? []).filter((d) => d?.type !== "Repos");
   const usedLabels = new Set(
     (plan?.planned ?? []).map((p) => p.day_label).concat(
-      (plan?.sessions ?? []).map((s) => s.session_label).filter(Boolean),
+      (plan?.sessions ?? []).filter((s) => s.status === "completed").map((s) => s.session_label).filter(Boolean),
     ),
   );
   const availableDayDefs = dayDefs.filter((d) => !usedLabels.has(d.label));

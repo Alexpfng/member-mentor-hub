@@ -246,7 +246,7 @@ export default function MemberPlanning() {
     const usedCount = new Map<string, number>();
     [
       ...(data?.planned ?? []).map((p: any) => p.day_label),
-      ...(data?.sessions ?? []).map((s: any) => s.session_label).filter(Boolean),
+      ...(data?.sessions ?? []).filter((s: any) => s.status === "completed").map((s: any) => s.session_label).filter(Boolean),
     ].forEach((l: string) => usedCount.set(l, (usedCount.get(l) ?? 0) + 1));
     const result: any[] = [];
     for (const d of defs) {
