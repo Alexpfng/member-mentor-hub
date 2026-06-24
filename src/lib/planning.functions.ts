@@ -5,6 +5,29 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const dateStr = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
+function frDate(iso: string | null | undefined): string {
+  if (!iso) return "";
+  return new Date(iso).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "long" });
+}
+
+async function notifyCoachPlanning(memberId: string, content: string) {
+  try {
+    const [{ data: assignment }, { data: profile }] = await Promise.all([
+      supabaseAdmin.from("assignments").select("coach_id").eq("member_id", memberId).eq("active", true).maybeSingle(),
+      supabaseAdmin.from("profiles").select("first_name, last_name").eq("id", memberId).maybeSingle(),
+    ]);
+    if (!assignment?.coach_id) return;
+    const name = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || "Le membre";
+    await supabaseAdmin.from("messages").insert({
+      from_id: memberId,
+      to_id: assignment.coach_id,
+      content: `${name} ${content}`,
+    });
+  } catch {
+    // Notification failure must never block the planning action
+  }
+}
+
 export const listWeekPlan = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
@@ -97,6 +120,14 @@ export const upsertPlannedSession = createServerFn({ method: "POST" })
     };
 
     if (data.id) {
+      // Fetch old date to build the "moved" notification
+      const { data: old } = await supabaseAdmin
+        .from("planned_sessions")
+        .select("planned_date, day_label")
+        .eq("id", data.id)
+        .eq("member_id", context.userId)
+        .maybeSingle();
+
       const { data: row, error } = await supabaseAdmin
         .from("planned_sessions")
         .update(payload)
@@ -105,6 +136,14 @@ export const upsertPlannedSession = createServerFn({ method: "POST" })
         .select()
         .single();
       if (error) throw new Error(error.message);
+
+      if (old?.planned_date && data.plannedDate && old.planned_date !== data.plannedDate) {
+        const label = old.day_label ?? "une séance";
+        await notifyCoachPlanning(
+          context.userId,
+          `📅 a déplacé « ${label} » : ${frDate(old.planned_date)} → ${frDate(data.plannedDate)}`,
+        );
+      }
       return row;
     }
     const { data: row, error } = await supabaseAdmin
@@ -120,12 +159,28 @@ export const deletePlannedSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
+    // Fetch before delete to build notification
+    const { data: planned } = await supabaseAdmin
+      .from("planned_sessions")
+      .select("day_label, planned_date")
+      .eq("id", data.id)
+      .eq("member_id", context.userId)
+      .maybeSingle();
+
     const { error } = await supabaseAdmin
       .from("planned_sessions")
       .delete()
       .eq("id", data.id)
       .eq("member_id", context.userId);
     if (error) throw new Error(error.message);
+
+    const label = planned?.day_label ?? "une séance";
+    const dateLabel = planned?.planned_date ? ` prévue le ${frDate(planned.planned_date)}` : "";
+    await notifyCoachPlanning(
+      context.userId,
+      `🗑 a supprimé « ${label} »${dateLabel} de son planning`,
+    );
+
     return { ok: true };
   });
 
