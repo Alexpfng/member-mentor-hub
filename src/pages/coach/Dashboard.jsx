@@ -172,8 +172,8 @@ function CoachDashboardInner() {
   const kpis = [
     [String(metrics?.activeMembers ?? realMembers.length).padStart(2, '0'), 'COACHÉS ACTIFS', '/coach/membres'],
     [String(metrics?.sessionsThisWeek ?? 0).padStart(2, '0'), 'SÉANCES CETTE SEMAINE', '/coach/seances'],
-    [String(todayPlanned).padStart(2, '0'), 'PLANNING AUJOURD\'HUI', '/coach/membres'],
-    [String(todayCompleted).padStart(2, '0'), 'SÉANCES TERMINÉES', '/coach/seances'],
+    [String(todayPlanned).padStart(2, '0'), 'PLANNING SEMAINE', '/coach/membres'],
+    [String(todayCompleted).padStart(2, '0'), 'TERMINÉES SEMAINE', '/coach/seances'],
   ];
 
   return (
@@ -239,12 +239,12 @@ function CoachDashboardInner() {
           </button>
           {todayPlanned > 0 && (
             <button className="cst-btn cst-btn-ghost-dark" onClick={() => navigate({ to: '/coach/membres' })}>
-              {todayPlanned} SÉANCE{todayPlanned > 1 ? 'S' : ''} PLANIFIÉE{todayPlanned > 1 ? 'S' : ''} AUJOURD'HUI →
+              {todayPlanned} SÉANCE{todayPlanned > 1 ? 'S' : ''} PLANIFIÉE{todayPlanned > 1 ? 'S' : ''} CETTE SEMAINE →
             </button>
           )}
           {todayCompleted > 0 && (
             <button className="cst-btn" style={{ background: 'rgba(45,90,53,0.15)', border: '1px solid rgba(45,90,53,0.4)', color: '#6EAB76' }} onClick={() => navigate({ to: '/coach/seances' })}>
-              {todayCompleted} SÉANCE{todayCompleted > 1 ? 'S' : ''} TERMINÉE{todayCompleted > 1 ? 'S' : ''} →
+              {todayCompleted} SÉANCE{todayCompleted > 1 ? 'S' : ''} TERMINÉE{todayCompleted > 1 ? 'S' : ''} CETTE SEMAINE →
             </button>
           )}
         </div>

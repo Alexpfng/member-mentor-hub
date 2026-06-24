@@ -43,21 +43,21 @@ export const getDashboardMetrics = createServerFn({ method: "GET" })
     const lateCutoff = daysAgo(3).toISOString().slice(0, 10);
     const lateFloor = daysAgo(30).toISOString().slice(0, 10);
 
-    const todayISO = new Date().toISOString().slice(0, 10);
+    const weekStartISO = startOfWeek().toISOString().slice(0, 10);
 
-    const [sessionsWeek, painUnresolved, msgsUnread, videosUnreviewed, sessionsUnseen, todayPlanned, todayCompleted] = await Promise.all([
+    const [sessionsWeek, painUnresolved, msgsUnread, videosUnreviewed, sessionsUnseen, weekPlanned, weekCompleted] = await Promise.all([
       supabaseAdmin.from("sessions").select("id, member_id, status", { count: "exact", head: false }).gte("started_at", weekStart),
       supabaseAdmin.from("pain_reports").select("id", { count: "exact", head: true }).is("resolved_at", null),
       supabaseAdmin.from("messages").select("id", { count: "exact", head: true }).eq("to_id", context.userId).eq("read", false),
       supabaseAdmin.from("technique_videos").select("id", { count: "exact", head: true }).eq("coach_reviewed", false),
       supabaseAdmin.from("sessions").select("id", { count: "exact", head: true }).eq("coach_seen", false).eq("status", "completed"),
-      // Séances planifiées aujourd'hui (tous les membres du coach)
+      // Séances planifiées depuis le début de la semaine (planning des membres)
       memberIds.length > 0
-        ? supabaseAdmin.from("planned_sessions").select("id", { count: "exact", head: true }).in("member_id", memberIds).eq("planned_date", todayISO).eq("status", "planned")
+        ? supabaseAdmin.from("planned_sessions").select("id", { count: "exact", head: true }).in("member_id", memberIds).gte("planned_date", weekStartISO).neq("status", "rest")
         : Promise.resolve({ count: 0 }),
-      // Séances terminées aujourd'hui (tous les membres du coach)
+      // Séances terminées cette semaine (tous les membres du coach)
       memberIds.length > 0
-        ? supabaseAdmin.from("sessions").select("id", { count: "exact", head: true }).in("member_id", memberIds).eq("date", todayISO).eq("status", "completed")
+        ? supabaseAdmin.from("sessions").select("id", { count: "exact", head: true }).in("member_id", memberIds).gte("started_at", weekStart).eq("status", "completed")
         : Promise.resolve({ count: 0 }),
     ]);
 
@@ -67,8 +67,8 @@ export const getDashboardMetrics = createServerFn({ method: "GET" })
       activeMembers: memberIds.length,
       sessionsThisWeek: sessionsWeek.count || 0,
       toTreat,
-      todayPlanned: todayPlanned.count || 0,
-      todayCompleted: todayCompleted.count || 0,
+      todayPlanned: weekPlanned.count || 0,
+      todayCompleted: weekCompleted.count || 0,
     };
   });
 
