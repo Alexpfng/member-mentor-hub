@@ -319,10 +319,10 @@ export default function MemberDashboard() {
                         disabled={busy}
                         onClick={() => chooseAndStart(d)}
                         className="cst-btn cst-btn-primary"
-                        style={{ fontSize: 12, justifyContent: "space-between", display: "flex" }}
+                        style={{ fontSize: 12, justifyContent: "space-between", display: "flex", alignItems: "center", gap: 8, height: "auto", minHeight: 44, padding: "10px 16px" }}
                       >
-                        <span>{d.label}</span>
-                        <span>→</span>
+                        <span style={{ flex: 1, textAlign: "left", whiteSpace: "normal", wordBreak: "break-word" }}>{d.label}</span>
+                        <span style={{ flexShrink: 0 }}>→</span>
                       </button>
                     ))}
                   </div>
