@@ -167,12 +167,13 @@ function CoachDashboardInner() {
   const dateLabel = `${['DIM','LUN','MAR','MER','JEU','VEN','SAM'][now.getDay()]}. ${now.getDate()} ${MONTHS[now.getMonth()]} · ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
   const monthLabel = `${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
 
-  const lateCount = metrics?.late ?? 0;
+  const todayPlanned = metrics?.todayPlanned ?? 0;
+  const todayCompleted = metrics?.todayCompleted ?? 0;
   const kpis = [
     [String(metrics?.activeMembers ?? realMembers.length).padStart(2, '0'), 'COACHÉS ACTIFS', '/coach/membres'],
     [String(metrics?.sessionsThisWeek ?? 0).padStart(2, '0'), 'SÉANCES CETTE SEMAINE', '/coach/seances'],
-    [String(lateCount).padStart(2, '0'), 'SÉANCES EN RETARD', '/coach/retards'],
-    [metrics?.adherence7d != null ? `${metrics.adherence7d}%` : '—', 'ADHÉRENCE 7J', '/coach/membres'],
+    [String(todayPlanned).padStart(2, '0'), 'PLANNING AUJOURD\'HUI', '/coach/membres'],
+    [String(todayCompleted).padStart(2, '0'), 'SÉANCES TERMINÉES', '/coach/seances'],
   ];
 
   return (
@@ -221,7 +222,7 @@ function CoachDashboardInner() {
             >
               <span className="cst-mono" style={{ fontSize: 9 }}>★ {String(i+1).padStart(2,'0')}</span>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                <span style={{ fontFamily: 'var(--cst-display)', fontWeight: 800, fontSize: 56, lineHeight: 0.9, color: i === 2 && lateCount > 0 ? '#E07B39' : '#fff' }}>{n}</span>
+                <span style={{ fontFamily: 'var(--cst-display)', fontWeight: 800, fontSize: 56, lineHeight: 0.9, color: i === 3 && todayCompleted > 0 ? '#6EAB76' : '#fff' }}>{n}</span>
               </div>
               <span className="cst-mono" style={{ fontSize: 9, letterSpacing: '0.22em' }}>{l} →</span>
             </div>
@@ -236,9 +237,14 @@ function CoachDashboardInner() {
           <button className="cst-btn cst-btn-ghost-dark" onClick={() => navigate({ to: '/coach/seances' })}>
             SÉANCES →
           </button>
-          {lateCount > 0 && (
-            <button className="cst-btn" style={{ background: 'rgba(224,123,57,0.12)', border: '1px solid rgba(224,123,57,0.4)', color: '#E07B39' }} onClick={() => navigate({ to: '/coach/retards' })}>
-              {lateCount} SÉANCE{lateCount > 1 ? 'S' : ''} EN RETARD →
+          {todayPlanned > 0 && (
+            <button className="cst-btn cst-btn-ghost-dark" onClick={() => navigate({ to: '/coach/membres' })}>
+              {todayPlanned} SÉANCE{todayPlanned > 1 ? 'S' : ''} PLANIFIÉE{todayPlanned > 1 ? 'S' : ''} AUJOURD'HUI →
+            </button>
+          )}
+          {todayCompleted > 0 && (
+            <button className="cst-btn" style={{ background: 'rgba(45,90,53,0.15)', border: '1px solid rgba(45,90,53,0.4)', color: '#6EAB76' }} onClick={() => navigate({ to: '/coach/seances' })}>
+              {todayCompleted} SÉANCE{todayCompleted > 1 ? 'S' : ''} TERMINÉE{todayCompleted > 1 ? 'S' : ''} →
             </button>
           )}
         </div>

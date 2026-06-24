@@ -43,32 +43,32 @@ export const getDashboardMetrics = createServerFn({ method: "GET" })
     const lateCutoff = daysAgo(3).toISOString().slice(0, 10);
     const lateFloor = daysAgo(30).toISOString().slice(0, 10);
 
-    const [sessionsWeek, painUnresolved, msgsUnread, videosUnreviewed, sessionsUnseen, latePlanned] = await Promise.all([
+    const todayISO = new Date().toISOString().slice(0, 10);
+
+    const [sessionsWeek, painUnresolved, msgsUnread, videosUnreviewed, sessionsUnseen, todayPlanned, todayCompleted] = await Promise.all([
       supabaseAdmin.from("sessions").select("id, member_id, status", { count: "exact", head: false }).gte("started_at", weekStart),
       supabaseAdmin.from("pain_reports").select("id", { count: "exact", head: true }).is("resolved_at", null),
       supabaseAdmin.from("messages").select("id", { count: "exact", head: true }).eq("to_id", context.userId).eq("read", false),
       supabaseAdmin.from("technique_videos").select("id", { count: "exact", head: true }).eq("coach_reviewed", false),
       supabaseAdmin.from("sessions").select("id", { count: "exact", head: true }).eq("coach_seen", false).eq("status", "completed"),
-      // Fetch with created_at so we can exclude retroactive entries (planned_date < created_at = coach entered old session today)
-      supabaseAdmin.from("planned_sessions").select("id, planned_date, created_at").eq("status", "planned").not("planned_date", "is", null).gte("planned_date", lateFloor).lte("planned_date", lateCutoff),
+      // Séances planifiées aujourd'hui (tous les membres du coach)
+      memberIds.length > 0
+        ? supabaseAdmin.from("planned_sessions").select("id", { count: "exact", head: true }).in("member_id", memberIds).eq("planned_date", todayISO).eq("status", "planned")
+        : Promise.resolve({ count: 0 }),
+      // Séances terminées aujourd'hui (tous les membres du coach)
+      memberIds.length > 0
+        ? supabaseAdmin.from("sessions").select("id", { count: "exact", head: true }).in("member_id", memberIds).eq("date", todayISO).eq("status", "completed")
+        : Promise.resolve({ count: 0 }),
     ]);
 
-    // adhérence 7j : seulement séances de PROGRAMME (les libres ne faussent pas l'adhérence)
-    const { data: recent7 } = await supabaseAdmin.from("sessions").select("id, status").eq("session_type", "program").gte("started_at", sevenDaysAgo);
-    const done = (recent7 ?? []).filter((s) => s.status === "completed").length;
-    const total = recent7?.length || 0;
-    const adherence = total > 0 ? Math.round((done / total) * 100) : 0;
-
     const toTreat = (painUnresolved.count || 0) + (msgsUnread.count || 0) + (videosUnreviewed.count || 0) + (sessionsUnseen.count || 0);
-    // Exclude retroactive entries: planned_date < created_at date → coach entered them after the fact
-    const lateCount = (latePlanned.data ?? []).filter((r) => r.planned_date! >= r.created_at.slice(0, 10)).length;
 
     return {
       activeMembers: memberIds.length,
       sessionsThisWeek: sessionsWeek.count || 0,
       toTreat,
-      late: lateCount,
-      adherence7d: adherence,
+      todayPlanned: todayPlanned.count || 0,
+      todayCompleted: todayCompleted.count || 0,
     };
   });
 
