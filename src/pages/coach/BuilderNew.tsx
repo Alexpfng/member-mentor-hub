@@ -463,7 +463,7 @@ function SortableExCard({ ex, onEdit, onDelete }: { ex: ProgramExercise; onEdit:
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
           {ex.chained && <span title="Enchaîné avec l'exercice précédent" style={{ fontSize: 11, color: 'var(--cst-mid-green)' }}>⛓</span>}
           <span style={{ fontSize: 12 }}>{ex.color}</span>
-          <span style={{ fontSize: 12, fontWeight: 600, color: '#fff', whiteSpace: 'normal', overflowWrap: 'anywhere', lineHeight: 1.3 }}>{ex.name}</span>
+          <span style={{ fontSize: 12, fontWeight: 600, color: '#fff', whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: 1.3 }}>{ex.name}</span>
           {ex.block_type && ex.block_type !== 'standard' && (
             <span style={{ fontFamily: 'var(--cst-mono)', fontSize: 8, letterSpacing: '0.1em', color: 'var(--cst-mid-green)', border: '1px solid rgba(45,90,53,0.5)', borderRadius: 3, padding: '1px 4px', flexShrink: 0 }}>
               {ex.block_type.toUpperCase()}
@@ -510,7 +510,7 @@ function DayColumn({
 
   return (
     <div style={{
-      minWidth: 180, flex: 1,
+      width: '100%',
       background: isOver ? 'rgba(45,90,53,0.08)' : 'rgba(255,255,255,0.02)',
       border: isOver ? '2px dashed #2D5A35' : '1px solid rgba(255,255,255,0.06)',
       borderRadius: 10, padding: 12,
@@ -1113,7 +1113,7 @@ export default function BuilderNew({ programIdParam }: { programIdParam?: string
           </div>
 
           {/* Day columns */}
-          <div className="cst-scroll-visible" style={{ flex: 1, padding: 16, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+          <div className="cst-scroll-visible" style={{ flex: 1, padding: 16, display: 'flex', gap: 10, alignItems: 'flex-start', overflowX: 'auto', overflowY: 'auto' }}>
             {currentWeek.days.map((day) => (
               <DroppableDayWrapper key={day.id} dayId={day.id} overId={overId}>
                 <DayColumn
@@ -1133,7 +1133,7 @@ export default function BuilderNew({ programIdParam }: { programIdParam?: string
               onClick={addDay}
               title="Ajouter une séance"
               style={{
-                flex: '0 0 auto', alignSelf: 'flex-start', minWidth: 150,
+                flexShrink: 0, alignSelf: 'flex-start', width: 150,
                 border: '1px dashed rgba(255,255,255,0.2)', borderRadius: 10,
                 background: 'transparent', color: 'rgba(255,255,255,0.45)',
                 fontFamily: 'var(--cst-mono)', fontSize: 11, letterSpacing: '0.1em',
@@ -1203,7 +1203,7 @@ function DroppableDayWrapper({ dayId, overId, children }: { dayId: string; overI
   const { setNodeRef } = useSortable({ id: dayId, data: { type: 'day' } });
   const isOver = overId === dayId;
   return (
-    <div ref={setNodeRef} style={{ flex: 1, minWidth: 160, maxWidth: 240 }}>
+    <div ref={setNodeRef} style={{ flexShrink: 0, width: 230 }}>
       {children}
     </div>
   );
