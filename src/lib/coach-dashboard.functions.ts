@@ -243,9 +243,9 @@ export const getRecentSessions = createServerFn({ method: "GET" })
     const { data: sessions } = await supabaseAdmin
       .from("sessions")
       .select("id, member_id, session_label, week_number, day_number, started_at, ended_at, duration_minutes, average_rpe, member_note, coach_seen, status, session_type, free_title, free_category")
-      .eq("status", "completed")
-      .order("ended_at", { ascending: false, nullsFirst: false })
-      .limit(data.limit ?? 10);
+      .in("status", ["completed", "in_progress"])
+      .order("started_at", { ascending: false, nullsFirst: false })
+      .limit(data.limit ?? 20);
 
     const ids = (sessions ?? []).map((s) => s.id);
     let painsBySession = new Map<string, number>();
@@ -260,7 +260,9 @@ export const getRecentSessions = createServerFn({ method: "GET" })
       memberName: nameOf.get(s.member_id) || "Membre",
       label: s.session_label,
       week: s.week_number, day: s.day_number,
+      startedAt: s.started_at,
       endedAt: s.ended_at,
+      status: s.status,
       durationMinutes: s.duration_minutes,
       averageRpe: s.average_rpe,
       memberNote: s.member_note,
