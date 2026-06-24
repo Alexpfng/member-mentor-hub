@@ -10,6 +10,7 @@ import {
   setExerciseArchived,
   seedExerciseLibraryV2,
   createIntensityCode,
+  deleteIntensityCode,
 } from "@/lib/exercises.functions";
 
 type Exercise = {
@@ -69,6 +70,7 @@ export default function Exercices() {
   const archiveFn = useServerFn(setExerciseArchived);
   const seedFn = useServerFn(seedExerciseLibraryV2);
   const createCodeFn = useServerFn(createIntensityCode);
+  const deleteCodeFn = useServerFn(deleteIntensityCode);
 
   const [items, setItems] = useState<Exercise[]>([]);
   const [codes, setCodes] = useState<IntensityCode[]>([]);
@@ -194,6 +196,33 @@ export default function Exercices() {
       toast.success(`Équipement « ${v} » ajouté`);
     }
     setAddModal(null);
+  }
+
+  async function handleDeletePreset(type: string, value: string) {
+    if (type === "intensity") {
+      try {
+        await deleteCodeFn({ data: { code: value } });
+        await reload();
+        toast.success("Intensité supprimée");
+      } catch (e) {
+        toast.error((e as Error).message);
+      }
+    } else if (type === "pattern") {
+      const next = customPatterns.filter((p) => p !== value);
+      setCustomPatterns(next);
+      savePresets("cst_custom_patterns", next);
+      setFilterPattern((prev) => { const n = new Set(prev); n.delete(value); return n; });
+    } else if (type === "muscle") {
+      const next = customMuscles.filter((m) => m !== value);
+      setCustomMuscles(next);
+      savePresets("cst_custom_muscles", next);
+      setFilterMuscle((prev) => { const n = new Set(prev); n.delete(value); return n; });
+    } else if (type === "equip") {
+      const next = customEquips.filter((e) => e !== value);
+      setCustomEquips(next);
+      savePresets("cst_custom_equips", next);
+      setFilterEquip((prev) => { const n = new Set(prev); n.delete(value); return n; });
+    }
   }
 
   async function handleSeed() {
@@ -363,31 +392,35 @@ export default function Exercices() {
           />
           <FilterChips
             label="Schéma moteur"
-            values={allPatterns}
+            values={allPatterns.map((p) => ({ ...p, deletable: customPatterns.includes(p.value) }))}
             selected={filterPattern}
             onToggle={(v) => toggleInSet(filterPattern, v, setFilterPattern)}
             onAdd={() => setAddModal({ type: "pattern" })}
+            onDelete={(v) => handleDeletePreset("pattern", v)}
           />
           <FilterChips
             label="Intensité"
-            values={codes.map((c) => ({ value: c.code, label: c.label, color: c.color_hex }))}
+            values={codes.map((c) => ({ value: c.code, label: c.label, color: c.color_hex, deletable: true }))}
             selected={filterIntensity}
             onToggle={(v) => toggleInSet(filterIntensity, v, setFilterIntensity)}
             onAdd={() => setAddModal({ type: "intensity" })}
+            onDelete={(v) => handleDeletePreset("intensity", v)}
           />
           <FilterChips
             label="Groupe musculaire"
-            values={muscles.map((m) => ({ value: m, label: m }))}
+            values={muscles.map((m) => ({ value: m, label: m, deletable: customMuscles.includes(m) }))}
             selected={filterMuscle}
             onToggle={(v) => toggleInSet(filterMuscle, v, setFilterMuscle)}
             onAdd={() => setAddModal({ type: "muscle" })}
+            onDelete={(v) => handleDeletePreset("muscle", v)}
           />
           <FilterChips
             label="Équipement"
-            values={equipments.map((e) => ({ value: e, label: e }))}
+            values={equipments.map((e) => ({ value: e, label: e, deletable: customEquips.includes(e) }))}
             selected={filterEquip}
             onToggle={(v) => toggleInSet(filterEquip, v, setFilterEquip)}
             onAdd={() => setAddModal({ type: "equip" })}
+            onDelete={(v) => handleDeletePreset("equip", v)}
           />
           <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 12, color: "var(--cst-text-soft)" }}>
             <input
@@ -873,12 +906,14 @@ function FilterChips({
   selected,
   onToggle,
   onAdd,
+  onDelete,
 }: {
   label: string;
-  values: { value: string; label: string; color?: string }[];
+  values: { value: string; label: string; color?: string; deletable?: boolean }[];
   selected: Set<string>;
   onToggle: (v: string) => void;
   onAdd?: () => void;
+  onDelete?: (v: string) => void;
 }) {
   return (
     <div>
@@ -905,36 +940,63 @@ function FilterChips({
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
         {values.map((v) => {
           const on = selected.has(v.value);
+          const canDelete = v.deletable && onDelete;
           return (
-            <button
+            <div
               key={v.value}
-              onClick={() => onToggle(v.value)}
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: 6,
-                padding: "5px 10px",
                 borderRadius: 999,
                 border: on ? "1px solid var(--cst-mid-green)" : "1px solid var(--cst-input-border)",
                 background: on ? "rgba(45,90,53,0.15)" : "var(--cst-input-bg)",
-                color: "var(--cst-text)",
-                fontSize: 11,
-                cursor: "pointer",
+                overflow: "hidden",
               }}
             >
-              {v.color && (
-                <span
+              <button
+                onClick={() => onToggle(v.value)}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: canDelete ? "5px 6px 5px 10px" : "5px 10px",
+                  border: "none",
+                  background: "transparent",
+                  color: "var(--cst-text)",
+                  fontSize: 11,
+                  cursor: "pointer",
+                }}
+              >
+                {v.color && (
+                  <span
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      background: v.color,
+                      border: "1px solid rgba(0,0,0,0.15)",
+                      flexShrink: 0,
+                    }}
+                  />
+                )}
+                {v.label}
+              </button>
+              {canDelete && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); onDelete(v.value); }}
+                  title="Supprimer ce filtre"
                   style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: "50%",
-                    background: v.color,
-                    border: "1px solid rgba(0,0,0,0.15)",
+                    border: "none",
+                    background: "transparent",
+                    color: "rgba(255,255,255,0.35)",
+                    fontSize: 11,
+                    cursor: "pointer",
+                    padding: "5px 8px 5px 2px",
+                    lineHeight: 1,
                   }}
-                />
+                >×</button>
               )}
-              {v.label}
-            </button>
+            </div>
           );
         })}
         {values.length === 0 && (
