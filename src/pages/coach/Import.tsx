@@ -332,7 +332,7 @@ export default function ExcelImport() {
     try {
       const res = await parseExcelFile(f);
       setParsed(res);
-      setProgramName(res.metadata.objective || f.name.replace(/\.(xlsx|xls|csv)$/i, ""));
+      setProgramName(f.name.replace(/\.(xlsx|xls|csv)$/i, ""));
       if (res.warnings.length) res.warnings.forEach((w) => toast.warning(w));
     } catch (e: any) {
       toast.error(e?.message || "Échec du parsing");
