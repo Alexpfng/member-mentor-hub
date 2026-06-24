@@ -345,6 +345,9 @@ export default function CoachMember() {
   }, [data]);
 
   const currentWeek = useMemo(() => {
+    // Use the actual highest week_number from assignment_weeks (authoritative)
+    // Falls back to date-based calculation only if no weeks exist yet
+    if (data?.current_week_number != null) return data.current_week_number;
     if (!data?.assignment?.start_date || !data?.program?.duration_weeks) return null;
     const elapsed = daysBetween(new Date(data.assignment.start_date), new Date());
     if (elapsed < 0) return 1;

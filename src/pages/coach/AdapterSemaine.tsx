@@ -631,7 +631,7 @@ export default function AdapterSemaine() {
                     >
                       <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
                         <ColorDot c={ex.color} />
-                        <span style={{ flex: 1, fontSize: 13, fontWeight: 600, whiteSpace: "normal", overflowWrap: "anywhere", lineHeight: 1.3 }}>{ex.name}</span>
+                        <span style={{ flex: 1, fontSize: 13, fontWeight: 600, whiteSpace: "normal", wordBreak: "break-word", lineHeight: 1.3 }}>{ex.name}</span>
                         {sugg && <span title="Suggestion d'après les retours" style={{ fontSize: 11 }}>{sugg.type === "pain" ? "🔴" : "⚠"}</span>}
                         <span className="cst-mono" style={{
                           fontSize: 10, fontWeight: 700, flexShrink: 0,

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import CoachSidebar from "@/components/CoachSidebar";
@@ -9,6 +9,7 @@ import {
   upsertExercise,
   setExerciseArchived,
   seedExerciseLibraryV2,
+  createIntensityCode,
 } from "@/lib/exercises.functions";
 
 type Exercise = {
@@ -52,6 +53,14 @@ const EMPTY: Partial<Exercise> = {
   movement_patterns: [],
 };
 
+// Persistent custom presets (localStorage) for non-DB-backed categories
+function loadPresets(key: string): string[] {
+  try { return JSON.parse(localStorage.getItem(key) ?? "[]"); } catch { return []; }
+}
+function savePresets(key: string, vals: string[]) {
+  localStorage.setItem(key, JSON.stringify(vals));
+}
+
 export default function Exercices() {
   const fetchExercises = useServerFn(listExercises);
   const fetchCodes = useServerFn(listIntensityCodes);
@@ -59,6 +68,7 @@ export default function Exercices() {
   const saveExercise = useServerFn(upsertExercise);
   const archiveFn = useServerFn(setExerciseArchived);
   const seedFn = useServerFn(seedExerciseLibraryV2);
+  const createCodeFn = useServerFn(createIntensityCode);
 
   const [items, setItems] = useState<Exercise[]>([]);
   const [codes, setCodes] = useState<IntensityCode[]>([]);
@@ -75,6 +85,14 @@ export default function Exercices() {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
+
+  // Custom presets for locally-managed filter categories
+  const [customPatterns, setCustomPatterns] = useState<string[]>(() => loadPresets("cst_custom_patterns"));
+  const [customMuscles, setCustomMuscles] = useState<string[]>(() => loadPresets("cst_custom_muscles"));
+  const [customEquips, setCustomEquips] = useState<string[]>(() => loadPresets("cst_custom_equips"));
+
+  // "Add filter" modal state
+  const [addModal, setAddModal] = useState<null | { type: "intensity" | "pattern" | "muscle" | "equip" }>(null);
 
   const [editing, setEditing] = useState<Partial<Exercise> | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -105,15 +123,24 @@ export default function Exercices() {
   }, [codes]);
 
   const muscles = useMemo(() => {
-    const s = new Set<string>();
+    const s = new Set<string>([...customMuscles]);
     items.forEach((it) => it.muscle_group && s.add(it.muscle_group));
     return Array.from(s).sort();
-  }, [items]);
+  }, [items, customMuscles]);
   const equipments = useMemo(() => {
-    const s = new Set<string>();
+    const s = new Set<string>([...customEquips]);
     items.forEach((it) => it.equipement && s.add(it.equipement));
     return Array.from(s).sort();
-  }, [items]);
+  }, [items, customEquips]);
+  const allPatterns = useMemo(() => {
+    const defaults = PATTERN_OPTIONS.map((p) => p.value);
+    const s = new Set<string>([...defaults, ...customPatterns]);
+    items.forEach((it) => (it.movement_patterns ?? []).forEach((p) => s.add(p)));
+    return Array.from(s).map((v) => ({
+      value: v,
+      label: PATTERN_OPTIONS.find((o) => o.value === v)?.label ?? v.replace(/_/g, " "),
+    }));
+  }, [items, customPatterns]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -139,6 +166,34 @@ export default function Exercices() {
     if (next.has(value)) next.delete(value);
     else next.add(value);
     setter(next);
+  }
+
+  async function handleAddPreset(type: string, value: string, label: string, colorHex?: string, description?: string) {
+    const v = value.trim();
+    if (!v) return;
+    if (type === "intensity") {
+      const code = v.toLowerCase().replace(/[^a-z0-9]/g, "_");
+      await createCodeFn({ data: { code, label: label || v, color_hex: colorHex || "#888888", description: description || "" } });
+      await reload();
+      toast.success(`Intensité « ${label || v} » ajoutée`);
+    } else if (type === "pattern") {
+      const key = v.toLowerCase().replace(/[^a-z0-9]/g, "_").slice(0, 20);
+      const next = [...new Set([...customPatterns, key])];
+      setCustomPatterns(next);
+      savePresets("cst_custom_patterns", next);
+      toast.success(`Schéma « ${v} » ajouté`);
+    } else if (type === "muscle") {
+      const next = [...new Set([...customMuscles, v])];
+      setCustomMuscles(next);
+      savePresets("cst_custom_muscles", next);
+      toast.success(`Groupe musculaire « ${v} » ajouté`);
+    } else if (type === "equip") {
+      const next = [...new Set([...customEquips, v])];
+      setCustomEquips(next);
+      savePresets("cst_custom_equips", next);
+      toast.success(`Équipement « ${v} » ajouté`);
+    }
+    setAddModal(null);
   }
 
   async function handleSeed() {
@@ -308,27 +363,31 @@ export default function Exercices() {
           />
           <FilterChips
             label="Schéma moteur"
-            values={PATTERN_OPTIONS}
+            values={allPatterns}
             selected={filterPattern}
             onToggle={(v) => toggleInSet(filterPattern, v, setFilterPattern)}
+            onAdd={() => setAddModal({ type: "pattern" })}
           />
           <FilterChips
             label="Intensité"
             values={codes.map((c) => ({ value: c.code, label: c.label, color: c.color_hex }))}
             selected={filterIntensity}
             onToggle={(v) => toggleInSet(filterIntensity, v, setFilterIntensity)}
+            onAdd={() => setAddModal({ type: "intensity" })}
           />
           <FilterChips
             label="Groupe musculaire"
             values={muscles.map((m) => ({ value: m, label: m }))}
             selected={filterMuscle}
             onToggle={(v) => toggleInSet(filterMuscle, v, setFilterMuscle)}
+            onAdd={() => setAddModal({ type: "muscle" })}
           />
           <FilterChips
             label="Équipement"
             values={equipments.map((e) => ({ value: e, label: e }))}
             selected={filterEquip}
             onToggle={(v) => toggleInSet(filterEquip, v, setFilterEquip)}
+            onAdd={() => setAddModal({ type: "equip" })}
           />
           <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 12, color: "var(--cst-text-soft)" }}>
             <input
@@ -664,6 +723,146 @@ export default function Exercices() {
           </div>
         </div>
       )}
+
+      {/* Add filter modal */}
+      {addModal && (
+        <AddFilterModal
+          type={addModal.type}
+          onClose={() => setAddModal(null)}
+          onConfirm={handleAddPreset}
+        />
+      )}
+    </div>
+  );
+}
+
+function AddFilterModal({
+  type,
+  onClose,
+  onConfirm,
+}: {
+  type: "intensity" | "pattern" | "muscle" | "equip";
+  onClose: () => void;
+  onConfirm: (type: string, value: string, label: string, colorHex?: string, description?: string) => Promise<void>;
+}) {
+  const [value, setValue] = useState("");
+  const [label, setLabel] = useState("");
+  const [colorHex, setColorHex] = useState("#888888");
+  const [description, setDescription] = useState("");
+  const [busy, setBusy] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => { inputRef.current?.focus(); }, []);
+
+  const titles: Record<string, string> = {
+    intensity: "Nouvelle intensité",
+    pattern: "Nouveau schéma moteur",
+    muscle: "Nouveau groupe musculaire",
+    equip: "Nouvel équipement",
+  };
+  const placeholders: Record<string, string> = {
+    intensity: "ex: explosif",
+    pattern: "ex: explosive",
+    muscle: "ex: rotateurs_externe",
+    equip: "ex: kettlebell",
+  };
+
+  const showColor = type === "intensity";
+  const showLabel = type === "intensity";
+  const showDesc = type === "intensity";
+
+  async function submit() {
+    if (!value.trim()) return;
+    setBusy(true);
+    try {
+      await onConfirm(type, value, label || value, colorHex, description);
+    } catch (e) {
+      alert((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div
+      onClick={onClose}
+      style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{ background: "var(--cst-card-bg)", border: "1px solid var(--cst-card-border)", borderRadius: 12, padding: 24, width: "min(400px, 100%)", display: "flex", flexDirection: "column", gap: 14 }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>{titles[type]}</h3>
+          <button onClick={onClose} style={{ background: "transparent", border: "none", color: "var(--cst-text-muted)", fontSize: 18, cursor: "pointer" }}>✕</button>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div>
+            <label style={{ fontSize: 11, color: "var(--cst-text-muted)", display: "block", marginBottom: 4 }}>
+              {showLabel ? "CODE (identifiant unique)" : "VALEUR"}
+            </label>
+            <input
+              ref={inputRef}
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && submit()}
+              placeholder={placeholders[type]}
+              style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid var(--cst-input-border)", background: "var(--cst-input-bg)", color: "var(--cst-text)", fontSize: 13, boxSizing: "border-box" }}
+            />
+          </div>
+          {showLabel && (
+            <div>
+              <label style={{ fontSize: 11, color: "var(--cst-text-muted)", display: "block", marginBottom: 4 }}>LABEL AFFICHÉ</label>
+              <input
+                value={label}
+                onChange={(e) => setLabel(e.target.value)}
+                placeholder="ex: Explosif"
+                style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid var(--cst-input-border)", background: "var(--cst-input-bg)", color: "var(--cst-text)", fontSize: 13, boxSizing: "border-box" }}
+              />
+            </div>
+          )}
+          {showColor && (
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <label style={{ fontSize: 11, color: "var(--cst-text-muted)" }}>COULEUR</label>
+              <input
+                type="color"
+                value={colorHex}
+                onChange={(e) => setColorHex(e.target.value)}
+                style={{ width: 40, height: 32, padding: 2, borderRadius: 6, border: "1px solid var(--cst-input-border)", background: "transparent", cursor: "pointer" }}
+              />
+              <span style={{ fontSize: 12, opacity: 0.7 }}>{colorHex}</span>
+            </div>
+          )}
+          {showDesc && (
+            <div>
+              <label style={{ fontSize: 11, color: "var(--cst-text-muted)", display: "block", marginBottom: 4 }}>DESCRIPTION (optionnel)</label>
+              <input
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="ex: Mouvements de type puissance/force explosive"
+                style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid var(--cst-input-border)", background: "var(--cst-input-bg)", color: "var(--cst-text)", fontSize: 13, boxSizing: "border-box" }}
+              />
+            </div>
+          )}
+        </div>
+
+        <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+          <button
+            onClick={submit}
+            disabled={!value.trim() || busy}
+            style={{ flex: 1, padding: "10px 0", borderRadius: 8, border: "none", background: "var(--cst-mid-green)", color: "#fff", fontWeight: 700, fontSize: 13, cursor: value.trim() && !busy ? "pointer" : "not-allowed", opacity: value.trim() && !busy ? 1 : 0.5 }}
+          >
+            {busy ? "Ajout…" : "Ajouter"}
+          </button>
+          <button
+            onClick={onClose}
+            style={{ flex: 1, padding: "10px 0", borderRadius: 8, border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "var(--cst-text-muted)", fontSize: 13, cursor: "pointer" }}
+          >
+            Annuler
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -673,17 +872,35 @@ function FilterChips({
   values,
   selected,
   onToggle,
+  onAdd,
 }: {
   label: string;
   values: { value: string; label: string; color?: string }[];
   selected: Set<string>;
   onToggle: (v: string) => void;
+  onAdd?: () => void;
 }) {
-  if (values.length === 0) return null;
   return (
     <div>
-      <div className="cst-mono" style={{ fontSize: 9, color: "var(--cst-text-muted)", letterSpacing: "0.2em", marginBottom: 6 }}>
-        {label.toUpperCase()}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+        <span className="cst-mono" style={{ fontSize: 9, color: "var(--cst-text-muted)", letterSpacing: "0.2em" }}>
+          {label.toUpperCase()}
+        </span>
+        {onAdd && (
+          <button
+            onClick={onAdd}
+            title={`Ajouter un filtre ${label}`}
+            style={{
+              width: 18, height: 18, borderRadius: "50%",
+              border: "1px solid rgba(255,255,255,0.2)",
+              background: "rgba(255,255,255,0.06)",
+              color: "var(--cst-text-muted)",
+              fontSize: 13, lineHeight: 1, cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              padding: 0,
+            }}
+          >+</button>
+        )}
       </div>
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
         {values.map((v) => {
@@ -720,6 +937,9 @@ function FilterChips({
             </button>
           );
         })}
+        {values.length === 0 && (
+          <span style={{ fontSize: 11, opacity: 0.45, fontStyle: "italic" }}>Aucun filtre</span>
+        )}
       </div>
     </div>
   );

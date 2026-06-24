@@ -37,18 +37,11 @@ function extractYoutubeId(url: string | null | undefined): string | null {
   return null;
 }
 
-const VALID_INTENSITY = new Set([
-  "epuisant",
-  "semi_epuisant",
-  "isolation",
-  "prevention",
-  "plyo",
-  "non_classe",
-]);
-
-const VALID_PATTERNS = new Set([
-  "push", "pull", "legs", "hinge", "core", "cardio", "mobility", "carry", "other",
-]);
+// No hardcoded whitelist — values are validated against the intensity_codes table at runtime.
+// Patterns are also open: any non-empty string is accepted.
+function sanitizePattern(p: string): string {
+  return p.toLowerCase().trim().replace(/[^a-z0-9_-]/g, "_").slice(0, 20);
+}
 
 const exerciseInputSchema = z.object({
   id: z.string().uuid().optional(),
@@ -104,13 +97,10 @@ export const upsertExercise = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => exerciseInputSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertCoach(context.userId);
-    const intensity =
-      data.intensity_code && VALID_INTENSITY.has(data.intensity_code)
-        ? data.intensity_code
-        : null;
+    const intensity = data.intensity_code?.trim() || null;
     const patterns = (data.movement_patterns ?? [])
-      .map((p) => String(p).toLowerCase().trim())
-      .filter((p) => VALID_PATTERNS.has(p));
+      .map((p) => sanitizePattern(String(p)))
+      .filter(Boolean);
     const payload = {
       name: data.name,
       intensity_code: intensity,
@@ -166,8 +156,8 @@ export const seedExerciseLibraryV2 = createServerFn({ method: "POST" })
     await assertCoach(context.userId);
     const rows = (seedExercises as SeedRow[]).map((ex) => ({
       name: ex.nom,
-      intensity_code: ex.categorie && VALID_INTENSITY.has(ex.categorie) ? ex.categorie : "non_classe",
-      category: ex.categorie && VALID_INTENSITY.has(ex.categorie) ? ex.categorie : "non_classe",
+      intensity_code: ex.categorie?.trim() || "non_classe",
+      category: ex.categorie?.trim() || "non_classe",
       muscle_group: ex.muscle_group || null,
       equipement: ex.equipement || null,
       default_tempo: ex.tempo_defaut || null,
@@ -195,4 +185,36 @@ export const seedExerciseLibraryV2 = createServerFn({ method: "POST" })
       inserted += chunk.length;
     }
     return { inserted, skipped: rows.length - inserted, total: rows.length };
+  });
+
+export const createIntensityCode = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      code: z.string().trim().min(1).max(40).regex(/^[a-z0-9_]+$/),
+      label: z.string().trim().min(1).max(80),
+      color_hex: z.string().trim().regex(/^#[0-9a-fA-F]{6}$/),
+      description: z.string().trim().max(300).optional().default(""),
+    }).parse(d)
+  )
+  .handler(async ({ data, context }) => {
+    await assertCoach(context.userId);
+    const { error } = await supabaseAdmin.from("intensity_codes").insert({
+      code: data.code,
+      label: data.label,
+      color_hex: data.color_hex,
+      description: data.description ?? "",
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const deleteIntensityCode = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ code: z.string().trim().min(1).max(40) }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertCoach(context.userId);
+    const { error } = await supabaseAdmin.from("intensity_codes").delete().eq("code", data.code);
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });

@@ -569,11 +569,14 @@ export const getMemberDetail = createServerFn({ method: "GET" })
 
     const lastWeight = (weightLogs ?? [])[0]?.weight_kg ?? memberProfile?.weight_kg ?? null;
 
-    const { data: coachNotesRow } = await supabaseAdmin
-      .from("member_coach_notes")
-      .select("notes")
-      .eq("member_id", memberId)
-      .maybeSingle();
+    const [{ data: coachNotesRow }, { data: latestWeekRow }] = await Promise.all([
+      supabaseAdmin.from("member_coach_notes").select("notes").eq("member_id", memberId).maybeSingle(),
+      assignment?.id
+        ? supabaseAdmin.from("assignment_weeks").select("week_number")
+            .eq("member_id", memberId).eq("assignment_id", assignment.id)
+            .order("week_number", { ascending: false }).limit(1).maybeSingle()
+        : Promise.resolve({ data: null }),
+    ]);
 
     return {
       profile,
@@ -587,6 +590,7 @@ export const getMemberDetail = createServerFn({ method: "GET" })
       weight_logs: weightLogs ?? [],
       unread_messages_count: unreadCount ?? 0,
       last_weight_kg: lastWeight,
+      current_week_number: latestWeekRow?.week_number ?? null,
     };
   });
 

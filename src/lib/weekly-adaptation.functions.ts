@@ -172,11 +172,19 @@ export const getMemberWeekContext = createServerFn({ method: "POST" })
     // Priority B — find by member + week_number
     let targetWeek: number = data.weekNumber ?? -1;
     if (!byIdResult.data && targetWeek === -1) {
-      const { data: last } = await supabaseAdmin
+      // Auto-detect: find the most recent in_progress/published week (= current week),
+      // or fall back to the highest draft, or default to 1 (will be created below).
+      const { data: activeWeek } = await supabaseAdmin
         .from("assignment_weeks").select("week_number").eq("member_id", data.memberId)
-        .in("status", ["published", "in_progress", "done"]).order("week_number", { ascending: false }).limit(1).maybeSingle();
-      targetWeek = (last?.week_number ?? 0) + 1;
-      if (targetWeek === 0) targetWeek = 1;
+        .in("status", ["in_progress", "published"]).order("week_number", { ascending: false }).limit(1).maybeSingle();
+      if (activeWeek) {
+        targetWeek = activeWeek.week_number;
+      } else {
+        const { data: anyWeek } = await supabaseAdmin
+          .from("assignment_weeks").select("week_number").eq("member_id", data.memberId)
+          .order("week_number", { ascending: false }).limit(1).maybeSingle();
+        targetWeek = anyWeek ? anyWeek.week_number : 1;
+      }
     } else if (!byIdResult.data) {
       // targetWeek already set from data.weekNumber
     } else {
@@ -726,11 +734,23 @@ export const listMemberWeekHistory = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ memberId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await requireCoach(context.userId);
-    const { data: rows } = await supabaseAdmin
+    // Only show weeks from the current active assignment, not all historical ones
+    const { data: activeAssignment } = await supabaseAdmin
+      .from("assignments")
+      .select("id")
+      .eq("member_id", data.memberId)
+      .eq("active", true)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    let query = supabaseAdmin
       .from("assignment_weeks")
       .select("id, week_number, status, published_at, start_date, changes_summary, based_on_week")
-      .eq("member_id", data.memberId)
-      .order("week_number", { ascending: false });
+      .eq("member_id", data.memberId);
+    if (activeAssignment?.id) {
+      query = query.eq("assignment_id", activeAssignment.id);
+    }
+    const { data: rows } = await query.order("week_number", { ascending: false });
     return { weeks: rows ?? [] };
   });
 
