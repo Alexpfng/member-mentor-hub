@@ -616,6 +616,13 @@ export default function AdapterSemaine() {
                   const sugg = suggestFor(ex, fb);
                   const cardColor = COLOR_MAP[(ex.color || "").toLowerCase()]?.bg || "#555";
                   const lastIdx = (day.exercises?.length ?? 1) - 1;
+                  // RPE peut contenir soit une valeur numérique (badge), soit une consigne
+                  // texte (cardio). Une consigne texte ne doit JAMAIS aller dans le badge
+                  // étroit : sinon elle vole toute la largeur et le nom s'affiche à la
+                  // verticale (1 lettre par ligne).
+                  const rpeStr = ex.rpe_target == null ? "" : String(ex.rpe_target).trim();
+                  const rpeIsNumeric = rpeStr !== "" && !Number.isNaN(Number(rpeStr));
+                  const rpeConsigne = rpeStr !== "" && !rpeIsNumeric ? rpeStr : null;
                   return (
                     <div key={ei} style={{ display: "flex", gap: 4, alignItems: "stretch" }}>
                     <button
@@ -631,16 +638,17 @@ export default function AdapterSemaine() {
                     >
                       <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
                         <ColorDot c={ex.color} />
-                        <span style={{ flex: 1, fontSize: 13, fontWeight: 600, whiteSpace: "normal", wordBreak: "break-word", lineHeight: 1.3 }}>{ex.name}</span>
+                        <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 600, whiteSpace: "normal", wordBreak: "break-word", lineHeight: 1.3 }}>{ex.name}</span>
                         {sugg && <span title="Suggestion d'après les retours" style={{ fontSize: 11 }}>{sugg.type === "pain" ? "🔴" : "⚠"}</span>}
-                        <span className="cst-mono" style={{
-                          fontSize: 10, fontWeight: 700, flexShrink: 0,
-                          background: (ex.rpe_target != null && ex.rpe_target !== "") ? `${cardColor}33` : "rgba(255,255,255,0.06)",
-                          border: `1px solid ${(ex.rpe_target != null && ex.rpe_target !== "") ? cardColor + "66" : "rgba(255,255,255,0.12)"}`,
+                        <span className="cst-mono" title={rpeConsigne ?? undefined} style={{
+                          fontSize: 10, fontWeight: 700, flexShrink: 0, maxWidth: 90,
+                          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                          background: rpeIsNumeric ? `${cardColor}33` : "rgba(255,255,255,0.06)",
+                          border: `1px solid ${rpeIsNumeric ? cardColor + "66" : "rgba(255,255,255,0.12)"}`,
                           borderRadius: 5, padding: "2px 7px",
-                          color: (ex.rpe_target != null && ex.rpe_target !== "") ? cardColor : "rgba(255,255,255,0.35)",
+                          color: rpeIsNumeric ? cardColor : "rgba(255,255,255,0.35)",
                         }}>
-                          RPE {ex.rpe_target != null && ex.rpe_target !== "" ? ex.rpe_target : "—"}
+                          {rpeIsNumeric ? `RPE ${rpeStr}` : rpeConsigne ? "CONSIGNE" : "RPE —"}
                         </span>
                       </div>
                       <div className="cst-mono" style={{ fontSize: 10, opacity: 0.6, display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -648,6 +656,11 @@ export default function AdapterSemaine() {
                         {ex.charge && <span>{/^(pdc|bb|bw|poids du corps|pds de corps|corps|bodyweight|[-—/])$/i.test(ex.charge.trim()) ? "PDC" : /^[\d.,]+$/.test(ex.charge.trim()) ? `${ex.charge.trim()}kg` : ex.charge.trim()}</span>}
                         {ex.tempo && <span>⏱{ex.tempo}</span>}
                       </div>
+                      {rpeConsigne && (
+                        <div style={{ fontSize: 11, opacity: 0.75, lineHeight: 1.35, whiteSpace: "normal", wordBreak: "break-word" }}>
+                          {rpeConsigne}
+                        </div>
+                      )}
                       {fb?.rpe != null && (
                         <div className="cst-mono" style={{ fontSize: 10, fontWeight: 700, color: fb.rpe >= 9 ? '#C0392B' : fb.rpe >= 7 ? '#E07B39' : '#5BA85A' }}>
                           S{ctx.sourceSummary.weekNumber ?? "?"} · RPE réel {fb.rpe}

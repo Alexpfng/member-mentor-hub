@@ -190,6 +190,15 @@ export const assignProgram = createServerFn({ method: "POST" })
       .eq("member_id", data.member_id)
       .in("status", ["planned", "rest"])
       .neq("program_id", data.program_id);
+    // Clôture les séances encore « en cours » de l'ancien programme : sans ça elles
+    // restent affichées EN COURS indéfiniment (impossible à reprendre sous le nouveau
+    // programme). On ne touche pas aux séances libres (program_id NULL) ni à l'historique.
+    await supabaseAdmin
+      .from("sessions")
+      .update({ status: "skipped", ended_at: new Date().toISOString() })
+      .eq("member_id", data.member_id)
+      .eq("status", "in_progress")
+      .neq("program_id", data.program_id);
     return { assignment: row };
   });
 
@@ -218,6 +227,13 @@ export const removeMemberProgram = createServerFn({ method: "POST" })
       .delete()
       .eq("member_id", data.member_id)
       .eq("status", "draft");
+    // Clôture les séances de programme encore « en cours » (séances libres conservées).
+    await supabaseAdmin
+      .from("sessions")
+      .update({ status: "skipped", ended_at: new Date().toISOString() })
+      .eq("member_id", data.member_id)
+      .eq("status", "in_progress")
+      .not("program_id", "is", null);
     return { ok: true };
   });
 

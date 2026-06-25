@@ -169,20 +169,29 @@ export const getMemberWeekContext = createServerFn({ method: "POST" })
       ? await supabaseAdmin.from("assignment_weeks").select("*").eq("id", data.weekId).eq("member_id", data.memberId).maybeSingle()
       : { data: null };
 
+    // Toutes les recherches de semaines doivent rester scopées à l'assignation
+    // ACTIVE. Sinon, après un changement de programme, on retombe sur les
+    // assignment_weeks de l'ancien programme (même week_number) et « + Semaine »
+    // renvoie vers l'ancien programme au lieu d'en créer une neuve.
+    const activeAssignmentId = assignment?.id ?? null;
+
     // Priority B — find by member + week_number
     let targetWeek: number = data.weekNumber ?? -1;
     if (!byIdResult.data && targetWeek === -1) {
       // Auto-detect: find the most recent in_progress/published week (= current week),
       // or fall back to the highest draft, or default to 1 (will be created below).
-      const { data: activeWeek } = await supabaseAdmin
+      let activeWeekQ = supabaseAdmin
         .from("assignment_weeks").select("week_number").eq("member_id", data.memberId)
-        .in("status", ["in_progress", "published"]).order("week_number", { ascending: false }).limit(1).maybeSingle();
+        .in("status", ["in_progress", "published"]);
+      if (activeAssignmentId) activeWeekQ = activeWeekQ.eq("assignment_id", activeAssignmentId);
+      const { data: activeWeek } = await activeWeekQ.order("week_number", { ascending: false }).limit(1).maybeSingle();
       if (activeWeek) {
         targetWeek = activeWeek.week_number;
       } else {
-        const { data: anyWeek } = await supabaseAdmin
-          .from("assignment_weeks").select("week_number").eq("member_id", data.memberId)
-          .order("week_number", { ascending: false }).limit(1).maybeSingle();
+        let anyWeekQ = supabaseAdmin
+          .from("assignment_weeks").select("week_number").eq("member_id", data.memberId);
+        if (activeAssignmentId) anyWeekQ = anyWeekQ.eq("assignment_id", activeAssignmentId);
+        const { data: anyWeek } = await anyWeekQ.order("week_number", { ascending: false }).limit(1).maybeSingle();
         targetWeek = anyWeek ? anyWeek.week_number : 1;
       }
     } else if (!byIdResult.data) {
@@ -191,8 +200,12 @@ export const getMemberWeekContext = createServerFn({ method: "POST" })
       targetWeek = byIdResult.data.week_number;
     }
 
-    const byNumberResult = !byIdResult.data
-      ? await supabaseAdmin.from("assignment_weeks").select("*").eq("member_id", data.memberId).eq("week_number", targetWeek).order("created_at", { ascending: false }).limit(1).maybeSingle()
+    let byNumberQuery = !byIdResult.data
+      ? supabaseAdmin.from("assignment_weeks").select("*").eq("member_id", data.memberId).eq("week_number", targetWeek)
+      : null;
+    if (byNumberQuery && activeAssignmentId) byNumberQuery = byNumberQuery.eq("assignment_id", activeAssignmentId);
+    const byNumberResult = byNumberQuery
+      ? await byNumberQuery.order("created_at", { ascending: false }).limit(1).maybeSingle()
       : { data: null };
 
     let weekRow = byIdResult.data ?? byNumberResult.data;
@@ -273,10 +286,12 @@ export const getMemberWeekContext = createServerFn({ method: "POST" })
     }
 
     // Max week number that already exists for this member (to prevent nav into unborn weeks)
+    // Scopé à l'assignation de la semaine résolue (sinon les anciens programmes gonflent le max).
     const { data: allWeeks } = await supabaseAdmin
       .from("assignment_weeks")
       .select("week_number")
-      .eq("member_id", data.memberId);
+      .eq("member_id", data.memberId)
+      .eq("assignment_id", weekRow.assignment_id);
     const maxWeekNumber = allWeeks?.length
       ? Math.max(...allWeeks.map((w) => w.week_number))
       : weekRow.week_number;
