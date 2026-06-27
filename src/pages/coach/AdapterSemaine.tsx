@@ -286,7 +286,7 @@ function ExoEditModal({
             : field("SÉRIES", <input value={String(ex.series ?? "")} onChange={(e) => onChange((x) => ({ ...x, series: e.target.value }))} className="cst-input" />)}
           {field(ex.block_type === "emom" ? "REPS/MIN" : "REPS", <input value={String(ex.reps ?? "")} onChange={(e) => onChange((x) => ({ ...x, reps: e.target.value }))} className="cst-input" />)}
           {field("CHARGE (kg)", <input value={ex.charge ?? ""} onChange={(e) => onChange((x) => ({ ...x, charge: e.target.value }))} className="cst-input" />)}
-          {field("RPE", <input value={String(ex.rpe_target ?? "")} onChange={(e) => onChange((x) => ({ ...x, rpe_target: e.target.value }))} className="cst-input" />)}
+          {field("RPE", <input inputMode="decimal" placeholder="ex. 8 ou 9,5" value={String(ex.rpe_target ?? "")} onChange={(e) => { const v = e.target.value.replace(",", ".").replace(/[^0-9.]/g, ""); onChange((x) => ({ ...x, rpe_target: v })); }} className="cst-input" />)}
           {field("TEMPO", <input value={ex.tempo ?? ""} onChange={(e) => onChange((x) => ({ ...x, tempo: e.target.value || null }))} placeholder="3-1-2" className="cst-input" />)}
           {field("RÉCUP", <input value={ex.recup ?? ""} onChange={(e) => onChange((x) => ({ ...x, recup: e.target.value || null }))} placeholder="90s" className="cst-input" />)}
         </div>
@@ -616,12 +616,13 @@ export default function AdapterSemaine() {
                   const sugg = suggestFor(ex, fb);
                   const cardColor = COLOR_MAP[(ex.color || "").toLowerCase()]?.bg || "#555";
                   const lastIdx = (day.exercises?.length ?? 1) - 1;
-                  // RPE peut contenir soit une valeur numérique (badge), soit une consigne
-                  // texte (cardio). Une consigne texte ne doit JAMAIS aller dans le badge
-                  // étroit : sinon elle vole toute la largeur et le nom s'affiche à la
-                  // verticale (1 lettre par ligne).
+                  // Le RPE est une valeur numérique (badge). La virgule décimale (9,5)
+                  // est acceptée. Tout texte libre hérité d'un ancien import cardio reste
+                  // affiché sous la carte, mais ne s'affiche plus comme un badge « CONSIGNE ».
                   const rpeStr = ex.rpe_target == null ? "" : String(ex.rpe_target).trim();
-                  const rpeIsNumeric = rpeStr !== "" && !Number.isNaN(Number(rpeStr));
+                  const rpeNum = rpeStr === "" ? NaN : Number(rpeStr.replace(",", "."));
+                  const rpeIsNumeric = !Number.isNaN(rpeNum);
+                  const rpeDisplay = rpeIsNumeric ? rpeStr.replace(".", ",") : null;
                   const rpeConsigne = rpeStr !== "" && !rpeIsNumeric ? rpeStr : null;
                   return (
                     <div key={ei} style={{ display: "flex", gap: 4, alignItems: "stretch" }}>
@@ -648,7 +649,7 @@ export default function AdapterSemaine() {
                           borderRadius: 5, padding: "2px 7px",
                           color: rpeIsNumeric ? cardColor : "rgba(255,255,255,0.35)",
                         }}>
-                          {rpeIsNumeric ? `RPE ${rpeStr}` : rpeConsigne ? "CONSIGNE" : "RPE —"}
+                          {rpeIsNumeric ? `RPE ${rpeDisplay}` : "RPE —"}
                         </span>
                       </div>
                       <div className="cst-mono" style={{ fontSize: 10, opacity: 0.6, display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -663,7 +664,7 @@ export default function AdapterSemaine() {
                       )}
                       {fb?.rpe != null && (
                         <div className="cst-mono" style={{ fontSize: 10, fontWeight: 700, color: fb.rpe >= 9 ? '#C0392B' : fb.rpe >= 7 ? '#E07B39' : '#5BA85A' }}>
-                          S{ctx.sourceSummary.weekNumber ?? "?"} · RPE réel {fb.rpe}
+                          Retour membre S{ctx.sourceSummary.weekNumber ?? "?"} · RPE {fb.rpe}
                         </div>
                       )}
                       {ex.coach_notes && <div style={{ fontSize: 10, opacity: 0.5, fontStyle: "italic", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>"{ex.coach_notes}"</div>}
