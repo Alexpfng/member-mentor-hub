@@ -322,6 +322,16 @@ function ExoEditModal({
   );
 }
 
+// Séances d'endurance où les exercices/consignes doivent être fusionnés en une seule
+// carte (course, natation, renfo, trail…). En muscu, au contraire, chaque exercice est
+// réel et garde sa carte + son RPE : on n'y fusionne JAMAIS, même si le RPE contient du
+// texte parasite. La fusion est donc conditionnée au type de séance (libellé du jour).
+const ENDURANCE_SESSION_RE =
+  /(course|courir|footing|run(?:ning)?|natation|nage|swim|renfo|renforcement|trail|cardio|endurance|sortie|v[ée]lo|marche)/i;
+function isEnduranceSession(day: { label?: string | null } | null | undefined): boolean {
+  return ENDURANCE_SESSION_RE.test(day?.label ?? "");
+}
+
 // Un « exercice » cardio / course : soit block_type cardio, soit un bloc de consignes
 // texte importé (rpe_target non numérique). On les détecte pour fusionner une séance de
 // course — exercice réel + lignes de consignes — en une seule carte (comme côté membre).
@@ -634,12 +644,15 @@ export default function AdapterSemaine() {
                 {/* Cartes exercices */}
                 {(day.exercises ?? []).map((ex, ei) => {
                   const exos = day.exercises ?? [];
+                  // La fusion ne s'applique qu'aux séances d'endurance (course, natation,
+                  // renfo, trail…). En muscu, chaque exercice garde sa carte et son RPE.
+                  const dayIsEndurance = isEnduranceSession(day);
                   // Fragment cardio qui suit un autre exercice cardio : il est absorbé dans
                   // la carte précédente (une séance de course = une seule carte).
-                  if (ei > 0 && isCardioExo(ex) && isCardioExo(exos[ei - 1])) return null;
+                  if (dayIsEndurance && ei > 0 && isCardioExo(ex) && isCardioExo(exos[ei - 1])) return null;
                   // Tête d'un bloc cardio : on agrège les fragments cardio consécutifs.
                   const cardioFragments: ProgExercise[] = [];
-                  if (isCardioExo(ex)) {
+                  if (dayIsEndurance && isCardioExo(ex)) {
                     for (let k = ei + 1; k < exos.length && isCardioExo(exos[k]); k++) {
                       cardioFragments.push(exos[k]);
                     }
