@@ -367,9 +367,9 @@ function computeChanges(prev: WeekStructure | null, next: WeekStructure): Array<
       if (String(ex.series ?? "") !== String(old.series ?? "") || String(ex.reps ?? "") !== String(old.reps ?? "")) {
         changes.push({ type: "volume", label: `${name} : ${old.series ?? "—"}×${old.reps ?? "—"} → ${ex.series ?? "—"}×${ex.reps ?? "—"}` });
       }
-      if (String(ex.rpe_target ?? "") !== String(old.rpe_target ?? "")) {
-        changes.push({ type: "rpe", label: `${name} : RPE ${old.rpe_target ?? "—"} → ${ex.rpe_target ?? "—"}` });
-      }
+      // Les variations de RPE ne sont volontairement PAS listées dans le récap :
+      // elles n'apportent pas d'info utile et noient les vrais changements (charge,
+      // volume). Seuls charges, séries/reps et exos ajoutés/retirés apparaissent.
     }
     for (const [name] of prevByName) {
       if (!nextByName.has(name)) {
@@ -771,7 +771,8 @@ export const listMemberWeekHistory = createServerFn({ method: "POST" })
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Replace a single exercise inside a draft week's structure
-// Keeps series/reps/charge/rpe_target/tempo/recup from the source exercise.
+// Resets the prescription (series/reps/charge/rpe_target/tempo/recup) to library
+// defaults — a different movement should not inherit the previous one's numbers.
 // ─────────────────────────────────────────────────────────────────────────────
 export const replaceExercise = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -803,15 +804,24 @@ export const replaceExercise = createServerFn({ method: "POST" })
     const source = day?.exercises?.[data.exoIndex];
     if (!day || !source) throw new Error("Exercice source introuvable dans la semaine.");
 
+    // Remplacer = nouveau mouvement => nouvelle prescription. On NE conserve PAS les
+    // séries/reps/charge/RPE/tempo de l'ancien exercice (ils n'ont plus de sens pour
+    // un mouvement différent). On repart sur les mêmes valeurs par défaut qu'un ajout
+    // depuis la bibliothèque, à charge du coach de les ajuster.
     const replaced: ProgExercise = {
       ...source,
       name: exo.name,
       color: exo.color ?? source.color ?? null,
-      tempo: source.tempo ?? exo.default_tempo ?? null,
+      series: 3,
+      reps: 10,
+      charge: null,
+      rpe_target: 8,
+      tempo: exo.default_tempo ?? null,
+      recup: null,
       youtube_url: exo.youtube_url ?? null,
       youtube_id: exo.youtube_id ?? null,
-      coach_notes: data.memberNote?.trim() || source.coach_notes || exo.coach_notes || null,
-      code: exo.intensity_code ?? source.code ?? null,
+      coach_notes: data.memberNote?.trim() || exo.coach_notes || null,
+      code: exo.intensity_code ?? null,
     };
     day.exercises![data.exoIndex] = replaced;
 
