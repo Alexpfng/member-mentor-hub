@@ -322,6 +322,20 @@ function ExoEditModal({
   );
 }
 
+// Un « exercice » cardio / course : soit block_type cardio, soit un bloc de consignes
+// texte importé (rpe_target non numérique). On les détecte pour fusionner une séance de
+// course — exercice réel + lignes de consignes — en une seule carte (comme côté membre).
+function isCardioExo(ex: ProgExercise): boolean {
+  if ((ex.block_type ?? "").toLowerCase() === "cardio") return true;
+  const rpe = String(ex.rpe_target ?? "").trim();
+  return !!(rpe && Number.isNaN(Number(rpe.replace(",", "."))) && rpe.length > 3);
+}
+// Texte de consigne porté par un exercice cardio (stocké dans rpe_target non numérique).
+function cardioConsigneText(ex: ProgExercise): string | null {
+  const rpe = String(ex.rpe_target ?? "").trim();
+  return rpe && Number.isNaN(Number(rpe.replace(",", "."))) ? rpe : null;
+}
+
 export default function AdapterSemaine() {
   const { memberId } = useParams({ from: "/_authenticated/coach/membre/$memberId/adapter" });
   const search = useSearch({ from: "/_authenticated/coach/membre/$memberId/adapter" }) as { week?: number; weekId?: string };
@@ -408,15 +422,22 @@ export default function AdapterSemaine() {
       return { ...s, days };
     });
   }
-  // Réordonne un exercice dans sa séance (dir = -1 monter, +1 descendre)
-  function moveExo(dayIdx: number, exoIdx: number, dir: -1 | 1) {
+  // Réordonne un exercice (ou un bloc cardio fusionné de `len` exercices) dans sa séance.
+  // dir = -1 monter, +1 descendre. Pour un exercice simple, len = 1.
+  function moveBlock(dayIdx: number, startIdx: number, len: number, dir: -1 | 1) {
     setStructure((s) => {
       const days = [...(s.days ?? [])];
       const day = { ...days[dayIdx] };
       const exos = [...(day.exercises ?? [])];
-      const j = exoIdx + dir;
-      if (j < 0 || j >= exos.length) return s;
-      [exos[exoIdx], exos[j]] = [exos[j], exos[exoIdx]];
+      if (dir === -1) {
+        if (startIdx <= 0) return s;
+        const block = exos.splice(startIdx, len);
+        exos.splice(startIdx - 1, 0, ...block);
+      } else {
+        if (startIdx + len >= exos.length) return s;
+        const block = exos.splice(startIdx, len);
+        exos.splice(startIdx + 1, 0, ...block);
+      }
       day.exercises = exos;
       days[dayIdx] = day;
       return { ...s, days };
@@ -612,6 +633,18 @@ export default function AdapterSemaine() {
 
                 {/* Cartes exercices */}
                 {(day.exercises ?? []).map((ex, ei) => {
+                  const exos = day.exercises ?? [];
+                  // Fragment cardio qui suit un autre exercice cardio : il est absorbé dans
+                  // la carte précédente (une séance de course = une seule carte).
+                  if (ei > 0 && isCardioExo(ex) && isCardioExo(exos[ei - 1])) return null;
+                  // Tête d'un bloc cardio : on agrège les fragments cardio consécutifs.
+                  const cardioFragments: ProgExercise[] = [];
+                  if (isCardioExo(ex)) {
+                    for (let k = ei + 1; k < exos.length && isCardioExo(exos[k]); k++) {
+                      cardioFragments.push(exos[k]);
+                    }
+                  }
+                  const blockLen = 1 + cardioFragments.length;
                   const fb = ctx.feedback[ex.name];
                   const sugg = suggestFor(ex, fb);
                   const cardColor = COLOR_MAP[(ex.color || "").toLowerCase()]?.bg || "#555";
@@ -668,10 +701,24 @@ export default function AdapterSemaine() {
                         </div>
                       )}
                       {ex.coach_notes && <div style={{ fontSize: 10, opacity: 0.5, fontStyle: "italic", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>"{ex.coach_notes}"</div>}
+                      {cardioFragments.length > 0 && (
+                        <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 2, paddingTop: 6, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+                          {cardioFragments.map((f, fi) => {
+                            const txt = cardioConsigneText(f);
+                            return (
+                              <div key={fi} style={{ fontSize: 11, lineHeight: 1.35, whiteSpace: "normal", wordBreak: "break-word" }}>
+                                {f.name && <span style={{ fontWeight: 600, opacity: 0.9 }}>{f.name} </span>}
+                                {txt && <span style={{ opacity: 0.75 }}>{txt}</span>}
+                                {f.coach_notes && <span style={{ opacity: 0.6, fontStyle: "italic" }}> {f.coach_notes}</span>}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </button>
                     <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", gap: 3 }}>
-                      <button onClick={() => moveExo(di, ei, -1)} disabled={ei === 0} title="Monter" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", color: "var(--cst-text)", borderRadius: 5, width: 28, padding: "5px 0", fontSize: 12, lineHeight: 1, cursor: ei === 0 ? "default" : "pointer", opacity: ei === 0 ? 0.25 : 0.85 }}>↑</button>
-                      <button onClick={() => moveExo(di, ei, 1)} disabled={ei === lastIdx} title="Descendre" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", color: "var(--cst-text)", borderRadius: 5, width: 28, padding: "5px 0", fontSize: 12, lineHeight: 1, cursor: ei === lastIdx ? "default" : "pointer", opacity: ei === lastIdx ? 0.25 : 0.85 }}>↓</button>
+                      <button onClick={() => moveBlock(di, ei, blockLen, -1)} disabled={ei === 0} title="Monter" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", color: "var(--cst-text)", borderRadius: 5, width: 28, padding: "5px 0", fontSize: 12, lineHeight: 1, cursor: ei === 0 ? "default" : "pointer", opacity: ei === 0 ? 0.25 : 0.85 }}>↑</button>
+                      <button onClick={() => moveBlock(di, ei, blockLen, 1)} disabled={ei + blockLen - 1 >= lastIdx} title="Descendre" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", color: "var(--cst-text)", borderRadius: 5, width: 28, padding: "5px 0", fontSize: 12, lineHeight: 1, cursor: ei + blockLen - 1 >= lastIdx ? "default" : "pointer", opacity: ei + blockLen - 1 >= lastIdx ? 0.25 : 0.85 }}>↓</button>
                     </div>
                     </div>
                   );
