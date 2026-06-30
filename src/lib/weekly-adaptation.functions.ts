@@ -752,7 +752,7 @@ export const listMemberWeekHistory = createServerFn({ method: "POST" })
     // Only show weeks from the current active assignment, not all historical ones
     const { data: activeAssignment } = await supabaseAdmin
       .from("assignments")
-      .select("id")
+      .select("id, programs(duration_weeks)")
       .eq("member_id", data.memberId)
       .eq("active", true)
       .order("created_at", { ascending: false })
@@ -766,7 +766,59 @@ export const listMemberWeekHistory = createServerFn({ method: "POST" })
       query = query.eq("assignment_id", activeAssignment.id);
     }
     const { data: rows } = await query.order("week_number", { ascending: false });
-    return { weeks: rows ?? [] };
+    const programDurationWeeks = (activeAssignment as { programs?: { duration_weeks?: number | null } } | null)?.programs?.duration_weeks ?? null;
+    return { weeks: rows ?? [], programDurationWeeks };
+  });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Bulk-create all missing draft weeks from the active program's structure.
+// Idempotent: skips weeks that already have an assignment_weeks row.
+// ─────────────────────────────────────────────────────────────────────────────
+export const initProgramWeeks = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ memberId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await requireCoach(context.userId);
+    const { data: assignment } = await supabaseAdmin
+      .from("assignments")
+      .select("id, program_id, programs(duration_weeks, structure)")
+      .eq("member_id", data.memberId)
+      .eq("active", true)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!assignment) throw new Error("Aucun programme actif pour ce membre.");
+    const prog = (assignment as { programs?: { duration_weeks?: number | null; structure?: ProgramStructure } } | null)?.programs;
+    const totalWeeks = prog?.duration_weeks ?? (prog?.structure?.weeks?.length ?? 0);
+    if (totalWeeks === 0) throw new Error("Le programme n'a pas de semaines définies.");
+
+    // Existing week numbers for this assignment
+    const { data: existing } = await supabaseAdmin
+      .from("assignment_weeks")
+      .select("week_number")
+      .eq("assignment_id", assignment.id)
+      .eq("member_id", data.memberId);
+    const existingNums = new Set((existing ?? []).map((r) => r.week_number));
+
+    const rows = [];
+    for (let i = 1; i <= totalWeeks; i++) {
+      if (existingNums.has(i)) continue;
+      const weekStructure = prog?.structure?.weeks?.[i - 1] ?? prog?.structure?.weeks?.[0] ?? { days: [] };
+      rows.push({
+        assignment_id: assignment.id,
+        member_id: data.memberId,
+        program_id: assignment.program_id,
+        week_number: i,
+        based_on_week: null,
+        structure: weekStructure as unknown as never,
+        status: "draft",
+        created_by: context.userId,
+      });
+    }
+    if (rows.length === 0) return { created: 0 };
+    const { error } = await supabaseAdmin.from("assignment_weeks").insert(rows);
+    if (error) throw new Error(error.message);
+    return { created: rows.length };
   });
 
 // ─────────────────────────────────────────────────────────────────────────────

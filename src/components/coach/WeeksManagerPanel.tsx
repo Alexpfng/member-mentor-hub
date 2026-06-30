@@ -7,6 +7,7 @@ import {
   listMemberPastSessions,
   generateWeekFromSessions,
   deleteWeek,
+  initProgramWeeks,
 } from "@/lib/weekly-adaptation.functions";
 import { normalizeWeekId } from "@/lib/coach-navigation";
 
@@ -236,7 +237,9 @@ export default function WeeksManagerPanel({ memberId }: { memberId: string }) {
   const listFn = useServerFn(listMemberWeekHistory);
   const dupFn = useServerFn(duplicateWeekTo);
   const delFn = useServerFn(deleteWeek);
+  const initFn = useServerFn(initProgramWeeks);
   const [weeks, setWeeks] = useState<WeekRow[]>([]);
+  const [programDurationWeeks, setProgramDurationWeeks] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
@@ -247,6 +250,7 @@ export default function WeeksManagerPanel({ memberId }: { memberId: string }) {
     try {
       const r = await listFn({ data: { memberId } });
       setWeeks((r.weeks ?? []) as WeekRow[]);
+      setProgramDurationWeeks((r as { programDurationWeeks?: number | null }).programDurationWeeks ?? null);
     } finally {
       setLoading(false);
     }
@@ -264,6 +268,21 @@ export default function WeeksManagerPanel({ memberId }: { memberId: string }) {
   }
 
   const nextWeek = weeks.length > 0 ? Math.max(...weeks.map((w) => w.week_number)) + 1 : 1;
+
+  async function doInitWeeks() {
+    setBusy("init");
+    try {
+      const r = await initFn({ data: { memberId } });
+      await load();
+      if ((r as { created?: number }).created === 0) {
+        // already up to date
+      }
+    } catch (e) {
+      alert((e as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  }
 
   async function doDeleteWeek(weekId: string) {
     setBusy("del-" + weekId);
@@ -304,6 +323,17 @@ export default function WeeksManagerPanel({ memberId }: { memberId: string }) {
             <div className="cst-display" style={{ fontSize: 16, marginTop: 4 }}>Gestion des semaines</div>
           </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {programDurationWeeks != null && weeks.length < programDurationWeeks && (
+              <button
+                onClick={doInitWeeks}
+                disabled={busy === "init"}
+                className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+                style={{ whiteSpace: "nowrap", borderColor: "rgba(90,168,90,0.5)", color: "var(--cst-mid-green)" }}
+                title={`Créer les ${programDurationWeeks - weeks.length} semaines manquantes du programme`}
+              >
+                {busy === "init" ? "…" : `📋 Déployer S01→S${String(programDurationWeeks).padStart(2, "0")}`}
+              </button>
+            )}
             <button
               onClick={() => setShowGenerateModal(true)}
               className="cst-btn cst-btn-ghost-dark cst-btn-sm"
