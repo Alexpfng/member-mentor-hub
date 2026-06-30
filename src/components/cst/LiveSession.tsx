@@ -1862,6 +1862,8 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
           onCues={() => setShowCues(setStep.exercise)}
         />
 
+        <ExerciseMediaCard exercise={setStep.exercise} />
+
         {isTimed && timedSecs && !timedDone && (
           <TimedSetScreen
             key={`timed-${stepIdx}`}
