@@ -148,6 +148,7 @@ export default function MemberProgramme() {
                           <div className="cst-col" style={{ padding: '10px 14px 14px', gap: 14 }}>
                             {(w.days || []).map((d, di) => {
                               const dayNum = d.number ?? di + 1;
+                              const dayLabel = d.label || String(dayNum);
                               const sess = sessionsByKey[`${weekNum}-${dayNum}`] || sessionsByKey[`${i + 1}-${di + 1}`];
                               const plannedDate = plannedByKey[`${weekNum}-J${dayNum}`] || plannedByKey[`${weekNum}-${d.label}`];
                               const isDone = sess?.status === 'completed';
@@ -175,7 +176,7 @@ export default function MemberProgramme() {
                                         className={isInProgress ? 'cst-btn cst-btn-primary cst-btn-sm' : 'cst-btn cst-btn-ghost-dark cst-btn-sm'}
                                         onClick={() => {
                                           if (isInProgress && sess?.id) navigate({ to: `/membre/seance/${sess.id}` });
-                                          else navigate({ to: '/membre/logger', search: { week: weekNum, day: dayNum } });
+                                          else navigate({ to: '/membre/logger', search: { week: i, day: dayLabel } });
                                         }}
                                         style={{ fontSize: 9, padding: '4px 8px' }}
                                       >

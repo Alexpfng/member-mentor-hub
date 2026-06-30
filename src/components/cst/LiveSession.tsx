@@ -250,6 +250,51 @@ function formatRelativeDays(iso?: string | null): string {
 type LastSet = { weight: number | null; reps: number | null; rpe: number | null; loggedAt: string | null };
 type LastByExo = Record<string, Record<number, LastSet> & { _loggedAt?: string | null; _sets?: LastSet[] }>;
 
+function YtThumbLink({ vid, href }: { vid: string | null; href: string }) {
+  const [imgOk, setImgOk] = React.useState(true);
+  const thumbSrc = vid ? `https://img.youtube.com/vi/${vid}/hqdefault.jpg` : null;
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      style={{ display: "block", textDecoration: "none", borderRadius: 8, overflow: "hidden", border: "1px solid rgba(255,255,255,0.10)" }}
+      title="Voir la démo sur YouTube"
+    >
+      {thumbSrc && imgOk ? (
+        <div style={{ position: "relative" }}>
+          <img
+            src={thumbSrc}
+            alt="Aperçu vidéo"
+            onError={() => setImgOk(false)}
+            style={{ width: "100%", display: "block", objectFit: "cover", aspectRatio: "16/9" }}
+          />
+          <div style={{
+            position: "absolute", inset: 0,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            background: "rgba(0,0,0,0.25)",
+          }}>
+            <div style={{
+              width: 42, height: 42, borderRadius: "50%",
+              background: "rgba(0,0,0,0.65)", display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <span style={{ color: "#fff", fontSize: 16, marginLeft: 3 }}>▶</span>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div style={{
+          display: "inline-flex", alignItems: "center", gap: 6,
+          padding: "8px 10px", background: "rgba(255,255,255,0.04)",
+          color: "rgba(255,255,255,0.85)", fontSize: 10, letterSpacing: "0.14em",
+        }} className="cst-mono">
+          ▶ VOIR LA DÉMO
+        </div>
+      )}
+    </a>
+  );
+}
+
 function extractYoutubeId(input?: string | null): string | null {
   if (!input) return null;
   const s = String(input).trim();
@@ -1416,30 +1461,12 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
                     « {ex.coach_notes} »
                   </div>
                 )}
-                {(ex.youtube_id || ex.youtube_url) && (
-                  <a
-                    href={ex.youtube_url || `https://www.youtube.com/watch?v=${ex.youtube_id}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="cst-mono"
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 6,
-                      padding: "8px 10px",
-                      background: "rgba(255,255,255,0.04)",
-                      border: "1px solid rgba(255,255,255,0.12)",
-                      borderRadius: 6,
-                      color: "rgba(255,255,255,0.85)",
-                      fontSize: 10,
-                      textDecoration: "none",
-                      letterSpacing: "0.14em",
-                      width: "fit-content",
-                    }}
-                  >
-                    ▶ VOIR LA DÉMO
-                  </a>
-                )}
+                {(ex.youtube_id || ex.youtube_url) && (() => {
+                  const vid = ex.youtube_id || extractYoutubeId(ex.youtube_url);
+                  const href = ex.youtube_url || (vid ? `https://www.youtube.com/watch?v=${vid}` : null);
+                  if (!href) return null;
+                  return <YtThumbLink vid={vid} href={href} />;
+                })()}
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   <button onClick={() => setShowThread(ex.name)} className="cst-btn cst-btn-ghost-dark cst-btn-sm">
                     💬 Échanger / Envoyer une vidéo
