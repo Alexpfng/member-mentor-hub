@@ -267,7 +267,7 @@ function YtThumbLink({ vid, href }: { vid: string | null; href: string }) {
             src={thumbSrc}
             alt="Aperçu vidéo"
             onError={() => setImgOk(false)}
-            style={{ width: "100%", display: "block", objectFit: "cover", aspectRatio: "16/9" }}
+            style={{ width: "100%", display: "block", objectFit: "cover", maxHeight: 150, aspectRatio: "16/9" }}
           />
           <div style={{
             position: "absolute", inset: 0,
@@ -550,9 +550,10 @@ type Props = {
   exercises: ProgExercise[];
   onFinish: () => void | Promise<void>;
   finishing?: boolean;
+  initialMode?: "expert" | "debutant";
 };
 
-export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFinish, finishing }: Props) {
+export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFinish, finishing, initialMode }: Props) {
   const steps = useMemo(() => buildSteps(exercises), [exercises]);
   const totalWorkSets = useMemo(() => steps.filter((s) => s.kind === "set" || s.kind === "emom" || s.kind === "circuit").length, [steps]);
 
@@ -560,6 +561,7 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
   const snap = useMemo(() => loadSnapshot(sessionId), [sessionId]);
 
   const [phase, setPhase] = useState<"intro" | "step" | "rest" | "recap">(snap?.phase ?? "intro");
+  const [sessionMode] = useState<"expert" | "debutant">(initialMode ?? "debutant");
   const [stepIdx, setStepIdx] = useState(snap?.stepIdx ?? 0);
   const [logging, setLogging] = useState<null | {
     weight: string;
@@ -807,6 +809,29 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
     if (step.restAfter) {
       setPhase("rest");
       setLogging(null);
+    } else {
+      goNext();
+    }
+  }
+
+  async function advanceExpertSet(step: WorkSet) {
+    try {
+      await supabase.from("set_logs").insert({
+        session_id: sessionId,
+        exercise_name: step.exercise.name,
+        set_number: step.setNumber,
+        weight_kg: null,
+        reps: null,
+        rpe: null,
+        completed: true,
+      });
+    } catch { /* non-bloquant */ }
+    setSavedByStep((m) => ({
+      ...m,
+      [stepIdx]: { exo: step.exercise.name, weight: null, reps: null, rpe: null },
+    }));
+    if (step.restAfter) {
+      setPhase("rest");
     } else {
       goNext();
     }
@@ -1563,7 +1588,105 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
     );
   }
 
-  // current.kind === "set"
+  // current.kind === "set"  ── MODE EXPERT : écran simplifié sans saisie
+  if (sessionMode === "expert") {
+    const exStep = current as WorkSet;
+    const exColor2 = asColor(exStep.exercise.color);
+    const accent2 = colorHex(exColor2) || "var(--cst-mid-green)";
+    const repPlaceholder2 = parseRepsPerSet(exStep.exercise.reps, exStep.totalSets)[exStep.setNumber - 1]
+      || (exStep.exercise.reps ? String(exStep.exercise.reps) : "");
+    return (
+      <div style={shellStyle}>
+        {renderHeader()}
+        <div className="cst-scroll" style={{ padding: "0 22px 24px", display: "flex", flexDirection: "column", gap: 14, flex: 1, overflowY: "auto" }}>
+          {/* Mode badge */}
+          <div className="cst-mono" style={{ fontSize: 9, opacity: 0.4, letterSpacing: "0.2em" }}>MODE EXPÉRIMENTÉ</div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {exColor2 && <ColorDot color={exColor2} size={14} onClick={() => setShowColor(exColor2)} />}
+            <h2 className="cst-display" style={{ margin: 0, fontSize: 22, flex: 1, color: "#fff" }}>
+              {exStep.exercise.name.toUpperCase()}
+            </h2>
+            {exStep.exercise.tempo && (
+              <TempoBadge
+                tempo={exStep.exercise.tempo}
+                onClick={() => setShowTempo({ tempo: exStep.exercise.tempo, name: exStep.exercise.name })}
+              />
+            )}
+          </div>
+
+          <div style={{ padding: "22px 16px", background: `${accent2}14`, border: `1px solid ${accent2}55`, borderRadius: 12, textAlign: "center" }}>
+            <div className="cst-mono" style={{ fontSize: 10, opacity: 0.65, letterSpacing: "0.22em" }}>SÉRIE</div>
+            <div className="cst-display" style={{ fontSize: 56, lineHeight: 1, marginTop: 4 }}>
+              {exStep.setNumber}
+              <span style={{ fontSize: 22, opacity: 0.5 }}> / {exStep.totalSets}</span>
+            </div>
+            {repPlaceholder2 && (
+              <div className="cst-mono" style={{ fontSize: 11, opacity: 0.8, marginTop: 8 }}>
+                OBJECTIF {formatRepsObjectif(repPlaceholder2) ?? repPlaceholder2}
+              </div>
+            )}
+            {exStep.exercise.charge && !isBodyweight(exStep.exercise.charge) && (
+              <div className="cst-mono" style={{ fontSize: 11, opacity: 0.7, marginTop: 4 }}>
+                CHARGE : {exStep.exercise.charge}
+              </div>
+            )}
+          </div>
+
+          {exColor2 && <RPEGuidance color={exColor2} />}
+
+          {exStep.exercise.coach_notes && (
+            <div style={{ fontSize: 12, opacity: 0.85, fontStyle: "italic", whiteSpace: "pre-wrap", background: "rgba(45,90,53,0.10)", borderLeft: "2px solid var(--cst-mid-green)", padding: "6px 10px", borderRadius: 3 }}>
+              « {exStep.exercise.coach_notes} »
+            </div>
+          )}
+
+          <CuesActionBar
+            exercise={exStep.exercise}
+            onVideo={() => setShowVideo(exStep.exercise)}
+            onCues={() => setShowCues(exStep.exercise)}
+          />
+
+          {(exStep.exercise.youtube_id || exStep.exercise.youtube_url) && (() => {
+            const vid = exStep.exercise.youtube_id || extractYoutubeId(exStep.exercise.youtube_url);
+            const href = exStep.exercise.youtube_url || (vid ? `https://www.youtube.com/watch?v=${vid}` : null);
+            if (!href) return null;
+            return <YtThumbLink vid={vid} href={href} />;
+          })()}
+
+          <div style={{ flex: 1 }} />
+
+          <button
+            onClick={() => advanceExpertSet(exStep)}
+            className="cst-btn cst-btn-primary"
+            style={{ width: "100%", padding: "18px 0", fontSize: 14 }}
+          >
+            ✓ FAIT {exStep.restAfter ? "→ REPOS" : exStep.isLastSetOfExercise ? "→ EXO SUIVANT" : "→ SUIVANT"}
+          </button>
+
+          {canGoNextBlock && (
+            <button onClick={goNextBlock} className="cst-btn cst-btn-ghost-dark cst-btn-sm" style={{ width: "100%", borderStyle: "dashed", opacity: 0.9 }}>
+              ⤼ Passer cet exercice (j'y reviens via ☰)
+            </button>
+          )}
+
+          <div style={{ display: "flex", gap: 8 }}>
+            {canGoPrevBlock && (
+              <button onClick={goPrevBlock} className="cst-btn cst-btn-ghost-dark cst-btn-sm" style={{ flex: 1 }}>← BLOC PRÉCÉDENT</button>
+            )}
+            <button onClick={() => setShowThread(exStep.exercise.name)} className="cst-btn cst-btn-ghost-dark cst-btn-sm" style={{ flex: 1 }}>
+              💬 Filmer / Échanger
+            </button>
+            <button onClick={() => setPainFor(exStep.exercise.name)} className="cst-btn cst-btn-sm" style={{ flex: 1, background: "rgba(192,57,43,0.15)", border: "1px solid rgba(192,57,43,0.5)", color: "#ff8a7a" }}>
+              🔴 Douleur
+            </button>
+          </div>
+        </div>
+        {renderOverlays()}
+      </div>
+    );
+  }
+
   const setStep = current;
   const exColor = asColor(setStep.exercise.color);
   const accent = colorHex(exColor) || "var(--cst-mid-green)";

@@ -50,6 +50,7 @@ function SeancePage() {
   const [loading, setLoading] = useState(true);
   const [finishing, setFinishing] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [sessionMode, setSessionMode] = useState<"expert" | "debutant">("debutant");
 
   useEffect(() => {
     (async () => {
@@ -58,6 +59,19 @@ function SeancePage() {
       const { data: s } = await supabase
         .from("sessions").select("*").eq("id", sessionId).maybeSingle();
       setSession(s as SessionRow | null);
+
+      // Fetch session_mode from active assignment
+      if (u.user?.id) {
+        const { data: asgn } = await supabase
+          .from("assignments")
+          .select("session_mode")
+          .eq("member_id", u.user.id)
+          .eq("active", true)
+          .limit(1)
+          .maybeSingle();
+        const mode = (asgn as { session_mode?: string | null } | null)?.session_mode;
+        if (mode === "expert" || mode === "debutant") setSessionMode(mode);
+      }
 
       let exos: ProgExercise[] = [];
       let resolutionError: string | null = null;
@@ -212,6 +226,7 @@ function SeancePage() {
                 exercises={exercises}
                 onFinish={finishSession}
                 finishing={finishing}
+                initialMode={sessionMode}
               />
             )}
           </div>

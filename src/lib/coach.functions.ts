@@ -527,9 +527,10 @@ export const getMemberDetail = createServerFn({ method: "GET" })
         .select("weight_kg, height_cm, level, goal, injuries")
         .eq("user_id", memberId)
         .maybeSingle(),
-      supabaseAdmin
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabaseAdmin as any)
         .from("assignments")
-        .select("id, program_id, start_date, end_date, active")
+        .select("id, program_id, start_date, end_date, active, session_mode")
         .eq("member_id", memberId)
         .eq("active", true)
         .order("start_date", { ascending: false })
@@ -865,6 +866,26 @@ export const deleteProgram = createServerFn({ method: "POST" })
       .delete()
       .eq("id", data.id)
       .eq("coach_id", context.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const setAssignmentSessionMode = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      member_id: z.string().uuid(),
+      session_mode: z.enum(["expert", "debutant"]),
+    }).parse(d)
+  )
+  .handler(async ({ data, context }) => {
+    await assertCoach(context.userId);
+    const { error } = await supabaseAdmin
+      .from("assignments")
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .update({ session_mode: data.session_mode } as any)
+      .eq("member_id", data.member_id)
+      .eq("active", true);
     if (error) throw new Error(error.message);
     return { ok: true };
   });

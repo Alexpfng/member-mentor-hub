@@ -164,7 +164,7 @@ import { useNavigate, useParams } from '@tanstack/react-router';
 import { useServerFn } from '@tanstack/react-start';
 import CoachSidebar from '../../components/CoachSidebar';
 import { CSTSectionNum, CSTAvatar, CSTStatus } from '../../components/Atoms';
-import { getMemberDetail, updateMemberNotes, updateMemberProfile, assignProgram, removeMemberProgram, listPrograms } from '@/lib/coach.functions';
+import { getMemberDetail, updateMemberNotes, updateMemberProfile, assignProgram, removeMemberProgram, listPrograms, setAssignmentSessionMode } from '@/lib/coach.functions';
 import { VideoReviewPanel } from '../../components/coach/VideoReviewPanel';
 import MemberFollowupTab from '../../components/coach/MemberFollowupTab';
 import WeeksManagerPanel from '../../components/coach/WeeksManagerPanel';
@@ -204,6 +204,7 @@ export default function CoachMember() {
   const listProgramsFn = useServerFn(listPrograms);
   const assignFn = useServerFn(assignProgram);
   const removeFn = useServerFn(removeMemberProgram);
+  const setModeFn = useServerFn(setAssignmentSessionMode);
 
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
@@ -219,6 +220,7 @@ export default function CoachMember() {
   const [savingForm, setSavingForm] = useState(false);
   const [formSaved, setFormSaved] = useState(false);
   const [logWeight, setLogWeight] = useState(false);
+  const [sessionModeBusy, setSessionModeBusy] = useState(false);
 
   async function reload() {
     setLoading(true);
@@ -574,6 +576,38 @@ export default function CoachMember() {
                       </div>
                     )}
                     <WeeksManagerPanel memberId={memberId} />
+
+                    {/* Session mode toggle */}
+                    {data.assignment && (() => {
+                      const currentMode = data.assignment.session_mode || 'debutant';
+                      async function toggleMode() {
+                        const next = currentMode === 'expert' ? 'debutant' : 'expert';
+                        setSessionModeBusy(true);
+                        try {
+                          await setModeFn({ data: { member_id: memberId, session_mode: next } });
+                          setData((d) => d ? { ...d, assignment: { ...d.assignment, session_mode: next } } : d);
+                        } catch { /* ignore */ } finally { setSessionModeBusy(false); }
+                      }
+                      return (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, marginTop: 10 }}>
+                          <div>
+                            <div className="cst-mono" style={{ fontSize: 10, opacity: 0.6 }}>MODE SÉANCE</div>
+                            <div className="cst-display" style={{ fontSize: 13, marginTop: 2 }}>
+                              {currentMode === 'expert' ? 'EXPÉRIMENTÉ — sans saisie' : 'SUIVI — avec poids & reps'}
+                            </div>
+                          </div>
+                          <button
+                            onClick={toggleMode}
+                            disabled={sessionModeBusy}
+                            className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+                            style={{ fontSize: 10, opacity: sessionModeBusy ? 0.5 : 1 }}
+                          >
+                            {sessionModeBusy ? '…' : currentMode === 'expert' ? '→ SUIVI' : '→ EXPÉRIMENTÉ'}
+                          </button>
+                        </div>
+                      );
+                    })()}
+
                     {/* Recap semaine precedente */}
                     {(() => {
                       const prevWeek = (currentWeek || 1) - 1;
