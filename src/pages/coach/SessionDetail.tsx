@@ -354,7 +354,7 @@ function MediaLightbox({ media, onClose }: { media: { type: "photo" | "video"; u
 
   if (!media || !media.url) return null;
   return (
-    <div onClick={onClose} role="dialog" aria-modal="true"
+    <div role="dialog" aria-modal="true"
       style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,0.92)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
       <button type="button" onClick={onClose} aria-label="Fermer"
         style={{ position: "absolute", top: 16, right: 16, width: 44, height: 44, borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.15)", color: "#fff", fontSize: 22, lineHeight: 1, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>

@@ -210,7 +210,6 @@ function AssignDialog({
 
   return (
     <div
-      onClick={onClose}
       style={{
         position: "fixed",
         inset: 0,

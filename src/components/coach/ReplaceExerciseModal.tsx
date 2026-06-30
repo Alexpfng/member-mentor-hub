@@ -94,7 +94,6 @@ export default function ReplaceExerciseModal({
   return (
     <div
       onMouseDown={(e) => { overlayDownRef.current = e.target === e.currentTarget; }}
-      onClick={(e) => { if (overlayDownRef.current && e.target === e.currentTarget) onClose(); }}
       style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 16 }}
     >
       <div

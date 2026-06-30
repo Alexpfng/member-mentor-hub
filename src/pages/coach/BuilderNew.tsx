@@ -285,7 +285,7 @@ function QuickConfig({ ex, onChange, onClose, canChain }: PopoverProps) {
       position: 'fixed', inset: 0, zIndex: 100,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
-    }} onClick={onClose}>
+    }}>
       <div onClick={e => e.stopPropagation()} style={{
         background: 'var(--cst-card-bg)', border: '1px solid var(--cst-card-border)',
         borderRadius: 12, padding: 24, width: 480, maxHeight: '90vh',
@@ -609,7 +609,7 @@ function AssignModal({ programId, durationWeeks, onClose }: { programId: string;
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={onClose}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div onClick={e => e.stopPropagation()} style={{ background: '#1A2620', border: '1px solid rgba(45,90,53,0.5)', borderRadius: 12, padding: 24, width: 400, display: 'flex', flexDirection: 'column', gap: 14 }}>
         <h3 style={{ margin: 0, fontFamily: 'var(--cst-display)', fontSize: 20, color: '#fff' }}>ASSIGNER LE PROGRAMME</h3>
         <div style={{ maxHeight: 260, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>

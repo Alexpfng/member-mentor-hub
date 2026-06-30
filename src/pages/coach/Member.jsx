@@ -111,7 +111,6 @@ function AssignProgramModal({ program, busy, defaultWeek, onClose, onConfirm }) 
 
   return (
     <div
-      onClick={onClose}
       style={{
         position: 'fixed',
         inset: 0,

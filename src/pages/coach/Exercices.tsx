@@ -862,7 +862,6 @@ function AddFilterModal({
 
   return (
     <div
-      onClick={onClose}
       style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
     >
       <div
@@ -1055,7 +1054,6 @@ function Drawer({ children, onClose, title }: { children: React.ReactNode; onClo
   return (
     <>
       <div
-        onClick={onClose}
         style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 150 }}
       />
       <div

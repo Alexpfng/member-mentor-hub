@@ -103,7 +103,6 @@ function GenerateModal({
         background: "rgba(0,0,0,0.7)", display: "flex",
         alignItems: "flex-end", justifyContent: "center",
       }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
         style={{

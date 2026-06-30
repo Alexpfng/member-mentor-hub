@@ -106,7 +106,6 @@ type ModalState =
 function Overlay({ onClose }: { onClose: () => void }) {
   return (
     <div
-      onClick={onClose}
       style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 40, touchAction: "none" }}
     />
   );

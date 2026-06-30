@@ -103,7 +103,6 @@ export function CSTModal({
   if (!open) return null;
   return (
     <div
-      onClick={onClose}
       style={{
         position: "fixed",
         inset: 0,

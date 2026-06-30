@@ -46,7 +46,7 @@ export default function PainReportDialog({ open, onClose, sessionId, exerciseNam
   }
 
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 1000, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 1000, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
       <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 480, background: "#1B2E1F", color: "#fff", borderRadius: "16px 16px 0 0", padding: 22, display: "flex", flexDirection: "column", gap: 14, maxHeight: "90vh", overflowY: "auto" }}>
         <div className="cst-mono" style={{ fontSize: 10, opacity: 0.55, letterSpacing: "0.22em" }}>🔴 SIGNALER UNE DOULEUR</div>
         <h2 className="cst-display" style={{ margin: 0, fontSize: 20 }}>{exerciseName.toUpperCase()}</h2>

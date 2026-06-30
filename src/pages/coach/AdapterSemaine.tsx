@@ -178,7 +178,7 @@ function LibraryPicker({ onClose, onPick }: { onClose: () => void; onPick: (ex: 
   }, [exercises, query]);
 
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 120, padding: 16 }}>
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 120, padding: 16 }}>
       <div onClick={(e) => e.stopPropagation()} className="cst-screen cst-hatch" style={{ width: 460, maxHeight: "80vh", display: "flex", flexDirection: "column", padding: 20, borderRadius: 12 }}>
         <div className="cst-mono" style={{ fontSize: 10, opacity: 0.6, letterSpacing: "0.18em", marginBottom: 8 }}>BIBLIOTHÈQUE · AJOUTER UN EXERCICE</div>
         <input
@@ -249,7 +249,6 @@ function ExoEditModal({
   return (
     <div
       onMouseDown={(e) => { overlayDownRef.current = e.target === e.currentTarget; }}
-      onClick={(e) => { if (overlayDownRef.current && e.target === e.currentTarget) onClose(); }}
       style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 120, padding: 16 }}
     >
       <div onClick={(e) => e.stopPropagation()} className="cst-screen cst-hatch" style={{ width: 440, maxHeight: "88vh", overflowY: "auto", padding: 22, borderRadius: 12 }}>
@@ -849,7 +848,7 @@ function Shell({ children }: { children: React.ReactNode }) {
 
 function PreviewModal({ structure, weekNumber, onClose }: { structure: WeekStructure; weekNumber: number; onClose: () => void }) {
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 16 }}>
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 16 }}>
       <div onClick={(e) => e.stopPropagation()} className="cst-screen cst-hatch" style={{ width: 480, maxHeight: "85vh", overflow: "auto", padding: 24, borderRadius: 12 }}>
         <div className="cst-mono" style={{ fontSize: 10, opacity: 0.6, letterSpacing: "0.18em", marginBottom: 6 }}>APERÇU MEMBRE</div>
         <h2 className="cst-display" style={{ fontSize: 22, marginBottom: 16 }}>Semaine {weekNumber}</h2>

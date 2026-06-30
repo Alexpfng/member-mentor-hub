@@ -2633,7 +2633,6 @@ function VideoModal({ exercise, onClose }: { exercise: ProgExercise | null; onCl
   const fallbackUrl = exercise.youtube_url || exercise.youtube_alt_url || null;
   return (
     <div
-      onClick={onClose}
       style={{
         position: "fixed",
         inset: 0,
@@ -2725,7 +2724,6 @@ function CuesModal({
   })();
   return (
     <div
-      onClick={onClose}
       style={{
         position: "fixed",
         inset: 0,

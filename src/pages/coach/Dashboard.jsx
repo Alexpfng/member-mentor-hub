@@ -51,7 +51,7 @@ function InviteModal({ onClose, onDone }) {
   }
 
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 16 }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 16 }}>
       <form onClick={(e) => e.stopPropagation()} onSubmit={submit} className="cst-screen cst-hatch" style={{ width: 460, padding: 28, borderRadius: 14 }}>
         <h2 className="cst-display" style={{ fontSize: 22, marginBottom: 4 }}>INVITER</h2>
         <div className="cst-italic" style={{ fontSize: 14, color: 'var(--cst-mid-green)', marginBottom: 18 }}>un nouvel adhérent.</div>
