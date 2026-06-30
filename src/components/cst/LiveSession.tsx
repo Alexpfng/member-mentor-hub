@@ -392,7 +392,17 @@ type EmomBlock = {
   alternating: boolean;       // reps alternées paires/impaires
 };
 
-type Step = Brief | WorkSet | EmomBlock;
+type CircuitBlock = {
+  kind: "circuit";
+  blockIdx: number;
+  blockLetter?: string;
+  exercises: ProgExercise[];
+  defaultTotalMin: number;   // total time suggestion (multiple of 5)
+  workSecPerStation: number; // 60s default
+  restSecBetween: number;    // from recup or 0
+};
+
+type Step = Brief | WorkSet | EmomBlock | CircuitBlock;
 
 function buildSteps(exercises: ProgExercise[]): Step[] {
   const blocks = groupBlocks(exercises || []);
@@ -412,6 +422,20 @@ function buildSteps(exercises: ProgExercise[]): Step[] {
       const altMatch = repsRaw.match(/^(\d+)\s*\/\s*(\d+)$/);
       const repsLabel = altMatch ? `${altMatch[1]}/${altMatch[2]}` : (repsPerMin != null ? String(repsPerMin) : null);
       steps.push({ kind: "emom", blockIdx, blockLetter: b.letter, exercise: ex, durationMin, repsPerMin, repsLabel, alternating: !!altMatch });
+      return;
+    }
+
+    // Circuit blocks get a dedicated multi-station timer — no brief, no sets
+    if (blockType === "circuit" && !isSuperset) {
+      steps.push({
+        kind: "circuit",
+        blockIdx,
+        blockLetter: b.letter,
+        exercises: b.exercises,
+        defaultTotalMin: 20,
+        workSecPerStation: 60,
+        restSecBetween: restSec > 0 ? restSec : 0,
+      });
       return;
     }
 
@@ -530,7 +554,7 @@ type Props = {
 
 export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFinish, finishing }: Props) {
   const steps = useMemo(() => buildSteps(exercises), [exercises]);
-  const totalWorkSets = useMemo(() => steps.filter((s) => s.kind === "set" || s.kind === "emom").length, [steps]);
+  const totalWorkSets = useMemo(() => steps.filter((s) => s.kind === "set" || s.kind === "emom" || s.kind === "circuit").length, [steps]);
 
   // Restore from localStorage on first render
   const snap = useMemo(() => loadSnapshot(sessionId), [sessionId]);
@@ -832,7 +856,7 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
     const idx = steps.findIndex((s) =>
       s.kind === "set" || s.kind === "emom"
         ? s.exercise.name === name
-        : s.kind === "brief"
+        : s.kind === "brief" || s.kind === "circuit"
           ? s.exercises.some((e) => e.name === name)
           : false,
     );
@@ -1323,6 +1347,34 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
             goNext();
           }}
           onPain={() => setPainFor(current.exercise.name)}
+        />
+        {renderOverlays()}
+      </div>
+    );
+  }
+
+  /* ───────── Circuit step ───────── */
+
+  if (current.kind === "circuit") {
+    return (
+      <div style={shellStyle}>
+        {renderHeader()}
+        <CircuitScreen
+          key={`circuit-${stepIdx}`}
+          exercises={current.exercises}
+          defaultTotalMin={current.defaultTotalMin}
+          workSecPerStation={current.workSecPerStation}
+          restSecBetween={current.restSecBetween}
+          blockLetter={current.blockLetter}
+          sessionId={sessionId}
+          onFinish={() => {
+            setSavedByStep((m) => ({
+              ...m,
+              [stepIdx]: { exo: current.exercises.map((e) => e.name).join("+"), weight: null, reps: null, rpe: null },
+            }));
+            goNext();
+          }}
+          onPain={() => setPainFor(current.exercises[0]?.name ?? "")}
         />
         {renderOverlays()}
       </div>
@@ -2047,12 +2099,13 @@ function EmomScreen({
   onFinish: (repsByMinute: number[]) => void;
   onPain: () => void;
 }) {
-  const totalSec = durationMin * 60;
+  const [adjustedMin, setAdjustedMin] = useState(Math.max(5, Math.round(durationMin / 5) * 5 || 10));
+  const totalSec = adjustedMin * 60;
   const [elapsed, setElapsed] = useState(0);
   const [running, setRunning] = useState(false);
   const [done, setDone] = useState(false);
   const [rpe, setRpe] = useState<number | null>(null);
-  const [repsByMinute, setRepsByMinute] = useState<number[]>(Array(durationMin).fill(repsPerMin ?? 0));
+  const [repsByMinute, setRepsByMinute] = useState<number[]>(Array(adjustedMin).fill(repsPerMin ?? 0));
   const doneFiredRef = useRef(false);
 
   const currentMinute = Math.floor(elapsed / 60); // 0-indexed current minute
@@ -2104,7 +2157,7 @@ function EmomScreen({
       <div style={{ padding: "0 22px 24px", display: "flex", flexDirection: "column", gap: 14, flex: 1, overflowY: "auto" }}>
         <div>
           <span className="cst-mono" style={{ fontSize: 10, opacity: 0.55, letterSpacing: "0.22em" }}>
-            EMOM · {exercise.code && `${exercise.code} · `}{durationMin} MIN
+            EMOM · {exercise.code && `${exercise.code} · `}{adjustedMin} MIN
             {repsLabel ? ` · ${repsLabel} REPS/MIN` : repsPerMin ? ` · ${repsPerMin} REPS/MIN` : ""}
           </span>
           <h2 className="cst-display" style={{ margin: "4px 0 0", fontSize: 22, color: "#fff" }}>
@@ -2116,6 +2169,31 @@ function EmomScreen({
             </div>
           )}
         </div>
+
+        {/* Duration adjustment — only before start */}
+        {!running && elapsed === 0 && (
+          <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "center", padding: "10px 0 2px" }}>
+            <button
+              onClick={() => {
+                const next = Math.max(5, adjustedMin - 5);
+                setAdjustedMin(next);
+                setRepsByMinute(Array(next).fill(repsPerMin ?? 0));
+              }}
+              className="cst-btn cst-btn-ghost-dark"
+              style={{ padding: "8px 14px", fontSize: 16, fontWeight: 700 }}
+            >−5 MIN</button>
+            <span className="cst-display" style={{ fontSize: 26, minWidth: 80, textAlign: "center" }}>{adjustedMin} MIN</span>
+            <button
+              onClick={() => {
+                const next = adjustedMin + 5;
+                setAdjustedMin(next);
+                setRepsByMinute(Array(next).fill(repsPerMin ?? 0));
+              }}
+              className="cst-btn cst-btn-ghost-dark"
+              style={{ padding: "8px 14px", fontSize: 16, fontWeight: 700 }}
+            >+5 MIN</button>
+          </div>
+        )}
 
         <div style={{ position: "relative", width: 220, height: 220, alignSelf: "center" }}>
           <svg width="220" height="220" viewBox="0 0 220 220">
@@ -2139,7 +2217,7 @@ function EmomScreen({
               <span className="cst-mono" style={{ fontSize: 13, opacity: 0.6, textAlign: "center" }}>PRÊT</span>
             ) : (
               <>
-                <span className="cst-mono" style={{ fontSize: 11, opacity: 0.5 }}>MIN {currentMinute + 1} / {durationMin}</span>
+                <span className="cst-mono" style={{ fontSize: 11, opacity: 0.5 }}>MIN {currentMinute + 1} / {adjustedMin}</span>
                 <span className="cst-display" style={{ fontSize: 44, color: "#fff", lineHeight: 1 }}>
                   0:{String(secLeftInMinute).padStart(2, "0")}
                 </span>
@@ -2225,7 +2303,7 @@ function EmomScreen({
           {exercise.name.toUpperCase()}
         </h2>
         <div className="cst-mono" style={{ fontSize: 12, opacity: 0.7, marginTop: 4 }}>
-          {durationMin} min · {totalReps} reps au total
+          {adjustedMin} min · {totalReps} reps au total
         </div>
       </div>
 
@@ -2251,6 +2329,267 @@ function EmomScreen({
         style={{ width: "100%", padding: "16px 0", fontSize: 14, opacity: rpe == null ? 0.5 : 1 }}
       >
         VALIDER L'EMOM →
+      </button>
+    </div>
+  );
+}
+
+/* ───────── Circuit screen — multi-station auto-cycling timer ───────── */
+
+function CircuitScreen({
+  exercises,
+  defaultTotalMin,
+  workSecPerStation,
+  restSecBetween,
+  blockLetter,
+  onFinish,
+  onPain,
+}: {
+  exercises: ProgExercise[];
+  defaultTotalMin: number;
+  workSecPerStation: number;
+  restSecBetween: number;
+  blockLetter?: string;
+  sessionId: string;
+  onFinish: () => void;
+  onPain: () => void;
+}) {
+  const [totalMin, setTotalMin] = React.useState(defaultTotalMin);
+  const [elapsed, setElapsed] = React.useState(0);
+  const [running, setRunning] = React.useState(false);
+  const [done, setDone] = React.useState(false);
+  const [rpe, setRpe] = React.useState<number | null>(null);
+  const doneFiredRef = React.useRef(false);
+
+  const n = exercises.length;
+  const stationCycle = workSecPerStation + restSecBetween;
+  const totalSec = totalMin * 60;
+
+  const stationAbsolute = stationCycle > 0 ? Math.floor(elapsed / stationCycle) : 0;
+  const stationInRound = n > 0 ? stationAbsolute % n : 0;
+  const round = n > 0 ? Math.floor(stationAbsolute / n) : 0;
+  const timeInStation = stationCycle > 0 ? elapsed % stationCycle : 0;
+  const isWorking = timeInStation < workSecPerStation;
+  const phaseCountdown = isWorking
+    ? workSecPerStation - timeInStation
+    : stationCycle - timeInStation;
+  const nextStationIdx = (stationInRound + 1) % n;
+  const nextExercise = exercises[nextStationIdx];
+  const totalProgress = totalSec > 0 ? elapsed / totalSec : 0;
+  const phaseProgress = (isWorking ? workSecPerStation : restSecBetween) > 0
+    ? (isWorking ? timeInStation / workSecPerStation : (timeInStation - workSecPerStation) / restSecBetween)
+    : 0;
+
+  const currentExercise = exercises[stationInRound];
+
+  useEffect(() => {
+    if (!running || elapsed >= totalSec) return;
+    const t = setTimeout(() => setElapsed((e) => e + 1), 1000);
+    return () => clearTimeout(t);
+  }, [running, elapsed, totalSec]);
+
+  useEffect(() => {
+    if (elapsed >= totalSec && running && !doneFiredRef.current) {
+      doneFiredRef.current = true;
+      setRunning(false);
+      setDone(true);
+      try {
+        if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+          (navigator as Navigator & { vibrate: (p: number | number[]) => boolean }).vibrate([300, 100, 300, 100, 600]);
+        }
+      } catch { /* ignore */ }
+    }
+  }, [elapsed, totalSec, running]);
+
+  // Vibrate at each station change
+  const prevStationRef = React.useRef(-1);
+  useEffect(() => {
+    if (!running || stationAbsolute === prevStationRef.current) return;
+    prevStationRef.current = stationAbsolute;
+    if (stationAbsolute > 0) {
+      try {
+        if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+          (navigator as Navigator & { vibrate: (p: number | number[]) => boolean }).vibrate([150, 50, 150]);
+        }
+      } catch { /* ignore */ }
+    }
+  }, [stationAbsolute, running]);
+
+  const radius = 90;
+  const phaseRadius = 64;
+  const circ = 2 * Math.PI * radius;
+  const phaseCirc = 2 * Math.PI * phaseRadius;
+
+  if (!done) {
+    return (
+      <div style={{ padding: "0 22px 24px", display: "flex", flexDirection: "column", gap: 14, flex: 1, overflowY: "auto" }}>
+        <div>
+          <span className="cst-mono" style={{ fontSize: 10, opacity: 0.55, letterSpacing: "0.22em" }}>
+            CIRCUIT {blockLetter ? `· BLOC ${blockLetter} ` : ""}· {n} STATIONS · {totalMin} MIN
+          </span>
+        </div>
+
+        {/* Duration adjustment — only before start */}
+        {!running && elapsed === 0 && (
+          <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "center", padding: "10px 0 2px" }}>
+            <button
+              onClick={() => setTotalMin((m) => Math.max(5, m - 5))}
+              className="cst-btn cst-btn-ghost-dark"
+              style={{ padding: "8px 14px", fontSize: 16, fontWeight: 700 }}
+            >−5 MIN</button>
+            <span className="cst-display" style={{ fontSize: 26, minWidth: 80, textAlign: "center" }}>{totalMin} MIN</span>
+            <button
+              onClick={() => setTotalMin((m) => m + 5)}
+              className="cst-btn cst-btn-ghost-dark"
+              style={{ padding: "8px 14px", fontSize: 16, fontWeight: 700 }}
+            >+5 MIN</button>
+          </div>
+        )}
+
+        {/* Timer rings */}
+        <div style={{ position: "relative", width: 220, height: 220, alignSelf: "center" }}>
+          <svg width="220" height="220" viewBox="0 0 220 220">
+            {/* Outer ring: total progress */}
+            <circle cx="110" cy="110" r={radius} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
+            <circle cx="110" cy="110" r={radius} fill="none" stroke="#3A8A4D" strokeWidth="8"
+              strokeDasharray={circ} strokeDashoffset={circ * (1 - totalProgress)}
+              strokeLinecap="round" transform="rotate(-90 110 110)"
+              style={{ transition: "stroke-dashoffset 1s linear" }} />
+            {/* Inner ring: current phase */}
+            <circle cx="110" cy="110" r={phaseRadius} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="6" />
+            <circle cx="110" cy="110" r={phaseRadius} fill="none"
+              stroke={isWorking ? (phaseCountdown < 10 ? "#C9483A" : "#D4A53B") : "rgba(100,160,220,0.8)"}
+              strokeWidth="6"
+              strokeDasharray={phaseCirc} strokeDashoffset={phaseCirc * (1 - phaseProgress)}
+              strokeLinecap="round" transform="rotate(-90 110 110)"
+              style={{ transition: "stroke-dashoffset 1s linear" }} />
+          </svg>
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 2 }}>
+            {!running && elapsed === 0 ? (
+              <span className="cst-mono" style={{ fontSize: 13, opacity: 0.6 }}>PRÊT</span>
+            ) : (
+              <>
+                <span className="cst-mono" style={{ fontSize: 9, opacity: 0.5 }}>
+                  {isWorking ? "TRAVAIL" : "TRANSITION"} · TOUR {round + 1}
+                </span>
+                <span className="cst-display" style={{ fontSize: 44, color: "#fff", lineHeight: 1 }}>
+                  {String(Math.floor(phaseCountdown / 60)).padStart(1, "0")}:{String(phaseCountdown % 60).padStart(2, "0")}
+                </span>
+                <span className="cst-mono" style={{ fontSize: 9, opacity: 0.5 }}>
+                  STATION {stationInRound + 1} / {n}
+                </span>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Current exercise */}
+        {(running || elapsed > 0) && currentExercise && (
+          <div style={{
+            padding: "14px 16px",
+            background: isWorking ? "rgba(45,90,53,0.18)" : "rgba(60,80,140,0.15)",
+            border: `1px solid ${isWorking ? "rgba(45,90,53,0.45)" : "rgba(60,80,140,0.45)"}`,
+            borderRadius: 10,
+          }}>
+            <div className="cst-mono" style={{ fontSize: 9, opacity: 0.6, marginBottom: 4 }}>
+              {isWorking ? "▶ EN COURS" : "⏸ TRANSITION"}
+            </div>
+            <div className="cst-display" style={{ fontSize: 18, color: "#fff" }}>
+              {currentExercise.name.toUpperCase()}
+            </div>
+            {currentExercise.reps && (
+              <div className="cst-mono" style={{ fontSize: 11, opacity: 0.7, marginTop: 4 }}>
+                {currentExercise.reps}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Next station preview */}
+        {running && n > 1 && (
+          <div style={{ padding: "8px 12px", background: "rgba(255,255,255,0.03)", borderRadius: 8, display: "flex", alignItems: "center", gap: 10 }}>
+            <span className="cst-mono" style={{ fontSize: 9, opacity: 0.5, whiteSpace: "nowrap" }}>SUIVANT →</span>
+            <span className="cst-display" style={{ fontSize: 13, opacity: 0.75 }}>{nextExercise?.name.toUpperCase()}</span>
+          </div>
+        )}
+
+        {/* Stations list before start */}
+        {!running && elapsed === 0 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <span className="cst-mono" style={{ fontSize: 9, opacity: 0.5, letterSpacing: "0.18em" }}>STATIONS</span>
+            {exercises.map((ex, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", background: "rgba(255,255,255,0.03)", borderRadius: 6 }}>
+                <span className="cst-mono" style={{ fontSize: 10, opacity: 0.45, minWidth: 20 }}>{i + 1}.</span>
+                <span className="cst-display" style={{ fontSize: 13 }}>{ex.name.toUpperCase()}</span>
+                {ex.reps && <span className="cst-mono" style={{ fontSize: 10, opacity: 0.6, marginLeft: "auto" }}>{ex.reps}</span>}
+              </div>
+            ))}
+            <div className="cst-mono" style={{ fontSize: 9, opacity: 0.45, marginTop: 4 }}>
+              {workSecPerStation}s travail{restSecBetween > 0 ? ` · ${restSecBetween}s transition` : " · pas de repos"}
+            </div>
+          </div>
+        )}
+
+        <div style={{ display: "flex", gap: 8 }}>
+          <button
+            onClick={() => setRunning((r) => !r)}
+            className="cst-btn cst-btn-primary"
+            style={{ flex: 2, padding: "14px 0" }}
+          >
+            {running ? "⏸ PAUSE" : elapsed === 0 ? "▶ DÉMARRER" : "▶ REPRENDRE"}
+          </button>
+          <button
+            onClick={() => { setDone(true); setRunning(false); }}
+            className="cst-btn cst-btn-ghost-dark"
+            style={{ flex: 1, padding: "14px 0", fontSize: 11 }}
+          >
+            TERMINER
+          </button>
+        </div>
+
+        <button onClick={onPain} className="cst-btn cst-btn-sm" style={{ alignSelf: "flex-start", background: "rgba(192,57,43,0.15)", border: "1px solid rgba(192,57,43,0.5)", color: "#ff8a7a" }}>
+          🔴 Signaler une douleur
+        </button>
+      </div>
+    );
+  }
+
+  // Finished — RPE recap
+  const minElapsed = Math.round(elapsed / 60);
+  return (
+    <div style={{ padding: "0 22px 24px", display: "flex", flexDirection: "column", gap: 16, flex: 1, overflowY: "auto" }}>
+      <div>
+        <span className="cst-mono" style={{ fontSize: 10, opacity: 0.55, letterSpacing: "0.22em" }}>✓ CIRCUIT TERMINÉ</span>
+        <h2 className="cst-display" style={{ margin: "4px 0 0", fontSize: 22, color: "#fff" }}>
+          {n} STATIONS · {minElapsed} MIN
+        </h2>
+        <div className="cst-mono" style={{ fontSize: 12, opacity: 0.7, marginTop: 4 }}>
+          {round} tour{round > 1 ? "s" : ""} complété{round > 1 ? "s" : ""}
+        </div>
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <span className="cst-mono" style={{ fontSize: 10, opacity: 0.6, letterSpacing: "0.18em" }}>RPE GLOBAL SUR CE CIRCUIT</span>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 4 }}>
+          {[1,2,3,4,5,6,7,8,9,10].map((v) => {
+            const on = rpe === v;
+            const hue = v >= 9 ? "#C9483A" : v >= 7 ? "#D4A53B" : "#3A8A4D";
+            return (
+              <button key={v} onClick={() => setRpe(v)} className="cst-mono" style={{ padding: "12px 0", borderRadius: 6, border: `1px solid ${on ? hue : "rgba(255,255,255,0.12)"}`, background: on ? `${hue}33` : "transparent", color: on ? "#fff" : "rgba(255,255,255,0.7)", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>
+                {v}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <button
+        onClick={onFinish}
+        disabled={rpe == null}
+        className="cst-btn cst-btn-primary"
+        style={{ width: "100%", padding: "16px 0", fontSize: 14, opacity: rpe == null ? 0.5 : 1 }}
+      >
+        VALIDER LE CIRCUIT →
       </button>
     </div>
   );
