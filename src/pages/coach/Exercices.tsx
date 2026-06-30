@@ -99,6 +99,8 @@ export default function Exercices() {
   const [editing, setEditing] = useState<Partial<Exercise> | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [sortCol, setSortCol] = useState<"name" | "muscle_group" | "equipement" | "default_tempo" | null>(null);
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
   async function reload() {
     setLoading(true);
@@ -162,6 +164,16 @@ export default function Exercices() {
       return true;
     });
   }, [items, search, filterMuscle, filterEquip, filterIntensity, filterPattern, showArchived]);
+
+  const sorted = useMemo(() => {
+    if (!sortCol) return filtered;
+    return [...filtered].sort((a, b) => {
+      const av = (a[sortCol] ?? "").toString().toLowerCase();
+      const bv = (b[sortCol] ?? "").toString().toLowerCase();
+      const cmp = av.localeCompare(bv, "fr", { numeric: true });
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+  }, [filtered, sortCol, sortDir]);
 
   function toggleInSet(set: Set<string>, value: string, setter: (s: Set<string>) => void) {
     const next = new Set(set);
@@ -452,17 +464,49 @@ export default function Exercices() {
             overflow: "hidden",
           }}
         >
-          {!loading && filtered.length > 0 && (
-            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 16px", borderBottom: "1px solid var(--cst-hairline)" }}>
-              <input
-                type="checkbox"
-                checked={filtered.length > 0 && filtered.every((e) => selected.has(e.id))}
-                onChange={toggleSelectAllVisible}
-                aria-label="Tout sélectionner"
-              />
-              <span className="cst-mono" style={{ fontSize: 10, color: "var(--cst-text-muted)", letterSpacing: "0.16em" }}>TOUT SÉLECTIONNER (VISIBLE)</span>
-            </div>
-          )}
+          {!loading && filtered.length > 0 && (() => {
+            const cols: { key: "name" | "muscle_group" | "equipement" | "default_tempo"; label: string }[] = [
+              { key: "name", label: "EXERCICES" },
+              { key: "muscle_group", label: "MUSCLES" },
+              { key: "equipement", label: "ÉQUIPEMENTS" },
+              { key: "default_tempo", label: "TEMPO" },
+            ];
+            return (
+              <div style={{ display: "grid", gridTemplateColumns: "24px 16px minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) 80px auto", gap: 12, padding: "8px 16px", borderBottom: "1px solid var(--cst-hairline)", alignItems: "center" }}>
+                <input
+                  type="checkbox"
+                  checked={filtered.length > 0 && filtered.every((e) => selected.has(e.id))}
+                  onChange={toggleSelectAllVisible}
+                  aria-label="Tout sélectionner"
+                  title="Tout sélectionner (visible)"
+                />
+                <span />
+                {cols.map(({ key, label }) => {
+                  const active = sortCol === key;
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => {
+                        if (sortCol === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+                        else { setSortCol(key); setSortDir("asc"); }
+                      }}
+                      className="cst-mono"
+                      style={{
+                        background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left",
+                        fontSize: 9, letterSpacing: "0.16em",
+                        color: active ? "var(--cst-mid-green)" : "var(--cst-text-muted)",
+                        display: "flex", alignItems: "center", gap: 4, userSelect: "none",
+                      }}
+                    >
+                      {label}
+                      <span style={{ opacity: active ? 1 : 0.3, fontSize: 9 }}>{active ? (sortDir === "asc" ? "↑" : "↓") : "↕"}</span>
+                    </button>
+                  );
+                })}
+                <span />
+              </div>
+            );
+          })()}
           {loading ? (
             <div style={{ padding: 32, textAlign: "center", color: "var(--cst-text-muted)" }}>Chargement…</div>
           ) : filtered.length === 0 ? (
@@ -470,7 +514,7 @@ export default function Exercices() {
               Aucun exercice. {showSeedButton && "Clique sur \u00ab Importer la biblioth\u00e8que \u00bb pour charger les 512 exos."}
             </div>
           ) : (
-            filtered.map((ex) => {
+            sorted.map((ex) => {
               const code = ex.intensity_code || ex.category || "non_classe";
               const meta = codeMap.get(code);
               const isOpen = expanded.has(ex.id);
