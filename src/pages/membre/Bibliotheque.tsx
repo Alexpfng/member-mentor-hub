@@ -15,6 +15,7 @@ type Ex = {
   coach_notes: string | null;
   youtube_url: string | null;
   youtube_id: string | null;
+  image_url: string | null;
   movement_patterns: string[] | null;
 };
 
@@ -34,12 +35,14 @@ function ytId(ex: Ex): string | null {
 const ytThumb = (id: string) => `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
 const accentOf = (ex: Ex) => COLOR_MAP[(ex.color || "").toLowerCase()] || "var(--cst-mid-green)";
 
-// Vignette d'exercice : miniature vidéo si dispo, sinon placeholder coloré.
+// Vignette d'exercice : image statique si dispo, sinon miniature YouTube, sinon placeholder coloré.
 function Tile({ ex, onClick }: { ex: Ex; onClick: () => void }) {
   const vid = ytId(ex);
   const [imgOk, setImgOk] = useState(true);
   const accent = accentOf(ex);
-  const showImg = vid && imgOk;
+  const imgSrc = ex.image_url || (vid ? ytThumb(vid) : null);
+  const showImg = !!imgSrc && imgOk;
+  const showPlay = !ex.image_url && !!vid; // play badge only for YouTube thumbs
   return (
     <button
       onClick={onClick}
@@ -58,7 +61,7 @@ function Tile({ ex, onClick }: { ex: Ex; onClick: () => void }) {
       <div style={{ position: "relative", width: "100%", aspectRatio: "1", background: showImg ? "#111" : `linear-gradient(135deg, ${accent}33, rgba(0,0,0,0.4))` }}>
         {showImg ? (
           <img
-            src={ytThumb(vid!)}
+            src={imgSrc!}
             alt=""
             onError={() => setImgOk(false)}
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
@@ -68,8 +71,8 @@ function Tile({ ex, onClick }: { ex: Ex; onClick: () => void }) {
         )}
         {/* pastille couleur d'intensité */}
         <span style={{ position: "absolute", top: 8, left: 8, width: 10, height: 10, borderRadius: "50%", background: accent, boxShadow: "0 0 0 2px rgba(0,0,0,0.4)" }} />
-        {/* badge play si vidéo */}
-        {vid && (
+        {/* badge play si vidéo YouTube (pas pour les images statiques) */}
+        {showPlay && (
           <span style={{ position: "absolute", bottom: 8, right: 8, width: 26, height: 26, borderRadius: "50%", background: "rgba(0,0,0,0.6)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>▶</span>
         )}
         {/* bandeau sombre franc pour que le nom reste BLANC et lisible sur toute photo (même fond clair) */}

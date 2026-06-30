@@ -295,6 +295,25 @@ function YtThumbLink({ vid, href }: { vid: string | null; href: string }) {
   );
 }
 
+function ExerciseMediaCard({ exercise }: { exercise: ProgExercise }) {
+  const vid = exercise.youtube_id || extractYoutubeId(exercise.youtube_url);
+  const href = exercise.youtube_url || (vid ? `https://www.youtube.com/watch?v=${vid}` : null);
+  if (exercise.image_url) {
+    const inner = (
+      <img
+        src={exercise.image_url}
+        alt=""
+        style={{ width: "100%", display: "block", objectFit: "cover", maxHeight: 150 }}
+      />
+    );
+    const cardStyle: React.CSSProperties = { display: "block", textDecoration: "none", borderRadius: 8, overflow: "hidden", border: "1px solid rgba(255,255,255,0.10)" };
+    if (href) return <a href={href} target="_blank" rel="noreferrer" style={cardStyle} title="Voir la démo sur YouTube">{inner}</a>;
+    return <div style={cardStyle}>{inner}</div>;
+  }
+  if (!href) return null;
+  return <YtThumbLink vid={vid} href={href} />;
+}
+
 function extractYoutubeId(input?: string | null): string | null {
   if (!input) return null;
   const s = String(input).trim();
@@ -562,6 +581,7 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
 
   const [phase, setPhase] = useState<"intro" | "step" | "rest" | "recap">(snap?.phase ?? "intro");
   const [sessionMode] = useState<"expert" | "debutant">(initialMode ?? "debutant");
+  const [expertRpe, setExpertRpe] = useState<number | null>(null);
   const [stepIdx, setStepIdx] = useState(snap?.stepIdx ?? 0);
   const [logging, setLogging] = useState<null | {
     weight: string;
@@ -666,6 +686,8 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
       updatedAt: Date.now(),
     });
   }, [sessionId, stepIdx, phase, savedByStep]);
+
+  useEffect(() => { setExpertRpe(null); }, [stepIdx]);
 
   const current = steps[stepIdx];
   const completedWorkSets = useMemo(() => Object.keys(savedByStep).length, [savedByStep]);
@@ -814,7 +836,7 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
     }
   }
 
-  async function advanceExpertSet(step: WorkSet) {
+  async function advanceExpertSet(step: WorkSet, rpe: number | null) {
     try {
       await supabase.from("set_logs").insert({
         session_id: sessionId,
@@ -822,14 +844,15 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
         set_number: step.setNumber,
         weight_kg: null,
         reps: null,
-        rpe: null,
+        rpe,
         completed: true,
       });
     } catch { /* non-bloquant */ }
     setSavedByStep((m) => ({
       ...m,
-      [stepIdx]: { exo: step.exercise.name, weight: null, reps: null, rpe: null },
+      [stepIdx]: { exo: step.exercise.name, weight: null, reps: null, rpe },
     }));
+    setExpertRpe(null);
     if (step.restAfter) {
       setPhase("rest");
     } else {
@@ -1538,12 +1561,7 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
                     « {ex.coach_notes} »
                   </div>
                 )}
-                {(ex.youtube_id || ex.youtube_url) && (() => {
-                  const vid = ex.youtube_id || extractYoutubeId(ex.youtube_url);
-                  const href = ex.youtube_url || (vid ? `https://www.youtube.com/watch?v=${vid}` : null);
-                  if (!href) return null;
-                  return <YtThumbLink vid={vid} href={href} />;
-                })()}
+                <ExerciseMediaCard exercise={ex} />
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   <button onClick={() => setShowThread(ex.name)} className="cst-btn cst-btn-ghost-dark cst-btn-sm">
                     💬 Échanger / Envoyer une vidéo
@@ -1647,21 +1665,46 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
             onCues={() => setShowCues(exStep.exercise)}
           />
 
-          {(exStep.exercise.youtube_id || exStep.exercise.youtube_url) && (() => {
-            const vid = exStep.exercise.youtube_id || extractYoutubeId(exStep.exercise.youtube_url);
-            const href = exStep.exercise.youtube_url || (vid ? `https://www.youtube.com/watch?v=${vid}` : null);
-            if (!href) return null;
-            return <YtThumbLink vid={vid} href={href} />;
-          })()}
+          <ExerciseMediaCard exercise={exStep.exercise} />
 
           <div style={{ flex: 1 }} />
 
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span className="cst-mono" style={{ fontSize: 10, opacity: 0.6, letterSpacing: "0.18em" }}>RPE PERÇU</span>
+              <button
+                onClick={() => setShowRpeRef(true)}
+                className="cst-mono"
+                style={{ background: "none", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.7)", fontSize: 9, padding: "2px 8px", borderRadius: 4, cursor: "pointer", letterSpacing: "0.12em" }}
+              >
+                ? ÉCHELLE
+              </button>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 4 }}>
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((v) => {
+                const on = expertRpe === v;
+                const hue = v >= 9 ? "#C9483A" : v >= 7 ? "#D4A53B" : "#3A8A4D";
+                return (
+                  <button
+                    key={v}
+                    onClick={() => setExpertRpe(v)}
+                    className="cst-mono"
+                    style={{ padding: "12px 0", borderRadius: 6, border: `1px solid ${on ? hue : "rgba(255,255,255,0.12)"}`, background: on ? `${hue}33` : "transparent", color: on ? "#fff" : "rgba(255,255,255,0.7)", fontSize: 15, fontWeight: 700, cursor: "pointer" }}
+                  >
+                    {v}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <button
-            onClick={() => advanceExpertSet(exStep)}
+            onClick={() => advanceExpertSet(exStep, expertRpe)}
+            disabled={expertRpe === null}
             className="cst-btn cst-btn-primary"
-            style={{ width: "100%", padding: "18px 0", fontSize: 14 }}
+            style={{ width: "100%", padding: "18px 0", fontSize: 14, opacity: expertRpe === null ? 0.4 : 1 }}
           >
-            ✓ FAIT {exStep.restAfter ? "→ REPOS" : exStep.isLastSetOfExercise ? "→ EXO SUIVANT" : "→ SUIVANT"}
+            VALIDER {exStep.restAfter ? "→ REPOS" : exStep.isLastSetOfExercise ? "→ EXO SUIVANT" : "→ SUIVANT"}
           </button>
 
           {canGoNextBlock && (

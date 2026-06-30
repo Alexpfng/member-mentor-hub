@@ -12,9 +12,9 @@ function isoDay(d: Date) {
 export const listLibraryForMember = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await (supabaseAdmin as any)
       .from("exercises")
-      .select("id, name, muscle_group, category, intensity_code, color, default_tempo, equipement, coach_notes, youtube_url, youtube_id, movement_patterns")
+      .select("id, name, muscle_group, category, intensity_code, color, default_tempo, equipement, coach_notes, youtube_url, youtube_id, image_url, movement_patterns")
       .or("is_archived.is.null,is_archived.eq.false")
       .order("muscle_group", { ascending: true })
       .order("name", { ascending: true })

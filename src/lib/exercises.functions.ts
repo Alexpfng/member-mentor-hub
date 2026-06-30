@@ -51,6 +51,7 @@ const exerciseInputSchema = z.object({
   equipement: z.string().max(80).optional().nullable(),
   default_tempo: z.string().max(40).optional().nullable(),
   youtube_url: z.string().trim().max(500).optional().nullable(),
+  image_url: z.string().trim().max(500).optional().nullable(),
   coach_notes: z.string().max(2000).optional().nullable(),
   is_archived: z.boolean().optional(),
   movement_patterns: z.array(z.string().max(20)).max(8).optional().nullable(),
@@ -59,10 +60,10 @@ const exerciseInputSchema = z.object({
 export const listExercises = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+    const { data, error } = await (context.supabase as any)
       .from("exercises")
       .select(
-        "id, name, intensity_code, category, color, muscle_group, equipement, default_tempo, youtube_url, youtube_id, coach_notes, is_archived, is_global, movement_patterns"
+        "id, name, intensity_code, category, color, muscle_group, equipement, default_tempo, youtube_url, youtube_id, image_url, coach_notes, is_archived, is_global, movement_patterns"
       )
       .order("name", { ascending: true })
       .limit(2000);
@@ -110,6 +111,7 @@ export const upsertExercise = createServerFn({ method: "POST" })
       default_tempo: data.default_tempo?.trim() || null,
       youtube_url: data.youtube_url?.trim() || null,
       youtube_id: extractYoutubeId(data.youtube_url),
+      image_url: data.image_url?.trim() || null,
       coach_notes: data.coach_notes?.trim() || null,
       is_archived: data.is_archived ?? false,
       is_global: true,
@@ -117,7 +119,7 @@ export const upsertExercise = createServerFn({ method: "POST" })
       ...(data.movement_patterns !== undefined ? { movement_patterns: patterns } : {}),
     };
     if (data.id) {
-      const { data: row, error } = await supabaseAdmin
+      const { data: row, error } = await (supabaseAdmin as any)
         .from("exercises")
         .update(payload)
         .eq("id", data.id)
@@ -126,7 +128,7 @@ export const upsertExercise = createServerFn({ method: "POST" })
       if (error) throw new Error(error.message);
       return { exercise: row };
     }
-    const { data: row, error } = await supabaseAdmin
+    const { data: row, error } = await (supabaseAdmin as any)
       .from("exercises")
       .insert(payload)
       .select()

@@ -15,6 +15,7 @@ export type ProgExercise = {
   youtube_url?: string | null;
   youtube_id?: string | null;
   youtube_alt_url?: string | null;
+  image_url?: string | null;
 };
 
 const COLOR_MAP: Record<string, string> = {

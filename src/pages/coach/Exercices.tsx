@@ -23,6 +23,7 @@ type Exercise = {
   default_tempo: string | null;
   youtube_url: string | null;
   youtube_id: string | null;
+  image_url: string | null;
   coach_notes: string | null;
   is_archived: boolean | null;
   movement_patterns: string[] | null;
@@ -49,6 +50,7 @@ const EMPTY: Partial<Exercise> = {
   equipement: "",
   default_tempo: "",
   youtube_url: "",
+  image_url: "",
   coach_notes: "",
   is_archived: false,
   movement_patterns: [],
@@ -267,6 +269,7 @@ export default function Exercices() {
           equipement: editing.equipement || null,
           default_tempo: editing.default_tempo || null,
           youtube_url: editing.youtube_url || null,
+          image_url: editing.image_url || null,
           coach_notes: editing.coach_notes || null,
           is_archived: !!editing.is_archived,
           movement_patterns: editing.movement_patterns ?? [],
@@ -702,6 +705,14 @@ export default function Exercices() {
               value={editing.youtube_url || ""}
               onChange={(e) => setEditing({ ...editing, youtube_url: e.target.value })}
               placeholder="https://youtu.be/…"
+              style={inputStyle}
+            />
+          </Field>
+          <Field label="Image statique (URL)">
+            <input
+              value={editing.image_url || ""}
+              onChange={(e) => setEditing({ ...editing, image_url: e.target.value })}
+              placeholder="https://…/photo.jpg"
               style={inputStyle}
             />
           </Field>
