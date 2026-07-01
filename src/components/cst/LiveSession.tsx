@@ -157,6 +157,16 @@ function parseTimedRounds(reps?: string | number | null, name?: string | null): 
   return isPerSide(reps) || isUnilateralByName(name) ? 2 : 1;
 }
 
+/** Parse le pattern de reps d'un Ladder (ex: "2, 3, 4" → [2, 3, 4]).
+ *  Retourne un tableau vide si le champ ne ressemble pas à une liste. */
+function parseLadderPattern(reps: string | number | null | undefined): number[] {
+  if (reps == null || reps === "") return [];
+  const raw = String(reps).trim();
+  // Doit contenir au moins 2 valeurs séparées par , ; ou /
+  if (!/\d+\s*[,;\/]\s*\d+/.test(raw)) return [];
+  return raw.split(/[,;\/]/).map((s) => parseInt(s.trim(), 10)).filter((n) => !isNaN(n) && n > 0);
+}
+
 /** Découpe une cible reps en une cible par série (15/12/10) ou répète une fourchette (10-8) */
 function parseRepsPerSet(repsTarget: string | number | null | undefined, seriesCount: number): string[] {
   const fallback = Array(seriesCount).fill("");
@@ -456,6 +466,39 @@ function buildSteps(exercises: ProgExercise[]): Step[] {
         restSecBetween: restSec > 0 ? restSec : 0,
       });
       return;
+    }
+
+    // Ladder blocks: generate one WorkSet per minute with the exact rep count for that minute.
+    // series = number of rounds through the pattern; reps = the pattern (e.g. "2, 3, 4").
+    if (blockType === "ladder" && !isSuperset) {
+      const ex = b.exercises[0];
+      const pattern = parseLadderPattern(ex.reps);
+      if (pattern.length > 0) {
+        const rounds = parseSeriesCount(ex.series);
+        const totalSets = rounds * pattern.length;
+        const exRest = parseRecupSeconds(ex.recup, 0);
+        steps.push({ kind: "brief", blockIdx, blockLetter: b.letter, isSuperset: false, blockType: "ladder", exercises: [ex] });
+        for (let r = 0; r < rounds; r++) {
+          pattern.forEach((repCount, i) => {
+            const globalIdx = r * pattern.length + i;
+            const isLast = globalIdx === totalSets - 1;
+            steps.push({
+              kind: "set",
+              blockIdx,
+              exercise: { ...ex, reps: String(repCount) },
+              exerciseIdxInBlock: 0,
+              setNumber: globalIdx + 1,
+              totalSets,
+              restAfter: !isLast && exRest > 0,
+              restSeconds: exRest,
+              isLastSetOfExercise: isLast,
+              nextPreview: !isLast ? { name: ex.name, setNumber: globalIdx + 2, totalSets } : null,
+            });
+          });
+        }
+        return;
+      }
+      // No valid pattern → fall through to regular set handling
     }
 
     steps.push({
