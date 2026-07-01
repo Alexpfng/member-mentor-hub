@@ -628,11 +628,13 @@ type Props = {
   sessionLabel?: string | null;
   exercises: ProgExercise[];
   onFinish: () => void | Promise<void>;
+  onReset: () => Promise<void>;
   finishing?: boolean;
   initialMode?: "expert" | "debutant";
+  quitRef?: React.MutableRefObject<(() => void) | null>;
 };
 
-export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFinish, finishing, initialMode }: Props) {
+export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFinish, onReset, finishing, initialMode, quitRef }: Props) {
   const steps = useMemo(() => buildSteps(exercises), [exercises]);
   const totalWorkSets = useMemo(() => steps.filter((s) => s.kind === "set" || s.kind === "emom" || s.kind === "circuit").length, [steps]);
 
@@ -658,6 +660,7 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
   const [showVideo, setShowVideo] = useState<ProgExercise | null>(null);
   const [showCues, setShowCues] = useState<ProgExercise | null>(null);
   const [showQuitConfirm, setShowQuitConfirm] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const [showResumeNotice, setShowResumeNotice] = useState(!!snap && Object.keys(snap.savedByStep).length > 0);
   /** For timed exercises: tracks whether the countdown has been completed */
   const [timedDone, setTimedDone] = useState(false);
@@ -748,6 +751,12 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
   }, [sessionId, stepIdx, phase, savedByStep]);
 
   useEffect(() => { setExpertRpe(null); }, [stepIdx]);
+
+  // Expose quit trigger to parent (outer "← QUITTER" button)
+  useEffect(() => {
+    if (quitRef) quitRef.current = () => setShowQuitConfirm(true);
+    return () => { if (quitRef) quitRef.current = null; };
+  }, [quitRef]);
 
   const current = steps[stepIdx];
   const completedWorkSets = useMemo(() => Object.keys(savedByStep).length, [savedByStep]);
@@ -1180,7 +1189,6 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
         />
         {showQuitConfirm && (
           <div
-            onClick={() => setShowQuitConfirm(false)}
             style={{
               position: "fixed",
               inset: 0,
@@ -1194,7 +1202,6 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
             }}
           >
             <div
-              onClick={(e) => e.stopPropagation()}
               className="cst-hatch"
               style={{
                 width: "100%",
@@ -1205,33 +1212,53 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
                 padding: 22,
                 display: "flex",
                 flexDirection: "column",
-                gap: 14,
+                gap: 12,
               }}
             >
-              <h3 className="cst-display" style={{ margin: 0, fontSize: 22, color: "#fff" }}>
-                QUITTER LA SÉANCE ?
+              <h3 className="cst-display" style={{ margin: 0, fontSize: 20, color: "#fff" }}>
+                POURQUOI TU SORS ?
               </h3>
-              <p style={{ margin: 0, fontSize: 13, lineHeight: 1.5, color: "rgba(255,255,255,0.8)" }}>
-                Si tu <strong>continues</strong>, tes séries déjà loggées sont conservées — tu reprends exactement où tu en étais.
-                <br /><br />
-                Si tu <strong>quittes / abandonnes</strong>, la progression est effacée.
-              </p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 6 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {/* Option 1 — Continuer */}
                 <button
                   onClick={() => setShowQuitConfirm(false)}
                   className="cst-btn cst-btn-primary"
                   style={{ width: "100%", padding: "14px 0", fontSize: 13 }}
                 >
-                  CONTINUER LA SÉANCE
+                  ← CONTINUER LA SÉANCE
                 </button>
+                {/* Option 2 — Séance terminée */}
                 <button
-                  onClick={() => { clearSnapshot(sessionId); navigateToMember(); }}
-                  className="cst-btn cst-btn-ghost-dark"
-                  style={{ width: "100%", padding: "12px 0", fontSize: 12 }}
+                  onClick={async () => {
+                    setShowQuitConfirm(false);
+                    await onFinish();
+                  }}
+                  className="cst-btn"
+                  style={{ width: "100%", padding: "13px 0", fontSize: 13, background: "rgba(45,190,120,0.18)", border: "1px solid rgba(45,190,120,0.45)", color: "#2DBE9A" }}
                 >
-                  QUITTER (ABANDONNER)
+                  ✓ SÉANCE TERMINÉE
+                </button>
+                {/* Option 3 — Erreur / consulter */}
+                <button
+                  onClick={async () => {
+                    setResetting(true);
+                    try {
+                      clearSnapshot(sessionId);
+                      await onReset();
+                    } finally {
+                      setResetting(false);
+                    }
+                  }}
+                  disabled={resetting}
+                  className="cst-btn cst-btn-ghost-dark"
+                  style={{ width: "100%", padding: "12px 0", fontSize: 12, opacity: resetting ? 0.5 : 1 }}
+                >
+                  {resetting ? "RÉINITIALISATION…" : "ERREUR / JE CONSULTE LE PROGRAMME"}
                 </button>
               </div>
+              <p style={{ margin: 0, fontSize: 11, opacity: 0.5, lineHeight: 1.4 }}>
+                "Erreur / Je consulte" remet la séance à zéro — aucune donnée conservée.
+              </p>
             </div>
           </div>
         )}

@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, useParams } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { notifyCoachComposedSession } from "@/lib/composed-session.functions";
 import MemberNav from "../components/MemberNav";
@@ -51,6 +51,7 @@ function SeancePage() {
   const [finishing, setFinishing] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [sessionMode, setSessionMode] = useState<"expert" | "debutant">("debutant");
+  const quitRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -107,6 +108,20 @@ function SeancePage() {
     })();
   }, [sessionId]);
 
+
+  async function resetSession() {
+    // Supprime les logs + remet la séance à "non commencée" → le coach ne voit plus "en cours"
+    await supabase.from("set_logs").delete().eq("session_id", sessionId);
+    await supabase.from("sessions").update({
+      status: null,
+      started_at: null,
+      ended_at: null,
+      total_volume_kg: null,
+      average_rpe: null,
+      duration_minutes: null,
+    }).eq("id", sessionId);
+    navigate({ to: "/membre" });
+  }
 
   async function finishSession() {
     setFinishing(true);
@@ -200,7 +215,7 @@ function SeancePage() {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "22px 22px 4px" }}>
             <CSTLogo size={11} />
             <button
-              onClick={() => navigate({ to: "/membre" })}
+              onClick={() => quitRef.current ? quitRef.current() : navigate({ to: "/membre" })}
               className="cst-mono"
               style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", borderRadius: 6, padding: "4px 10px", fontSize: 10, cursor: "pointer", letterSpacing: "0.12em" }}
             >
@@ -225,8 +240,10 @@ function SeancePage() {
                 sessionLabel={session?.session_label ?? null}
                 exercises={exercises}
                 onFinish={finishSession}
+                onReset={resetSession}
                 finishing={finishing}
                 initialMode={sessionMode}
+                quitRef={quitRef}
               />
             )}
           </div>
