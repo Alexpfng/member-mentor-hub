@@ -604,3 +604,81 @@ export const getExerciseProgression = createServerFn({ method: "GET" })
 
     return { exercises, series, selected: target };
   });
+
+/* ---------- Planning hebdomadaire (vue coach : tous les membres) ---------- */
+
+type DayCell = {
+  date: string;
+  status: "done" | "in_progress" | "planned" | "rest";
+  label: string | null;
+  sessionId: string | null;
+};
+
+export const getCoachWeeklyPlan = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertCoach(context.userId);
+
+    const today = new Date();
+    const dow = (today.getDay() + 6) % 7;
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - dow);
+    monday.setHours(0, 0, 0, 0);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    const weekStart = monday.toISOString().slice(0, 10);
+    const weekEnd = sunday.toISOString().slice(0, 10);
+
+    const members = await listCoachMembers();
+    const memberIds = members.map((m) => m.user_id);
+
+    if (!memberIds.length) return { members: [] as { id: string; name: string; days: DayCell[] }[], weekStart, weekEnd };
+
+    const [{ data: planned }, { data: sessions }] = await Promise.all([
+      supabaseAdmin
+        .from("planned_sessions")
+        .select("id, member_id, day_label, planned_date, status, session_id")
+        .in("member_id", memberIds)
+        .gte("planned_date", weekStart)
+        .lte("planned_date", weekEnd),
+      supabaseAdmin
+        .from("sessions")
+        .select("id, member_id, status, date, session_label")
+        .in("member_id", memberIds)
+        .gte("date", weekStart)
+        .lte("date", weekEnd),
+    ]);
+
+    const sessionById = new Map<string, { status: string | null; session_label: string | null }>();
+    for (const s of sessions ?? []) sessionById.set(s.id, s);
+
+    const result = members.map((m) => {
+      const memberPlanned = (planned ?? []).filter((p) => p.member_id === m.user_id);
+      const memberSessions = (sessions ?? []).filter((s) => s.member_id === m.user_id);
+
+      const dayMap = new Map<string, DayCell>();
+
+      for (const p of memberPlanned) {
+        if (!p.planned_date) continue;
+        const linked = p.session_id ? sessionById.get(p.session_id) : null;
+        let cellStatus: DayCell["status"];
+        if (p.status === "done") cellStatus = "done";
+        else if (p.status === "rest") cellStatus = "rest";
+        else if (linked?.status === "in_progress") cellStatus = "in_progress";
+        else if (linked?.status === "completed") cellStatus = "done";
+        else cellStatus = "planned";
+        dayMap.set(p.planned_date, { date: p.planned_date, status: cellStatus, label: p.day_label, sessionId: p.session_id });
+      }
+
+      for (const s of memberSessions) {
+        if (!s.date || dayMap.has(s.date)) continue;
+        const cellStatus: DayCell["status"] = s.status === "in_progress" ? "in_progress" : "done";
+        dayMap.set(s.date, { date: s.date, status: cellStatus, label: s.session_label, sessionId: s.id });
+      }
+
+      const name = `${m.first_name ?? ""} ${m.last_name ?? ""}`.trim() || m.email || "?";
+      return { id: m.user_id, name, days: [...dayMap.values()].sort((a, b) => a.date.localeCompare(b.date)) };
+    });
+
+    return { members: result, weekStart, weekEnd };
+  });

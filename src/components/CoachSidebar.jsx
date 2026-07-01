@@ -8,6 +8,7 @@ import NotificationBell from "./coach/NotificationBell";
 
 const items = [
   { id: "membres", label: "Membres", icon: "○", path: "/coach", match: (p) => p === "/coach" || p.startsWith("/coach/membre") },
+  { id: "planning", label: "Planning", icon: "▦", path: "/coach/planning" },
   { id: "exercices", label: "Bibliothèque", icon: "❖", path: "/coach/exercices" },
   { id: "programmes", label: "Programmes", icon: "◤", path: "/coach/programmes" },
   { id: "import", label: "Import Excel", icon: "◥", path: "/coach/import" },
