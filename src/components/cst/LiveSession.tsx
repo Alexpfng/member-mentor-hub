@@ -469,12 +469,29 @@ function buildSteps(exercises: ProgExercise[]): Step[] {
     }
 
     // Ladder blocks: generate one WorkSet per minute with the exact rep count for that minute.
-    // series = number of rounds through the pattern; reps = the pattern (e.g. "2, 3, 4").
+    // Supports two notations Léo uses:
+    //   A) series="3"          reps="2,3,4"        → pattern from reps, rounds=series
+    //   B) series="Ladder 2/3/4"  reps="27 en tout" → pattern from series, rounds inferred (27/(2+3+4)=3)
     if (blockType === "ladder" && !isSuperset) {
       const ex = b.exercises[0];
-      const pattern = parseLadderPattern(ex.reps);
+      // 1. Try to find the pattern (comma/slash-separated numbers)
+      let pattern = parseLadderPattern(ex.reps);
+      if (pattern.length === 0) {
+        // Also check series field: "Ladder 2/3/4" → strip prefix → "2/3/4"
+        const seriesStr = ex.series != null ? String(ex.series).replace(/^ladder\s*/i, "").trim() : "";
+        if (/\d+\s*[,;\/]\s*\d+/.test(seriesStr)) {
+          pattern = seriesStr.split(/[,;\/]/).map((s) => parseInt(s.trim(), 10)).filter((n) => !isNaN(n) && n > 0);
+        }
+      }
       if (pattern.length > 0) {
-        const rounds = parseSeriesCount(ex.series);
+        // 2. Infer rounds: if reps starts with a total number (e.g. "27 en tout"), divide by pattern sum
+        const patternSum = pattern.reduce((a, c) => a + c, 0);
+        const totalMatch = ex.reps != null ? String(ex.reps).match(/^(\d+)/) : null;
+        const totalReps = totalMatch ? parseInt(totalMatch[1], 10) : null;
+        const rounds =
+          totalReps && patternSum > 0 && totalReps % patternSum === 0
+            ? totalReps / patternSum
+            : Math.max(1, parseSeriesCount(ex.series));
         const totalSets = rounds * pattern.length;
         const exRest = parseRecupSeconds(ex.recup, 0);
         steps.push({ kind: "brief", blockIdx, blockLetter: b.letter, isSuperset: false, blockType: "ladder", exercises: [ex] });
