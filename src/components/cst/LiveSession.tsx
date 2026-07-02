@@ -265,6 +265,7 @@ function formatRelativeDays(iso?: string | null): string {
 
 type LastSet = { weight: number | null; reps: number | null; rpe: number | null; loggedAt: string | null };
 type LastByExo = Record<string, Record<number, LastSet> & { _loggedAt?: string | null; _sets?: LastSet[] }>;
+type ExpertRecapGroup = ReturnType<typeof groupExpertRecapByExercise>[number];
 
 function YtThumbLink({ vid, href }: { vid: string | null; href: string }) {
   const [imgOk, setImgOk] = React.useState(true);
@@ -328,6 +329,133 @@ function ExerciseMediaCard({ exercise }: { exercise: ProgExercise }) {
   }
   if (!href) return null;
   return <YtThumbLink vid={vid} href={href} />;
+}
+
+function rpeTone(value: number | null) {
+  if (value == null) return "rgba(255,255,255,0.16)";
+  if (value >= 9) return "#C9483A";
+  if (value >= 7) return "#4A8BC4";
+  return "#6EAB76";
+}
+
+function ExpertRecapRpeBadge({
+  group,
+  value,
+  open,
+  onToggle,
+  onChange,
+  onClear,
+}: {
+  group: ExpertRecapGroup;
+  value: number | null;
+  open: boolean;
+  onToggle: () => void;
+  onChange: (value: number) => void;
+  onClear: () => void;
+}) {
+  const tone = rpeTone(value);
+  return (
+    <div
+      style={{
+        padding: "12px 14px",
+        background: "rgba(255,255,255,0.03)",
+        borderRadius: 10,
+        border: "1px solid rgba(255,255,255,0.08)",
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div className="cst-display" style={{ fontSize: 15, lineHeight: 1.2 }}>
+            {group.exerciseName}
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 8 }}>
+            {group.rows.map((row) => (
+              <div key={row.stepIdx} className="cst-mono" style={{ fontSize: 10, opacity: 0.78 }}>
+                S{row.setNumber} · {row.weight ?? "—"}kg × {row.reps ?? "—"}
+              </div>
+            ))}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onToggle}
+          className="cst-mono"
+          style={{
+            minWidth: 78,
+            padding: "8px 10px",
+            borderRadius: 8,
+            border: `1px solid ${tone}`,
+            background: value == null ? "transparent" : `${tone}22`,
+            color: value == null ? "rgba(255,255,255,0.78)" : "#fff",
+            fontSize: 11,
+            letterSpacing: "0.12em",
+            cursor: "pointer",
+          }}
+        >
+          {value == null ? "RPE —" : `RPE ${value}`}
+        </button>
+      </div>
+      {open && (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 8,
+            padding: 10,
+            borderRadius: 10,
+            background: "rgba(20,32,24,0.96)",
+            border: "1px solid rgba(255,255,255,0.08)",
+          }}
+        >
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
+            {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((score) => {
+              const selected = value === score;
+              const scoreTone = rpeTone(score);
+              return (
+                <button
+                  key={score}
+                  type="button"
+                  onClick={() => onChange(score)}
+                  className="cst-mono"
+                  style={{
+                    padding: "12px 0",
+                    borderRadius: 8,
+                    border: `1px solid ${selected ? scoreTone : "rgba(255,255,255,0.12)"}`,
+                    background: selected ? `${scoreTone}33` : "transparent",
+                    color: selected ? "#fff" : "rgba(255,255,255,0.78)",
+                    fontSize: 18,
+                    cursor: "pointer",
+                  }}
+                >
+                  {score}
+                </button>
+              );
+            })}
+          </div>
+          <button
+            type="button"
+            onClick={onClear}
+            className="cst-mono"
+            style={{
+              padding: "12px 14px",
+              borderRadius: 8,
+              border: "1px solid rgba(255,255,255,0.12)",
+              background: "transparent",
+              color: "rgba(255,255,255,0.72)",
+              fontSize: 11,
+              letterSpacing: "0.14em",
+              cursor: "pointer",
+            }}
+          >
+            EFFACER LE RPE
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function extractYoutubeId(input?: string | null): string | null {
@@ -654,6 +782,7 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
   const [phase, setPhase] = useState<"intro" | "step" | "rest" | "recap">(snap?.phase ?? "intro");
   const [sessionMode] = useState<"expert" | "debutant">(initialMode ?? "debutant");
   const [expertRecapRpeByExercise, setExpertRecapRpeByExercise] = useState<Record<string, number | null>>({});
+  const [expertRecapPickerFor, setExpertRecapPickerFor] = useState<string | null>(null);
   const [stepIdx, setStepIdx] = useState(snap?.stepIdx ?? 0);
   const [logging, setLogging] = useState<null | {
     weight: string;
@@ -1100,22 +1229,23 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
             )}
             <button
               onClick={() => setShowOverview(true)}
-              aria-label="Voir toute la séance"
-              title="Voir toute la séance"
+              aria-label={sessionMode === "expert" ? "Voir le résumé de séance" : "Voir toute la séance"}
+              title={sessionMode === "expert" ? "Voir le résumé de séance" : "Voir toute la séance"}
               className="cst-mono"
               style={{
                 background: "transparent",
                 border: "1px solid rgba(255,255,255,0.18)",
                 color: "rgba(255,255,255,0.85)",
                 borderRadius: 6,
-                padding: "6px 10px",
-                fontSize: 13,
+                padding: sessionMode === "expert" ? "6px 12px" : "6px 10px",
+                fontSize: sessionMode === "expert" ? 11 : 13,
                 cursor: "pointer",
                 minWidth: 44,
                 minHeight: 32,
+                letterSpacing: sessionMode === "expert" ? "0.12em" : undefined,
               }}
             >
-              ☰
+              {sessionMode === "expert" ? "RÉSUMÉ" : "☰"}
             </button>
           </div>
         </div>
@@ -1194,7 +1324,7 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                 <h3 className="cst-display" style={{ margin: 0, fontSize: 20 }}>
-                  PROGRAMME COMPLET
+                  {sessionMode === "expert" ? "RÉSUMÉ DE SÉANCE" : "PROGRAMME COMPLET"}
                 </h3>
                 <button
                   onClick={() => setShowOverview(false)}
@@ -1204,37 +1334,64 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
                 </button>
               </div>
               <p className="cst-mono" style={{ fontSize: 9, opacity: 0.5, letterSpacing: "0.14em", margin: "0 0 10px" }}>
-                Touche « ALLER → » pour faire un exercice tout de suite (ex. machine déjà prise).
+                {sessionMode === "expert"
+                  ? "Touchez un exercice pour y aller directement. ✓ = fait, … = en cours, □ = pas encore fait."
+                  : "Touche « ALLER → » pour faire un exercice tout de suite (ex. machine déjà prise)."}
               </p>
               {overviewRows.length > 0 && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 14 }}>
                   {overviewRows.map((row) => {
                     const tone = row.state === "done" ? "#6EAB76" : row.state === "current" ? "#D4A53B" : "rgba(255,255,255,0.45)";
                     const label = row.state === "done" ? "FAIT" : row.state === "current" ? "EN COURS" : "À FAIRE";
+                    const statusIcon = row.state === "done" ? "✓" : row.state === "current" ? "…" : "□";
+                    const isClickable = sessionMode === "expert";
                     return (
-                      <div
+                      <button
                         key={row.exerciseName}
+                        type="button"
+                        onClick={() => {
+                          if (!isClickable) return;
+                          jumpToExercise(row.exerciseName);
+                        }}
                         style={{
+                          appearance: "none",
+                          background: "rgba(255,255,255,0.03)",
                           display: "flex",
                           justifyContent: "space-between",
                           alignItems: "center",
                           gap: 10,
                           padding: "8px 10px",
-                          background: "rgba(255,255,255,0.03)",
                           border: "1px solid rgba(255,255,255,0.06)",
                           borderRadius: 8,
+                          width: "100%",
+                          cursor: isClickable ? "pointer" : "default",
+                          textAlign: "left",
                         }}
                       >
-                        <span style={{ fontSize: 12, fontWeight: 600 }}>{row.exerciseName}</span>
-                        <span className="cst-mono" style={{ fontSize: 10, color: tone, letterSpacing: "0.14em" }}>
-                          {label} · {row.completedSteps}/{row.totalSteps || 1}
-                        </span>
-                      </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: 1 }}>
+                          <span className="cst-mono" style={{ fontSize: 18, color: tone, width: 16, textAlign: "center" }}>
+                            {statusIcon}
+                          </span>
+                          <div style={{ minWidth: 0, flex: 1 }}>
+                            <div style={{ fontSize: 12, fontWeight: 600 }}>{row.exerciseName}</div>
+                            <div className="cst-mono" style={{ fontSize: 10, color: tone, letterSpacing: "0.14em", marginTop: 2 }}>
+                              {label} · {row.completedSteps}/{row.totalSteps || 1}
+                            </div>
+                          </div>
+                        </div>
+                        {sessionMode === "expert" && (
+                          <span className="cst-mono" style={{ fontSize: 10, opacity: 0.68, letterSpacing: "0.14em" }}>
+                            ALLER →
+                          </span>
+                        )}
+                      </button>
                     );
                   })}
                 </div>
               )}
-              <ProgramBlocks exercises={exercises} onExerciseClick={(ex) => jumpToExercise(ex.name)} />
+              {sessionMode !== "expert" && (
+                <ProgramBlocks exercises={exercises} onExerciseClick={(ex) => jumpToExercise(ex.name)} />
+              )}
             </div>
           </div>
         )}
@@ -1477,44 +1634,42 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
           </div>
           <div
             className="cst-scroll"
-            style={{ maxHeight: 180, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4 }}
+            style={{ maxHeight: 320, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8 }}
           >
             {sessionMode === "expert" ? (
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 <div className="cst-mono" style={{ fontSize: 10, opacity: 0.6, letterSpacing: "0.18em" }}>
-                  RENSEIGNE LE RPE FINAL PAR EXERCICE
+                  EXERCICES RÉELLEMENT FAITS · RENSEIGNE LE RPE FINAL
                 </div>
-                {expertRecapGroups.map((group) => (
-                  <div
-                    key={group.exerciseName}
-                    style={{
-                      padding: "10px 12px",
-                      background: "rgba(0,0,0,0.18)",
-                      borderRadius: 8,
-                      border: "1px solid rgba(255,255,255,0.06)",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 8,
-                    }}
-                  >
-                    <div style={{ fontSize: 13, fontWeight: 700 }}>{group.exerciseName}</div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                      {group.rows.map((row) => (
-                        <div key={row.stepIdx} className="cst-mono" style={{ fontSize: 11, opacity: 0.82 }}>
-                          S{row.setNumber} · {row.weight ?? "—"}kg × {row.reps ?? "—"}
-                        </div>
-                      ))}
-                    </div>
-                    <RPESelector
-                      value={expertRecapRpeByExercise[group.exerciseName] ?? null}
-                      onChange={(value) =>
-                        setExpertRecapRpeByExercise((currentMap) => ({
-                          ...currentMap,
-                          [group.exerciseName]: value,
-                        }))
-                      }
-                    />
+                {expertRecapGroups.length === 0 && (
+                  <div className="cst-mono" style={{ fontSize: 11, opacity: 0.7 }}>
+                    Aucun exercice validé dans cette séance.
                   </div>
+                )}
+                {expertRecapGroups.map((group) => (
+                  <ExpertRecapRpeBadge
+                    key={group.exerciseName}
+                    group={group}
+                    value={expertRecapRpeByExercise[group.exerciseName] ?? null}
+                    open={expertRecapPickerFor === group.exerciseName}
+                    onToggle={() =>
+                      setExpertRecapPickerFor((current) => (current === group.exerciseName ? null : group.exerciseName))
+                    }
+                    onChange={(value) => {
+                      setExpertRecapRpeByExercise((currentMap) => ({
+                        ...currentMap,
+                        [group.exerciseName]: value,
+                      }));
+                      setExpertRecapPickerFor(null);
+                    }}
+                    onClear={() => {
+                      setExpertRecapRpeByExercise((currentMap) => ({
+                        ...currentMap,
+                        [group.exerciseName]: null,
+                      }));
+                      setExpertRecapPickerFor(null);
+                    }}
+                  />
                 ))}
               </div>
             ) : (
