@@ -1,25 +1,36 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getPriorityFeed } from "@/lib/coach-dashboard.functions";
+import { getPriorityFeed, hideSessionFromCoachDashboard, markPriorityMessageRead } from "@/lib/coach-dashboard.functions";
 import { resolvePainReport } from "@/lib/pain-reports.functions";
 import { timeAgo } from "@/lib/format";
 import { toast } from "sonner";
+import { hideMessageFromPriorityItems, hideSessionFromPriorityItems, type PriorityMemberGroup, type PrioritySessionEntry } from "./priority-feed";
 
 export default function PriorityFeed() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const fetchFeed = useServerFn(getPriorityFeed);
+  const hideSession = useServerFn(hideSessionFromCoachDashboard);
+  const markMessageRead = useServerFn(markPriorityMessageRead);
   const resolve = useServerFn(resolvePainReport);
   const { data, isLoading } = useQuery({ queryKey: ["coach", "priority"], queryFn: () => fetchFeed() });
+  const [hiddenSessionIds, setHiddenSessionIds] = useState<string[]>([]);
+  const [hiddenMessageIds, setHiddenMessageIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    setHiddenSessionIds([]);
+    setHiddenMessageIds([]);
+  }, [data]);
 
   if (isLoading) {
     return <div className="cst-card-dark" style={{ padding: 20, opacity: 0.6 }}>Chargement…</div>;
   }
   // Group high_rpe + session items by memberId → 1 card per member
   const rawItems = data ?? [];
-  type SessionEntry = { sessionId: string; createdAt: string; exercises: { name: string; rpe: number }[]; maxRpe: number; label?: string | null };
-  type MemberGroup = { type: 'member_group'; id: string; memberId: string; memberName: string; sessions: SessionEntry[]; maxRpe: number; createdAt: string; priority: number };
+  type SessionEntry = PrioritySessionEntry;
+  type MemberGroup = PriorityMemberGroup;
   const memberGroupMap = new Map<string, MemberGroup>();
   const items: (typeof rawItems[number] | MemberGroup)[] = [];
 
@@ -53,7 +64,16 @@ export default function PriorityFeed() {
     }
   }
 
-  if (items.length === 0) {
+  const visibleItems = hiddenSessionIds.reduce(
+    (currentItems, sessionId) => hideSessionFromPriorityItems(currentItems, sessionId),
+    items,
+  );
+  const visiblePriorityItems = hiddenMessageIds.reduce(
+    (currentItems, messageId) => hideMessageFromPriorityItems(currentItems, messageId),
+    visibleItems,
+  );
+
+  if (visiblePriorityItems.length === 0) {
     return (
       <div className="cst-card-dark" style={{ padding: 22, textAlign: "center" }}>
         <div className="cst-display" style={{ fontSize: 18, marginBottom: 4 }}>RIEN À TRAITER</div>
@@ -72,10 +92,42 @@ export default function PriorityFeed() {
     }
   }
 
+  async function onHideSession(sessionId: string) {
+    const confirmed = window.confirm("Retirer cette séance du dashboard coach ?");
+    if (!confirmed) return;
+
+    setHiddenSessionIds((current) => (current.includes(sessionId) ? current : [...current, sessionId]));
+
+    try {
+      await hideSession({ data: { sessionId } });
+      toast.success("Séance retirée du dashboard");
+      await qc.invalidateQueries({ queryKey: ["coach"] });
+    } catch (e: unknown) {
+      setHiddenSessionIds((current) => current.filter((id) => id !== sessionId));
+      toast.error(e instanceof Error ? e.message : "Erreur");
+    }
+  }
+
+  async function onHideMessage(messageId: string) {
+    const confirmed = window.confirm("Retirer ce message de la colonne priorité ?");
+    if (!confirmed) return;
+
+    setHiddenMessageIds((current) => (current.includes(messageId) ? current : [...current, messageId]));
+
+    try {
+      await markMessageRead({ data: { messageId } });
+      toast.success("Message retiré de la priorité");
+      await qc.invalidateQueries({ queryKey: ["coach"] });
+    } catch (e: unknown) {
+      setHiddenMessageIds((current) => current.filter((id) => id !== messageId));
+      toast.error(e instanceof Error ? e.message : "Erreur");
+    }
+  }
+
   return (
     <div className="cst-card-dark" style={{ padding: 0, overflow: "hidden" }}>
-      {items.map((it, idx) => {
-        const isLast = idx === items.length - 1;
+      {visiblePriorityItems.map((it, idx) => {
+        const isLast = idx === visiblePriorityItems.length - 1;
         const common = { borderBottom: isLast ? "none" : "1px solid rgba(255,255,255,0.06)" } as const;
 
         if (it.type === "pain") {
@@ -121,10 +173,24 @@ export default function PriorityFeed() {
                 {it.sessions.map((sess, si) => (
                   <div key={sess.sessionId} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 6, padding: "8px 10px" }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: sess.exercises.length > 0 ? 5 : 0 }}>
-                      <span style={{ fontSize: 11, opacity: 0.7 }}>{sess.label || `Séance ${si + 1}`}</span>
-                      {sess.maxRpe > 0 && <span className="cst-mono" style={{ fontSize: 9, color: "#E07B39" }}>RPE {sess.maxRpe}</span>}
-                      <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" style={{ padding: "2px 8px", fontSize: 10 }}
-                        onClick={() => navigate({ to: "/coach/seance/$sessionId", params: { sessionId: sess.sessionId } })}>Voir →</button>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                        <span style={{ fontSize: 11, opacity: 0.7 }}>{sess.label || `Séance ${si + 1}`}</span>
+                        {sess.maxRpe > 0 && <span className="cst-mono" style={{ fontSize: 9, color: "#E07B39" }}>RPE {sess.maxRpe}</span>}
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <button
+                          type="button"
+                          className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+                          style={{ minWidth: 32, paddingInline: 8, color: "#ff8a7a", borderColor: "rgba(255,138,122,0.35)" }}
+                          onClick={() => void onHideSession(sess.sessionId)}
+                          aria-label={`Retirer ${sess.label || `la séance ${si + 1}`} du dashboard coach`}
+                          title="Retirer du dashboard"
+                        >
+                          ✕
+                        </button>
+                        <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" style={{ padding: "2px 8px", fontSize: 10 }}
+                          onClick={() => navigate({ to: "/coach/seance/$sessionId", params: { sessionId: sess.sessionId } })}>Voir →</button>
+                      </div>
                     </div>
                     {sess.exercises.length > 0 && (
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
@@ -166,6 +232,16 @@ export default function PriorityFeed() {
               <span style={{ fontSize: 18 }}>💬</span>
               <span className="cst-mono" style={{ fontSize: 10, letterSpacing: "0.18em" }}>MESSAGE</span>
               <span className="cst-mono" style={{ fontSize: 10, opacity: 0.55, marginLeft: "auto" }}>{timeAgo(it.createdAt)}</span>
+              <button
+                type="button"
+                className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+                style={{ minWidth: 32, paddingInline: 8, color: "#ff8a7a", borderColor: "rgba(255,138,122,0.35)" }}
+                onClick={() => void onHideMessage(it.id)}
+                aria-label="Retirer ce message de la colonne priorité"
+                title="Retirer de la priorité"
+              >
+                ✕
+              </button>
             </div>
             <div style={{ fontSize: 13 }}><strong>{it.memberName}</strong></div>
             <div style={{ fontSize: 12, opacity: 0.8, fontStyle: "italic" }}>« {msgContent.slice(0, 140)}{msgContent.length > 140 ? "…" : ""} »</div>

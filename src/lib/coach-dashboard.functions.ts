@@ -353,6 +353,22 @@ export const markSessionSeen = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const markPriorityMessageRead = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ messageId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertCoach(context.userId);
+    const { data: updated, error } = await supabaseAdmin
+      .from("messages")
+      .update({ read: true })
+      .eq("id", data.messageId)
+      .eq("to_id", context.userId)
+      .select("id");
+    if (error) throw new Error(error.message);
+    if (!updated || updated.length === 0) throw new Error("Message introuvable");
+    return { ok: true };
+  });
+
 export const hideSessionFromCoachDashboard = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ sessionId: z.string().uuid() }).parse(d))

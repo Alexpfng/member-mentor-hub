@@ -13,6 +13,7 @@ import {
 import { normalizeWeekId } from "@/lib/coach-navigation";
 import { getExerciseFeedback } from "@/lib/exercise-feedback";
 import { listExercises } from "@/lib/exercises.functions";
+import { setExerciseQuickRpe } from "@/lib/adapter-week-rpe";
 
 type LibExercise = {
   id: string;
@@ -374,7 +375,9 @@ export default function AdapterSemaine() {
   const [confirmDeleteDay, setConfirmDeleteDay] = useState<number | null>(null);
   const [editTarget, setEditTarget] = useState<{ dayIdx: number; exoIdx: number } | null>(null);
   const [libraryTarget, setLibraryTarget] = useState<number | null>(null);
+  const [quickRpeTarget, setQuickRpeTarget] = useState<{ dayIdx: number; exoIdx: number } | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const quickRpePopoverRef = useRef<HTMLDivElement | null>(null);
 
   async function load() {
     setLoading(true);
@@ -396,6 +399,17 @@ export default function AdapterSemaine() {
     }
   }
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [memberId, search.week, safeWeekId]);
+
+  useEffect(() => {
+    function onPointerDown(event: MouseEvent) {
+      if (!quickRpeTarget) return;
+      if (quickRpePopoverRef.current?.contains(event.target as Node)) return;
+      setQuickRpeTarget(null);
+    }
+
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, [quickRpeTarget]);
 
   // Auto-save with debounce
   useEffect(() => {
@@ -493,6 +507,12 @@ export default function AdapterSemaine() {
         exercises: (day.exercises ?? []).map((ex) => ({ ...ex, rpe_target: null })),
       })),
     }));
+    setQuickRpeTarget(null);
+  }
+
+  function applyQuickRpe(dayIdx: number, exoIdx: number, rpe: number | null) {
+    setStructure((current) => setExerciseQuickRpe(current, dayIdx, exoIdx, rpe));
+    setQuickRpeTarget(null);
   }
 
   async function openPublish() {
@@ -672,8 +692,16 @@ export default function AdapterSemaine() {
                   const rpeConsigne = rpeStr !== "" && !rpeIsNumeric ? rpeStr : null;
                   return (
                     <div key={ei} style={{ display: "flex", gap: 4, alignItems: "stretch" }}>
-                    <button
+                    <div
                       onClick={() => setEditTarget({ dayIdx: di, exoIdx: ei })}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          setEditTarget({ dayIdx: di, exoIdx: ei });
+                        }
+                      }}
                       style={{
                         textAlign: "left", cursor: "pointer", flex: 1, minWidth: 0,
                         background: `${cardColor}0d`,
@@ -687,16 +715,88 @@ export default function AdapterSemaine() {
                         <ColorDot c={ex.color} />
                         <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 600, whiteSpace: "normal", wordBreak: "break-word", lineHeight: 1.3 }}>{ex.name}</span>
                         {sugg && <span title="Suggestion d'après les retours" style={{ fontSize: 11 }}>{sugg.type === "pain" ? "🔴" : "⚠"}</span>}
-                        <span className="cst-mono" title={rpeConsigne ?? undefined} style={{
-                          fontSize: 10, fontWeight: 700, flexShrink: 0, maxWidth: 90,
-                          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                          background: rpeIsNumeric ? `${cardColor}33` : "rgba(255,255,255,0.06)",
-                          border: `1px solid ${rpeIsNumeric ? cardColor + "66" : "rgba(255,255,255,0.12)"}`,
-                          borderRadius: 5, padding: "2px 7px",
-                          color: rpeIsNumeric ? cardColor : "rgba(255,255,255,0.35)",
-                        }}>
-                          {rpeIsNumeric ? `RPE ${rpeDisplay}` : "RPE —"}
-                        </span>
+                        <div style={{ position: "relative", flexShrink: 0 }}>
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setQuickRpeTarget((current) =>
+                                current?.dayIdx === di && current?.exoIdx === ei ? null : { dayIdx: di, exoIdx: ei },
+                              );
+                            }}
+                            className="cst-mono"
+                            title={rpeConsigne ?? "Modifier le RPE"}
+                            style={{
+                              fontSize: 10, fontWeight: 700, maxWidth: 90,
+                              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                              background: rpeIsNumeric ? `${cardColor}33` : "rgba(255,255,255,0.06)",
+                              border: `1px solid ${rpeIsNumeric ? cardColor + "66" : "rgba(255,255,255,0.12)"}`,
+                              borderRadius: 5, padding: "2px 7px",
+                              color: rpeIsNumeric ? cardColor : "rgba(255,255,255,0.35)",
+                              cursor: "pointer",
+                            }}
+                          >
+                            {rpeIsNumeric ? `RPE ${rpeDisplay}` : "RPE —"}
+                          </button>
+                          {quickRpeTarget?.dayIdx === di && quickRpeTarget?.exoIdx === ei && (
+                            <div
+                              ref={quickRpePopoverRef}
+                              onClick={(event) => event.stopPropagation()}
+                              style={{
+                                position: "absolute",
+                                top: "calc(100% + 6px)",
+                                right: 0,
+                                zIndex: 30,
+                                width: 176,
+                                padding: 8,
+                                borderRadius: 8,
+                                background: "#223528",
+                                border: "1px solid rgba(255,255,255,0.12)",
+                                boxShadow: "0 10px 30px rgba(0,0,0,0.35)",
+                                display: "grid",
+                                gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+                                gap: 6,
+                              }}
+                            >
+                              {Array.from({ length: 11 }, (_, value) => (
+                                <button
+                                  key={value}
+                                  type="button"
+                                  className="cst-mono"
+                                  onClick={() => applyQuickRpe(di, ei, value)}
+                                  style={{
+                                    borderRadius: 6,
+                                    border: "1px solid rgba(255,255,255,0.1)",
+                                    background: Number(rpeStr.replace(",", ".")) === value ? `${cardColor}44` : "rgba(255,255,255,0.05)",
+                                    color: "var(--cst-text)",
+                                    padding: "6px 0",
+                                    fontSize: 11,
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  {value}
+                                </button>
+                              ))}
+                              <button
+                                type="button"
+                                className="cst-mono"
+                                onClick={() => applyQuickRpe(di, ei, null)}
+                                style={{
+                                  gridColumn: "span 4",
+                                  borderRadius: 6,
+                                  border: "1px solid rgba(255,255,255,0.1)",
+                                  background: "rgba(255,255,255,0.04)",
+                                  color: "rgba(255,255,255,0.75)",
+                                  padding: "6px 0",
+                                  fontSize: 10,
+                                  cursor: "pointer",
+                                }}
+                              >
+                                Effacer le RPE
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
                       <div className="cst-mono" style={{ fontSize: 10, opacity: 0.6, display: "flex", gap: 8, flexWrap: "wrap" }}>
                         <span>{ex.block_type === "emom" ? String(ex.series ?? "EMOM") : `${ex.series ?? "—"}×${ex.reps ?? "—"}`}</span>
@@ -728,7 +828,7 @@ export default function AdapterSemaine() {
                           })}
                         </div>
                       )}
-                    </button>
+                    </div>
                     <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", gap: 3 }}>
                       <button onClick={() => moveBlock(di, ei, blockLen, -1)} disabled={ei === 0} title="Monter" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", color: "var(--cst-text)", borderRadius: 5, width: 28, padding: "5px 0", fontSize: 12, lineHeight: 1, cursor: ei === 0 ? "default" : "pointer", opacity: ei === 0 ? 0.25 : 0.85 }}>↑</button>
                       <button onClick={() => moveBlock(di, ei, blockLen, 1)} disabled={ei + blockLen - 1 >= lastIdx} title="Descendre" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", color: "var(--cst-text)", borderRadius: 5, width: 28, padding: "5px 0", fontSize: 12, lineHeight: 1, cursor: ei + blockLen - 1 >= lastIdx ? "default" : "pointer", opacity: ei + blockLen - 1 >= lastIdx ? 0.25 : 0.85 }}>↓</button>
