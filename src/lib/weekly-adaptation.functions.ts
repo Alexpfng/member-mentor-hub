@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { normalizeExerciseFeedbackKey } from "@/lib/exercise-feedback";
 
 /**
  * Adaptation hebdomadaire des programmes (coach).
@@ -103,9 +104,10 @@ async function aggregateFeedback(
 
   const acc: Record<string, { rpeSum: number; rpeCount: number; pain: boolean; tooHard: boolean; tooEasy: boolean; failure: boolean }> = {};
   function bucket(name: string | null | undefined) {
-    if (!name) return null;
-    if (!acc[name]) acc[name] = { rpeSum: 0, rpeCount: 0, pain: false, tooHard: false, tooEasy: false, failure: false };
-    return acc[name];
+    const key = normalizeExerciseFeedbackKey(name);
+    if (!key) return null;
+    if (!acc[key]) acc[key] = { rpeSum: 0, rpeCount: 0, pain: false, tooHard: false, tooEasy: false, failure: false };
+    return acc[key];
   }
   (logs ?? []).forEach((l) => {
     const b = bucket(l.exercise_name);

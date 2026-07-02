@@ -9,6 +9,7 @@ import { type ProgExercise } from "../components/cst/ProgramBlocks";
 import { LiveSession } from "../components/cst/LiveSession";
 import { RunningSession, isRunningSession } from "../components/cst/RunningSession";
 import { computeSessionDurationMin } from "@/lib/format";
+import { resolveSessionExercises } from "@/lib/program-weeks";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/membre/seance/$sessionId")({
@@ -77,18 +78,30 @@ function SeancePage() {
       let exos: ProgExercise[] = [];
       let resolutionError: string | null = null;
       if (s?.program_id) {
-        const { data: prog } = await supabase
-          .from("programs").select("structure").eq("id", s.program_id).maybeSingle();
+        const [{ data: prog }, { data: adaptedWeeks }] = await Promise.all([
+          supabase.from("programs").select("structure").eq("id", s.program_id).maybeSingle(),
+          supabase
+            .from("assignment_weeks")
+            .select("week_number, structure")
+            .eq("member_id", u.user?.id ?? "")
+            .eq("program_id", s.program_id)
+            .in("status", ["published", "in_progress", "done"]),
+        ]);
         const struct = prog?.structure as ProgramStructure | undefined;
         const w = s.week_number ?? 0;
-        const d = (s.day_number ?? 1) - 1;
-        const day = struct?.weeks?.[w]?.days?.[d];
-        if (day?.exercises?.length) {
-          exos = day.exercises;
+        const dayNumber = s.day_number ?? 1;
+        exos = resolveSessionExercises(struct, adaptedWeeks ?? [], w, dayNumber) as ProgExercise[];
+        if (exos.length) {
+          // ok
         } else {
-          resolutionError = `Aucun exercice trouvé pour ${s.session_label ?? "ce jour"} (semaine ${w + 1}, jour ${d + 1}).`;
+          resolutionError = `Aucun exercice trouvé pour ${s.session_label ?? "ce jour"} (semaine ${w + 1}, jour ${dayNumber}).`;
           console.warn("[seance] structure lookup failed", {
-            sessionId, programId: s.program_id, week: w, day: d, label: s.session_label,
+            sessionId,
+            programId: s.program_id,
+            week: w,
+            day: dayNumber - 1,
+            label: s.session_label,
+            adaptedWeeks: adaptedWeeks?.length ?? 0,
           });
         }
       } else if (s?.planned_exercises) {

@@ -11,6 +11,7 @@ import {
   previewWeekChanges,
 } from "@/lib/weekly-adaptation.functions";
 import { normalizeWeekId } from "@/lib/coach-navigation";
+import { getExerciseFeedback } from "@/lib/exercise-feedback";
 import { listExercises } from "@/lib/exercises.functions";
 
 type LibExercise = {
@@ -657,7 +658,7 @@ export default function AdapterSemaine() {
                     }
                   }
                   const blockLen = 1 + cardioFragments.length;
-                  const fb = ctx.feedback[ex.name];
+                  const fb = getExerciseFeedback(ctx.feedback, ex.name);
                   const sugg = suggestFor(ex, fb);
                   const cardColor = COLOR_MAP[(ex.color || "").toLowerCase()]?.bg || "#555";
                   const lastIdx = (day.exercises?.length ?? 1) - 1;
@@ -819,7 +820,7 @@ export default function AdapterSemaine() {
       )}
       {editTarget && structure.days?.[editTarget.dayIdx]?.exercises?.[editTarget.exoIdx] && (() => {
         const ex = structure.days![editTarget.dayIdx].exercises![editTarget.exoIdx];
-        const fb = ctx.feedback[ex.name];
+        const fb = getExerciseFeedback(ctx.feedback, ex.name);
         return (
           <ExoEditModal
             ex={ex}

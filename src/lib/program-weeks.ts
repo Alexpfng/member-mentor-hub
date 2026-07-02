@@ -9,7 +9,11 @@
 // Ce helper centralise la fusion pour que la vue programme, le planning et le lanceur
 // de séance partagent EXACTEMENT la même structure.
 
-export type WeekDay = { label?: string | null; type?: string | null };
+export type WeekDay = {
+  label?: string | null;
+  type?: string | null;
+  exercises?: unknown[] | null;
+};
 export type WeekLike = { number?: number | null; days?: WeekDay[] | null };
 export type StructureLike = { weeks?: WeekLike[] } | null | undefined;
 export type AdaptedWeek = { week_number?: number | null; structure?: unknown };
@@ -27,4 +31,16 @@ export function mergeAssignmentWeeks(base: StructureLike, adapted: AdaptedWeek[]
     weeks[idx] = (w.structure as WeekLike) ?? { days: [] };
   }
   return weeks;
+}
+
+export function resolveSessionExercises(
+  base: StructureLike,
+  adapted: AdaptedWeek[] | null | undefined,
+  weekNumber: number | null | undefined,
+  dayNumber: number | null | undefined,
+) {
+  const weeks = mergeAssignmentWeeks(base, adapted);
+  const weekIdx = Math.max(0, weekNumber ?? 0);
+  const dayIdx = Math.max(0, (dayNumber ?? 1) - 1);
+  return weeks[weekIdx]?.days?.[dayIdx]?.exercises ?? [];
 }
