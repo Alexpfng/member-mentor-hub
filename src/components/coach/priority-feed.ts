@@ -39,3 +39,10 @@ export function hideMessageFromPriorityItems<T extends { type: string; id: strin
 ) {
   return items.filter((item) => !(item.type === "message" && item.id === messageId));
 }
+
+export function hideVideoFromPriorityItems<T extends { type: string; id: string }>(
+  items: T[],
+  videoId: string,
+) {
+  return items.filter((item) => !(item.type === "video" && item.id === videoId));
+}

@@ -4,9 +4,10 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getPriorityFeed, hideSessionFromCoachDashboard, markPriorityMessageRead } from "@/lib/coach-dashboard.functions";
 import { resolvePainReport } from "@/lib/pain-reports.functions";
+import { markVideoReviewed } from "@/lib/videos.functions";
 import { timeAgo } from "@/lib/format";
 import { toast } from "sonner";
-import { hideMessageFromPriorityItems, hideSessionFromPriorityItems, type PriorityMemberGroup, type PrioritySessionEntry } from "./priority-feed";
+import { hideMessageFromPriorityItems, hideSessionFromPriorityItems, hideVideoFromPriorityItems, type PriorityMemberGroup, type PrioritySessionEntry } from "./priority-feed";
 
 export default function PriorityFeed() {
   const navigate = useNavigate();
@@ -14,14 +15,17 @@ export default function PriorityFeed() {
   const fetchFeed = useServerFn(getPriorityFeed);
   const hideSession = useServerFn(hideSessionFromCoachDashboard);
   const markMessageRead = useServerFn(markPriorityMessageRead);
+  const reviewVideo = useServerFn(markVideoReviewed);
   const resolve = useServerFn(resolvePainReport);
   const { data, isLoading } = useQuery({ queryKey: ["coach", "priority"], queryFn: () => fetchFeed() });
   const [hiddenSessionIds, setHiddenSessionIds] = useState<string[]>([]);
   const [hiddenMessageIds, setHiddenMessageIds] = useState<string[]>([]);
+  const [hiddenVideoIds, setHiddenVideoIds] = useState<string[]>([]);
 
   useEffect(() => {
     setHiddenSessionIds([]);
     setHiddenMessageIds([]);
+    setHiddenVideoIds([]);
   }, [data]);
 
   if (isLoading) {
@@ -72,8 +76,12 @@ export default function PriorityFeed() {
     (currentItems, messageId) => hideMessageFromPriorityItems(currentItems, messageId),
     visibleItems,
   );
+  const visibleCoachItems = hiddenVideoIds.reduce(
+    (currentItems, videoId) => hideVideoFromPriorityItems(currentItems, videoId),
+    visiblePriorityItems,
+  );
 
-  if (visiblePriorityItems.length === 0) {
+  if (visibleCoachItems.length === 0) {
     return (
       <div className="cst-card-dark" style={{ padding: 22, textAlign: "center" }}>
         <div className="cst-display" style={{ fontSize: 18, marginBottom: 4 }}>RIEN À TRAITER</div>
@@ -124,10 +132,26 @@ export default function PriorityFeed() {
     }
   }
 
+  async function onHideVideo(videoId: string) {
+    const confirmed = window.confirm("Retirer cette vidéo de la colonne priorité ?");
+    if (!confirmed) return;
+
+    setHiddenVideoIds((current) => (current.includes(videoId) ? current : [...current, videoId]));
+
+    try {
+      await reviewVideo({ data: { videoId } });
+      toast.success("Vidéo retirée de la priorité");
+      await qc.invalidateQueries({ queryKey: ["coach"] });
+    } catch (e: unknown) {
+      setHiddenVideoIds((current) => current.filter((id) => id !== videoId));
+      toast.error(e instanceof Error ? e.message : "Erreur");
+    }
+  }
+
   return (
     <div className="cst-card-dark" style={{ padding: 0, overflow: "hidden" }}>
-      {visiblePriorityItems.map((it, idx) => {
-        const isLast = idx === visiblePriorityItems.length - 1;
+      {visibleCoachItems.map((it, idx) => {
+        const isLast = idx === visibleCoachItems.length - 1;
         const common = { borderBottom: isLast ? "none" : "1px solid rgba(255,255,255,0.06)" } as const;
 
         if (it.type === "pain") {
@@ -216,6 +240,16 @@ export default function PriorityFeed() {
                 <span style={{ fontSize: 18 }}>🎬</span>
                 <span className="cst-mono" style={{ fontSize: 10, letterSpacing: "0.18em" }}>VIDÉO À REVOIR</span>
                 <span className="cst-mono" style={{ fontSize: 10, opacity: 0.55, marginLeft: "auto" }}>{timeAgo(it.createdAt)}</span>
+                <button
+                  type="button"
+                  className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+                  style={{ minWidth: 32, paddingInline: 8, color: "#ff8a7a", borderColor: "rgba(255,138,122,0.35)" }}
+                  onClick={() => void onHideVideo(it.id)}
+                  aria-label="Retirer cette vidéo de la colonne priorité"
+                  title="Retirer de la priorité"
+                >
+                  ✕
+                </button>
               </div>
               <div style={{ fontSize: 13 }}><strong>{it.memberName}</strong> · {it.exerciseName || "—"}</div>
               <div style={{ display: "flex", gap: 6 }}>

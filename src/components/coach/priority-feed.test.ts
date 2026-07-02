@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 
-import { hideMessageFromPriorityItems, hideSessionFromPriorityItems } from "./priority-feed";
+import { hideMessageFromPriorityItems, hideSessionFromPriorityItems, hideVideoFromPriorityItems } from "./priority-feed";
 
 describe("hideSessionFromPriorityItems", () => {
   it("removes only the targeted session from a grouped priority card", () => {
@@ -63,6 +63,17 @@ describe("hideSessionFromPriorityItems", () => {
 
     expect(hideMessageFromPriorityItems(items, "m1")).toEqual([
       { type: "message", id: "m2", memberId: "b" },
+    ]);
+  });
+
+  it("removes only the targeted video card", () => {
+    const items = [
+      { type: "video", id: "v1", memberId: "a" },
+      { type: "video", id: "v2", memberId: "b" },
+    ];
+
+    expect(hideVideoFromPriorityItems(items, "v1")).toEqual([
+      { type: "video", id: "v2", memberId: "b" },
     ]);
   });
 });

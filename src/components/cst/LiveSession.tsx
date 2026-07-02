@@ -6,6 +6,12 @@ import { ProgramBlocks, groupBlocks, type ProgExercise } from "./ProgramBlocks";
 import { ExerciseThread } from "./ExerciseThread";
 import PainReportDialog from "./PainReportDialog";
 import {
+  buildExerciseOverview,
+  groupExpertRecapByExercise,
+  type ExpertSavedStep,
+  type SessionProgressStep,
+} from "@/lib/live-session-progress";
+import {
   ColorDot,
   ColorTooltip,
   TempoBadge,
@@ -637,13 +643,17 @@ type Props = {
 export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFinish, onReset, finishing, initialMode, quitRef }: Props) {
   const steps = useMemo(() => buildSteps(exercises), [exercises]);
   const totalWorkSets = useMemo(() => steps.filter((s) => s.kind === "set" || s.kind === "emom" || s.kind === "circuit").length, [steps]);
+  const exerciseNames = useMemo(
+    () => Array.from(new Set(exercises.map((exercise) => exercise.name).filter(Boolean))),
+    [exercises],
+  );
 
   // Restore from localStorage on first render
   const snap = useMemo(() => loadSnapshot(sessionId), [sessionId]);
 
   const [phase, setPhase] = useState<"intro" | "step" | "rest" | "recap">(snap?.phase ?? "intro");
   const [sessionMode] = useState<"expert" | "debutant">(initialMode ?? "debutant");
-  const [expertRpe, setExpertRpe] = useState<number | null>(null);
+  const [expertRecapRpeByExercise, setExpertRecapRpeByExercise] = useState<Record<string, number | null>>({});
   const [stepIdx, setStepIdx] = useState(snap?.stepIdx ?? 0);
   const [logging, setLogging] = useState<null | {
     weight: string;
@@ -667,7 +677,7 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
 
   /** Saisies par stepIdx — conservées si on revient en arrière, écrasées si on re-valide. */
   const [savedByStep, setSavedByStep] = useState<
-    Record<number, { weight: number | null; reps: number | null; rpe: number | null; exo: string }>
+    Record<number, ExpertSavedStep>
   >(snap?.savedByStep ?? {});
 
   /** Historique de la dernière séance pour le même exercice. */
@@ -750,8 +760,6 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
     });
   }, [sessionId, stepIdx, phase, savedByStep]);
 
-  useEffect(() => { setExpertRpe(null); }, [stepIdx]);
-
   // Expose quit trigger to parent (outer "← QUITTER" button)
   useEffect(() => {
     if (quitRef) quitRef.current = () => setShowQuitConfirm(true);
@@ -760,6 +768,31 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
 
   const current = steps[stepIdx];
   const completedWorkSets = useMemo(() => Object.keys(savedByStep).length, [savedByStep]);
+  const progressSteps = useMemo<SessionProgressStep[]>(
+    () =>
+      steps.flatMap((step, index) => {
+        if (step.kind === "set") {
+          return [{ index, exerciseName: step.exercise.name, kind: "set" }];
+        }
+        if (step.kind === "emom") {
+          return [{ index, exerciseName: step.exercise.name, kind: "emom" }];
+        }
+        if (step.kind === "circuit") {
+          return step.exercises.map((exercise) => ({
+            index,
+            exerciseName: exercise.name,
+            kind: "circuit" as const,
+          }));
+        }
+        return [];
+      }),
+    [steps],
+  );
+  const overviewRows = useMemo(
+    () => buildExerciseOverview(exerciseNames, progressSteps, savedByStep, stepIdx),
+    [exerciseNames, progressSteps, savedByStep, stepIdx],
+  );
+  const expertRecapGroups = useMemo(() => groupExpertRecapByExercise(savedByStep), [savedByStep]);
 
   function goNext() {
     setLogging(null);
@@ -906,27 +939,60 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
   }
 
   async function advanceExpertSet(step: WorkSet, rpe: number | null) {
-    try {
-      await supabase.from("set_logs").insert({
-        session_id: sessionId,
-        exercise_name: step.exercise.name,
-        set_number: step.setNumber,
-        weight_kg: null,
-        reps: null,
-        rpe,
-        completed: true,
-      });
-    } catch { /* non-bloquant */ }
+    const defaults = computeDefaults(step);
+    const parsedWeight = defaults.weight ? parseFloat(defaults.weight.replace(",", ".")) : NaN;
+    const repTarget = parseRepsPerSet(step.exercise.reps, step.totalSets)[step.setNumber - 1]
+      || (step.exercise.reps ? String(step.exercise.reps) : "");
+    const parsedTargetReps = isDurationReps(repTarget)
+      ? parseDurationSeconds(repTarget)
+      : extractNumeric(repTarget);
     setSavedByStep((m) => ({
       ...m,
-      [stepIdx]: { exo: step.exercise.name, weight: null, reps: null, rpe },
+      [stepIdx]: {
+        exo: step.exercise.name,
+        weight: Number.isFinite(parsedWeight) ? parsedWeight : null,
+        reps: parsedTargetReps != null ? Math.round(parsedTargetReps) : null,
+        rpe,
+      },
     }));
-    setExpertRpe(null);
     if (step.restAfter) {
       setPhase("rest");
     } else {
       goNext();
     }
+  }
+
+  async function finishExpertRecap() {
+    const missingExercise = expertRecapGroups.find((group) => expertRecapRpeByExercise[group.exerciseName] == null);
+    if (missingExercise) {
+      setValidationError(`Renseigne le RPE final de ${missingExercise.exerciseName}.`);
+      return;
+    }
+
+    setValidationError(null);
+
+    const rows = expertRecapGroups.flatMap((group) =>
+      group.rows.map((row) => ({
+        session_id: sessionId,
+        exercise_name: group.exerciseName,
+        set_number: row.setNumber,
+        weight_kg: row.weight,
+        reps: row.reps,
+        rpe: expertRecapRpeByExercise[group.exerciseName],
+        completed: true,
+      })),
+    );
+
+    const { error: deleteError } = await supabase.from("set_logs").delete().eq("session_id", sessionId);
+    if (deleteError) throw deleteError;
+
+    if (rows.length > 0) {
+      const { error: insertError } = await supabase.from("set_logs").insert(rows);
+      if (insertError) throw insertError;
+    }
+
+    await onFinish();
+    clearSnapshot(sessionId);
   }
 
   /** Calcule les valeurs pré-remplies pour un set donné. */
@@ -986,6 +1052,8 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
 
   function renderHeader() {
     const pct = totalWorkSets ? (completedWorkSets / totalWorkSets) * 100 : 0;
+    const doneExercises = overviewRows.filter((row) => row.state === "done").length;
+    const remainingExercises = Math.max(0, overviewRows.length - doneExercises);
     return (
       <div style={{ padding: "16px 18px 8px", display: "flex", flexDirection: "column", gap: 8 }}>
         {showResumeNotice && (
@@ -1025,6 +1093,11 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
             <span className="cst-mono" style={{ fontSize: 10, opacity: 0.6 }}>
               {completedWorkSets}/{totalWorkSets}
             </span>
+            {overviewRows.length > 0 && (
+              <span className="cst-mono" style={{ fontSize: 10, opacity: 0.6 }}>
+                {doneExercises} faits · {remainingExercises} restants
+              </span>
+            )}
             <button
               onClick={() => setShowOverview(true)}
               aria-label="Voir toute la séance"
@@ -1133,6 +1206,34 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
               <p className="cst-mono" style={{ fontSize: 9, opacity: 0.5, letterSpacing: "0.14em", margin: "0 0 10px" }}>
                 Touche « ALLER → » pour faire un exercice tout de suite (ex. machine déjà prise).
               </p>
+              {overviewRows.length > 0 && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 14 }}>
+                  {overviewRows.map((row) => {
+                    const tone = row.state === "done" ? "#6EAB76" : row.state === "current" ? "#D4A53B" : "rgba(255,255,255,0.45)";
+                    const label = row.state === "done" ? "FAIT" : row.state === "current" ? "EN COURS" : "À FAIRE";
+                    return (
+                      <div
+                        key={row.exerciseName}
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          gap: 10,
+                          padding: "8px 10px",
+                          background: "rgba(255,255,255,0.03)",
+                          border: "1px solid rgba(255,255,255,0.06)",
+                          borderRadius: 8,
+                        }}
+                      >
+                        <span style={{ fontSize: 12, fontWeight: 600 }}>{row.exerciseName}</span>
+                        <span className="cst-mono" style={{ fontSize: 10, color: tone, letterSpacing: "0.14em" }}>
+                          {label} · {row.completedSteps}/{row.totalSteps || 1}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
               <ProgramBlocks exercises={exercises} onExerciseClick={(ex) => jumpToExercise(ex.name)} />
             </div>
           </div>
@@ -1378,22 +1479,65 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
             className="cst-scroll"
             style={{ maxHeight: 180, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4 }}
           >
-            {savedList.map((l, i) => (
-              <div
-                key={i}
-                className="cst-mono"
-                style={{
-                  fontSize: 11,
-                  padding: "6px 10px",
-                  background: "rgba(0,0,0,0.18)",
-                  borderRadius: 4,
-                  opacity: 0.85,
-                }}
-              >
-                {l.exo} — {l.weight ?? "—"}kg × {l.reps ?? "—"} @ RPE {l.rpe ?? "—"}
+            {sessionMode === "expert" ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <div className="cst-mono" style={{ fontSize: 10, opacity: 0.6, letterSpacing: "0.18em" }}>
+                  RENSEIGNE LE RPE FINAL PAR EXERCICE
+                </div>
+                {expertRecapGroups.map((group) => (
+                  <div
+                    key={group.exerciseName}
+                    style={{
+                      padding: "10px 12px",
+                      background: "rgba(0,0,0,0.18)",
+                      borderRadius: 8,
+                      border: "1px solid rgba(255,255,255,0.06)",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 8,
+                    }}
+                  >
+                    <div style={{ fontSize: 13, fontWeight: 700 }}>{group.exerciseName}</div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      {group.rows.map((row) => (
+                        <div key={row.stepIdx} className="cst-mono" style={{ fontSize: 11, opacity: 0.82 }}>
+                          S{row.setNumber} · {row.weight ?? "—"}kg × {row.reps ?? "—"}
+                        </div>
+                      ))}
+                    </div>
+                    <RPESelector
+                      value={expertRecapRpeByExercise[group.exerciseName] ?? null}
+                      onChange={(value) =>
+                        setExpertRecapRpeByExercise((currentMap) => ({
+                          ...currentMap,
+                          [group.exerciseName]: value,
+                        }))
+                      }
+                    />
+                  </div>
+                ))}
               </div>
-            ))}
+            ) : (
+              savedList.map((l, i) => (
+                <div
+                  key={i}
+                  className="cst-mono"
+                  style={{
+                    fontSize: 11,
+                    padding: "6px 10px",
+                    background: "rgba(0,0,0,0.18)",
+                    borderRadius: 4,
+                    opacity: 0.85,
+                  }}
+                >
+                  {l.exo} — {l.weight ?? "—"}kg × {l.reps ?? "—"} @ RPE {l.rpe ?? "—"}
+                </div>
+              ))
+            )}
           </div>
+          {validationError && (
+            <div style={{ fontSize: 12, color: "#ff8a7a" }}>{validationError}</div>
+          )}
 
           {/* Session-level video share */}
           <SessionMediaUploader sessionId={sessionId} userId={userId} />
@@ -1401,8 +1545,12 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
           <button
             onClick={async () => {
               try {
-                await onFinish();
-                clearSnapshot(sessionId); // seulement si la fin a réussi
+                if (sessionMode === "expert") {
+                  await finishExpertRecap();
+                } else {
+                  await onFinish();
+                  clearSnapshot(sessionId); // seulement si la fin a réussi
+                }
               } catch {
                 /* échec déjà signalé (toast) ; on garde le snapshot pour réessayer */
               }
@@ -1757,39 +1905,22 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
           <div style={{ flex: 1 }} />
 
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span className="cst-mono" style={{ fontSize: 10, opacity: 0.6, letterSpacing: "0.18em" }}>RPE PERÇU</span>
-              <button
-                onClick={() => setShowRpeRef(true)}
-                className="cst-mono"
-                style={{ background: "none", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.7)", fontSize: 9, padding: "2px 8px", borderRadius: 4, cursor: "pointer", letterSpacing: "0.12em" }}
-              >
-                ? ÉCHELLE
-              </button>
+            <div className="cst-mono" style={{ fontSize: 10, opacity: 0.65, letterSpacing: "0.18em" }}>
+              RPE À RENSEIGNER À LA FIN DE LA SÉANCE
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 4 }}>
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((v) => {
-                const on = expertRpe === v;
-                const hue = v >= 9 ? "#C9483A" : v >= 7 ? "#D4A53B" : "#3A8A4D";
-                return (
-                  <button
-                    key={v}
-                    onClick={() => setExpertRpe(v)}
-                    className="cst-mono"
-                    style={{ padding: "12px 0", borderRadius: 6, border: `1px solid ${on ? hue : "rgba(255,255,255,0.12)"}`, background: on ? `${hue}33` : "transparent", color: on ? "#fff" : "rgba(255,255,255,0.7)", fontSize: 15, fontWeight: 700, cursor: "pointer" }}
-                  >
-                    {v}
-                  </button>
-                );
-              })}
-            </div>
+            <button
+              onClick={() => setShowRpeRef(true)}
+              className="cst-mono"
+              style={{ background: "none", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.7)", fontSize: 9, padding: "8px 10px", borderRadius: 6, cursor: "pointer", letterSpacing: "0.12em", alignSelf: "flex-start" }}
+            >
+              ? VOIR L'ÉCHELLE RPE
+            </button>
           </div>
 
           <button
-            onClick={() => advanceExpertSet(exStep, expertRpe)}
-            disabled={expertRpe === null}
+            onClick={() => advanceExpertSet(exStep, null)}
             className="cst-btn cst-btn-primary"
-            style={{ width: "100%", padding: "18px 0", fontSize: 14, opacity: expertRpe === null ? 0.4 : 1 }}
+            style={{ width: "100%", padding: "18px 0", fontSize: 14 }}
           >
             VALIDER {exStep.restAfter ? "→ REPOS" : exStep.isLastSetOfExercise ? "→ EXO SUIVANT" : "→ SUIVANT"}
           </button>
@@ -3468,4 +3599,3 @@ function CuesModal({
     </div>
   );
 }
-
