@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router"
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
+import { mergeAssignmentWeeks } from "@/lib/program-weeks";
 
 const searchSchema = z.object({
   day: z.string().min(1).max(120).optional(),
@@ -68,6 +69,19 @@ function SessionLauncher() {
         }
         const weekNumber = search.week ?? currentWeek;
 
+        // Fusionne les semaines adaptées (assignment_weeks) sur le template, pour que le
+        // jour choisi soit résolu contre la structure RÉELLEMENT assignée au membre (une
+        // semaine adaptée peut ne pas exister dans le template). Le membre peut lire ses
+        // propres semaines publiées (RLS).
+        let awQuery = supabase
+          .from("assignment_weeks")
+          .select("week_number, structure")
+          .eq("member_id", uid)
+          .in("status", ["published", "in_progress", "done"]);
+        if (programId) awQuery = awQuery.eq("program_id", programId);
+        const { data: adaptedWeeks } = await awQuery;
+        const weeks = mergeAssignmentWeeks(structure, adaptedWeeks ?? []);
+
         // Resolve day_number (1-based) from day_label within the program week
         const normalize = (s: string) =>
           s
@@ -79,14 +93,13 @@ function SessionLauncher() {
 
         let dayNumber: number | null = null;
         let sessionLabel: string | null = search.day ?? null;
-        if (search.day && structure?.weeks?.[weekNumber]?.days) {
+        const weekDays = weeks[weekNumber]?.days ?? null;
+        if (search.day && weekDays) {
           const target = normalize(search.day);
-          const idx = structure.weeks[weekNumber].days!.findIndex(
-            (d) => normalize(d?.label ?? "") === target,
-          );
+          const idx = weekDays.findIndex((d) => normalize(d?.label ?? "") === target);
           if (idx >= 0) {
             dayNumber = idx + 1;
-            sessionLabel = structure.weeks[weekNumber].days![idx].label ?? search.day;
+            sessionLabel = weekDays[idx].label ?? search.day;
           }
         }
 

@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { mergeAssignmentWeeks } from "@/lib/program-weeks";
 
 async function assertCoach(userId: string) {
   const { data, error } = await supabaseAdmin
@@ -831,14 +832,9 @@ export const getMyAssignedProgram = createServerFn({ method: "GET" })
         .eq("assignment_id", assignment.id)
         .in("status", ["published", "in_progress", "done"]);
       if (weeks && weeks.length > 0) {
-        const base = (program.structure as { weeks?: unknown[] } | null) ?? { weeks: [] };
-        const merged: unknown[] = Array.isArray(base.weeks) ? [...base.weeks] : [];
-        for (const w of weeks) {
-          const idx = Math.max(0, (w.week_number ?? 1) - 1);
-          while (merged.length <= idx) merged.push({ days: [] });
-          merged[idx] = w.structure;
-        }
-        program.structure = { ...(base as object), weeks: merged } as typeof program.structure;
+        const base = (program.structure as object | null) ?? {};
+        const merged = mergeAssignmentWeeks(base as never, weeks);
+        program.structure = { ...base, weeks: merged } as typeof program.structure;
       }
     }
 

@@ -128,7 +128,10 @@ export default function MemberProgramme() {
                 <div className="cst-col" style={{ gap: 8, marginTop: 18 }}>
                   {weeks.map((w, i) => {
                     const isOpen = openWeek === i;
-                    const weekNum = w.number ?? i + 1;
+                    // Numéro basé sur la position : les semaines adaptées (assignment_weeks)
+                    // n'ont pas de champ `number`, et certains templates ont des numéros
+                    // dupliqués → on affichait « Semaine 01 » deux fois.
+                    const weekNum = i + 1;
                     return (
                       <div key={i} className="cst-card-dark" style={{ padding: 0, overflow: 'hidden' }}>
                         <button

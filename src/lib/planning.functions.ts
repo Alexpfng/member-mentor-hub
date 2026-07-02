@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { mergeAssignmentWeeks } from "@/lib/program-weeks";
 
 const dateStr = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
@@ -62,7 +63,16 @@ export const listWeekPlan = createServerFn({ method: "GET" })
     weekEnd.setDate(weekStart.getDate() + 6);
 
     const program = (assignment as any).programs ?? null;
-    const weeks = program?.structure?.weeks ?? [];
+    // Fusionne les semaines adaptées (assignment_weeks) sur le template : le planning
+    // doit proposer les séances réellement assignées au membre (une semaine adaptée
+    // peut ne pas exister dans le template), sinon le membre planifie une séance que
+    // le lanceur ne retrouvera pas.
+    const { data: adaptedWeeks } = await supabaseAdmin
+      .from("assignment_weeks")
+      .select("week_number, structure")
+      .eq("assignment_id", assignment.id)
+      .in("status", ["published", "in_progress", "done"]);
+    const weeks = mergeAssignmentWeeks(program?.structure, adaptedWeeks ?? []);
     const weekDef = weeks[weekNumber] ?? null;
     const dayDefs = weekDef?.days ?? [];
 
