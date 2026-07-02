@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { filterRecentSessionsForCoach } from "@/lib/coach-recent-sessions";
 
 async function assertCoach(userId: string) {
   const { data } = await supabaseAdmin
@@ -50,7 +51,7 @@ export const getDashboardMetrics = createServerFn({ method: "GET" })
       supabaseAdmin.from("pain_reports").select("id", { count: "exact", head: true }).is("resolved_at", null),
       supabaseAdmin.from("messages").select("id", { count: "exact", head: true }).eq("to_id", context.userId).eq("read", false),
       supabaseAdmin.from("technique_videos").select("id", { count: "exact", head: true }).eq("coach_reviewed", false),
-      supabaseAdmin.from("sessions").select("id", { count: "exact", head: true }).eq("coach_seen", false).eq("status", "completed"),
+      supabaseAdmin.from("sessions").select("id", { count: "exact", head: true }).eq("coach_seen", false).eq("status", "completed").is("coach_hidden_at", null),
       // Séances planifiées depuis le début de la semaine (planning des membres)
       memberIds.length > 0
         ? supabaseAdmin.from("planned_sessions").select("id", { count: "exact", head: true }).in("member_id", memberIds).gte("planned_date", weekStartISO).neq("status", "rest")
@@ -193,8 +194,8 @@ export const getPriorityFeed = createServerFn({ method: "GET" })
       supabaseAdmin.from("pain_reports").select("id, member_id, session_id, exercise_name, zone, intensity, comment, created_at").is("resolved_at", null).order("intensity", { ascending: false }).order("created_at", { ascending: false }).limit(20),
       supabaseAdmin.from("technique_videos").select("id, member_id, session_id, exercise_name, created_at").eq("coach_reviewed", false).order("created_at", { ascending: false }).limit(20),
       supabaseAdmin.from("messages").select("id, from_id, content, created_at").eq("to_id", context.userId).eq("read", false).order("created_at", { ascending: false }).limit(20),
-      supabaseAdmin.from("exercise_feedbacks").select("id, session_id, exercise_name, rpe, created_at, sessions!inner(member_id, coach_seen, status)").gte("rpe", 9).eq("sessions.coach_seen", false).eq("sessions.status", "completed").order("created_at", { ascending: false }).limit(30),
-      supabaseAdmin.from("sessions").select("id, member_id, session_label, week_number, day_number, ended_at, started_at, average_rpe, session_type, free_title").eq("coach_seen", false).eq("status", "completed").order("ended_at", { ascending: false, nullsFirst: false }).limit(60),
+      supabaseAdmin.from("exercise_feedbacks").select("id, session_id, exercise_name, rpe, created_at, sessions!inner(member_id, coach_seen, coach_hidden_at, status)").gte("rpe", 9).eq("sessions.coach_seen", false).eq("sessions.status", "completed").is("sessions.coach_hidden_at", null).order("created_at", { ascending: false }).limit(30),
+      supabaseAdmin.from("sessions").select("id, member_id, session_label, week_number, day_number, ended_at, started_at, average_rpe, session_type, free_title, coach_hidden_at").eq("coach_seen", false).eq("status", "completed").is("coach_hidden_at", null).order("ended_at", { ascending: false, nullsFirst: false }).limit(60),
     ]);
 
     type Item =
@@ -242,8 +243,9 @@ export const getRecentSessions = createServerFn({ method: "GET" })
 
     const { data: sessions } = await supabaseAdmin
       .from("sessions")
-      .select("id, member_id, session_label, week_number, day_number, started_at, ended_at, duration_minutes, average_rpe, member_note, coach_seen, status, session_type, free_title, free_category")
-      .in("status", ["completed", "in_progress"])
+      .select("id, member_id, session_label, week_number, day_number, started_at, ended_at, duration_minutes, average_rpe, member_note, coach_seen, coach_hidden_at, status, session_type, free_title, free_category")
+      .eq("status", "completed")
+      .is("coach_hidden_at", null)
       .order("started_at", { ascending: false, nullsFirst: false })
       .limit(data.limit ?? 20);
 
@@ -254,7 +256,7 @@ export const getRecentSessions = createServerFn({ method: "GET" })
       for (const p of pains ?? []) if (p.session_id) painsBySession.set(p.session_id, (painsBySession.get(p.session_id) || 0) + 1);
     }
 
-    return (sessions ?? []).map((s) => ({
+    return filterRecentSessionsForCoach(sessions ?? []).map((s) => ({
       id: s.id,
       memberId: s.member_id,
       memberName: nameOf.get(s.member_id) || "Membre",
@@ -347,6 +349,19 @@ export const markSessionSeen = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertCoach(context.userId);
     const { error } = await supabaseAdmin.from("sessions").update({ coach_seen: true }).eq("id", data.sessionId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const hideSessionFromCoachDashboard = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ sessionId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertCoach(context.userId);
+    const { error } = await supabaseAdmin
+      .from("sessions")
+      .update({ coach_hidden_at: new Date().toISOString(), coach_seen: true })
+      .eq("id", data.sessionId);
     if (error) throw new Error(error.message);
     return { ok: true };
   });

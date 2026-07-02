@@ -1,17 +1,33 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
-import { getRecentSessions } from "@/lib/coach-dashboard.functions";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getRecentSessions, hideSessionFromCoachDashboard } from "@/lib/coach-dashboard.functions";
 import { timeAgo, sanitizeDurationMin } from "@/lib/format";
 import { CSTAvatar } from "@/components/Atoms";
+import { toast } from "sonner";
 
 export default function RecentSessionsList() {
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const fetchSessions = useServerFn(getRecentSessions);
+  const hideSession = useServerFn(hideSessionFromCoachDashboard);
   const { data, isLoading } = useQuery({
     queryKey: ["coach", "recent-sessions"],
     queryFn: () => fetchSessions({ data: { limit: 20 } }),
   });
+
+  async function onHideSession(sessionId: string) {
+    const confirmed = window.confirm("Retirer cette séance du dashboard coach ?");
+    if (!confirmed) return;
+
+    try {
+      await hideSession({ data: { sessionId } });
+      toast.success("Séance retirée du dashboard");
+      await qc.invalidateQueries({ queryKey: ["coach"] });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Erreur");
+    }
+  }
 
   if (isLoading) return <div className="cst-card-dark" style={{ padding: 20, opacity: 0.6 }}>Chargement…</div>;
   const sessions = data ?? [];
@@ -48,7 +64,22 @@ export default function RecentSessionsList() {
               </div>
               {s.memberNote && <div style={{ marginTop: 6, fontSize: 12, opacity: 0.75, fontStyle: "italic" }}>« {s.memberNote.slice(0, 140)}{s.memberNote.length > 140 ? "…" : ""} »</div>}
             </div>
-            <div style={{ alignSelf: "center", opacity: 0.6 }}>→</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, alignSelf: "stretch" }}>
+              <button
+                type="button"
+                className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+                style={{ minWidth: 36, paddingInline: 10, color: "#ff8a7a", borderColor: "rgba(255,138,122,0.35)" }}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  void onHideSession(s.id);
+                }}
+                aria-label={`Retirer la séance de ${s.memberName} du dashboard coach`}
+                title="Retirer du dashboard"
+              >
+                ✕
+              </button>
+              <div style={{ alignSelf: "center", opacity: 0.6 }}>→</div>
+            </div>
           </div>
         );
       })}

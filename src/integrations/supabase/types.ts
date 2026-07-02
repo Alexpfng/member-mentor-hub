@@ -967,6 +967,7 @@ export type Database = {
       sessions: {
         Row: {
           average_rpe: number | null
+          coach_hidden_at: string | null
           coach_note: string | null
           coach_seen: boolean
           created_at: string | null
@@ -991,6 +992,7 @@ export type Database = {
         }
         Insert: {
           average_rpe?: number | null
+          coach_hidden_at?: string | null
           coach_note?: string | null
           coach_seen?: boolean
           created_at?: string | null
@@ -1015,6 +1017,7 @@ export type Database = {
         }
         Update: {
           average_rpe?: number | null
+          coach_hidden_at?: string | null
           coach_note?: string | null
           coach_seen?: boolean
           created_at?: string | null
