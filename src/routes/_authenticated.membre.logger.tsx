@@ -49,7 +49,7 @@ function SessionLauncher() {
         // Active assignment (for program_id + structure)
         const { data: assignment } = await supabase
           .from("assignments")
-          .select("program_id, start_date, programs(structure)")
+          .select("id, program_id, start_date, programs(structure)")
           .eq("member_id", uid)
           .eq("active", true)
           .order("created_at", { ascending: false })
@@ -67,7 +67,8 @@ function SessionLauncher() {
           const diff = Math.floor((Date.now() - start.getTime()) / 86400000);
           currentWeek = Math.max(0, Math.floor(diff / 7));
         }
-        const weekNumber = search.week ?? currentWeek;
+        const weekIndex = search.week ?? currentWeek;
+        const sessionWeekNumber = weekIndex + 1;
 
         // Fusionne les semaines adaptées (assignment_weeks) sur le template, pour que le
         // jour choisi soit résolu contre la structure RÉELLEMENT assignée au membre (une
@@ -78,7 +79,8 @@ function SessionLauncher() {
           .select("week_number, structure")
           .eq("member_id", uid)
           .in("status", ["published", "in_progress", "done"]);
-        if (programId) awQuery = awQuery.eq("program_id", programId);
+        if (assignment?.id) awQuery = awQuery.eq("assignment_id", assignment.id);
+        else if (programId) awQuery = awQuery.eq("program_id", programId);
         const { data: adaptedWeeks } = await awQuery;
         const weeks = mergeAssignmentWeeks(structure, adaptedWeeks ?? []);
 
@@ -93,7 +95,7 @@ function SessionLauncher() {
 
         let dayNumber: number | null = null;
         let sessionLabel: string | null = search.day ?? null;
-        const weekDays = weeks[weekNumber]?.days ?? null;
+        const weekDays = weeks[weekIndex]?.days ?? null;
         if (search.day && weekDays) {
           const target = normalize(search.day);
           const idx = weekDays.findIndex((d) => normalize(d?.label ?? "") === target);
@@ -118,7 +120,7 @@ function SessionLauncher() {
           if (dayNumber == null) {
             // Label didn't match the program structure — don't create a stub session.
             setError(
-              `Le jour « ${search.day} » n'existe pas dans le programme (semaine ${weekNumber + 1}). Choisis une séance du programme ou demande à ton coach.`,
+              `Le jour « ${search.day} » n'existe pas dans le programme (semaine ${weekIndex + 1}). Choisis une séance du programme ou demande à ton coach.`,
             );
             return;
           }
@@ -129,7 +131,7 @@ function SessionLauncher() {
               .from("sessions")
               .update({
                 program_id: programId,
-                week_number: weekNumber,
+                week_number: sessionWeekNumber,
                 day_number: dayNumber,
                 session_label: sessionLabel,
               })
@@ -149,7 +151,7 @@ function SessionLauncher() {
               started_at: new Date().toISOString(),
               status: "in_progress",
               session_label: sessionLabel,
-              week_number: weekNumber,
+              week_number: sessionWeekNumber,
               day_number: dayNumber,
             })
             .select("id")

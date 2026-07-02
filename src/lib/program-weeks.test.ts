@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 
-import { resolveSessionExercises } from "./program-weeks";
+import { resolveMemberSessionExercises, resolveSessionExercises } from "./program-weeks";
 
 describe("resolveSessionExercises", () => {
   it("prefers adapted week exercises over the base program structure", () => {
@@ -39,5 +39,43 @@ describe("resolveSessionExercises", () => {
     );
 
     expect(resolved).toEqual(exercises);
+  });
+});
+
+describe("resolveMemberSessionExercises", () => {
+  it("falls back to the previous week index when the stored session week is one-based", () => {
+    const exercises = [{ name: "Romanian deadlift" }];
+
+    const resolved = resolveMemberSessionExercises(
+      {
+        weeks: [
+          { days: [{ label: "Lower body 1", exercises }] },
+          { days: [{ label: "Lower body 2", exercises: [] }] },
+        ],
+      },
+      [],
+      1,
+      1,
+      "Lower body 1",
+    );
+
+    expect(resolved).toEqual(exercises);
+  });
+
+  it("does not guess when the label matches multiple possible weeks", () => {
+    const resolved = resolveMemberSessionExercises(
+      {
+        weeks: [
+          { days: [{ label: "Séance 1", exercises: [{ name: "A" }] }] },
+          { days: [{ label: "Séance 1", exercises: [{ name: "B" }] }] },
+        ],
+      },
+      [],
+      1,
+      1,
+      "Séance 1",
+    );
+
+    expect(resolved).toEqual([]);
   });
 });

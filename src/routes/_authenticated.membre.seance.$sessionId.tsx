@@ -9,7 +9,7 @@ import { type ProgExercise } from "../components/cst/ProgramBlocks";
 import { LiveSession } from "../components/cst/LiveSession";
 import { RunningSession, isRunningSession } from "../components/cst/RunningSession";
 import { computeSessionDurationMin } from "@/lib/format";
-import { resolveSessionExercises } from "@/lib/program-weeks";
+import { resolveMemberSessionExercises } from "@/lib/program-weeks";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/membre/seance/$sessionId")({
@@ -62,45 +62,73 @@ function SeancePage() {
         .from("sessions").select("*").eq("id", sessionId).maybeSingle();
       setSession(s as SessionRow | null);
 
-      // Fetch session_mode from active assignment
+      let activeAssignment:
+        | {
+            id: string;
+            program_id: string;
+            session_mode?: string | null;
+            programs?: { structure?: ProgramStructure } | null;
+          }
+        | null
+        | undefined;
+
+      // Fetch session_mode + active assignment structure
       if (u.user?.id) {
         const { data: asgn } = await supabase
           .from("assignments")
-          .select("session_mode")
+          .select("id, program_id, session_mode, programs(structure)")
           .eq("member_id", u.user.id)
           .eq("active", true)
+          .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle();
-        const mode = (asgn as { session_mode?: string | null } | null)?.session_mode;
+        activeAssignment = asgn as typeof activeAssignment;
+        const mode = activeAssignment?.session_mode;
         if (mode === "expert" || mode === "debutant") setSessionMode(mode);
       }
 
       let exos: ProgExercise[] = [];
       let resolutionError: string | null = null;
       if (s?.program_id) {
+        const assignmentMatchesSession = activeAssignment?.program_id === s.program_id;
+        const adaptedWeeksQuery = supabase
+          .from("assignment_weeks")
+          .select("week_number, structure")
+          .eq("member_id", u.user?.id ?? "")
+          .in("status", ["published", "in_progress", "done"]);
+
         const [{ data: prog }, { data: adaptedWeeks }] = await Promise.all([
-          supabase.from("programs").select("structure").eq("id", s.program_id).maybeSingle(),
-          supabase
-            .from("assignment_weeks")
-            .select("week_number, structure")
-            .eq("member_id", u.user?.id ?? "")
-            .eq("program_id", s.program_id)
-            .in("status", ["published", "in_progress", "done"]),
+          assignmentMatchesSession
+            ? Promise.resolve({
+                data: {
+                  structure: activeAssignment?.programs?.structure ?? null,
+                },
+              })
+            : supabase.from("programs").select("structure").eq("id", s.program_id).maybeSingle(),
+          assignmentMatchesSession && activeAssignment?.id
+            ? adaptedWeeksQuery.eq("assignment_id", activeAssignment.id)
+            : adaptedWeeksQuery.eq("program_id", s.program_id),
         ]);
         const struct = prog?.structure as ProgramStructure | undefined;
-        const w = s.week_number ?? 0;
         const dayNumber = s.day_number ?? 1;
-        exos = resolveSessionExercises(struct, adaptedWeeks ?? [], w, dayNumber) as ProgExercise[];
+        exos = resolveMemberSessionExercises(
+          struct,
+          adaptedWeeks ?? [],
+          s.week_number,
+          dayNumber,
+          s.session_label,
+        ) as ProgExercise[];
         if (exos.length) {
           // ok
         } else {
-          resolutionError = `Aucun exercice trouvé pour ${s.session_label ?? "ce jour"} (semaine ${w + 1}, jour ${dayNumber}).`;
+          resolutionError = `Aucun exercice trouvé pour ${s.session_label ?? "cette séance"}.`;
           console.warn("[seance] structure lookup failed", {
             sessionId,
             programId: s.program_id,
-            week: w,
-            day: dayNumber - 1,
+            storedWeekNumber: s.week_number,
+            dayNumber,
             label: s.session_label,
+            usedAssignmentId: assignmentMatchesSession ? activeAssignment?.id : null,
             adaptedWeeks: adaptedWeeks?.length ?? 0,
           });
         }
