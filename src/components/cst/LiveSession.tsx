@@ -1842,7 +1842,10 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
   }
 
   // current.kind === "set"  ── MODE EXPERT : écran simplifié sans saisie
-  if (sessionMode === "expert") {
+  // Important: les blocs "brief", "emom" et "circuit" ont leur propre rendu.
+  // Si on force le mode expert sur une étape non-"set", on caste à tort l'étape
+  // en WorkSet et la navigation plante au passage entre deux exercices/blocs.
+  if (sessionMode === "expert" && current.kind === "set") {
     const exStep = current as WorkSet;
     const exColor2 = asColor(exStep.exercise.color);
     const accent2 = colorHex(exColor2) || "var(--cst-mid-green)";
