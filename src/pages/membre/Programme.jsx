@@ -17,6 +17,7 @@ export default function MemberProgramme() {
   const fn = useServerFn(getMyAssignedProgram);
   const [data, setData] = useState(null);
   const [openWeek, setOpenWeek] = useState(null);
+  const [openDaysByWeek, setOpenDaysByWeek] = useState({});
   const [loading, setLoading] = useState(true);
   const [sessionsByKey, setSessionsByKey] = useState({}); // "w-d" -> { status, id }
   const [plannedByKey, setPlannedByKey] = useState({}); // "w-d" -> planned_date
@@ -66,6 +67,13 @@ export default function MemberProgramme() {
   const program = data?.program;
   const weeks = program?.structure?.weeks || [];
   const startDate = data?.assignment?.start_date ? new Date(data.assignment.start_date) : null;
+
+  function toggleDay(weekIndex, dayIndex) {
+    setOpenDaysByWeek((prev) => ({
+      ...prev,
+      [weekIndex]: prev[weekIndex] === dayIndex ? null : dayIndex,
+    }));
+  }
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#111' }}>
@@ -128,6 +136,7 @@ export default function MemberProgramme() {
                 <div className="cst-col" style={{ gap: 8, marginTop: 18 }}>
                   {weeks.map((w, i) => {
                     const isOpen = openWeek === i;
+                    const openDayIndex = openDaysByWeek[i] ?? 0;
                     // Numéro basé sur la position : les semaines adaptées (assignment_weeks)
                     // n'ont pas de champ `number`, et certains templates ont des numéros
                     // dupliqués → on affichait « Semaine 01 » deux fois.
@@ -152,6 +161,7 @@ export default function MemberProgramme() {
                             {(w.days || []).map((d, di) => {
                               const dayNum = d.number ?? di + 1;
                               const dayLabel = d.label || String(dayNum);
+                              const isDayOpen = openDayIndex === di;
                               const sess = sessionsByKey[`${weekNum}-${dayNum}`] || sessionsByKey[`${i + 1}-${di + 1}`];
                               const plannedDate = plannedByKey[`${weekNum}-J${dayNum}`] || plannedByKey[`${weekNum}-${d.label}`];
                               const isDone = sess?.status === 'completed';
@@ -160,10 +170,15 @@ export default function MemberProgramme() {
                               const iconColor = isDone ? 'var(--cst-mid-green)' : isInProgress ? '#F5A623' : plannedDate ? '#6EAB76' : 'rgba(255,255,255,0.4)';
                               return (
                                 <div key={di} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: 10 }}>
-                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8, gap: 8 }}>
-                                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flex: 1 }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'stretch', marginBottom: isDayOpen ? 8 : 0, gap: 8 }}>
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleDay(i, di)}
+                                      style={{ all: 'unset', cursor: 'pointer', display: 'flex', alignItems: 'baseline', gap: 8, flex: 1, minWidth: 0 }}
+                                    >
+                                      <span style={{ fontSize: 12, opacity: 0.5, width: 12, textAlign: 'center' }}>{isDayOpen ? '▼' : '▶'}</span>
                                       <span style={{ fontSize: 14, color: iconColor }}>{icon}</span>
-                                      <div className="cst-col" style={{ gap: 2 }}>
+                                      <div className="cst-col" style={{ gap: 2, minWidth: 0 }}>
                                         <span className="cst-display" style={{ fontSize: 13 }}>
                                           J{dayNum} · {(d.label || 'Séance').toUpperCase()}
                                         </span>
@@ -173,7 +188,7 @@ export default function MemberProgramme() {
                                           </span>
                                         )}
                                       </div>
-                                    </div>
+                                    </button>
                                     {d.type !== 'Repos' && (d.exercises?.length ?? 0) > 0 && !isDone && (
                                       <button
                                         className={isInProgress ? 'cst-btn cst-btn-primary cst-btn-sm' : 'cst-btn cst-btn-ghost-dark cst-btn-sm'}
@@ -187,10 +202,12 @@ export default function MemberProgramme() {
                                       </button>
                                     )}
                                   </div>
-                                  {d.type === 'Repos' ? (
-                                    <div className="cst-mono" style={{ fontSize: 10, opacity: 0.5, padding: '8px 0' }}>RÉCUPÉRATION</div>
-                                  ) : (
-                                    <ProgramBlocks exercises={d.exercises || []} />
+                                  {isDayOpen && (
+                                    d.type === 'Repos' ? (
+                                      <div className="cst-mono" style={{ fontSize: 10, opacity: 0.5, padding: '8px 0' }}>RÉCUPÉRATION</div>
+                                    ) : (
+                                      <ProgramBlocks exercises={d.exercises || []} />
+                                    )
                                   )}
                                 </div>
                               );
