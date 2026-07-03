@@ -458,6 +458,106 @@ function ExpertRecapRpeBadge({
   );
 }
 
+function ExpertOverviewRpeBadge({
+  value,
+  open,
+  onToggle,
+  onChange,
+  onClear,
+}: {
+  value: number | null;
+  open: boolean;
+  onToggle: () => void;
+  onChange: (value: number) => void;
+  onClear: () => void;
+}) {
+  const tone = rpeTone(value);
+  return (
+    <div style={{ position: "relative", display: "flex", justifyContent: "flex-end" }}>
+      <button
+        type="button"
+        onClick={onToggle}
+        className="cst-mono"
+        style={{
+          minWidth: 78,
+          padding: "8px 10px",
+          borderRadius: 8,
+          border: `1px solid ${tone}`,
+          background: value == null ? "transparent" : `${tone}22`,
+          color: value == null ? "rgba(255,255,255,0.78)" : "#fff",
+          fontSize: 11,
+          letterSpacing: "0.12em",
+          cursor: "pointer",
+        }}
+      >
+        {value == null ? "RPE —" : `RPE ${value}`}
+      </button>
+      {open && (
+        <div
+          style={{
+            position: "absolute",
+            top: "calc(100% + 8px)",
+            right: 0,
+            zIndex: 20,
+            width: 220,
+            padding: 10,
+            borderRadius: 10,
+            background: "rgba(20,32,24,0.98)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            boxShadow: "0 10px 30px rgba(0,0,0,0.35)",
+            display: "flex",
+            flexDirection: "column",
+            gap: 8,
+          }}
+        >
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
+            {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((score) => {
+              const selected = value === score;
+              const scoreTone = rpeTone(score);
+              return (
+                <button
+                  key={score}
+                  type="button"
+                  onClick={() => onChange(score)}
+                  className="cst-mono"
+                  style={{
+                    padding: "10px 0",
+                    borderRadius: 8,
+                    border: `1px solid ${selected ? scoreTone : "rgba(255,255,255,0.12)"}`,
+                    background: selected ? `${scoreTone}33` : "transparent",
+                    color: selected ? "#fff" : "rgba(255,255,255,0.78)",
+                    fontSize: 16,
+                    cursor: "pointer",
+                  }}
+                >
+                  {score}
+                </button>
+              );
+            })}
+          </div>
+          <button
+            type="button"
+            onClick={onClear}
+            className="cst-mono"
+            style={{
+              padding: "11px 12px",
+              borderRadius: 8,
+              border: "1px solid rgba(255,255,255,0.12)",
+              background: "transparent",
+              color: "rgba(255,255,255,0.72)",
+              fontSize: 10,
+              letterSpacing: "0.14em",
+              cursor: "pointer",
+            }}
+          >
+            EFFACER LE RPE
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function extractYoutubeId(input?: string | null): string | null {
   if (!input) return null;
   const s = String(input).trim();
@@ -783,6 +883,7 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
   const [sessionMode] = useState<"expert" | "debutant">(initialMode ?? "debutant");
   const [expertRecapRpeByExercise, setExpertRecapRpeByExercise] = useState<Record<string, number | null>>({});
   const [expertRecapPickerFor, setExpertRecapPickerFor] = useState<string | null>(null);
+  const [expertOverviewPickerFor, setExpertOverviewPickerFor] = useState<string | null>(null);
   const [stepIdx, setStepIdx] = useState(snap?.stepIdx ?? 0);
   const [logging, setLogging] = useState<null | {
     weight: string;
@@ -1335,7 +1436,7 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
               </div>
               <p className="cst-mono" style={{ fontSize: 9, opacity: 0.5, letterSpacing: "0.14em", margin: "0 0 10px" }}>
                 {sessionMode === "expert"
-                  ? "Touchez un exercice pour y aller directement. ✓ = fait, … = en cours, □ = pas encore fait."
+                  ? "Touchez un exercice pour y aller directement. ✓ = fait, … = en cours, □ = pas encore fait. Les exos déjà effectués peuvent recevoir leur RPE ici."
                   : "Touche « ALLER → » pour faire un exercice tout de suite (ex. machine déjà prise)."}
               </p>
               {overviewRows.length > 0 && (
@@ -1345,46 +1446,78 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
                     const label = row.state === "done" ? "FAIT" : row.state === "current" ? "EN COURS" : "À FAIRE";
                     const statusIcon = row.state === "done" ? "✓" : row.state === "current" ? "…" : "□";
                     const isClickable = sessionMode === "expert";
+                    const canAssignRpe = sessionMode === "expert" && row.completedSteps > 0;
                     return (
-                      <button
+                      <div
                         key={row.exerciseName}
-                        type="button"
-                        onClick={() => {
-                          if (!isClickable) return;
-                          jumpToExercise(row.exerciseName);
-                        }}
                         style={{
-                          appearance: "none",
                           background: "rgba(255,255,255,0.03)",
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          gap: 10,
-                          padding: "8px 10px",
                           border: "1px solid rgba(255,255,255,0.06)",
                           borderRadius: 8,
-                          width: "100%",
-                          cursor: isClickable ? "pointer" : "default",
-                          textAlign: "left",
+                          padding: "8px 10px",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 10,
                         }}
                       >
-                        <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: 1 }}>
-                          <span className="cst-mono" style={{ fontSize: 18, color: tone, width: 16, textAlign: "center" }}>
-                            {statusIcon}
-                          </span>
-                          <div style={{ minWidth: 0, flex: 1 }}>
-                            <div style={{ fontSize: 12, fontWeight: 600 }}>{row.exerciseName}</div>
-                            <div className="cst-mono" style={{ fontSize: 10, color: tone, letterSpacing: "0.14em", marginTop: 2 }}>
-                              {label} · {row.completedSteps}/{row.totalSteps || 1}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!isClickable) return;
+                            jumpToExercise(row.exerciseName);
+                          }}
+                          style={{
+                            appearance: "none",
+                            background: "transparent",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            gap: 10,
+                            width: "100%",
+                            cursor: isClickable ? "pointer" : "default",
+                            textAlign: "left",
+                            flex: 1,
+                          }}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: 1 }}>
+                            <span className="cst-mono" style={{ fontSize: 18, color: tone, width: 16, textAlign: "center" }}>
+                              {statusIcon}
+                            </span>
+                            <div style={{ minWidth: 0, flex: 1 }}>
+                              <div style={{ fontSize: 12, fontWeight: 600 }}>{row.exerciseName}</div>
+                              <div className="cst-mono" style={{ fontSize: 10, color: tone, letterSpacing: "0.14em", marginTop: 2 }}>
+                                {label} · {row.completedSteps}/{row.totalSteps || 1}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        {sessionMode === "expert" && (
                           <span className="cst-mono" style={{ fontSize: 10, opacity: 0.68, letterSpacing: "0.14em" }}>
                             ALLER →
                           </span>
+                        </button>
+                        {canAssignRpe && (
+                          <ExpertOverviewRpeBadge
+                            value={expertRecapRpeByExercise[row.exerciseName] ?? null}
+                            open={expertOverviewPickerFor === row.exerciseName}
+                            onToggle={() =>
+                              setExpertOverviewPickerFor((current) => (current === row.exerciseName ? null : row.exerciseName))
+                            }
+                            onChange={(value) => {
+                              setExpertRecapRpeByExercise((currentMap) => ({
+                                ...currentMap,
+                                [row.exerciseName]: value,
+                              }));
+                              setExpertOverviewPickerFor(null);
+                            }}
+                            onClear={() => {
+                              setExpertRecapRpeByExercise((currentMap) => ({
+                                ...currentMap,
+                                [row.exerciseName]: null,
+                              }));
+                              setExpertOverviewPickerFor(null);
+                            }}
+                          />
                         )}
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
