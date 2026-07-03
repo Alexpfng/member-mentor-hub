@@ -136,7 +136,7 @@ export default function MemberProgramme() {
                 <div className="cst-col" style={{ gap: 8, marginTop: 18 }}>
                   {weeks.map((w, i) => {
                     const isOpen = openWeek === i;
-                    const openDayIndex = openDaysByWeek[i] ?? 0;
+                    const openDayIndex = openDaysByWeek[i] ?? null;
                     // Numéro basé sur la position : les semaines adaptées (assignment_weeks)
                     // n'ont pas de champ `number`, et certains templates ont des numéros
                     // dupliqués → on affichait « Semaine 01 » deux fois.
