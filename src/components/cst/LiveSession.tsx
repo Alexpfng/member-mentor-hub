@@ -12,6 +12,11 @@ import {
   type SessionProgressStep,
 } from "@/lib/live-session-progress";
 import {
+  buildExpertExerciseFeedbackRows,
+  normalizeExpertRpeForStorage,
+} from "@/lib/live-session-feedback";
+import { getExpertEmomLoggedValue, getExpertSetLoggedValue } from "@/lib/session-prescription";
+import {
   ColorDot,
   ColorTooltip,
   TempoBadge,
@@ -348,16 +353,20 @@ function rpeTone(value: number | null) {
 function ExpertRecapRpeBadge({
   group,
   value,
+  comment,
   open,
   onToggle,
   onChange,
+  onCommentChange,
   onClear,
 }: {
   group: ExpertRecapGroup;
   value: number | null;
+  comment: string;
   open: boolean;
   onToggle: () => void;
   onChange: (value: number) => void;
+  onCommentChange: (value: string) => void;
   onClear: () => void;
 }) {
   const tone = rpeTone(value);
@@ -462,6 +471,28 @@ function ExpertRecapRpeBadge({
               KO
             </button>
           </div>
+          <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <span className="cst-mono" style={{ fontSize: 10, opacity: 0.62, letterSpacing: "0.14em" }}>
+              COMMENTAIRE (OPTIONNEL)
+            </span>
+            <textarea
+              value={comment}
+              onChange={(event) => onCommentChange(event.target.value)}
+              placeholder="ex. trop dur aujourd'hui, douleur, bonne sensation..."
+              rows={3}
+              style={{
+                width: "100%",
+                resize: "vertical",
+                borderRadius: 8,
+                border: "1px solid rgba(255,255,255,0.12)",
+                background: "rgba(255,255,255,0.04)",
+                color: "#fff",
+                padding: "10px 12px",
+                fontSize: 12,
+                lineHeight: 1.4,
+              }}
+            />
+          </label>
           <button
             type="button"
             onClick={onClear}
@@ -488,15 +519,19 @@ function ExpertRecapRpeBadge({
 
 function ExpertOverviewRpeBadge({
   value,
+  comment,
   open,
   onToggle,
   onChange,
+  onCommentChange,
   onClear,
 }: {
   value: number | null;
+  comment: string;
   open: boolean;
   onToggle: () => void;
   onChange: (value: number) => void;
+  onCommentChange: (value: string) => void;
   onClear: () => void;
 }) {
   const tone = rpeTone(value);
@@ -528,7 +563,7 @@ function ExpertOverviewRpeBadge({
             top: "calc(100% + 8px)",
             right: 0,
             zIndex: 20,
-            width: 220,
+            width: 280,
             padding: 10,
             borderRadius: 10,
             background: "rgba(20,32,24,0.98)",
@@ -583,6 +618,28 @@ function ExpertOverviewRpeBadge({
               KO
             </button>
           </div>
+          <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <span className="cst-mono" style={{ fontSize: 10, opacity: 0.62, letterSpacing: "0.14em" }}>
+              COMMENTAIRE (OPTIONNEL)
+            </span>
+            <textarea
+              value={comment}
+              onChange={(event) => onCommentChange(event.target.value)}
+              placeholder="ex. trop dur aujourd'hui, douleur, bonne sensation..."
+              rows={3}
+              style={{
+                width: "100%",
+                resize: "vertical",
+                borderRadius: 8,
+                border: "1px solid rgba(255,255,255,0.12)",
+                background: "rgba(255,255,255,0.04)",
+                color: "#fff",
+                padding: "10px 12px",
+                fontSize: 12,
+                lineHeight: 1.4,
+              }}
+            />
+          </label>
           <button
             type="button"
             onClick={onClear}
@@ -943,6 +1000,7 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
   const [phase, setPhase] = useState<"intro" | "step" | "rest" | "recap">(snap?.phase ?? "intro");
   const [sessionMode] = useState<"expert" | "debutant">(initialMode ?? "debutant");
   const [expertRecapRpeByExercise, setExpertRecapRpeByExercise] = useState<Record<string, number | null>>({});
+  const [expertRecapCommentByExercise, setExpertRecapCommentByExercise] = useState<Record<string, string>>({});
   const [expertRecapPickerFor, setExpertRecapPickerFor] = useState<string | null>(null);
   const [expertOverviewPickerFor, setExpertOverviewPickerFor] = useState<string | null>(null);
   const [stepIdx, setStepIdx] = useState(snap?.stepIdx ?? 0);
@@ -1232,17 +1290,13 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
   async function advanceExpertSet(step: WorkSet, rpe: number | null) {
     const defaults = computeDefaults(step);
     const parsedWeight = defaults.weight ? parseFloat(defaults.weight.replace(",", ".")) : NaN;
-    const repTarget = parseRepsPerSet(step.exercise.reps, step.totalSets)[step.setNumber - 1]
-      || (step.exercise.reps ? String(step.exercise.reps) : "");
-    const parsedTargetReps = isDurationReps(repTarget)
-      ? parseDurationSeconds(repTarget)
-      : extractNumeric(repTarget);
+    const prescribedMetric = getExpertSetLoggedValue(step.exercise, step.totalSets, step.setNumber);
     setSavedByStep((m) => ({
       ...m,
       [stepIdx]: {
         exo: step.exercise.name,
         weight: Number.isFinite(parsedWeight) ? parsedWeight : null,
-        reps: parsedTargetReps != null ? Math.round(parsedTargetReps) : null,
+        reps: prescribedMetric.value,
         rpe,
       },
     }));
@@ -1269,17 +1323,32 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
         set_number: row.setNumber,
         weight_kg: row.weight,
         reps: row.reps,
-        rpe: expertRecapRpeByExercise[group.exerciseName],
+        rpe: normalizeExpertRpeForStorage(expertRecapRpeByExercise[group.exerciseName]),
         completed: true,
       })),
+    );
+
+    const feedbackRows = buildExpertExerciseFeedbackRows(
+      sessionId,
+      expertRecapGroups,
+      expertRecapRpeByExercise,
+      expertRecapCommentByExercise,
     );
 
     const { error: deleteError } = await supabase.from("set_logs").delete().eq("session_id", sessionId);
     if (deleteError) throw deleteError;
 
+    const { error: deleteFeedbackError } = await supabase.from("exercise_feedbacks").delete().eq("session_id", sessionId);
+    if (deleteFeedbackError) throw deleteFeedbackError;
+
     if (rows.length > 0) {
       const { error: insertError } = await supabase.from("set_logs").insert(rows);
       if (insertError) throw insertError;
+    }
+
+    if (feedbackRows.length > 0) {
+      const { error: insertFeedbackError } = await supabase.from("exercise_feedbacks").insert(feedbackRows);
+      if (insertFeedbackError) throw insertFeedbackError;
     }
 
     await onFinish();
@@ -1555,6 +1624,7 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
                         {canAssignRpe && (
                           <ExpertOverviewRpeBadge
                             value={expertRecapRpeByExercise[row.exerciseName] ?? null}
+                            comment={expertRecapCommentByExercise[row.exerciseName] ?? ""}
                             open={expertOverviewPickerFor === row.exerciseName}
                             onToggle={() =>
                               setExpertOverviewPickerFor((current) => (current === row.exerciseName ? null : row.exerciseName))
@@ -1564,12 +1634,21 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
                                 ...currentMap,
                                 [row.exerciseName]: value,
                               }));
-                              setExpertOverviewPickerFor(null);
+                            }}
+                            onCommentChange={(value) => {
+                              setExpertRecapCommentByExercise((currentMap) => ({
+                                ...currentMap,
+                                [row.exerciseName]: value,
+                              }));
                             }}
                             onClear={() => {
                               setExpertRecapRpeByExercise((currentMap) => ({
                                 ...currentMap,
                                 [row.exerciseName]: null,
+                              }));
+                              setExpertRecapCommentByExercise((currentMap) => ({
+                                ...currentMap,
+                                [row.exerciseName]: "",
                               }));
                               setExpertOverviewPickerFor(null);
                             }}
@@ -1842,6 +1921,7 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
                     key={group.exerciseName}
                     group={group}
                     value={expertRecapRpeByExercise[group.exerciseName] ?? null}
+                    comment={expertRecapCommentByExercise[group.exerciseName] ?? ""}
                     open={expertRecapPickerFor === group.exerciseName}
                     onToggle={() =>
                       setExpertRecapPickerFor((current) => (current === group.exerciseName ? null : group.exerciseName))
@@ -1851,12 +1931,21 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
                         ...currentMap,
                         [group.exerciseName]: value,
                       }));
-                      setExpertRecapPickerFor(null);
+                    }}
+                    onCommentChange={(value) => {
+                      setExpertRecapCommentByExercise((currentMap) => ({
+                        ...currentMap,
+                        [group.exerciseName]: value,
+                      }));
                     }}
                     onClear={() => {
                       setExpertRecapRpeByExercise((currentMap) => ({
                         ...currentMap,
                         [group.exerciseName]: null,
+                      }));
+                      setExpertRecapCommentByExercise((currentMap) => ({
+                        ...currentMap,
+                        [group.exerciseName]: "",
                       }));
                       setExpertRecapPickerFor(null);
                     }}
@@ -1960,18 +2049,21 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
           alternating={current.alternating}
           sessionId={sessionId}
           onFinish={(logs) => {
+            const computedReps = sessionMode === "expert"
+              ? getExpertEmomLoggedValue(current.exercise, logs.length) ?? logs.reduce((s, l) => s + l, 0)
+              : logs.reduce((s, l) => s + l, 0);
             // Persist EMOM result as a single "set_log" entry
             supabase.from("set_logs").insert({
               session_id: sessionId,
               exercise_name: current.exercise.name,
               set_number: 1,
-              reps: logs.reduce((s, l) => s + l, 0),
+              reps: computedReps,
               rpe: null,
               completed: true,
             }).then(() => {});
             setSavedByStep((m) => ({
               ...m,
-              [stepIdx]: { exo: current.exercise.name, weight: null, reps: logs.reduce((s, l) => s + l, 0), rpe: null },
+              [stepIdx]: { exo: current.exercise.name, weight: null, reps: computedReps, rpe: null },
             }));
             goNext();
           }}

@@ -9,6 +9,7 @@ import { resolvePainReport } from "@/lib/pain-reports.functions";
 import { timeAgo, sanitizeDurationMin } from "@/lib/format";
 import { toast } from "sonner";
 import { ExerciseThread } from "@/components/cst/ExerciseThread";
+import { getCoachMetricLabel, getCoachMetricValue } from "@/lib/session-prescription";
 import { supabase } from "@/integrations/supabase/client";
 
 type ProgExo = { code?: string; name?: string; series?: string | number; reps?: string | number; charge?: string; rpe_target?: string | number; recup?: string };
@@ -222,6 +223,7 @@ export default function CoachSessionDetail() {
                 const pains = painsByExo.get(name) || [];
                 const rpeTarget = planned?.rpe_target ? Number(planned.rpe_target) : null;
                 const overTarget = rpeTarget != null && fb?.rpe != null && fb.rpe > rpeTarget + 1;
+                const metricLabel = getCoachMetricLabel(planned);
                 return (
                   <div key={name} className="cst-card-dark" style={{ padding: 16 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
@@ -242,7 +244,7 @@ export default function CoachSessionDetail() {
                         <tr style={{ opacity: 0.55, fontFamily: "var(--cst-mono)", fontSize: 10, letterSpacing: "0.1em" }}>
                           <th style={{ textAlign: "left", padding: "4px 6px" }}>SÉRIE</th>
                           <th style={{ textAlign: "left", padding: "4px 6px" }}>POIDS</th>
-                          <th style={{ textAlign: "left", padding: "4px 6px" }}>REPS</th>
+                          <th style={{ textAlign: "left", padding: "4px 6px" }}>{metricLabel}</th>
                           <th style={{ textAlign: "left", padding: "4px 6px" }}>RPE</th>
                           <th style={{ textAlign: "left", padding: "4px 6px" }}>NOTE</th>
                         </tr>
@@ -252,7 +254,7 @@ export default function CoachSessionDetail() {
                           <tr key={i} style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
                             <td style={{ padding: "6px" }}>{l.set_number ?? i + 1}</td>
                             <td style={{ padding: "6px" }}>{l.weight_kg != null ? `${l.weight_kg} kg` : "—"}</td>
-                            <td style={{ padding: "6px" }}>{l.reps ?? "—"}</td>
+                            <td style={{ padding: "6px" }}>{getCoachMetricValue(planned, l.reps)}</td>
                             <td style={{ padding: "6px", color: l.rpe != null && l.rpe >= 9 ? "#E07B39" : undefined }}>{l.rpe ?? "—"}</td>
                             <td style={{ padding: "6px", opacity: 0.8, fontStyle: "italic" }}>{l.note || ""}</td>
                           </tr>

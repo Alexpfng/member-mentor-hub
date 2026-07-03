@@ -13,7 +13,7 @@ import {
 import { normalizeWeekId } from "@/lib/coach-navigation";
 import { getExerciseFeedback } from "@/lib/exercise-feedback";
 import { listExercises } from "@/lib/exercises.functions";
-import { setExerciseQuickRpe } from "@/lib/adapter-week-rpe";
+import { setExerciseQuickCoachNote, setExerciseQuickRpe } from "@/lib/adapter-week-rpe";
 
 type LibExercise = {
   id: string;
@@ -518,7 +518,10 @@ export default function AdapterSemaine() {
 
   function applyQuickRpe(dayIdx: number, exoIdx: number, rpe: string | number | null) {
     setStructure((current) => setExerciseQuickRpe(current, dayIdx, exoIdx, rpe));
-    setQuickRpeTarget(null);
+  }
+
+  function applyQuickCoachNote(dayIdx: number, exoIdx: number, coachNote: string) {
+    setStructure((current) => setExerciseQuickCoachNote(current, dayIdx, exoIdx, coachNote));
   }
 
   async function openPublish() {
@@ -754,27 +757,52 @@ export default function AdapterSemaine() {
                                 top: "calc(100% + 6px)",
                                 right: 0,
                                 zIndex: 30,
-                                width: 176,
+                                width: 264,
                                 padding: 8,
                                 borderRadius: 8,
                                 background: "#223528",
                                 border: "1px solid rgba(255,255,255,0.12)",
                                 boxShadow: "0 10px 30px rgba(0,0,0,0.35)",
-                                display: "grid",
-                                gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-                                gap: 6,
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: 8,
                               }}
                             >
-                              {QUICK_RPE_VALUES.map((value) => (
+                              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 6 }}>
+                                {QUICK_RPE_VALUES.map((value) => (
+                                  <button
+                                    key={String(value)}
+                                    type="button"
+                                    className="cst-mono"
+                                    onClick={() => applyQuickRpe(di, ei, value)}
+                                    style={{
+                                      borderRadius: 6,
+                                      border: "1px solid rgba(255,255,255,0.1)",
+                                      background: Number(rpeStr.replace(",", ".")) === value ? `${cardColor}44` : "rgba(255,255,255,0.05)",
+                                      color: "#fff",
+                                      WebkitTextFillColor: "#fff",
+                                      appearance: "none",
+                                      WebkitAppearance: "none",
+                                      padding: "6px 0",
+                                      fontSize: 11,
+                                      fontWeight: 700,
+                                      cursor: "pointer",
+                                    }}
+                                  >
+                                    {formatRpeValue(value)}
+                                  </button>
+                                ))}
                                 <button
-                                  key={String(value)}
                                   type="button"
                                   className="cst-mono"
-                                  onClick={() => applyQuickRpe(di, ei, value)}
+                                  onClick={() => applyQuickRpe(di, ei, "échec")}
                                   style={{
+                                    gridColumn: "span 2",
                                     borderRadius: 6,
-                                    border: "1px solid rgba(255,255,255,0.1)",
-                                    background: Number(rpeStr.replace(",", ".")) === value ? `${cardColor}44` : "rgba(255,255,255,0.05)",
+                                    border: "1px solid rgba(255,138,122,0.28)",
+                                    background: String(rpeStr).trim().toLowerCase() === "échec" || String(rpeStr).trim().toLowerCase() === "echec"
+                                      ? "rgba(201,72,58,0.28)"
+                                      : "rgba(255,255,255,0.05)",
                                     color: "#fff",
                                     WebkitTextFillColor: "#fff",
                                     appearance: "none",
@@ -785,52 +813,51 @@ export default function AdapterSemaine() {
                                     cursor: "pointer",
                                   }}
                                 >
-                                  {formatRpeValue(value)}
+                                  ÉCHEC
                                 </button>
-                              ))}
-                              <button
-                                type="button"
-                                className="cst-mono"
-                                onClick={() => applyQuickRpe(di, ei, "échec")}
-                                style={{
-                                  gridColumn: "span 2",
-                                  borderRadius: 6,
-                                  border: "1px solid rgba(255,138,122,0.28)",
-                                  background: String(rpeStr).trim().toLowerCase() === "échec" || String(rpeStr).trim().toLowerCase() === "echec"
-                                    ? "rgba(201,72,58,0.28)"
-                                    : "rgba(255,255,255,0.05)",
-                                  color: "#fff",
-                                  WebkitTextFillColor: "#fff",
-                                  appearance: "none",
-                                  WebkitAppearance: "none",
-                                  padding: "6px 0",
-                                  fontSize: 11,
-                                  fontWeight: 700,
-                                  cursor: "pointer",
-                                }}
-                              >
-                                ÉCHEC
-                              </button>
-                              <button
-                                type="button"
-                                className="cst-mono"
-                                onClick={() => applyQuickRpe(di, ei, null)}
-                                style={{
-                                  gridColumn: "span 2",
-                                  borderRadius: 6,
-                                  border: "1px solid rgba(255,255,255,0.1)",
-                                  background: "rgba(255,255,255,0.04)",
-                                  color: "rgba(255,255,255,0.92)",
-                                  WebkitTextFillColor: "rgba(255,255,255,0.92)",
-                                  appearance: "none",
-                                  WebkitAppearance: "none",
-                                  padding: "6px 0",
-                                  fontSize: 10,
-                                  cursor: "pointer",
-                                }}
-                              >
-                                Effacer le RPE
-                              </button>
+                                <button
+                                  type="button"
+                                  className="cst-mono"
+                                  onClick={() => applyQuickRpe(di, ei, null)}
+                                  style={{
+                                    gridColumn: "span 2",
+                                    borderRadius: 6,
+                                    border: "1px solid rgba(255,255,255,0.1)",
+                                    background: "rgba(255,255,255,0.04)",
+                                    color: "rgba(255,255,255,0.92)",
+                                    WebkitTextFillColor: "rgba(255,255,255,0.92)",
+                                    appearance: "none",
+                                    WebkitAppearance: "none",
+                                    padding: "6px 0",
+                                    fontSize: 10,
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  Effacer le RPE
+                                </button>
+                              </div>
+                              <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                                <span className="cst-mono" style={{ fontSize: 9, opacity: 0.65, letterSpacing: "0.12em" }}>
+                                  COMMENTAIRE / CONSIGNE (OPTIONNEL)
+                                </span>
+                                <textarea
+                                  value={String(ex.coach_notes ?? "")}
+                                  onChange={(event) => applyQuickCoachNote(di, ei, event.target.value)}
+                                  placeholder="ex. rester propre, douleur à surveiller..."
+                                  rows={3}
+                                  style={{
+                                    width: "100%",
+                                    resize: "vertical",
+                                    borderRadius: 8,
+                                    border: "1px solid rgba(255,255,255,0.12)",
+                                    background: "rgba(255,255,255,0.04)",
+                                    color: "#fff",
+                                    padding: "10px 12px",
+                                    fontSize: 12,
+                                    lineHeight: 1.4,
+                                  }}
+                                />
+                              </label>
                             </div>
                           )}
                         </div>

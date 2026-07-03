@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 
-import { setExerciseQuickRpe } from "./adapter-week-rpe";
+import { setExerciseQuickCoachNote, setExerciseQuickRpe } from "./adapter-week-rpe";
 
 describe("setExerciseQuickRpe", () => {
   it("updates only the targeted exercise rpe in the selected day", () => {
@@ -29,6 +29,22 @@ describe("setExerciseQuickRpe", () => {
     expect(setExerciseQuickRpe(structure, 0, 0, null)).toEqual({
       days: [
         { label: "Séance 1", exercises: [{ name: "A", rpe_target: null }] },
+      ],
+    });
+  });
+
+  it("updates only the targeted exercise coach note in the selected day", () => {
+    const structure = {
+      days: [
+        { label: "Séance 1", exercises: [{ name: "A", coach_notes: "ancien" }, { name: "B", coach_notes: null }] },
+        { label: "Séance 2", exercises: [{ name: "C", coach_notes: "ok" }] },
+      ],
+    };
+
+    expect(setExerciseQuickCoachNote(structure, 0, 1, "à surveiller")).toEqual({
+      days: [
+        { label: "Séance 1", exercises: [{ name: "A", coach_notes: "ancien" }, { name: "B", coach_notes: "à surveiller" }] },
+        { label: "Séance 2", exercises: [{ name: "C", coach_notes: "ok" }] },
       ],
     });
   });
