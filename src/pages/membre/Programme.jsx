@@ -80,7 +80,26 @@ export default function MemberProgramme() {
       <div style={{ width: '100%', maxWidth: 390, minHeight: 780, position: 'relative' }}>
         <div className="cst-screen cst-hatch" style={{ minHeight: 780 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 22px 8px' }}>
-            <span style={{ fontSize: 18, opacity: 0.7 }}>←</span>
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof window !== 'undefined' && window.history.length > 1) window.history.back();
+                else navigate({ to: '/membre' });
+              }}
+              aria-label="Retour"
+              style={{
+                background: 'transparent',
+                border: '1px solid rgba(255,255,255,0.18)',
+                color: 'rgba(255,255,255,0.85)',
+                borderRadius: 6,
+                padding: '6px 10px',
+                fontSize: 18,
+                cursor: 'pointer',
+                lineHeight: 1,
+              }}
+            >
+              ←
+            </button>
             <span className="cst-mono" style={{ color: '#fff' }}>MON PROGRAMME</span>
             <span style={{ fontSize: 18, opacity: 0.7 }}>◯</span>
           </div>
