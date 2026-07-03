@@ -393,6 +393,7 @@ function ExpertRecapRpeBadge({
             fontSize: 11,
             letterSpacing: "0.12em",
             cursor: "pointer",
+            ...rpeButtonReset(value == null ? "rgba(255,255,255,0.78)" : "#ffffff"),
           }}
         >
           {value == null ? "RPE —" : `RPE ${value}`}
@@ -424,10 +425,11 @@ function ExpertRecapRpeBadge({
                     padding: "12px 0",
                     borderRadius: 8,
                     border: `1px solid ${selected ? scoreTone : "rgba(255,255,255,0.12)"}`,
-                    background: selected ? `${scoreTone}33` : "transparent",
-                    color: selected ? "#fff" : "rgba(255,255,255,0.78)",
+                    background: selected ? `${scoreTone}40` : "rgba(255,255,255,0.04)",
+                    color: selected ? "#fff" : "rgba(255,255,255,0.9)",
                     fontSize: 18,
                     cursor: "pointer",
+                    ...rpeButtonReset(selected ? "#ffffff" : "rgba(255,255,255,0.9)"),
                   }}
                 >
                   {score}
@@ -443,11 +445,12 @@ function ExpertRecapRpeBadge({
               padding: "12px 14px",
               borderRadius: 8,
               border: "1px solid rgba(255,255,255,0.12)",
-              background: "transparent",
-              color: "rgba(255,255,255,0.72)",
+              background: "rgba(255,255,255,0.04)",
+              color: "rgba(255,255,255,0.82)",
               fontSize: 11,
               letterSpacing: "0.14em",
               cursor: "pointer",
+              ...rpeButtonReset("rgba(255,255,255,0.82)"),
             }}
           >
             EFFACER LE RPE
@@ -488,6 +491,7 @@ function ExpertOverviewRpeBadge({
           fontSize: 11,
           letterSpacing: "0.12em",
           cursor: "pointer",
+          ...rpeButtonReset(value == null ? "rgba(255,255,255,0.78)" : "#ffffff"),
         }}
       >
         {value == null ? "RPE —" : `RPE ${value}`}
@@ -524,10 +528,11 @@ function ExpertOverviewRpeBadge({
                     padding: "10px 0",
                     borderRadius: 8,
                     border: `1px solid ${selected ? scoreTone : "rgba(255,255,255,0.12)"}`,
-                    background: selected ? `${scoreTone}33` : "transparent",
-                    color: selected ? "#fff" : "rgba(255,255,255,0.78)",
+                    background: selected ? `${scoreTone}40` : "rgba(255,255,255,0.04)",
+                    color: selected ? "#fff" : "rgba(255,255,255,0.9)",
                     fontSize: 16,
                     cursor: "pointer",
+                    ...rpeButtonReset(selected ? "#ffffff" : "rgba(255,255,255,0.9)"),
                   }}
                 >
                   {score}
@@ -543,11 +548,12 @@ function ExpertOverviewRpeBadge({
               padding: "11px 12px",
               borderRadius: 8,
               border: "1px solid rgba(255,255,255,0.12)",
-              background: "transparent",
-              color: "rgba(255,255,255,0.72)",
+              background: "rgba(255,255,255,0.04)",
+              color: "rgba(255,255,255,0.82)",
               fontSize: 10,
               letterSpacing: "0.14em",
               cursor: "pointer",
+              ...rpeButtonReset("rgba(255,255,255,0.82)"),
             }}
           >
             EFFACER LE RPE
@@ -556,6 +562,18 @@ function ExpertOverviewRpeBadge({
       )}
     </div>
   );
+}
+
+function rpeButtonReset(color: string) {
+  return {
+    appearance: "none" as const,
+    WebkitAppearance: "none" as const,
+    WebkitTapHighlightColor: "transparent",
+    WebkitTextFillColor: color,
+    boxShadow: "none",
+    fontWeight: 700,
+    lineHeight: 1.1,
+  };
 }
 
 function extractYoutubeId(input?: string | null): string | null {
