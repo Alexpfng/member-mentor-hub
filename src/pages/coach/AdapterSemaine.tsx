@@ -45,6 +45,12 @@ type WeekStructure = { days?: DayStructure[] };
 
 type Feedback = { rpe: number | null; pain: boolean; tooHard: boolean; tooEasy: boolean; failure: boolean };
 
+const QUICK_RPE_VALUES = Array.from({ length: 21 }, (_, index) => index * 0.5);
+
+function formatRpeValue(value: number) {
+  return Number.isInteger(value) ? String(value) : String(value).replace(".", ",");
+}
+
 type Suggestion =
   | { type: "pain"; actions: { label: string; apply?: (ex: ProgExercise) => ProgExercise }[] }
   | { type: "too_hard" | "high" | "low" | "slightly_low"; actions: { label: string; apply: (ex: ProgExercise) => ProgExercise }[] };
@@ -287,7 +293,7 @@ function ExoEditModal({
             : field("SÉRIES", <input value={String(ex.series ?? "")} onChange={(e) => onChange((x) => ({ ...x, series: e.target.value }))} className="cst-input" />)}
           {field(ex.block_type === "emom" ? "REPS/MIN" : "REPS", <input value={String(ex.reps ?? "")} onChange={(e) => onChange((x) => ({ ...x, reps: e.target.value }))} className="cst-input" />)}
           {field("CHARGE (kg)", <input value={ex.charge ?? ""} onChange={(e) => onChange((x) => ({ ...x, charge: e.target.value }))} className="cst-input" />)}
-          {field("RPE", <input inputMode="decimal" placeholder="ex. 8 ou 9,5" value={String(ex.rpe_target ?? "")} onChange={(e) => { const v = e.target.value.replace(",", ".").replace(/[^0-9.]/g, ""); onChange((x) => ({ ...x, rpe_target: v })); }} className="cst-input" />)}
+          {field("RPE / CONSIGNE", <input inputMode="text" placeholder="ex. 8,5 ou échec" value={String(ex.rpe_target ?? "")} onChange={(e) => onChange((x) => ({ ...x, rpe_target: e.target.value }))} className="cst-input" />)}
           {field("TEMPO", <input value={ex.tempo ?? ""} onChange={(e) => onChange((x) => ({ ...x, tempo: e.target.value || null }))} placeholder="3-1-2" className="cst-input" />)}
           {field("RÉCUP", <input value={ex.recup ?? ""} onChange={(e) => onChange((x) => ({ ...x, recup: e.target.value || null }))} placeholder="90s" className="cst-input" />)}
         </div>
@@ -510,7 +516,7 @@ export default function AdapterSemaine() {
     setQuickRpeTarget(null);
   }
 
-  function applyQuickRpe(dayIdx: number, exoIdx: number, rpe: number | null) {
+  function applyQuickRpe(dayIdx: number, exoIdx: number, rpe: string | number | null) {
     setStructure((current) => setExerciseQuickRpe(current, dayIdx, exoIdx, rpe));
     setQuickRpeTarget(null);
   }
@@ -689,7 +695,8 @@ export default function AdapterSemaine() {
                   const rpeNum = rpeStr === "" ? NaN : Number(rpeStr.replace(",", "."));
                   const rpeIsNumeric = !Number.isNaN(rpeNum);
                   const rpeDisplay = rpeIsNumeric ? rpeStr.replace(".", ",") : null;
-                  const rpeConsigne = rpeStr !== "" && !rpeIsNumeric ? rpeStr : null;
+                  const rpeIsFailure = /^(échec|echec)$/i.test(rpeStr);
+                  const rpeConsigne = rpeStr !== "" && !rpeIsNumeric && !rpeIsFailure ? rpeStr : null;
                   return (
                     <div key={ei} style={{ display: "flex", gap: 4, alignItems: "stretch" }}>
                     <div
@@ -729,14 +736,14 @@ export default function AdapterSemaine() {
                             style={{
                               fontSize: 10, fontWeight: 700, maxWidth: 90,
                               overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                              background: rpeIsNumeric ? `${cardColor}33` : "rgba(255,255,255,0.06)",
-                              border: `1px solid ${rpeIsNumeric ? cardColor + "66" : "rgba(255,255,255,0.12)"}`,
+                              background: rpeIsNumeric ? `${cardColor}33` : rpeIsFailure ? "rgba(201,72,58,0.22)" : "rgba(255,255,255,0.06)",
+                              border: `1px solid ${rpeIsNumeric ? cardColor + "66" : rpeIsFailure ? "rgba(255,138,122,0.32)" : "rgba(255,255,255,0.12)"}`,
                               borderRadius: 5, padding: "2px 7px",
-                              color: rpeIsNumeric ? cardColor : "rgba(255,255,255,0.35)",
+                              color: rpeIsNumeric ? cardColor : rpeIsFailure ? "#ffb0a5" : "rgba(255,255,255,0.35)",
                               cursor: "pointer",
                             }}
                           >
-                            {rpeIsNumeric ? `RPE ${rpeDisplay}` : "RPE —"}
+                            {rpeIsNumeric ? `RPE ${rpeDisplay}` : rpeIsFailure ? "ÉCHEC" : "RPE —"}
                           </button>
                           {quickRpeTarget?.dayIdx === di && quickRpeTarget?.exoIdx === ei && (
                             <div
@@ -758,9 +765,9 @@ export default function AdapterSemaine() {
                                 gap: 6,
                               }}
                             >
-                              {Array.from({ length: 11 }, (_, value) => (
+                              {QUICK_RPE_VALUES.map((value) => (
                                 <button
-                                  key={value}
+                                  key={String(value)}
                                   type="button"
                                   className="cst-mono"
                                   onClick={() => applyQuickRpe(di, ei, value)}
@@ -768,25 +775,55 @@ export default function AdapterSemaine() {
                                     borderRadius: 6,
                                     border: "1px solid rgba(255,255,255,0.1)",
                                     background: Number(rpeStr.replace(",", ".")) === value ? `${cardColor}44` : "rgba(255,255,255,0.05)",
-                                    color: "var(--cst-text)",
+                                    color: "#fff",
+                                    WebkitTextFillColor: "#fff",
+                                    appearance: "none",
+                                    WebkitAppearance: "none",
                                     padding: "6px 0",
                                     fontSize: 11,
+                                    fontWeight: 700,
                                     cursor: "pointer",
                                   }}
                                 >
-                                  {value}
+                                  {formatRpeValue(value)}
                                 </button>
                               ))}
                               <button
                                 type="button"
                                 className="cst-mono"
+                                onClick={() => applyQuickRpe(di, ei, "échec")}
+                                style={{
+                                  gridColumn: "span 2",
+                                  borderRadius: 6,
+                                  border: "1px solid rgba(255,138,122,0.28)",
+                                  background: String(rpeStr).trim().toLowerCase() === "échec" || String(rpeStr).trim().toLowerCase() === "echec"
+                                    ? "rgba(201,72,58,0.28)"
+                                    : "rgba(255,255,255,0.05)",
+                                  color: "#fff",
+                                  WebkitTextFillColor: "#fff",
+                                  appearance: "none",
+                                  WebkitAppearance: "none",
+                                  padding: "6px 0",
+                                  fontSize: 11,
+                                  fontWeight: 700,
+                                  cursor: "pointer",
+                                }}
+                              >
+                                ÉCHEC
+                              </button>
+                              <button
+                                type="button"
+                                className="cst-mono"
                                 onClick={() => applyQuickRpe(di, ei, null)}
                                 style={{
-                                  gridColumn: "span 4",
+                                  gridColumn: "span 2",
                                   borderRadius: 6,
                                   border: "1px solid rgba(255,255,255,0.1)",
                                   background: "rgba(255,255,255,0.04)",
-                                  color: "rgba(255,255,255,0.75)",
+                                  color: "rgba(255,255,255,0.92)",
+                                  WebkitTextFillColor: "rgba(255,255,255,0.92)",
+                                  appearance: "none",
+                                  WebkitAppearance: "none",
                                   padding: "6px 0",
                                   fontSize: 10,
                                   cursor: "pointer",

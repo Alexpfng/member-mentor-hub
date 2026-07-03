@@ -6,7 +6,7 @@ export function setExerciseQuickRpe<T extends WeekStructureLike>(
   structure: T,
   dayIdx: number,
   exoIdx: number,
-  rpe: number | null,
+  rpe: string | number | null,
 ): T {
   const days = [...(structure.days ?? [])];
   const day = { ...days[dayIdx] };

@@ -264,6 +264,12 @@ function formatRelativeDays(iso?: string | null): string {
 }
 
 type LastSet = { weight: number | null; reps: number | null; rpe: number | null; loggedAt: string | null };
+
+const RPE_PICKER_VALUES = Array.from({ length: 21 }, (_, index) => index * 0.5);
+
+function formatRpeValue(value: number) {
+  return Number.isInteger(value) ? String(value) : String(value).replace(".", ",");
+}
 type LastByExo = Record<string, Record<number, LastSet> & { _loggedAt?: string | null; _sets?: LastSet[] }>;
 type ExpertRecapGroup = ReturnType<typeof groupExpertRecapByExercise>[number];
 
@@ -396,7 +402,7 @@ function ExpertRecapRpeBadge({
             ...rpeButtonReset(value == null ? "rgba(255,255,255,0.78)" : "#ffffff"),
           }}
         >
-          {value == null ? "RPE —" : `RPE ${value}`}
+          {value == null ? "RPE —" : `RPE ${formatRpeValue(value)}`}
         </button>
       </div>
       {open && (
@@ -412,7 +418,7 @@ function ExpertRecapRpeBadge({
           }}
         >
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
-            {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((score) => {
+            {RPE_PICKER_VALUES.map((score) => {
               const selected = value === score;
               const scoreTone = rpeTone(score);
               return (
@@ -432,7 +438,7 @@ function ExpertRecapRpeBadge({
                     ...rpeButtonReset(selected ? "#ffffff" : "rgba(255,255,255,0.9)"),
                   }}
                 >
-                  {score}
+                  {formatRpeValue(score)}
                 </button>
               );
             })}
@@ -494,7 +500,7 @@ function ExpertOverviewRpeBadge({
           ...rpeButtonReset(value == null ? "rgba(255,255,255,0.78)" : "#ffffff"),
         }}
       >
-        {value == null ? "RPE —" : `RPE ${value}`}
+        {value == null ? "RPE —" : `RPE ${formatRpeValue(value)}`}
       </button>
       {open && (
         <div
@@ -515,7 +521,7 @@ function ExpertOverviewRpeBadge({
           }}
         >
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
-            {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((score) => {
+            {RPE_PICKER_VALUES.map((score) => {
               const selected = value === score;
               const scoreTone = rpeTone(score);
               return (
@@ -535,7 +541,7 @@ function ExpertOverviewRpeBadge({
                     ...rpeButtonReset(selected ? "#ffffff" : "rgba(255,255,255,0.9)"),
                   }}
                 >
-                  {score}
+                  {formatRpeValue(score)}
                 </button>
               );
             })}
@@ -2484,7 +2490,7 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
               </div>
               {exColor && <RPEGuidance color={exColor} />}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 4 }}>
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((v) => {
+                {RPE_PICKER_VALUES.filter((value) => value > 0).map((v) => {
                   const on = logging.rpe === v;
                   const hue = v >= 9 ? "#C9483A" : v >= 7 ? "#D4A53B" : "#3A8A4D";
                   return (
@@ -2504,9 +2510,10 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
                         fontSize: 15,
                         fontWeight: 700,
                         cursor: "pointer",
+                        ...rpeButtonReset(on ? "#ffffff" : "rgba(255,255,255,0.7)"),
                       }}
                     >
-                      {v}
+                      {formatRpeValue(v)}
                     </button>
                   );
                 })}
@@ -3002,12 +3009,12 @@ function EmomScreen({
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span className="cst-mono" style={{ fontSize: 10, opacity: 0.6, letterSpacing: "0.18em" }}>RPE GLOBAL SUR CET EMOM</span>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 4 }}>
-          {[1,2,3,4,5,6,7,8,9,10].map((v) => {
+          {RPE_PICKER_VALUES.filter((value) => value > 0).map((v) => {
             const on = rpe === v;
             const hue = v >= 9 ? "#C9483A" : v >= 7 ? "#D4A53B" : "#3A8A4D";
             return (
-              <button key={v} onClick={() => setRpe(v)} className="cst-mono" style={{ padding: "12px 0", borderRadius: 6, border: `1px solid ${on ? hue : "rgba(255,255,255,0.12)"}`, background: on ? `${hue}33` : "transparent", color: on ? "#fff" : "rgba(255,255,255,0.7)", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>
-                {v}
+              <button key={v} onClick={() => setRpe(v)} className="cst-mono" style={{ padding: "12px 0", borderRadius: 6, border: `1px solid ${on ? hue : "rgba(255,255,255,0.12)"}`, background: on ? `${hue}33` : "transparent", color: on ? "#fff" : "rgba(255,255,255,0.7)", fontSize: 15, fontWeight: 700, cursor: "pointer", ...rpeButtonReset(on ? "#ffffff" : "rgba(255,255,255,0.7)") }}>
+                {formatRpeValue(v)}
               </button>
             );
           })}
@@ -3263,12 +3270,12 @@ function CircuitScreen({
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span className="cst-mono" style={{ fontSize: 10, opacity: 0.6, letterSpacing: "0.18em" }}>RPE GLOBAL SUR CE CIRCUIT</span>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 4 }}>
-          {[1,2,3,4,5,6,7,8,9,10].map((v) => {
+          {RPE_PICKER_VALUES.filter((value) => value > 0).map((v) => {
             const on = rpe === v;
             const hue = v >= 9 ? "#C9483A" : v >= 7 ? "#D4A53B" : "#3A8A4D";
             return (
-              <button key={v} onClick={() => setRpe(v)} className="cst-mono" style={{ padding: "12px 0", borderRadius: 6, border: `1px solid ${on ? hue : "rgba(255,255,255,0.12)"}`, background: on ? `${hue}33` : "transparent", color: on ? "#fff" : "rgba(255,255,255,0.7)", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>
-                {v}
+              <button key={v} onClick={() => setRpe(v)} className="cst-mono" style={{ padding: "12px 0", borderRadius: 6, border: `1px solid ${on ? hue : "rgba(255,255,255,0.12)"}`, background: on ? `${hue}33` : "transparent", color: on ? "#fff" : "rgba(255,255,255,0.7)", fontSize: 15, fontWeight: 700, cursor: "pointer", ...rpeButtonReset(on ? "#ffffff" : "rgba(255,255,255,0.7)") }}>
+                {formatRpeValue(v)}
               </button>
             );
           })}
