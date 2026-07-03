@@ -1460,40 +1460,37 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
                           gap: 10,
                         }}
                       >
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (!isClickable) return;
-                            jumpToExercise(row.exerciseName);
-                          }}
-                          style={{
-                            appearance: "none",
-                            background: "transparent",
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            gap: 10,
-                            width: "100%",
-                            cursor: isClickable ? "pointer" : "default",
-                            textAlign: "left",
-                            flex: 1,
-                          }}
-                        >
-                          <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: 1 }}>
-                            <span className="cst-mono" style={{ fontSize: 18, color: tone, width: 16, textAlign: "center" }}>
-                              {statusIcon}
-                            </span>
-                            <div style={{ minWidth: 0, flex: 1 }}>
-                              <div style={{ fontSize: 12, fontWeight: 600 }}>{row.exerciseName}</div>
-                              <div className="cst-mono" style={{ fontSize: 10, color: tone, letterSpacing: "0.14em", marginTop: 2 }}>
-                                {label} · {row.completedSteps}/{row.totalSteps || 1}
-                              </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: 1 }}>
+                          <span className="cst-mono" style={{ fontSize: 18, color: tone, width: 16, textAlign: "center" }}>
+                            {statusIcon}
+                          </span>
+                          <div style={{ minWidth: 0, flex: 1 }}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (!isClickable) return;
+                                jumpToExercise(row.exerciseName);
+                              }}
+                              style={{
+                                appearance: "none",
+                                background: "transparent",
+                                border: 0,
+                                padding: 0,
+                                margin: 0,
+                                cursor: isClickable ? "pointer" : "default",
+                                textAlign: "left",
+                                color: "#fff",
+                                fontSize: 12,
+                                fontWeight: 600,
+                              }}
+                            >
+                              {row.exerciseName}
+                            </button>
+                            <div className="cst-mono" style={{ fontSize: 10, color: tone, letterSpacing: "0.14em", marginTop: 2 }}>
+                              {label} · {row.completedSteps}/{row.totalSteps || 1}
                             </div>
                           </div>
-                          <span className="cst-mono" style={{ fontSize: 10, opacity: 0.68, letterSpacing: "0.14em" }}>
-                            ALLER →
-                          </span>
-                        </button>
+                        </div>
                         {canAssignRpe && (
                           <ExpertOverviewRpeBadge
                             value={expertRecapRpeByExercise[row.exerciseName] ?? null}
