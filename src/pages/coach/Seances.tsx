@@ -5,6 +5,7 @@ import CoachSidebar from '../../components/CoachSidebar';
 import { CSTSectionNum } from '../../components/Atoms';
 import PriorityFeed from '@/components/coach/PriorityFeed';
 import RecentSessionsList from '@/components/coach/RecentSessionsList';
+import ArchivedSessionsPanel from '@/components/coach/ArchivedSessionsPanel';
 import { getDashboardMetrics } from '@/lib/coach-dashboard.functions';
 
 export default function CoachSeances() {
@@ -36,6 +37,9 @@ function CoachSeancesInner() {
               <CSTSectionNum num={2} label="À TRAITER EN PRIORITÉ" sub={metrics?.toTreat ? `${metrics.toTreat} ITEMS` : 'TOUT EST À JOUR'} />
             </div>
             <PriorityFeed />
+            <div style={{ marginTop: 16 }}>
+              <ArchivedSessionsPanel />
+            </div>
           </div>
           <div>
             <div style={{ marginBottom: 14 }}>

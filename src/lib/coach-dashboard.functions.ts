@@ -276,6 +276,42 @@ export const getRecentSessions = createServerFn({ method: "GET" })
     }));
   });
 
+export const getArchivedCoachSessions = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ limit: z.number().int().min(1).max(100).optional() }).parse(d ?? {}))
+  .handler(async ({ context, data }) => {
+    await assertCoach(context.userId);
+    const members = await listCoachMembers();
+    const nameOf = new Map(members.map((m) => [m.user_id, [m.first_name, m.last_name].filter(Boolean).join(" ") || m.email || "Membre"]));
+
+    const { data: sessions } = await supabaseAdmin
+      .from("sessions")
+      .select("id, member_id, session_label, week_number, day_number, started_at, ended_at, duration_minutes, average_rpe, coach_seen, coach_hidden_at, status, session_type, free_title, free_category")
+      .eq("status", "completed")
+      .not("coach_hidden_at", "is", null)
+      .order("coach_hidden_at", { ascending: false, nullsFirst: false })
+      .limit(data.limit ?? 30);
+
+    return (sessions ?? []).map((s) => ({
+      id: s.id,
+      memberId: s.member_id,
+      memberName: nameOf.get(s.member_id) || "Membre",
+      label: s.session_label,
+      week: s.week_number,
+      day: s.day_number,
+      startedAt: s.started_at,
+      endedAt: s.ended_at,
+      status: s.status,
+      durationMinutes: s.duration_minutes,
+      averageRpe: s.average_rpe,
+      coachSeen: s.coach_seen,
+      archivedAt: s.coach_hidden_at,
+      sessionType: s.session_type ?? "program",
+      freeTitle: s.free_title ?? null,
+      freeCategory: s.free_category ?? null,
+    }));
+  });
+
 export const getMembersOverview = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -377,6 +413,19 @@ export const hideSessionFromCoachDashboard = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin
       .from("sessions")
       .update({ coach_hidden_at: new Date().toISOString(), coach_seen: true })
+      .eq("id", data.sessionId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const restoreSessionToCoachDashboard = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ sessionId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertCoach(context.userId);
+    const { error } = await supabaseAdmin
+      .from("sessions")
+      .update({ coach_hidden_at: null, coach_seen: true })
       .eq("id", data.sessionId);
     if (error) throw new Error(error.message);
     return { ok: true };
