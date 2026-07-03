@@ -268,6 +268,7 @@ type LastSet = { weight: number | null; reps: number | null; rpe: number | null;
 const RPE_PICKER_VALUES = Array.from({ length: 21 }, (_, index) => index * 0.5);
 
 function formatRpeValue(value: number) {
+  if (value > 10) return "KO";
   return Number.isInteger(value) ? String(value) : String(value).replace(".", ",");
 }
 type LastByExo = Record<string, Record<number, LastSet> & { _loggedAt?: string | null; _sets?: LastSet[] }>;
@@ -442,6 +443,24 @@ function ExpertRecapRpeBadge({
                 </button>
               );
             })}
+            <button
+              type="button"
+              onClick={() => onChange(11)}
+              className="cst-mono"
+              style={{
+                gridColumn: "span 1",
+                padding: "12px 0",
+                borderRadius: 8,
+                border: `1px solid ${value === 11 ? "#C9483A" : "rgba(255,138,122,0.22)"}`,
+                background: value === 11 ? "rgba(201,72,58,0.4)" : "rgba(201,72,58,0.12)",
+                color: "#fff",
+                fontSize: 16,
+                cursor: "pointer",
+                ...rpeButtonReset("#ffffff"),
+              }}
+            >
+              KO
+            </button>
           </div>
           <button
             type="button"
@@ -545,6 +564,24 @@ function ExpertOverviewRpeBadge({
                 </button>
               );
             })}
+            <button
+              type="button"
+              onClick={() => onChange(11)}
+              className="cst-mono"
+              style={{
+                gridColumn: "span 1",
+                padding: "10px 0",
+                borderRadius: 8,
+                border: `1px solid ${value === 11 ? "#C9483A" : "rgba(255,138,122,0.22)"}`,
+                background: value === 11 ? "rgba(201,72,58,0.4)" : "rgba(201,72,58,0.12)",
+                color: "#fff",
+                fontSize: 15,
+                cursor: "pointer",
+                ...rpeButtonReset("#ffffff"),
+              }}
+            >
+              KO
+            </button>
           </div>
           <button
             type="button"
