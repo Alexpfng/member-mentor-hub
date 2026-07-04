@@ -527,7 +527,17 @@ export const duplicateWeekTo = createServerFn({ method: "POST" })
       .from("assignment_weeks").select("*").eq("id", data.weekId).maybeSingle();
     if (!week) throw new Error("Semaine introuvable.");
 
-    const sorted = [...data.targetWeeks].sort((a, b) => a - b);
+    // Ne garde que les semaines qui n'existent pas déjà AVANT de calculer la
+    // progression : sinon « deload dernière semaine » sautait dès que la dernière
+    // cible existait (le facteur 0.6 était calculé sur un index jamais créé).
+    const requested = [...new Set(data.targetWeeks)].sort((a, b) => a - b);
+    const { data: existingRows } = await supabaseAdmin
+      .from("assignment_weeks")
+      .select("week_number")
+      .eq("assignment_id", week.assignment_id)
+      .in("week_number", requested);
+    const existingSet = new Set((existingRows ?? []).map((r) => r.week_number));
+    const sorted = requested.filter((tw) => !existingSet.has(tw));
     const lastIdx = sorted.length - 1;
     const out: Array<{ weekNumber: number; id: string }> = [];
 
@@ -547,14 +557,6 @@ export const duplicateWeekTo = createServerFn({ method: "POST" })
           }
         }
       }
-      const { data: existing } = await supabaseAdmin
-        .from("assignment_weeks")
-        .select("id")
-        .eq("assignment_id", week.assignment_id)
-        .eq("week_number", tw)
-        .maybeSingle();
-      if (existing) continue;
-
       const { data: created, error } = await supabaseAdmin
         .from("assignment_weeks")
         .insert({

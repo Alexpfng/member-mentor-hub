@@ -69,8 +69,10 @@ export type ParsedExcel = {
 const COLOR_MAP: Record<string, string[]> = {
   red: ["F4CCCC", "EA9999", "E06666", "CC0000", "DD7E6B"],
   green: ["D9EAD3", "B6D7A8", "93C47D", "6AA84F"],
-  yellow: ["FFE599", "FFD966", "F1C232"],
-  blue: ["FFF2CC", "CFE2F3", "9FC5E8", "6FA8DC", "A4C2F4", "C9DAF8"],
+  // FFF2CC = crème (code « isolation » dans les Excel du coach) : c'est un jaune,
+  // il était classé à tort dans le groupe bleu.
+  yellow: ["FFE599", "FFD966", "F1C232", "FFF2CC"],
+  blue: ["CFE2F3", "9FC5E8", "6FA8DC", "A4C2F4", "C9DAF8"],
 };
 
 const SESSION_RE =
@@ -255,7 +257,23 @@ function parseWeekSheet(ws: XLSX.WorkSheet, sheetName: string): ImportedWeek | n
       continue;
     }
 
-    if (JUNK_RE.test(name) && !hasData) continue;
+    // Ligne de consigne (« OBJECTIF : … », fragment de phrase en minuscules…)
+    // sans données numériques : on la rattache aux notes de l'exercice précédent
+    // au lieu d'en faire un exercice fantôme (« —×— · CONSIGNE » côté membre).
+    // Le texte éventuel de la colonne RPE fait partie de la consigne.
+    const rpeIsNumeric = !!rpe && !Number.isNaN(Number(rpe.replace(",", ".")));
+    const hasNumericData = !!(series || reps || charge || rpeIsNumeric);
+    const looksLikeConsigne =
+      !exMatch && !hasNumericData && (JUNK_RE.test(name) || /^[a-zàâäéèêëîïôöùûüç]/.test(name));
+    if (looksLikeConsigne) {
+      const prev = currentDay?.exercises[currentDay.exercises.length - 1];
+      if (prev) {
+        const fragment = [name, rpe && !rpeIsNumeric ? rpe : null].filter(Boolean).join(" — ");
+        prev.coach_notes = prev.coach_notes ? `${prev.coach_notes}\n${fragment}` : fragment;
+      }
+      continue;
+    }
+
     if (!hasData && !exMatch) continue;
     if (!currentDay) {
       dayIndex++;

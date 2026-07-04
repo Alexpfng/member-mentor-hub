@@ -47,7 +47,16 @@ export const getDashboardMetrics = createServerFn({ method: "GET" })
     const weekStartISO = startOfWeek().toISOString().slice(0, 10);
 
     const [sessionsWeek, painUnresolved, msgsUnread, videosUnreviewed, sessionsUnseen, weekPlanned, weekCompleted] = await Promise.all([
-      supabaseAdmin.from("sessions").select("id, member_id, status", { count: "exact", head: false }).gte("started_at", weekStart),
+      // Scopé aux membres du coach, et seules les séances utiles comptent
+      // (les abandonnées/skipped gonflaient le compteur).
+      memberIds.length > 0
+        ? supabaseAdmin
+            .from("sessions")
+            .select("id, member_id, status", { count: "exact", head: false })
+            .in("member_id", memberIds)
+            .in("status", ["completed", "in_progress"])
+            .gte("started_at", weekStart)
+        : Promise.resolve({ count: 0 }),
       supabaseAdmin.from("pain_reports").select("id", { count: "exact", head: true }).is("resolved_at", null),
       supabaseAdmin.from("messages").select("id", { count: "exact", head: true }).eq("to_id", context.userId).eq("read", false),
       supabaseAdmin.from("technique_videos").select("id", { count: "exact", head: true }).eq("coach_reviewed", false),
