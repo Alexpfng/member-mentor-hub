@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { localDateISO } from "@/lib/local-date";
 import { computeSessionDurationMin } from "./format";
 
 const FREE_CATEGORIES = ["muscu", "course", "cardio", "sport", "mobilite", "autre"] as const;
@@ -31,7 +32,7 @@ export const createFreeSession = createServerFn({ method: "POST" })
       .maybeSingle();
     if (existing) return { sessionId: existing.id };
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localDateISO();
     const { data: row, error } = await supabaseAdmin
       .from("sessions")
       .insert({

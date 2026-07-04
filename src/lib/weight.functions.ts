@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { localDateISO } from "@/lib/local-date";
 
 export const logWeight = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -13,7 +14,7 @@ export const logWeight = createServerFn({ method: "POST" })
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    const date = data.date ?? new Date().toISOString().slice(0, 10);
+    const date = data.date ?? localDateISO();
     // Upsert by member+date
     const { data: existing } = await supabaseAdmin
       .from("weight_logs")

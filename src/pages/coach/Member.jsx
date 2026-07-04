@@ -1,13 +1,14 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import AssignmentTimingFields from '@/components/coach/AssignmentTimingFields';
 import { deriveAssignmentStartDate } from '@/lib/assignment-start';
+import { localDateISO } from "@/lib/local-date";
 
 function normalize(s) {
   return (s || '').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
 function todayISO() {
-  return new Date().toISOString().slice(0, 10);
+  return localDateISO();
 }
 
 function ProgramPicker({ programs, excludeId, placeholder = 'Rechercher un programme…', disabled, onPick, size = 'md' }) {

@@ -69,7 +69,10 @@ export default function CoachSessionDetail() {
           if (ex.name) map.set(ex.name.toLowerCase(), { ...ex, blockLetter: block.letter });
         }
       }
-    } catch {}
+    } catch (e) {
+      // Structure legacy illisible : la page reste utilisable (logs seuls).
+      console.error("[SessionDetail] parse structureJson", e);
+    }
     return map;
   }, [data]);
 

@@ -353,10 +353,12 @@ export const getMembersOverview = createServerFn({ method: "GET" })
       let currentWeek: number | null = null;
       if (a?.startDate) {
         const diff = Math.floor((Date.now() - new Date(a.startDate).getTime()) / (7 * 86400000)) + 1;
-        currentWeek = Math.max(1, diff);
+        // Bornée à la durée du programme : un programme de 8 semaines terminé
+        // depuis 3 mois ne doit pas afficher « S20 ».
+        currentWeek = Math.max(1, a.durationWeeks ? Math.min(diff, a.durationWeeks) : diff);
       }
       const s7 = sessions7By.get(m.user_id) || { done: 0, total: 0 };
-      const adherence = s7.total > 0 ? Math.round((s7.done / s7.total) * 100) : null;
+      const adherence = s7.total > 0 ? Math.min(100, Math.round((s7.done / s7.total) * 100)) : null;
       let status: "red" | "orange" | "green" = "green";
       let statusLabel = "OK";
       if (painSet.has(m.user_id)) { status = "red"; statusLabel = "Douleur signalée"; }
@@ -556,7 +558,7 @@ export const getMemberFollowup = createServerFn({ method: "GET" })
     const planned30 = plannedPerWeek * 4;
     const done30 = completedProgram.length;
     const free30 = completedFree.length;
-    const adherence = planned30 > 0 ? Math.round((done30 / planned30) * 100) : null;
+    const adherence = planned30 > 0 ? Math.min(100, Math.round((done30 / planned30) * 100)) : null;
 
     const openPains = (painsR.data ?? []).filter((p) => !p.resolved_at);
 

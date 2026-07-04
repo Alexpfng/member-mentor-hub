@@ -12,6 +12,7 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { toast } from "sonner";
+import { localDateISO } from "@/lib/local-date";
 import MemberNav from "../../components/MemberNav";
 import {
   listWeekPlan,
@@ -219,7 +220,7 @@ export default function MemberPlanning() {
     });
   }, [data?.weekStart]);
 
-  const todayISO = isoDay(new Date());
+  const todayISO = localDateISO();
 
   const plannedByDate = useMemo(() => {
     const map = new Map<string, any>();

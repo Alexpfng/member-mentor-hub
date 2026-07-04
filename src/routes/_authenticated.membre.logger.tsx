@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { mergeAssignmentWeeks } from "@/lib/program-weeks";
+import { localDateISO } from "@/lib/local-date";
 
 const searchSchema = z.object({
   day: z.string().min(1).max(120).optional(),
@@ -160,7 +161,7 @@ function SessionLauncher() {
             return;
           }
 
-          const today = new Date().toISOString().slice(0, 10);
+          const today = localDateISO();
           const { data: created, error: err } = await supabase
             .from("sessions")
             .insert({

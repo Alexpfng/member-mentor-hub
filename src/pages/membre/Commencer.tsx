@@ -8,6 +8,7 @@ import { createFreeSession } from "@/lib/free-session.functions";
 import MemberNav from "../../components/MemberNav";
 import { CSTLogo, CSTSectionNum } from "../../components/Atoms";
 import { toast } from "sonner";
+import { localDateISO } from "@/lib/local-date";
 
 type PlannedRow = {
   id: string;
@@ -35,7 +36,7 @@ type PlanResult = {
   sessions?: SessionRow[];
 };
 
-const todayISO = () => new Date().toISOString().slice(0, 10);
+const todayISO = () => localDateISO();
 
 function timeAgo(iso?: string | null): string {
   if (!iso) return "";

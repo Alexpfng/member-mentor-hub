@@ -12,23 +12,19 @@ import { usePRConfetti } from "@/hooks/usePRConfetti";
 import { getMemberDashboard } from "@/lib/member-stats.functions";
 import { listWeekPlan, upsertPlannedSession } from "@/lib/planning.functions";
 import { sanitizeDurationMin } from "@/lib/format";
+import { localDateISO, addDaysISO } from "@/lib/local-date";
 
-const today = new Date();
-const todayISO = today.toISOString().slice(0, 10);
+const todayISO = localDateISO();
+const today = new Date(); // affichage uniquement (salutation, date du jour)
 
 function getInitials(firstName, lastName) {
   return ((firstName?.[0] ?? "") + (lastName?.[0] ?? "")).toUpperCase() || "??";
 }
 
 function getWeekDates() {
-  const day = today.getDay(); // 0=dim
-  const monday = new Date(today);
-  monday.setDate(today.getDate() - ((day + 6) % 7));
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(monday);
-    d.setDate(monday.getDate() + i);
-    return d.toISOString().slice(0, 10);
-  });
+  const day = new Date(`${todayISO}T00:00:00Z`).getUTCDay(); // 0=dim
+  const monday = addDaysISO(todayISO, -((day + 6) % 7));
+  return Array.from({ length: 7 }, (_, i) => addDaysISO(monday, i));
 }
 
 export default function MemberDashboard() {

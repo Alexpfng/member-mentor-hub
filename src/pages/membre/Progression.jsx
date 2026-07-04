@@ -7,6 +7,7 @@ import { getMemberProgression, listMyExercises, getMyExerciseProgression } from 
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { localDateISO } from "@/lib/local-date";
 import { ConfirmDialog } from "../../components/cst/ConfirmDialog";
 
 const MEASURE_FIELDS = [
@@ -103,7 +104,7 @@ export default function Progression() {
     setSavingMeasure(true);
     const row = {
       member_id: userId,
-      date: new Date().toISOString().slice(0, 10),
+      date: localDateISO(),
       waist_cm: num(form.waist_cm), hips_cm: num(form.hips_cm), chest_cm: num(form.chest_cm),
       arm_cm: num(form.arm_cm), thigh_cm: num(form.thigh_cm), note: form.note.trim() || null,
     };
@@ -122,7 +123,7 @@ export default function Progression() {
     const path = `${userId}/${Date.now()}.${ext}`;
     const { error: upErr } = await supabase.storage.from("progress-photos").upload(path, file, { upsert: false });
     if (upErr) { toast.error("Envoi de la photo impossible. Réessaie."); setUploadingPhoto(false); return; }
-    const { error: insErr } = await supabase.from("progress_photos").insert({ member_id: userId, storage_path: path, date: new Date().toISOString().slice(0, 10) });
+    const { error: insErr } = await supabase.from("progress_photos").insert({ member_id: userId, storage_path: path, date: localDateISO() });
     if (insErr) { toast.error("La photo n'a pas pu être enregistrée."); setUploadingPhoto(false); return; }
     try { await loadEvolution(userId); } catch { /* ignore */ }
     setUploadingPhoto(false);

@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { localDateISO } from "@/lib/local-date";
 import { normalizeExerciseFeedbackKey } from "@/lib/exercise-feedback";
 
 /**
@@ -609,7 +610,7 @@ export const duplicateProgramForMember = createServerFn({ method: "POST" })
       member_id: data.memberId,
       program_id: created.id,
       active: true,
-      start_date: new Date().toISOString().slice(0, 10),
+      start_date: localDateISO(),
     }).select("id").single();
     if (aErr) throw new Error(aErr.message);
 

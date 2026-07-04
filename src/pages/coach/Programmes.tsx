@@ -3,6 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import CoachSidebar from "../../components/CoachSidebar";
 import { CSTSectionNum } from "../../components/Atoms";
+import { localDateISO } from "@/lib/local-date";
 import {
   listPrograms,
   duplicateProgram,
@@ -27,7 +28,7 @@ type Program = {
 type Member = { id: string; first_name: string | null; last_name: string | null; email: string | null };
 
 function todayISO(): string {
-  return new Date().toISOString().slice(0, 10);
+  return localDateISO();
 }
 
 function AssignModal({
@@ -156,8 +157,13 @@ export default function ProgrammesPage() {
 
   useEffect(() => {
     (async () => {
-      try { await seedFn(); } catch {}
-      try { await reload(); } catch {}
+      try { await seedFn(); } catch { /* seed best-effort (déjà fait) */ }
+      try {
+        await reload();
+      } catch (e) {
+        console.error("reload programmes", e);
+        notify("Impossible de charger les programmes. Recharge la page.");
+      }
       setLoading(false);
     })();
   }, []);

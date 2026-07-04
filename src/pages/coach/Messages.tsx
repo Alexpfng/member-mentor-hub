@@ -103,7 +103,10 @@ export default function CoachMessages() {
     try {
       const r = await convFn({});
       setConversations(r.conversations);
-    } catch {}
+    } catch (e) {
+      console.error("loadConversations", e);
+      toast.error("Impossible de charger les conversations. Réessaie.");
+    }
   }, [convFn]);
 
   // Auto-select partner from ?partner= URL param
@@ -147,7 +150,10 @@ export default function CoachMessages() {
       const r = await msgsFn({ data: { partner_id: partnerId } });
       setMessages(r.messages as Message[]);
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
-    } catch {}
+    } catch (e) {
+      console.error("loadMessages", e);
+      toast.error("Impossible de charger les messages. Réessaie.");
+    }
   }, [msgsFn]);
 
 

@@ -72,7 +72,10 @@ export default function MemberMessages() {
       const r = await msgsFn({ data: { partner_id: partnerId } });
       setMessages(r.messages as Message[]);
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
-    } catch {}
+    } catch (e) {
+      console.error("loadMessages", e);
+      toast.error("Impossible de charger les messages. Réessaie.");
+    }
   }, [msgsFn]);
 
   useEffect(() => { if (coach) loadMessages(coach.id); }, [coach, loadMessages]);

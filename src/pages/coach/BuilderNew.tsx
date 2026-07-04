@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { localDateISO } from "@/lib/local-date";
 import {
   DndContext, DragOverlay, closestCenter, PointerSensor, TouchSensor,
   useSensor, useSensors, type DragStartEvent, type DragEndEvent, type DragOverEvent,
@@ -579,7 +580,7 @@ function DayColumn({
 function AssignModal({ programId, durationWeeks, onClose }: { programId: string; durationWeeks: number; onClose: () => void }) {
   const [members, setMembers] = useState<any[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
+  const [startDate, setStartDate] = useState(localDateISO());
   const [startWeek, setStartWeek] = useState(1);
   const [loading, setLoading] = useState(false);
   const effectiveStartDate = deriveAssignmentStartDate(startDate, startWeek);

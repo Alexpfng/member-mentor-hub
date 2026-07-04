@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { mergeAssignmentWeeks } from "@/lib/program-weeks";
+import { localDateISO } from "@/lib/local-date";
 
 async function assertCoach(userId: string) {
   const { data, error } = await supabaseAdmin
@@ -178,7 +179,7 @@ export const assignProgram = createServerFn({ method: "POST" })
         member_id: data.member_id,
         program_id: data.program_id,
         active: true,
-        start_date: data.start_date ?? new Date().toISOString().slice(0, 10),
+        start_date: data.start_date ?? localDateISO(),
       })
       .select()
       .single();
@@ -698,7 +699,7 @@ export const updateMemberProfile = createServerFn({ method: "POST" })
     if (data.log_weight && data.weight_kg) {
       const { error } = await supabaseAdmin
         .from("weight_logs")
-        .insert({ member_id: data.member_id, weight_kg: data.weight_kg, date: new Date().toISOString().slice(0, 10) });
+        .insert({ member_id: data.member_id, weight_kg: data.weight_kg, date: localDateISO() });
       if (error) throw new Error(error.message);
     }
 
