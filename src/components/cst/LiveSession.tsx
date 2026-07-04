@@ -2106,6 +2106,32 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
           blockLetter={current.blockLetter}
           sessionId={sessionId}
           onFinish={() => {
+            // Persiste le circuit dans set_logs (1 ligne par exercice), comme les
+            // EMOM : sinon il est invisible côté coach, historique et pré-remplissage.
+            (async () => {
+              try {
+                for (const ex of current.exercises) {
+                  await supabase
+                    .from("set_logs")
+                    .delete()
+                    .eq("session_id", sessionId)
+                    .eq("exercise_name", ex.name)
+                    .eq("set_number", 1);
+                }
+                await supabase.from("set_logs").insert(
+                  current.exercises.map((ex) => ({
+                    session_id: sessionId,
+                    exercise_name: ex.name,
+                    set_number: 1,
+                    reps: null,
+                    rpe: null,
+                    completed: true,
+                  })),
+                );
+              } catch (e) {
+                console.error("circuit set_logs insert failed", e);
+              }
+            })();
             setSavedByStep((m) => ({
               ...m,
               [stepIdx]: { exo: current.exercises.map((e) => e.name).join("+"), weight: null, reps: null, rpe: null },

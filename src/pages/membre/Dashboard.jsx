@@ -68,7 +68,7 @@ export default function MemberDashboard() {
         const [{ data: prof }, { data: assigns }, { data: sessions }] = await Promise.all([
           supabase.from("profiles").select("first_name,last_name").eq("id", uid).maybeSingle(),
           supabase.from("assignments").select("program_id,programs(name,description)").eq("member_id", uid).eq("active", true).order("created_at", { ascending: false }).limit(1),
-          supabase.from("sessions").select("id,date,status,session_label,duration_minutes").eq("member_id", uid).gte("date", getWeekDates()[0]).lte("date", getWeekDates()[6]).order("date"),
+          supabase.from("sessions").select("id,date,status,session_label,duration_minutes,session_type").eq("member_id", uid).gte("date", getWeekDates()[0]).lte("date", getWeekDates()[6]).order("date"),
         ]);
 
         setProfile(prof);
@@ -108,8 +108,17 @@ export default function MemberDashboard() {
   const weekDates = getWeekDates();
   const dayLabels = ["LUN", "MAR", "MER", "JEU", "VEN", "SAM", "DIM"];
 
-  const doneSessions = weekSessions.filter((s) => s.status === "completed").length;
-  const adherencePct = weekDates.length ? Math.round((doneSessions / 5) * 100) : 0;
+  // Adhérence : séances PROGRAMME terminées / séances prévues cette semaine
+  // (les séances libres ne comptent pas, et le dénominateur suit le programme —
+  // un plan 3×/semaine complété doit afficher 100 %, pas 60 %).
+  const dayDefs = (plan?.dayDefs ?? []).filter((d) => d?.type !== "Repos");
+  const doneSessions = weekSessions.filter(
+    (s) => s.status === "completed" && (s.session_type ?? "program") === "program",
+  ).length;
+  const plannedPerWeek = dayDefs.length || 5;
+  const adherencePct = weekDates.length
+    ? Math.min(100, Math.round((doneSessions / plannedPerWeek) * 100))
+    : 0;
 
   const todaySession = weekSessions.find((s) => s.date === todayISO);
   const inProgress = weekSessions.find((s) => s.status === "in_progress");
@@ -121,10 +130,14 @@ export default function MemberDashboard() {
   });
   const todayPlanned = plannedByDate.get(todayISO) ?? null;
 
-  const dayDefs = (plan?.dayDefs ?? []).filter((d) => d?.type !== "Repos");
+  // « À faire » : exclut le planifié, le terminé ET l'en-cours (sinon une séance
+  // commencée réapparaît comme à faire alors qu'elle est reprise ailleurs).
   const usedLabels = new Set(
     (plan?.planned ?? []).map((p) => p.day_label).concat(
-      (plan?.sessions ?? []).filter((s) => s.status === "completed").map((s) => s.session_label).filter(Boolean),
+      (plan?.sessions ?? [])
+        .filter((s) => s.status === "completed" || s.status === "in_progress")
+        .map((s) => s.session_label)
+        .filter(Boolean),
     ),
   );
   const availableDayDefs = dayDefs.filter((d) => !usedLabels.has(d.label));
@@ -382,7 +395,7 @@ export default function MemberDashboard() {
 
             {/* Week strip */}
             <div style={{ marginTop: 22 }}>
-              <CSTSectionNum num={2} label="MA SEMAINE" sub={`${doneSessions} / 5 SÉANCES`} />
+              <CSTSectionNum num={2} label="MA SEMAINE" sub={`${doneSessions} / ${plannedPerWeek} SÉANCES`} />
               <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: 6, marginTop: 12 }}>
                 {weekDates.map((date, i) => {
                   const sess = weekSessions.find((s) => s.date === date);
@@ -447,7 +460,7 @@ export default function MemberDashboard() {
                 <span className="cst-mono" style={{ fontSize: 9 }}>ADHÉRENCE · SEMAINE</span>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginTop: 6 }}>
                   <span className="cst-display" style={{ fontSize: 28 }}>
-                    {doneSessions}<span style={{ opacity: 0.4 }}>/5</span>
+                    {doneSessions}<span style={{ opacity: 0.4 }}>/{plannedPerWeek}</span>
                   </span>
                   <span className="cst-mono" style={{ fontSize: 10, color: "var(--cst-mid-green)" }}>
                     {adherencePct}%

@@ -533,6 +533,11 @@ export default function AdapterSemaine() {
   async function openPublish() {
     if (!ctx?.week.id) return;
     try {
+      // Flush : le preview et la publication lisent la base — on pousse d'abord
+      // l'état local, sinon les dernières frappes (< 700 ms) seraient ignorées.
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      await saveFn({ data: { weekId: ctx.week.id, structure } });
+      setSavedAt(Date.now());
       const { changes } = await previewFn({ data: { weekId: ctx.week.id } });
       setChanges(changes);
       setShowPublish(true);

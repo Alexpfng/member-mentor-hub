@@ -245,7 +245,12 @@ export default function MemberPlanning() {
     const usedCount = new Map<string, number>();
     [
       ...(data?.planned ?? []).map((p: any) => p.day_label),
-      ...(data?.sessions ?? []).filter((s: any) => s.status === "completed").map((s: any) => s.session_label).filter(Boolean),
+      // in_progress compte aussi : une séance commencée ne doit pas réapparaître
+      // « à planifier » (elle se reprend depuis Commencer / le Dashboard).
+      ...(data?.sessions ?? [])
+        .filter((s: any) => s.status === "completed" || s.status === "in_progress")
+        .map((s: any) => s.session_label)
+        .filter(Boolean),
     ].forEach((l: string) => usedCount.set(l, (usedCount.get(l) ?? 0) + 1));
     const result: any[] = [];
     for (const d of defs) {
@@ -339,15 +344,21 @@ export default function MemberPlanning() {
     if (busy) return;
     setBusy(true);
     try {
-      await upsertFn({
-        data: {
-          programId: null,
-          weekNumber: data.weekNumber,
-          dayLabel: "Séance libre",
-          plannedDate: date,
-        },
-      });
+      // La session d'abord : si createFree échoue, aucune ligne planning orpheline.
+      // (Et createFree réutilise une séance libre in_progress, donc pas de doublon.)
       const r = (await createFree({ data: {} })) as { sessionId: string };
+      try {
+        await upsertFn({
+          data: {
+            programId: null,
+            weekNumber: data.weekNumber,
+            dayLabel: "Séance libre",
+            plannedDate: date,
+          },
+        });
+      } catch {
+        /* le marquage planning est cosmétique : ne bloque pas la séance */
+      }
       setModal(null);
       navigate({ to: "/membre/seance-libre/$sessionId", params: { sessionId: r.sessionId } });
     } catch (e: any) {
@@ -561,11 +572,11 @@ export default function MemberPlanning() {
         <BottomSheet>
           <ModalTitle text={`${modal.planned.day_label} · ${frDate(modal.date)}`} />
 
-          {(modal.date <= todayISO) && (
-            <SheetBtn onClick={() => startPlannedNow(modal.planned)} disabled={busy}>
-              ▶ Démarrer maintenant
-            </SheetBtn>
-          )}
+          {/* Démarrable même si planifiée plus tard : le membre a le droit d'avancer
+              sa séance (c'était le seul écran sans porte d'entrée pour la lancer). */}
+          <SheetBtn onClick={() => startPlannedNow(modal.planned)} disabled={busy}>
+            {modal.date <= todayISO ? "▶ Démarrer maintenant" : "▶ Démarrer en avance"}
+          </SheetBtn>
           <SheetBtn onClick={() => deletePlanned(modal.planned.id)} disabled={busy} danger>
             Supprimer du planning
           </SheetBtn>
