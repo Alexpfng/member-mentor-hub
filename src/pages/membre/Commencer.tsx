@@ -102,12 +102,12 @@ export default function Commencer() {
       await upsertPlanned({
         data: {
           programId: plan?.assignment?.program_id ?? null,
-          weekNumber: plan?.weekNumber ?? 0,
+          weekNumber: plan?.weekNumber ?? 1,
           dayLabel: label,
           plannedDate: todayISO(),
         },
       });
-      tsNav({ to: "/membre/logger", search: { day: label, week: plan?.weekNumber ?? 0 } });
+      tsNav({ to: "/membre/logger", search: { day: label, week: plan?.weekNumber ?? 1 } });
     } catch (e) {
       setBusy(false);
       toast.error(e instanceof Error ? e.message : "Erreur");

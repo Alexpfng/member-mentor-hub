@@ -86,7 +86,7 @@ export default function MemberCarnet() {
 
         <div className="text-center mb-6">
           <div className="font-mono text-xs opacity-60 tracking-widest">
-            SEMAINE {logbook.week_number + 1}
+            SEMAINE {logbook.week_number}
           </div>
           <div className="text-sm opacity-70">
             Du {new Date(logbook.period_start).toLocaleDateString("fr-FR")} au{" "}

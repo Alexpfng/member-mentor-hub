@@ -1119,7 +1119,7 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
   const completedWorkSets = useMemo(() => Object.keys(savedByStep).length, [savedByStep]);
   const progressSteps = useMemo<SessionProgressStep[]>(
     () =>
-      steps.flatMap((step, index) => {
+      steps.flatMap((step, index): SessionProgressStep[] => {
         if (step.kind === "set") {
           return [{ index, exerciseName: step.exercise.name, kind: "set" }];
         }
@@ -1263,6 +1263,14 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
     const reps = isNaN(r) ? null : r;
 
     try {
+      // Revalider une série (retour en arrière) doit REMPLACER la ligne existante,
+      // pas en ajouter une deuxième — sinon volume et RPE moyens sont gonflés.
+      await supabase
+        .from("set_logs")
+        .delete()
+        .eq("session_id", sessionId)
+        .eq("exercise_name", step.exercise.name)
+        .eq("set_number", step.setNumber);
       await supabase.from("set_logs").insert({
         session_id: sessionId,
         exercise_name: step.exercise.name,
@@ -2052,15 +2060,24 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
             const computedReps = sessionMode === "expert"
               ? getExpertEmomLoggedValue(current.exercise, logs.length) ?? logs.reduce((s, l) => s + l, 0)
               : logs.reduce((s, l) => s + l, 0);
-            // Persist EMOM result as a single "set_log" entry
-            supabase.from("set_logs").insert({
-              session_id: sessionId,
-              exercise_name: current.exercise.name,
-              set_number: 1,
-              reps: computedReps,
-              rpe: null,
-              completed: true,
-            }).then(() => {});
+            // Persist EMOM result as a single "set_log" entry.
+            // Refaire le bloc doit remplacer la ligne existante, pas la dupliquer.
+            supabase
+              .from("set_logs")
+              .delete()
+              .eq("session_id", sessionId)
+              .eq("exercise_name", current.exercise.name)
+              .eq("set_number", 1)
+              .then(() => {
+                supabase.from("set_logs").insert({
+                  session_id: sessionId,
+                  exercise_name: current.exercise.name,
+                  set_number: 1,
+                  reps: computedReps,
+                  rpe: null,
+                  completed: true,
+                }).then(() => {});
+              });
             setSavedByStep((m) => ({
               ...m,
               [stepIdx]: { exo: current.exercise.name, weight: null, reps: computedReps, rpe: null },
@@ -2637,7 +2654,6 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
                         background: on ? `${hue}33` : "transparent",
                         color: on ? "#fff" : "rgba(255,255,255,0.7)",
                         fontSize: 15,
-                        fontWeight: 700,
                         cursor: "pointer",
                         ...rpeButtonReset(on ? "#ffffff" : "rgba(255,255,255,0.7)"),
                       }}
@@ -3142,7 +3158,7 @@ function EmomScreen({
             const on = rpe === v;
             const hue = v >= 9 ? "#C9483A" : v >= 7 ? "#D4A53B" : "#3A8A4D";
             return (
-              <button key={v} onClick={() => setRpe(v)} className="cst-mono" style={{ padding: "12px 0", borderRadius: 6, border: `1px solid ${on ? hue : "rgba(255,255,255,0.12)"}`, background: on ? `${hue}33` : "transparent", color: on ? "#fff" : "rgba(255,255,255,0.7)", fontSize: 15, fontWeight: 700, cursor: "pointer", ...rpeButtonReset(on ? "#ffffff" : "rgba(255,255,255,0.7)") }}>
+              <button key={v} onClick={() => setRpe(v)} className="cst-mono" style={{ padding: "12px 0", borderRadius: 6, border: `1px solid ${on ? hue : "rgba(255,255,255,0.12)"}`, background: on ? `${hue}33` : "transparent", color: on ? "#fff" : "rgba(255,255,255,0.7)", fontSize: 15, cursor: "pointer", ...rpeButtonReset(on ? "#ffffff" : "rgba(255,255,255,0.7)") }}>
                 {formatRpeValue(v)}
               </button>
             );
@@ -3403,7 +3419,7 @@ function CircuitScreen({
             const on = rpe === v;
             const hue = v >= 9 ? "#C9483A" : v >= 7 ? "#D4A53B" : "#3A8A4D";
             return (
-              <button key={v} onClick={() => setRpe(v)} className="cst-mono" style={{ padding: "12px 0", borderRadius: 6, border: `1px solid ${on ? hue : "rgba(255,255,255,0.12)"}`, background: on ? `${hue}33` : "transparent", color: on ? "#fff" : "rgba(255,255,255,0.7)", fontSize: 15, fontWeight: 700, cursor: "pointer", ...rpeButtonReset(on ? "#ffffff" : "rgba(255,255,255,0.7)") }}>
+              <button key={v} onClick={() => setRpe(v)} className="cst-mono" style={{ padding: "12px 0", borderRadius: 6, border: `1px solid ${on ? hue : "rgba(255,255,255,0.12)"}`, background: on ? `${hue}33` : "transparent", color: on ? "#fff" : "rgba(255,255,255,0.7)", fontSize: 15, cursor: "pointer", ...rpeButtonReset(on ? "#ffffff" : "rgba(255,255,255,0.7)") }}>
                 {formatRpeValue(v)}
               </button>
             );

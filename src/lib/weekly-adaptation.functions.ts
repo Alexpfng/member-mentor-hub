@@ -42,6 +42,27 @@ async function requireCoach(userId: string) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Brouillon de révision.
+// Une semaine déjà livrée au membre (published/in_progress) ne doit JAMAIS être
+// modifiée en direct : le membre lit `structure`, donc chaque frappe du coach
+// serait visible immédiatement — y compris pendant une séance. Les éditions vont
+// dans `draft_structure` et ne basculent dans `structure` qu'à la republication.
+// ─────────────────────────────────────────────────────────────────────────────
+type WeekRowLike = { status?: string | null; structure?: unknown; draft_structure?: unknown };
+
+/** Structure « en cours d'édition » : le brouillon en attente s'il existe, sinon la version live. */
+function effectiveStructure(week: WeekRowLike): WeekStructure {
+  return ((week.draft_structure ?? week.structure) as WeekStructure) ?? { days: [] };
+}
+
+/** Patch d'écriture : direct sur `structure` en draft, sinon vers `draft_structure`. */
+function structurePatch(week: WeekRowLike, structure: unknown) {
+  return week.status === "draft"
+    ? { structure: structure as unknown as never }
+    : { draft_structure: structure as unknown as never };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Resolve the source week structure for a member at a given week number.
 // Priority: latest published assignment_weeks for that week, else program.structure.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -232,9 +253,10 @@ export const getMemberWeekContext = createServerFn({ method: "POST" })
       if (error) throw new Error(error.message);
       weekRow = created;
     } else {
-      // Auto-populate empty structure from program
+      // Auto-populate empty structure from program — UNIQUEMENT en draft : une
+      // semaine déjà livrée ne doit pas être réécrite par simple ouverture.
       const hasContent = (weekRow.structure as WeekStructure)?.days?.some((d) => (d.exercises ?? []).length > 0);
-      if (!hasContent && assignment) {
+      if (!hasContent && assignment && weekRow.status === "draft") {
         const src = await resolveSourceWeek(assignment.id, targetWeek);
         if ((src.structure.days ?? []).some((d) => (d.exercises ?? []).length > 0)) {
           await supabaseAdmin.from("assignment_weeks")
@@ -298,8 +320,16 @@ export const getMemberWeekContext = createServerFn({ method: "POST" })
       ? Math.max(...allWeeks.map((w) => w.week_number))
       : weekRow.week_number;
 
+    // L'éditeur travaille toujours sur la structure effective (brouillon de
+    // révision s'il existe) ; `has_pending_draft` permet à l'UI d'afficher
+    // « modifications en attente de publication ».
+    const pendingDraft = (weekRow as WeekRowLike).draft_structure != null;
     return {
-      week: weekRow,
+      week: {
+        ...weekRow,
+        structure: effectiveStructure(weekRow as WeekRowLike) as unknown as never,
+        has_pending_draft: pendingDraft,
+      },
       assignment: {
         id: assignment?.id ?? weekRow.assignment_id,
         program_id: assignment?.program_id ?? weekRow.program_id,
@@ -329,13 +359,19 @@ export const saveDraftWeek = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await requireCoach(context.userId);
+    const { data: week } = await supabaseAdmin
+      .from("assignment_weeks")
+      .select("id, status")
+      .eq("id", data.weekId)
+      .maybeSingle();
+    if (!week) throw new Error("Semaine introuvable.");
+    if (week.status === "done") throw new Error("Semaine terminée, non modifiable.");
     const { error } = await supabaseAdmin
       .from("assignment_weeks")
-      .update({ structure: data.structure })
-      .eq("id", data.weekId)
-      .neq("status", "done");
+      .update(structurePatch(week, data.structure))
+      .eq("id", data.weekId);
     if (error) throw new Error(error.message);
-    return { ok: true };
+    return { ok: true, pendingPublish: week.status !== "draft" };
   });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -393,6 +429,11 @@ export const previewWeekChanges = createServerFn({ method: "POST" })
     const { data: week } = await supabaseAdmin
       .from("assignment_weeks").select("*").eq("id", data.weekId).maybeSingle();
     if (!week) throw new Error("Semaine introuvable.");
+    // Republication d'une semaine déjà livrée : le diff pertinent pour le membre
+    // est « ce qu'il a actuellement » (structure live) vs le brouillon de révision.
+    if (week.draft_structure != null) {
+      return { changes: computeChanges(week.structure as WeekStructure, week.draft_structure as WeekStructure) };
+    }
     let prev: WeekStructure | null = null;
     if (week.based_on_week != null) {
       const { data: src } = await supabaseAdmin
@@ -426,8 +467,13 @@ export const publishWeek = createServerFn({ method: "POST" })
       .from("assignment_weeks").select("*").eq("id", data.weekId).maybeSingle();
     if (!week) throw new Error("Semaine introuvable.");
 
+    // La publication bascule le brouillon de révision (s'il existe) dans la
+    // structure live — c'est le seul moment où le membre voit les éditions.
+    const nextStructure = effectiveStructure(week);
     let prev: WeekStructure | null = null;
-    if (week.based_on_week != null) {
+    if (week.draft_structure != null) {
+      prev = week.structure as WeekStructure;
+    } else if (week.based_on_week != null) {
       const { data: src } = await supabaseAdmin
         .from("assignment_weeks")
         .select("structure")
@@ -437,7 +483,7 @@ export const publishWeek = createServerFn({ method: "POST" })
         .maybeSingle();
       prev = (src?.structure as WeekStructure) ?? null;
     }
-    const changes = computeChanges(prev, week.structure as WeekStructure);
+    const changes = computeChanges(prev, nextStructure);
 
     const { error } = await supabaseAdmin
       .from("assignment_weeks")
@@ -446,6 +492,8 @@ export const publishWeek = createServerFn({ method: "POST" })
         published_at: new Date().toISOString(),
         start_date: data.startDate ?? week.start_date ?? null,
         changes_summary: changes,
+        structure: nextStructure as unknown as never,
+        draft_structure: null,
       })
       .eq("id", data.weekId);
     if (error) throw new Error(error.message);
@@ -484,7 +532,8 @@ export const duplicateWeekTo = createServerFn({ method: "POST" })
 
     for (let i = 0; i < sorted.length; i++) {
       const tw = sorted[i];
-      const structure = JSON.parse(JSON.stringify(week.structure ?? {})) as WeekStructure;
+      // Duplique la version en cours d'édition (brouillon de révision inclus).
+      const structure = JSON.parse(JSON.stringify(effectiveStructure(week))) as WeekStructure;
       let factor = 1;
       if (data.progression === "plus5_cumulative") factor = 1 + 0.05 * (i + 1);
       if (data.progression === "deload_last" && i === lastIdx) factor = 0.6;
@@ -853,7 +902,7 @@ export const replaceExercise = createServerFn({ method: "POST" })
       .maybeSingle();
     if (exErr || !exo) throw new Error("Exercice introuvable.");
 
-    const structure = JSON.parse(JSON.stringify(week.structure ?? {})) as WeekStructure;
+    const structure = JSON.parse(JSON.stringify(effectiveStructure(week))) as WeekStructure;
     const day = (structure.days ?? [])[data.dayIndex];
     const source = day?.exercises?.[data.exoIndex];
     if (!day || !source) throw new Error("Exercice source introuvable dans la semaine.");
@@ -881,7 +930,7 @@ export const replaceExercise = createServerFn({ method: "POST" })
 
     const { error } = await supabaseAdmin
       .from("assignment_weeks")
-      .update({ structure: structure as unknown as never })
+      .update(structurePatch(week, structure))
       .eq("id", data.weekId);
     if (error) throw new Error(error.message);
     return { ok: true, structure };

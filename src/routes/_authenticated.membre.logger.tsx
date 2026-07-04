@@ -67,7 +67,9 @@ function SessionLauncher() {
           const diff = Math.floor((Date.now() - start.getTime()) / 86400000);
           currentWeek = Math.max(0, Math.floor(diff / 7));
         }
-        const weekIndex = search.week ?? currentWeek;
+        // `?week=` est le numéro de semaine 1-based (convention DB unifiée).
+        // Math.max tolère d'anciennes URLs 0-based en les rabattant sur la semaine 1.
+        const weekIndex = Math.max(0, (search.week ?? currentWeek + 1) - 1);
         const sessionWeekNumber = weekIndex + 1;
 
         // Fusionne les semaines adaptées (assignment_weeks) sur le template, pour que le
@@ -127,6 +129,23 @@ function SessionLauncher() {
 
           if (existing?.id) {
             // Realign the existing in-progress session to the chosen one.
+            const isDifferentSession =
+              existing.week_number !== sessionWeekNumber ||
+              existing.day_number !== dayNumber ||
+              existing.program_id !== programId;
+            if (isDifferentSession) {
+              // La session change de séance : on purge les séries déjà loguées et le
+              // snapshot local de l'ancienne séance, sinon elles se retrouvent
+              // rattachées (volume/RPE/historique) à la nouvelle et le snapshot
+              // restaure la position de l'ancienne par-dessus les nouveaux exercices.
+              await supabase.from("set_logs").delete().eq("session_id", existing.id);
+              await supabase.from("exercise_feedbacks").delete().eq("session_id", existing.id);
+              try {
+                localStorage.removeItem(`cst_session_${existing.id}`);
+              } catch {
+                /* stockage local indisponible : le garde-fou serveur suffit */
+              }
+            }
             await supabase
               .from("sessions")
               .update({

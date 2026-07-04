@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 type AnyRow = Record<string, any>;
 
+// Convention : `weekNumber` est 1-based (aligné sur assignment_weeks/sessions).
 async function buildLogbook(memberId: string, weekNumber: number) {
   // Active assignment for context
   const { data: assignment } = await supabaseAdmin
@@ -17,15 +18,16 @@ async function buildLogbook(memberId: string, weekNumber: number) {
     .maybeSingle();
 
   const start = assignment?.start_date ? new Date(assignment.start_date) : new Date();
+  const weekIdx = Math.max(0, weekNumber - 1);
   const periodStart = new Date(start);
-  periodStart.setDate(start.getDate() + weekNumber * 7);
+  periodStart.setDate(start.getDate() + weekIdx * 7);
   const periodEnd = new Date(periodStart);
   periodEnd.setDate(periodStart.getDate() + 6);
   const psISO = periodStart.toISOString().slice(0, 10);
   const peISO = periodEnd.toISOString().slice(0, 10);
 
   const program = (assignment as AnyRow | null)?.programs;
-  const weekDef = program?.structure?.weeks?.[weekNumber];
+  const weekDef = program?.structure?.weeks?.[weekIdx];
   const sessionsPlanned = weekDef?.days?.filter((d: AnyRow) => d.type !== "Repos").length ?? 0;
 
   const [{ data: sessions }, { data: weights }, { data: pains }, { data: prs }, { data: feedbacks }] = await Promise.all([
@@ -137,7 +139,7 @@ async function upsertLogbook(memberId: string, weekNumber: number) {
 export const getLogbook = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({ weekNumber: z.number().int().min(0).optional() }).parse(d ?? {}),
+    z.object({ weekNumber: z.number().int().min(1).optional() }).parse(d ?? {}),
   )
   .handler(async ({ data, context }) => {
     // Determine current week
@@ -153,8 +155,9 @@ export const getLogbook = createServerFn({ method: "GET" })
     if (!assignment) return null;
     const start = assignment.start_date ? new Date(assignment.start_date) : new Date();
     const diff = Math.floor((Date.now() - start.getTime()) / 86400000);
-    const currentWeek = Math.max(0, Math.floor(diff / 7));
-    const weekNumber = data.weekNumber ?? Math.max(0, currentWeek - 1);
+    const currentWeekNumber = Math.max(1, Math.floor(diff / 7) + 1);
+    // Par défaut : la dernière semaine terminée (la précédente), 1-based.
+    const weekNumber = data.weekNumber ?? Math.max(1, currentWeekNumber - 1);
 
     // Try existing first
     const { data: existing } = await supabaseAdmin

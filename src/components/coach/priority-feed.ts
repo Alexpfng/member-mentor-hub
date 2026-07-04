@@ -23,12 +23,13 @@ export function hideSessionFromPriorityItems<T extends { type: string; sessionId
 ) {
   return items.flatMap((item) => {
     if (item.type === "member_group") {
-      const sessions = item.sessions.filter((session) => session.sessionId !== sessionId);
+      const group = item as PriorityMemberGroup;
+      const sessions = group.sessions.filter((session) => session.sessionId !== sessionId);
       if (sessions.length === 0) return [];
-      return [{ ...item, sessions }];
+      return [{ ...group, sessions }];
     }
 
-    if (item.sessionId === sessionId) return [];
+    if ((item as T).sessionId === sessionId) return [];
     return [item];
   });
 }

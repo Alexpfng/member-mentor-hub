@@ -510,7 +510,13 @@ export default function AdapterSemaine() {
       ...s,
       days: (s.days ?? []).map((day) => ({
         ...day,
-        exercises: (day.exercises ?? []).map((ex) => ({ ...ex, rpe_target: null })),
+        exercises: (day.exercises ?? []).map((ex) => {
+          // N'efface que les vrais RPE numériques : un rpe_target texte est une
+          // consigne cardio (héritée d'imports) qu'on doit préserver.
+          const str = String(ex.rpe_target ?? "").trim();
+          const isNumeric = str !== "" && !Number.isNaN(Number(str.replace(",", ".")));
+          return isNumeric ? { ...ex, rpe_target: null } : ex;
+        }),
       })),
     }));
     setQuickRpeTarget(null);
@@ -925,7 +931,11 @@ export default function AdapterSemaine() {
         {/* Footer actions */}
         <div style={{ position: "sticky", bottom: 0, background: "var(--cst-dark-green)", borderTop: "1px solid rgba(255,255,255,0.1)", padding: "14px 0", display: "flex", gap: 10, justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}>
           <div className="cst-mono" style={{ fontSize: 10, opacity: 0.6 }}>
-            {savedAt ? `✓ Sauvegardé ${new Date(savedAt).toLocaleTimeString("fr-FR")}` : "—"}
+            {savedAt
+              ? ctx && ["published", "in_progress"].includes(ctx.week.status)
+                ? `✓ Brouillon sauvegardé ${new Date(savedAt).toLocaleTimeString("fr-FR")} · visible après republication`
+                : `✓ Sauvegardé ${new Date(savedAt).toLocaleTimeString("fr-FR")}`
+              : "—"}
           </div>
           <div style={{ display: "flex", gap: 10 }}>
             <button onClick={resetAllRpe} className="cst-btn cst-btn-ghost-dark" title="Effacer tous les RPE de la semaine">Réinitialiser les RPE</button>

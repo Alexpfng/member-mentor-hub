@@ -21,6 +21,7 @@ export type Database = {
           changes_summary: Json
           created_at: string
           created_by: string | null
+          draft_structure: Json | null
           id: string
           member_id: string
           program_id: string | null
@@ -37,6 +38,7 @@ export type Database = {
           changes_summary?: Json
           created_at?: string
           created_by?: string | null
+          draft_structure?: Json | null
           id?: string
           member_id: string
           program_id?: string | null
@@ -53,6 +55,7 @@ export type Database = {
           changes_summary?: Json
           created_at?: string
           created_by?: string | null
+          draft_structure?: Json | null
           id?: string
           member_id?: string
           program_id?: string | null

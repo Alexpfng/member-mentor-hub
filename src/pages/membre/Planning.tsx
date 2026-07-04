@@ -431,13 +431,13 @@ export default function MemberPlanning() {
         {data && (
           <div className="flex items-center justify-between mb-3">
             <button
-              onClick={() => setWeekOffset((w) => Math.max(0, (w ?? data.weekNumber) - 1))}
+              onClick={() => setWeekOffset((w) => Math.max(1, (w ?? data.weekNumber) - 1))}
               className="text-xs px-2 py-1 rounded border border-border"
             >
               ← Sem. préc.
             </button>
             <div className="text-sm font-semibold">
-              Semaine {data.weekNumber + 1}{" "}
+              Semaine {data.weekNumber}{" "}
               <span className="opacity-60 text-xs">
                 ({new Date(data.weekStart).toLocaleDateString("fr-FR")} →{" "}
                 {new Date(data.weekEnd).toLocaleDateString("fr-FR")})

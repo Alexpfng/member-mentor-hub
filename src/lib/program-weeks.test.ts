@@ -43,7 +43,7 @@ describe("resolveSessionExercises", () => {
 });
 
 describe("resolveMemberSessionExercises", () => {
-  it("falls back to the previous week index when the stored session week is one-based", () => {
+  it("resolves the stored one-based week number to the matching week index", () => {
     const exercises = [{ name: "Romanian deadlift" }];
 
     const resolved = resolveMemberSessionExercises(
@@ -62,7 +62,7 @@ describe("resolveMemberSessionExercises", () => {
     expect(resolved).toEqual(exercises);
   });
 
-  it("does not guess when the label matches multiple possible weeks", () => {
+  it("uses the stored week even when the same label exists in other weeks", () => {
     const resolved = resolveMemberSessionExercises(
       {
         weeks: [
@@ -71,11 +71,33 @@ describe("resolveMemberSessionExercises", () => {
         ],
       },
       [],
-      1,
+      2,
       1,
       "Séance 1",
     );
 
-    expect(resolved).toEqual([]);
+    expect(resolved).toEqual([{ name: "B" }]);
+  });
+
+  it("recovers a reordered day within the same week by label", () => {
+    const push = [{ name: "Développé couché" }];
+    const resolved = resolveMemberSessionExercises(
+      {
+        weeks: [
+          {
+            days: [
+              { label: "Pull", exercises: [{ name: "Tractions" }] },
+              { label: "Push", exercises: push },
+            ],
+          },
+        ],
+      },
+      [],
+      1,
+      1,
+      "Push",
+    );
+
+    expect(resolved).toEqual(push);
   });
 });

@@ -30,10 +30,13 @@ async function notifyCoachPlanning(memberId: string, content: string) {
   }
 }
 
+// Convention : `week_number` est 1-based PARTOUT en base (aligné sur
+// assignment_weeks et sessions). Les index de tableau (structure.weeks) restent
+// 0-based en interne : weekIdx = weekNumber - 1.
 export const listWeekPlan = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({ weekNumber: z.number().int().min(0).optional() }).parse(d ?? {}),
+    z.object({ weekNumber: z.number().int().min(1).optional() }).parse(d ?? {}),
   )
   .handler(async ({ data, context }) => {
     // Find active assignment + program
@@ -47,18 +50,19 @@ export const listWeekPlan = createServerFn({ method: "GET" })
       .maybeSingle();
 
     if (!assignment) {
-      return { weekNumber: 0, weekStart: null, weekEnd: null, days: [], assignment: null };
+      return { weekNumber: 1, weekStart: null, weekEnd: null, days: [], assignment: null };
     }
 
     const start = assignment.start_date ? new Date(assignment.start_date) : new Date();
     const now = new Date();
     const diffDays = Math.floor((now.getTime() - start.getTime()) / 86400000);
-    const currentWeek = Math.max(0, Math.floor(diffDays / 7));
-    const weekNumber = data.weekNumber ?? currentWeek;
+    const currentWeekNumber = Math.max(1, Math.floor(diffDays / 7) + 1);
+    const weekNumber = data.weekNumber ?? currentWeekNumber;
+    const weekIdx = weekNumber - 1;
 
     // Week monday/sunday
     const weekStart = new Date(start);
-    weekStart.setDate(start.getDate() + weekNumber * 7);
+    weekStart.setDate(start.getDate() + weekIdx * 7);
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekStart.getDate() + 6);
 
@@ -73,8 +77,12 @@ export const listWeekPlan = createServerFn({ method: "GET" })
       .eq("assignment_id", assignment.id)
       .in("status", ["published", "in_progress", "done"]);
     const weeks = mergeAssignmentWeeks(program?.structure, adaptedWeeks ?? []);
-    const weekDef = weeks[weekNumber] ?? null;
-    const dayDefs = weekDef?.days ?? [];
+    const weekDef = weeks[weekIdx] ?? null;
+    // Les écrans ne consomment que label/type : payload épuré et sérialisable.
+    const dayDefs = (weekDef?.days ?? []).map((d) => ({
+      label: d?.label ?? null,
+      type: d?.type ?? null,
+    }));
 
     // Existing planned_sessions for that week — scopé au programme actif pour
     // éviter que le planning d'un ancien programme « fuite » (on garde les nulls par compat).
@@ -112,7 +120,7 @@ export const upsertPlannedSession = createServerFn({ method: "POST" })
     z.object({
       id: z.string().uuid().optional(),
       programId: z.string().uuid().optional().nullable(),
-      weekNumber: z.number().int().min(0),
+      weekNumber: z.number().int().min(1),
       dayLabel: z.string().min(1).max(120),
       plannedDate: dateStr.nullable().optional(),
       reminderTime: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/).nullable().optional(),
@@ -199,7 +207,7 @@ export const markDayRest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
     z.object({
-      weekNumber: z.number().int().min(0),
+      weekNumber: z.number().int().min(1),
       plannedDate: dateStr,
     }).parse(d),
   )

@@ -27,14 +27,6 @@ function normalizeDayLabel(label: string | null | undefined) {
     .toLowerCase();
 }
 
-function getDayExercises(weeks: WeekLike[], weekIdx: number, dayIdx: number) {
-  const day = weeks[weekIdx]?.days?.[dayIdx];
-  return {
-    weekIdx,
-    day,
-    exercises: day?.exercises ?? [],
-  };
-}
 
 /**
  * Fusionne la structure template avec les semaines adaptées publiées.
@@ -64,15 +56,18 @@ export function resolveSessionExercises(
 }
 
 /**
- * Résout les exercices d'une séance membre en tolérant les anciennes lignes `sessions`
- * où `week_number` a parfois été stocké en index 0-based, parfois en numéro 1-based.
+ * Résout les exercices d'une séance membre.
+ *
+ * `sessions.week_number` est 1-based (convention DB unifiée — les anciennes lignes
+ * 0-based ont été recalées par migration), donc la semaine stockée fait autorité :
+ * weekIdx = week_number - 1. Le libellé ne sert plus qu'à rattraper les cas où le
+ * coach a réordonné ou renommé des jours depuis le début de la séance.
  *
  * Ordre de résolution :
- * 1. semaine stockée telle quelle
- * 2. semaine précédente (fallback legacy one-based -> zero-based)
- * 3. correspondance unique par libellé dans tout le programme
- *
- * On refuse de "deviner" si plusieurs semaines possibles portent le même libellé.
+ * 1. position exacte (semaine + jour) si le libellé concorde (ou sans libellé)
+ * 2. même semaine, jour retrouvé par libellé (jours réordonnés)
+ * 3. position exacte malgré un libellé différent (jour renommé)
+ * 4. libellé unique dans tout le programme (dernier recours)
  */
 export function resolveMemberSessionExercises(
   base: StructureLike,
@@ -82,52 +77,37 @@ export function resolveMemberSessionExercises(
   sessionLabel?: string | null,
 ) {
   const weeks = mergeAssignmentWeeks(base, adapted);
+  const weekIdx = Math.max(0, (weekNumber ?? 1) - 1);
   const dayIdx = Math.max(0, (dayNumber ?? 1) - 1);
   const normalizedLabel = normalizeDayLabel(sessionLabel);
 
-  const candidateIndexes = Array.from(
-    new Set(
-      [weekNumber ?? 0, weekNumber != null ? weekNumber - 1 : null].filter(
-        (value): value is number => value != null && value >= 0,
-      ),
-    ),
-  );
+  const days = weeks[weekIdx]?.days ?? [];
+  const direct = days[dayIdx];
+  const directExercises = direct?.exercises ?? [];
 
-  const candidates = candidateIndexes.map((weekIdx) => getDayExercises(weeks, weekIdx, dayIdx));
+  if (
+    directExercises.length > 0 &&
+    (!normalizedLabel || normalizeDayLabel(direct?.label) === normalizedLabel)
+  ) {
+    return directExercises;
+  }
 
   if (normalizedLabel) {
-    const matchingCandidates = candidates.filter(
-      ({ day, exercises }) =>
-        exercises.length > 0 && normalizeDayLabel(day?.label) === normalizedLabel,
+    const byLabel = days.find(
+      (d) => (d?.exercises?.length ?? 0) > 0 && normalizeDayLabel(d?.label) === normalizedLabel,
     );
-
-    if (matchingCandidates.length === 1) {
-      return matchingCandidates[0].exercises;
-    }
-
-    if (matchingCandidates.length > 1) {
-      return [];
-    }
+    if (byLabel) return byLabel.exercises ?? [];
   }
 
-  const directCandidate = candidates.find(({ exercises }) => exercises.length > 0);
-  if (directCandidate) {
-    return directCandidate.exercises;
-  }
+  if (directExercises.length > 0) return directExercises;
 
-  if (!normalizedLabel) {
-    return [];
-  }
-
-  const globalLabelMatches = weeks
-    .map((week, weekIdx) => getDayExercises(weeks, weekIdx, dayIdx))
-    .filter(
-      ({ day, exercises }) =>
-        exercises.length > 0 && normalizeDayLabel(day?.label) === normalizedLabel,
+  if (normalizedLabel) {
+    const matches = weeks.flatMap((w) =>
+      (w?.days ?? []).filter(
+        (d) => (d?.exercises?.length ?? 0) > 0 && normalizeDayLabel(d?.label) === normalizedLabel,
+      ),
     );
-
-  if (globalLabelMatches.length === 1) {
-    return globalLabelMatches[0].exercises;
+    if (matches.length === 1) return matches[0].exercises ?? [];
   }
 
   return [];

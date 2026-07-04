@@ -132,7 +132,7 @@ export default function MemberDashboard() {
   const startSession = (dayLabel) => {
     tsNavigate({
       to: "/membre/logger",
-      search: dayLabel ? { day: dayLabel, week: plan?.weekNumber ?? 0 } : {},
+      search: dayLabel ? { day: dayLabel, week: plan?.weekNumber ?? 1 } : {},
     });
   };
 
@@ -143,7 +143,7 @@ export default function MemberDashboard() {
       await upsertPlanned({
         data: {
           programId: plan?.assignment?.program_id ?? null,
-          weekNumber: plan?.weekNumber ?? 0,
+          weekNumber: plan?.weekNumber ?? 1,
           dayLabel: def.label,
           plannedDate: todayISO,
         },

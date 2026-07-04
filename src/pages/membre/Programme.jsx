@@ -213,7 +213,7 @@ export default function MemberProgramme() {
                                         className={isInProgress ? 'cst-btn cst-btn-primary cst-btn-sm' : 'cst-btn cst-btn-ghost-dark cst-btn-sm'}
                                         onClick={() => {
                                           if (isInProgress && sess?.id) navigate({ to: `/membre/seance/${sess.id}` });
-                                          else navigate({ to: '/membre/logger', search: { week: i, day: dayLabel } });
+                                          else navigate({ to: '/membre/logger', search: { week: i + 1, day: dayLabel } });
                                         }}
                                         style={{ fontSize: 9, padding: '4px 8px' }}
                                       >
