@@ -56,13 +56,6 @@ export default function PriorityFeed() {
       sess.maxRpe = Math.max(sess.maxRpe, it.rpe);
       g.maxRpe = Math.max(g.maxRpe, it.rpe);
       if (it.createdAt > g.createdAt) g.createdAt = it.createdAt;
-    } else if (it.type === 'session') {
-      const g = getOrCreateMemberGroup(it);
-      if (!g.sessions.find(s => s.sessionId === it.sessionId)) {
-        g.sessions.push({ sessionId: it.sessionId, createdAt: it.createdAt, exercises: [], maxRpe: it.rpe ?? 0, label: it.label });
-        g.maxRpe = Math.max(g.maxRpe, it.rpe ?? 0);
-        if (it.createdAt > g.createdAt) g.createdAt = it.createdAt;
-      }
     } else {
       items.push(it);
     }

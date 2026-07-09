@@ -46,7 +46,7 @@ export const getDashboardMetrics = createServerFn({ method: "GET" })
 
     const weekStartISO = startOfWeek().toISOString().slice(0, 10);
 
-    const [sessionsWeek, painUnresolved, msgsUnread, videosUnreviewed, sessionsUnseen, weekPlanned, weekCompleted] = await Promise.all([
+    const [sessionsWeek, painUnresolved, msgsUnread, videosUnreviewed, weekPlanned, weekCompleted] = await Promise.all([
       // Scopé aux membres du coach, et seules les séances utiles comptent
       // (les abandonnées/skipped gonflaient le compteur).
       memberIds.length > 0
@@ -60,7 +60,6 @@ export const getDashboardMetrics = createServerFn({ method: "GET" })
       supabaseAdmin.from("pain_reports").select("id", { count: "exact", head: true }).is("resolved_at", null),
       supabaseAdmin.from("messages").select("id", { count: "exact", head: true }).eq("to_id", context.userId).eq("read", false),
       supabaseAdmin.from("technique_videos").select("id", { count: "exact", head: true }).eq("coach_reviewed", false),
-      supabaseAdmin.from("sessions").select("id", { count: "exact", head: true }).eq("coach_seen", false).eq("status", "completed").is("coach_hidden_at", null),
       // Séances planifiées depuis le début de la semaine (planning des membres)
       memberIds.length > 0
         ? supabaseAdmin.from("planned_sessions").select("id", { count: "exact", head: true }).in("member_id", memberIds).gte("planned_date", weekStartISO).neq("status", "rest")
@@ -71,7 +70,9 @@ export const getDashboardMetrics = createServerFn({ method: "GET" })
         : Promise.resolve({ count: 0 }),
     ]);
 
-    const toTreat = (painUnresolved.count || 0) + (msgsUnread.count || 0) + (videosUnreviewed.count || 0) + (sessionsUnseen.count || 0);
+    // « À traiter » = seulement les vraies alertes (la colonne priorité ne liste plus
+    // les séances terminées, qui vivent dans « SÉANCES TERMINÉES »).
+    const toTreat = (painUnresolved.count || 0) + (msgsUnread.count || 0) + (videosUnreviewed.count || 0);
 
     return {
       activeMembers: memberIds.length,
@@ -199,44 +200,34 @@ export const getPriorityFeed = createServerFn({ method: "GET" })
     const members = await listCoachMembers();
     const nameOf = new Map(members.map((m) => [m.user_id, [m.first_name, m.last_name].filter(Boolean).join(" ") || m.email || "Membre"]));
 
-    const [pains, videos, msgs, highRpe, unseenSessions] = await Promise.all([
+    // Les séances terminées « à voir » ne sont plus listées ici : elles vivent dans
+    // la colonne « SÉANCES TERMINÉES ». Cette colonne ne garde que les vraies alertes
+    // (douleur, RPE élevé, vidéo à revoir, message non lu).
+    const [pains, videos, msgs, highRpe] = await Promise.all([
       supabaseAdmin.from("pain_reports").select("id, member_id, session_id, exercise_name, zone, intensity, comment, created_at").is("resolved_at", null).order("intensity", { ascending: false }).order("created_at", { ascending: false }).limit(20),
       supabaseAdmin.from("technique_videos").select("id, member_id, session_id, exercise_name, created_at").eq("coach_reviewed", false).order("created_at", { ascending: false }).limit(20),
       supabaseAdmin.from("messages").select("id, from_id, content, created_at").eq("to_id", context.userId).eq("read", false).order("created_at", { ascending: false }).limit(20),
       supabaseAdmin.from("exercise_feedbacks").select("id, session_id, exercise_name, rpe, created_at, sessions!inner(member_id, coach_seen, coach_hidden_at, status)").gte("rpe", 9).eq("sessions.coach_seen", false).eq("sessions.status", "completed").is("sessions.coach_hidden_at", null).order("created_at", { ascending: false }).limit(30),
-      supabaseAdmin.from("sessions").select("id, member_id, session_label, week_number, day_number, ended_at, started_at, average_rpe, session_type, free_title, coach_hidden_at").eq("coach_seen", false).eq("status", "completed").is("coach_hidden_at", null).order("ended_at", { ascending: false, nullsFirst: false }).limit(60),
     ]);
 
     type Item =
       | { type: "pain"; id: string; priority: number; memberId: string; memberName: string; sessionId: string | null; exerciseName: string; zone: string; intensity: number; comment: string | null; createdAt: string }
       | { type: "high_rpe"; id: string; priority: number; memberId: string; memberName: string; sessionId: string; exerciseName: string; rpe: number; createdAt: string }
       | { type: "video"; id: string; priority: number; memberId: string; memberName: string; sessionId: string | null; exerciseName: string | null; createdAt: string }
-      | { type: "message"; id: string; priority: number; memberId: string; memberName: string; content: string; createdAt: string }
-      | { type: "session"; id: string; priority: number; memberId: string; memberName: string; sessionId: string; label: string; rpe: number | null; createdAt: string };
+      | { type: "message"; id: string; priority: number; memberId: string; memberName: string; content: string; createdAt: string };
 
     const items: Item[] = [];
-    // Séances déjà représentées par un item plus prioritaire (douleur / RPE élevé) — évite les doublons
-    const coveredSessions = new Set<string>();
     for (const p of pains.data ?? []) {
-      if (p.session_id) coveredSessions.add(p.session_id);
       items.push({ type: "pain", id: p.id, priority: 100 + p.intensity, memberId: p.member_id, memberName: nameOf.get(p.member_id) || "Membre", sessionId: p.session_id, exerciseName: p.exercise_name, zone: p.zone, intensity: p.intensity, comment: p.comment, createdAt: p.created_at });
     }
     // Dedup high RPE per session
     const seenSess = new Set<string>();
     for (const r of (highRpe.data ?? []) as unknown as Array<{ id: string; session_id: string; exercise_name: string | null; rpe: number; created_at: string; sessions: { member_id: string } }>) {
-      if (seenSess.has(r.session_id)) continue; seenSess.add(r.session_id); coveredSessions.add(r.session_id);
+      if (seenSess.has(r.session_id)) continue; seenSess.add(r.session_id);
       items.push({ type: "high_rpe", id: r.id, priority: 80 + r.rpe, memberId: r.sessions.member_id, memberName: nameOf.get(r.sessions.member_id) || "Membre", sessionId: r.session_id, exerciseName: r.exercise_name || "—", rpe: r.rpe, createdAt: r.created_at });
     }
     for (const v of videos.data ?? []) items.push({ type: "video", id: v.id, priority: 60, memberId: v.member_id, memberName: nameOf.get(v.member_id) || "Membre", sessionId: v.session_id, exerciseName: v.exercise_name, createdAt: v.created_at ?? new Date().toISOString() });
     for (const m of msgs.data ?? []) items.push({ type: "message", id: m.id, priority: 40, memberId: m.from_id, memberName: nameOf.get(m.from_id) || "Membre", content: m.content, createdAt: m.created_at ?? new Date().toISOString() });
-    // Séances terminées non encore vues par le coach — c'est le gros du « à traiter »
-    for (const s of unseenSessions.data ?? []) {
-      if (coveredSessions.has(s.id)) continue;
-      const label = s.session_type === "free"
-        ? (s.free_title || "Séance libre")
-        : (s.session_label || (s.week_number && s.day_number ? `S${s.week_number} · J${s.day_number}` : "Séance"));
-      items.push({ type: "session", id: s.id, priority: 20, memberId: s.member_id, memberName: nameOf.get(s.member_id) || "Membre", sessionId: s.id, label, rpe: s.average_rpe, createdAt: s.ended_at ?? s.started_at ?? new Date().toISOString() });
-    }
 
     items.sort((a, b) => b.priority - a.priority || (a.createdAt < b.createdAt ? 1 : -1));
     return items.slice(0, 50);

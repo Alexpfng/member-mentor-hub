@@ -24,28 +24,28 @@ function CoachSeancesInner() {
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '24px 32px', borderBottom: '1px solid rgba(255,255,255,0.06)', flexWrap: 'wrap', gap: 12 }}>
-          <CSTSectionNum num={1} label="SÉANCES" sub="PRIORITÉS & ACTIVITÉ RÉCENTE" />
+          <CSTSectionNum num={1} label="SÉANCES" sub="TERMINÉES & À TRAITER" />
           <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" onClick={() => navigate({ to: '/coach' })}>
             ← TABLEAU DE BORD
           </button>
         </div>
 
-        {/* Content: 2 columns */}
+        {/* Content: 2 columns — séances terminées à gauche, alertes à traiter à droite */}
         <div style={{ padding: '24px 32px 32px', display: 'grid', gridTemplateColumns: 'minmax(0, 1.2fr) minmax(0, 1fr)', gap: 24 }}>
           <div>
             <div style={{ marginBottom: 14 }}>
-              <CSTSectionNum num={2} label="À TRAITER EN PRIORITÉ" sub={metrics?.toTreat ? `${metrics.toTreat} ITEMS` : 'TOUT EST À JOUR'} />
+              <CSTSectionNum num={2} label="SÉANCES TERMINÉES" sub="TEMPS RÉEL" />
             </div>
-            <PriorityFeed />
+            <RecentSessionsList />
             <div style={{ marginTop: 16 }}>
               <ArchivedSessionsPanel />
             </div>
           </div>
           <div>
             <div style={{ marginBottom: 14 }}>
-              <CSTSectionNum num={3} label="SÉANCES RÉCENTES" sub="TEMPS RÉEL" />
+              <CSTSectionNum num={3} label="À TRAITER" sub={metrics?.toTreat ? `${metrics.toTreat} ITEMS` : 'TOUT EST À JOUR'} />
             </div>
-            <RecentSessionsList />
+            <PriorityFeed />
           </div>
         </div>
 
