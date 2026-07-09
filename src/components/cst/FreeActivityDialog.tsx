@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { RunStatsCapture } from "./RunStatsCapture";
 
 export type FreeActivityValues = {
   name: string;
@@ -26,11 +27,13 @@ type Props = {
   open: boolean;
   defaultCategory?: string | null;
   initial?: Partial<FreeActivityValues>;
+  sessionId?: string | null;
+  userId?: string | null;
   onClose: () => void;
   onSubmit: (v: FreeActivityValues) => Promise<void> | void;
 };
 
-export default function FreeActivityDialog({ open, defaultCategory, initial, onClose, onSubmit }: Props) {
+export default function FreeActivityDialog({ open, defaultCategory, initial, sessionId, userId, onClose, onSubmit }: Props) {
   const [name, setName] = useState("");
   const [category, setCategory] = useState<string>("muscu");
   const [series, setSeries] = useState("");
@@ -251,6 +254,32 @@ export default function FreeActivityDialog({ open, defaultCategory, initial, onC
           <Field label="Durée (min)">
             <input value={duration} onChange={(e) => setDuration(e.target.value)} inputMode="numeric" style={inputStyle} placeholder="60" />
           </Field>
+        )}
+
+        {isRun && sessionId && userId && (
+          <RunStatsCapture
+            sessionId={sessionId}
+            userId={userId}
+            onExtracted={(form) => {
+              if (form.distanceKm) setDistance(form.distanceKm);
+              if (form.durationMin) setDuration(form.durationMin);
+              if (form.elevationM) setElevation(form.elevationM);
+            }}
+          />
+        )}
+
+        {isRun && (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            <Field label="Distance (km)">
+              <input value={distance} onChange={(e) => setDistance(e.target.value)} inputMode="decimal" style={inputStyle} placeholder="8,2" />
+            </Field>
+            <Field label="Durée (min)">
+              <input value={duration} onChange={(e) => setDuration(e.target.value)} inputMode="numeric" style={inputStyle} placeholder="48" />
+            </Field>
+            <Field label="Dénivelé D+ (m)">
+              <input value={elevation} onChange={(e) => setElevation(e.target.value)} inputMode="numeric" style={inputStyle} placeholder="120" />
+            </Field>
+          </div>
         )}
 
         {isRun && (

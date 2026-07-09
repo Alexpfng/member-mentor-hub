@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import { ExerciseThread } from "@/components/cst/ExerciseThread";
 import { getCoachMetricLabel, getCoachMetricValue } from "@/lib/session-prescription";
 import { supabase } from "@/integrations/supabase/client";
+import { RunComparisonCard } from "@/components/cst/RunComparisonCard";
+import type { RunMetrics } from "@/lib/run-stats";
 
 type ProgExo = { code?: string; name?: string; series?: string | number; reps?: string | number; charge?: string; rpe_target?: string | number; recup?: string };
 type ProgBlock = { letter?: string; type?: string; isSuperset?: boolean; exercises?: ProgExo[] };
@@ -110,6 +112,8 @@ export default function CoachSessionDetail() {
   const isFree = (s as any).session_type === "free";
   const freeTitle = (s as any).free_title as string | null;
   const freeCategory = (s as any).free_category as string | null;
+  const runStats = (data as any).runStats as RunMetrics | null;
+  const runPrevious = (data as any).runPrevious as RunMetrics | null;
   const catIcon = freeCategory === "course" ? "🏃" : freeCategory === "cardio" ? "❤️" : freeCategory === "muscu" ? "🏋️" : freeCategory === "sport" ? "⚽" : "✨";
   const freeActivities = (data as any).freeActivities as Array<{ id: string; name: string; category: string | null; series: number | null; reps: string | null; charge: string | null; duration_min: number | null; distance_km: number | null; elevation_m: number | null; rpe: number | null; note: string | null }> | undefined;
   const allMedia = (data as any).media as Array<{ id: string; type: "photo" | "video"; url: string | null; thumbnailUrl: string | null; caption: string | null; isSessionLevel?: boolean }> | undefined;
@@ -138,6 +142,13 @@ export default function CoachSessionDetail() {
             {!isFree && <Metric label="VOLUME TOTAL" value={s.total_volume_kg != null ? `${Math.round(Number(s.total_volume_kg))} kg` : "—"} />}
             <Metric label="RESSENTI" value={s.overall_feeling != null ? `${s.overall_feeling}/5` : "—"} />
           </div>
+
+          {runStats && (
+            <div>
+              <div className="cst-mono" style={{ fontSize: 10, opacity: 0.55, letterSpacing: "0.18em", marginBottom: 10 }}>📊 STATS DE COURSE</div>
+              <RunComparisonCard previous={runPrevious} current={runStats} />
+            </div>
+          )}
 
           {s.member_note && (
             <div className="cst-card-dark" style={{ padding: 16 }}>

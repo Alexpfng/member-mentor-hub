@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { filterRecentSessionsForCoach } from "@/lib/coach-recent-sessions";
+import type { RunMetrics } from "@/lib/run-stats";
 
 async function assertCoach(userId: string) {
   const { data } = await supabaseAdmin
@@ -468,6 +469,22 @@ export const getSessionDetail = createServerFn({ method: "GET" })
     }
     const { data: prof } = await supabaseAdmin.from("profiles").select("first_name, last_name, email").eq("id", sessR.data.member_id).maybeSingle();
 
+    // Stats de course structurées + course précédente (pour la comparaison côté coach)
+    let runStats: RunMetrics | null = null;
+    let runPrevious: RunMetrics | null = null;
+    const toRunMetrics = (r: { distance_km: number | null; duration_sec: number | null; elevation_m: number | null; avg_hr: number | null; pace_sec_per_km: number | null; rpe: number | null }): RunMetrics => ({
+      distanceKm: r.distance_km != null ? Number(r.distance_km) : null,
+      durationSec: r.duration_sec, elevationM: r.elevation_m, avgHr: r.avg_hr, paceSecPerKm: r.pace_sec_per_km, rpe: r.rpe,
+    });
+    {
+      const { data: rs } = await supabaseAdmin.from("run_stats").select("distance_km, duration_sec, elevation_m, avg_hr, pace_sec_per_km, rpe, created_at").eq("session_id", data.sessionId).maybeSingle();
+      if (rs) {
+        runStats = toRunMetrics(rs);
+        const { data: prev } = await supabaseAdmin.from("run_stats").select("distance_km, duration_sec, elevation_m, avg_hr, pace_sec_per_km, rpe, created_at").eq("member_id", sessR.data.member_id).neq("session_id", data.sessionId).lt("created_at", rs.created_at).order("created_at", { ascending: false }).limit(1).maybeSingle();
+        if (prev) runPrevious = toRunMetrics(prev);
+      }
+    }
+
     // Signed URLs for private bucket (session_media)
     const mediaWithUrls = await Promise.all(
       (mediaR.data ?? []).map(async (m) => {
@@ -511,6 +528,8 @@ export const getSessionDetail = createServerFn({ method: "GET" })
       feedbacks: fbR.data ?? [],
       pains: painsR.data ?? [],
       freeActivities: freeActR.data ?? [],
+      runStats,
+      runPrevious,
       media: mediaWithUrls,
       techniqueVideos: techVideosWithUrls,
       exerciseComments: (commentsR.data ?? []).map((c) => ({

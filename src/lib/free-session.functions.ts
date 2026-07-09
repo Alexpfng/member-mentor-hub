@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { localDateISO } from "@/lib/local-date";
 import { computeSessionDurationMin } from "./format";
+import { upsertRunStatsFromFreeSession } from "@/lib/run.functions";
 
 const FREE_CATEGORIES = ["muscu", "course", "cardio", "sport", "mobilite", "autre"] as const;
 
@@ -123,6 +124,14 @@ export const finishFreeSession = createServerFn({ method: "POST" })
       .eq("member_id", context.userId);
     if (error) throw new Error(error.message);
 
+    // Si la séance contient une activité "course", enregistre les stats structurées
+    // (rejoint l'historique run_stats unifié). Non bloquant.
+    try {
+      await upsertRunStatsFromFreeSession(data.sessionId, context.userId);
+    } catch {
+      /* non-bloquant */
+    }
+
     // Notifier le coach via Messages
     try {
       const { data: coachRole } = await supabaseAdmin
@@ -161,7 +170,13 @@ const activityInput = z.object({
   reps: z.string().max(40).optional().nullable(),
   charge: z.string().max(40).optional().nullable(),
   distance_km: z.number().min(0).max(1000).optional().nullable(),
-  duration_min: z.number().int().min(0).max(60 * 24).optional().nullable(),
+  duration_min: z
+    .number()
+    .int()
+    .min(0)
+    .max(60 * 24)
+    .optional()
+    .nullable(),
   elevation_m: z.number().int().min(0).max(20000).optional().nullable(),
   rpe: z.number().int().min(1).max(10).optional().nullable(),
   note: z.string().max(1000).optional().nullable(),

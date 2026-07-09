@@ -453,6 +453,8 @@ export default function SeanceLibre() {
       <FreeActivityDialog
         open={dialogOpen}
         defaultCategory={category}
+        sessionId={sessionId}
+        userId={userId}
         onClose={() => setDialogOpen(false)}
         onSubmit={handleAdd}
       />

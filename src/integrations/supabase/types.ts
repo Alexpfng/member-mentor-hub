@@ -423,6 +423,68 @@ export type Database = {
           },
         ]
       }
+      run_stats: {
+        Row: {
+          avg_hr: number | null
+          confidence: number | null
+          created_at: string
+          distance_km: number | null
+          duration_sec: number | null
+          elevation_m: number | null
+          id: string
+          member_id: string
+          pace_sec_per_km: number | null
+          raw_extraction: Json | null
+          rpe: number | null
+          screenshot_media_id: string | null
+          session_id: string
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          avg_hr?: number | null
+          confidence?: number | null
+          created_at?: string
+          distance_km?: number | null
+          duration_sec?: number | null
+          elevation_m?: number | null
+          id?: string
+          member_id: string
+          pace_sec_per_km?: number | null
+          raw_extraction?: Json | null
+          rpe?: number | null
+          screenshot_media_id?: string | null
+          session_id: string
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          avg_hr?: number | null
+          confidence?: number | null
+          created_at?: string
+          distance_km?: number | null
+          duration_sec?: number | null
+          elevation_m?: number | null
+          id?: string
+          member_id?: string
+          pace_sec_per_km?: number | null
+          raw_extraction?: Json | null
+          rpe?: number | null
+          screenshot_media_id?: string | null
+          session_id?: string
+          source?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "run_stats_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: true
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       glossary: {
         Row: {
           cle: string
