@@ -102,6 +102,7 @@ function DraggableSession({
 type ModalState =
   | { kind: "empty"; date: string; dayIdx: number }
   | { kind: "planned"; date: string; dayIdx: number; planned: any }
+  | { kind: "place"; def: any }
   | null;
 
 function Overlay({ onClose }: { onClose: () => void }) {
@@ -189,7 +190,7 @@ export default function MemberPlanning() {
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 10 } }),
   );
 
   const reload = async () => {
@@ -471,7 +472,7 @@ export default function MemberPlanning() {
             {unplanned.length > 0 && (
               <div className="mb-4 p-3 rounded-lg border border-dashed border-border bg-muted/30">
                 <div className="text-[10px] font-mono opacity-60 tracking-widest mb-2">
-                  À PLANIFIER · Glisse sur un jour ou tape sur un jour vide
+                  À PLANIFIER · Tape une séance pour la placer (ou glisse-la sur un jour)
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {unplanned.map((d: any) => (
@@ -480,6 +481,7 @@ export default function MemberPlanning() {
                       id={`def-${d.label}`}
                       label={d.label}
                       status="planned"
+                      onTap={() => setModal({ kind: "place", def: d })}
                     />
                   ))}
                 </div>
@@ -563,6 +565,33 @@ export default function MemberPlanning() {
           <SheetBtn onClick={() => scheduleRest(modal.date)} disabled={busy} muted>
             — Marquer comme repos
           </SheetBtn>
+          <SheetBtn onClick={() => setModal(null)} muted>
+            Annuler
+          </SheetBtn>
+        </BottomSheet>
+      )}
+
+      {modal?.kind === "place" && (
+        <BottomSheet>
+          <ModalTitle text={`Placer : ${modal.def.label}`} />
+          <div className="font-mono" style={{ fontSize: 9, letterSpacing: "0.16em", padding: "8px 20px 4px", color: "rgba(255,255,255,0.45)", textTransform: "uppercase" }}>
+            Choisis un jour
+          </div>
+          {weekDates.map((date, i) => {
+            const occupied = sessionByDate.get(date) ?? plannedByDate.get(date);
+            const def = modal.def;
+            return (
+              <SheetBtn
+                key={date}
+                onClick={() => scheduleDayDef(def, date)}
+                disabled={busy}
+                muted={!!occupied}
+              >
+                {FR_DAYS[i]} {new Date(date).getDate()}
+                {occupied ? " · occupé" : date === todayISO ? " · aujourd'hui" : ""}
+              </SheetBtn>
+            );
+          })}
           <SheetBtn onClick={() => setModal(null)} muted>
             Annuler
           </SheetBtn>
