@@ -45,13 +45,15 @@ function DroppableDay({
   return (
     <div
       ref={setNodeRef}
-      className={`flex flex-col rounded-lg border p-2 min-h-[120px] transition-colors ${
+      className={`flex flex-row sm:flex-col items-stretch gap-3 sm:gap-0 rounded-lg border p-2 sm:min-h-[120px] transition-colors ${
         isOver ? "border-primary bg-primary/10" : isToday ? "border-primary/60" : "border-border"
       }`}
     >
-      <div className="text-[10px] font-mono opacity-60 tracking-widest">{label}</div>
-      <div className="text-sm font-semibold mb-2">{dayNum}</div>
-      <div className="flex-1 flex flex-col gap-1">{children}</div>
+      <div className="flex flex-col items-center sm:items-start shrink-0 w-11 sm:w-auto">
+        <div className="text-[10px] font-mono opacity-60 tracking-widest">{label}</div>
+        <div className="text-sm font-semibold sm:mb-2">{dayNum}</div>
+      </div>
+      <div className="flex-1 min-w-0 flex flex-col justify-center gap-1">{children}</div>
     </div>
   );
 }
@@ -89,7 +91,7 @@ function DraggableSession({
       {...listeners}
       {...attributes}
       onClick={onTap}
-      className={`text-left rounded-md px-2 py-1 text-xs touch-none ${color}`}
+      className={`text-left rounded-md px-2 py-1 text-xs touch-none max-w-full break-words ${color}`}
     >
       {done ? "✓ " : status === "rest" ? "— " : "● "}
       {label}
@@ -488,7 +490,7 @@ export default function MemberPlanning() {
               </div>
             )}
 
-            <div className="grid grid-cols-7 gap-2">
+            <div className="flex flex-col gap-2 sm:grid sm:grid-cols-7">
               {weekDates.map((date, i) => {
                 const sess = sessionByDate.get(date);
                 const planned = plannedByDate.get(date);
@@ -500,7 +502,7 @@ export default function MemberPlanning() {
                     isToday={date === todayISO}
                   >
                     {sess?.status === "completed" && (
-                      <div className="rounded-md px-2 py-1 text-xs bg-emerald-600 text-white">
+                      <div className="rounded-md px-2 py-1 text-xs bg-emerald-600 text-white break-words">
                         ✓ {sess.session_label ?? "Séance"}
                       </div>
                     )}
@@ -515,7 +517,7 @@ export default function MemberPlanning() {
                     {!sess && !planned && (
                       <button
                         onClick={() => openEmptyDay(date)}
-                        className="rounded-md py-1 text-xs opacity-40 hover:opacity-100 border border-dashed border-border"
+                        className="w-full sm:w-auto rounded-md px-2 py-1 text-xs opacity-40 hover:opacity-100 border border-dashed border-border"
                       >
                         +
                       </button>
