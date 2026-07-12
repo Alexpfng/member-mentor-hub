@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import CoachSidebar from "@/components/CoachSidebar";
@@ -353,6 +353,15 @@ function cardioConsigneText(ex: ProgExercise): string | null {
   return rpe && Number.isNaN(Number(rpe.replace(",", "."))) ? rpe : null;
 }
 
+// Code de bloc (A1, B2…) → lettre du groupe. Deux exercices ou plus qui partagent
+// la lettre (B1, B2…) forment un enchaînement / superset — c'est ainsi qu'ils sont
+// repérés dans les Google Sheets. On affiche le code + un bandeau pour que le coach
+// voie l'enchaînement au lieu de cartes isolées.
+function blockLetterOf(code?: string | null): string | null {
+  const m = /^([A-Za-z])\d/.exec(String(code ?? "").trim());
+  return m ? m[1].toUpperCase() : null;
+}
+
 export default function AdapterSemaine() {
   const { memberId } = useParams({ from: "/_authenticated/coach/membre/$memberId/adapter" });
   const search = useSearch({ from: "/_authenticated/coach/membre/$memberId/adapter" }) as { week?: number; weekId?: string };
@@ -702,6 +711,16 @@ export default function AdapterSemaine() {
                   const sugg = suggestFor(ex, fb);
                   const cardColor = COLOR_MAP[(ex.color || "").toLowerCase()]?.bg || "#555";
                   const lastIdx = (day.exercises?.length ?? 1) - 1;
+                  // Enchaînement (superset) : cet exercice partage sa lettre de code
+                  // (B1/B2…) avec au moins un autre du même jour.
+                  const blockLetter = blockLetterOf(ex.code);
+                  const isSuperset =
+                    !!blockLetter &&
+                    exos.filter((e) => blockLetterOf(e.code) === blockLetter).length >= 2;
+                  const prevLetter = ei > 0 ? blockLetterOf(exos[ei - 1]?.code) : null;
+                  const nextLetter = blockLetterOf(exos[ei + 1]?.code);
+                  const isBlockStart = isSuperset && blockLetter !== prevLetter;
+                  const isBlockEnd = isSuperset && blockLetter !== nextLetter;
                   // Le RPE est une valeur numérique (badge). La virgule décimale (9,5)
                   // est acceptée. Tout texte libre hérité d'un ancien import cardio reste
                   // affiché sous la carte, mais ne s'affiche plus comme un badge « CONSIGNE ».
@@ -712,7 +731,31 @@ export default function AdapterSemaine() {
                   const rpeIsFailure = /^(échec|echec)$/i.test(rpeStr);
                   const rpeConsigne = rpeStr !== "" && !rpeIsNumeric && !rpeIsFailure ? rpeStr : null;
                   return (
-                    <div key={ei} style={{ display: "flex", gap: 4, alignItems: "stretch" }}>
+                    <Fragment key={ei}>
+                    {isBlockStart && (
+                      <div
+                        className="cst-mono"
+                        style={{
+                          fontSize: 9, letterSpacing: "0.16em", fontWeight: 700,
+                          color: "var(--cst-mid-green)", display: "flex", alignItems: "center",
+                          gap: 6, padding: "4px 2px 0",
+                        }}
+                      >
+                        ⛓ SUPERSET {blockLetter} · enchaîner sans repos
+                      </div>
+                    )}
+                    <div
+                      style={{
+                        display: "flex", gap: 4, alignItems: "stretch",
+                        ...(isSuperset
+                          ? {
+                              borderLeft: "2px solid var(--cst-mid-green)",
+                              paddingLeft: 6, marginLeft: 1,
+                              paddingBottom: isBlockEnd ? 4 : 0,
+                            }
+                          : {}),
+                      }}
+                    >
                     <div
                       onClick={() => setEditTarget({ dayIdx: di, exoIdx: ei })}
                       role="button"
@@ -734,6 +777,21 @@ export default function AdapterSemaine() {
                     >
                       <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
                         <ColorDot c={ex.color} />
+                        {ex.code && (
+                          <span
+                            className="cst-mono"
+                            title={isSuperset ? `Superset ${blockLetter}` : undefined}
+                            style={{
+                              fontSize: 10, fontWeight: 700, flexShrink: 0,
+                              color: "var(--cst-mid-green)",
+                              background: "rgba(45,90,53,0.14)",
+                              border: "1px solid rgba(45,90,53,0.3)",
+                              borderRadius: 4, padding: "1px 5px",
+                            }}
+                          >
+                            {ex.code}
+                          </span>
+                        )}
                         <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 600, whiteSpace: "normal", wordBreak: "break-word", lineHeight: 1.3 }}>{ex.name}</span>
                         {sugg && <span title="Suggestion d'après les retours" style={{ fontSize: 11 }}>{sugg.type === "pain" ? "🔴" : "⚠"}</span>}
                         <div style={{ position: "relative", flexShrink: 0 }}>
@@ -909,6 +967,7 @@ export default function AdapterSemaine() {
                       <button onClick={() => moveBlock(di, ei, blockLen, 1)} disabled={ei + blockLen - 1 >= lastIdx} title="Descendre" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", color: "var(--cst-text)", borderRadius: 5, width: 28, padding: "5px 0", fontSize: 12, lineHeight: 1, cursor: ei + blockLen - 1 >= lastIdx ? "default" : "pointer", opacity: ei + blockLen - 1 >= lastIdx ? 0.25 : 0.85 }}>↓</button>
                     </div>
                     </div>
+                    </Fragment>
                   );
                 })}
 
