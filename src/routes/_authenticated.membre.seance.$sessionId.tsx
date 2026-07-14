@@ -50,6 +50,7 @@ function SeancePage() {
   const [exercises, setExercises] = useState<ProgExercise[]>([]);
   const [loading, setLoading] = useState(true);
   const [finishing, setFinishing] = useState(false);
+  const [celebrate, setCelebrate] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [sessionMode, setSessionMode] = useState<"expert" | "debutant">("debutant");
   const quitRef = useRef<(() => void) | null>(null);
@@ -194,7 +195,8 @@ function SeancePage() {
         await notifyCoach({ data: { sessionId } }).catch(() => {});
       }
 
-      navigate({ to: "/membre/historique" });
+      // Écran de célébration « Good job soldat » avant de renvoyer au dashboard.
+      setCelebrate(true);
     } catch (err) {
       console.error("[finishSession]", err);
       toast.error("Impossible de terminer la séance. Vérifie ta connexion et réessaie.");
@@ -208,6 +210,47 @@ function SeancePage() {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--cst-dark-green)", color: "rgba(255,255,255,0.5)", fontFamily: "var(--cst-mono)", fontSize: 11 }}>
         CHARGEMENT…
+      </div>
+    );
+  }
+
+  if (celebrate) {
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#111" }}>
+        <div style={{ width: 390, minHeight: 780, position: "relative" }}>
+          <div
+            className="cst-screen cst-hatch"
+            style={{ minHeight: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "40px 28px", gap: 22 }}
+          >
+            <span className="cst-mono" style={{ fontSize: 10, opacity: 0.5, letterSpacing: "0.24em" }}>
+              ★ SÉANCE TERMINÉE
+            </span>
+
+            {/* Récompense : la bière du repos bien mérité. */}
+            <img
+              src="/recompense-biere.png"
+              alt="Bière du repos bien mérité"
+              width={180}
+              height={180}
+              style={{ width: 180, height: "auto", objectFit: "contain", filter: "drop-shadow(0 8px 24px rgba(0,0,0,0.45))" }}
+            />
+
+            <h1 className="cst-display" style={{ fontSize: 34, margin: 0, lineHeight: 1.05 }}>
+              GOOD JOB SOLDAT !
+            </h1>
+            <p style={{ fontSize: 15, opacity: 0.8, lineHeight: 1.5, margin: 0, maxWidth: 300 }}>
+              Attends le retour de Léo… et maintenant, <strong>repos</strong> !
+            </p>
+
+            <button
+              onClick={() => navigate({ to: "/membre/historique" })}
+              className="cst-btn cst-btn-primary"
+              style={{ marginTop: 8, padding: "16px 28px", fontSize: 14 }}
+            >
+              REPOS, SOLDAT →
+            </button>
+          </div>
+        </div>
       </div>
     );
   }

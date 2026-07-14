@@ -1,6 +1,7 @@
 /* ColosmartTraining — Séance interactive guidée
    Un écran = une action. Chrono auto. Aucun scroll-fest. */
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ProgramBlocks, groupBlocks, type ProgExercise } from "./ProgramBlocks";
 import { ExerciseThread } from "./ExerciseThread";
@@ -1002,6 +1003,9 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
   const [expertRecapRpeByExercise, setExpertRecapRpeByExercise] = useState<Record<string, number | null>>({});
   const [expertRecapCommentByExercise, setExpertRecapCommentByExercise] = useState<Record<string, string>>({});
   const [expertRecapPickerFor, setExpertRecapPickerFor] = useState<string | null>(null);
+  // Mode expert : la fin de séance fait ses propres écritures DB (pas via onFinish),
+  // il lui faut donc son propre indicateur « en cours » pour le retour visuel.
+  const [expertFinishing, setExpertFinishing] = useState(false);
   const [expertOverviewPickerFor, setExpertOverviewPickerFor] = useState<string | null>(null);
   const [stepIdx, setStepIdx] = useState(snap?.stepIdx ?? 0);
   const [logging, setLogging] = useState<null | {
@@ -1318,49 +1322,68 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
   async function finishExpertRecap() {
     const missingExercise = expertRecapGroups.find((group) => expertRecapRpeByExercise[group.exerciseName] == null);
     if (missingExercise) {
-      setValidationError(`Renseigne le RPE final de ${missingExercise.exerciseName}.`);
+      const msg = `Renseigne le RPE final de ${missingExercise.exerciseName}.`;
+      setValidationError(msg);
+      // Toast en plus du message inline : celui-ci est parfois hors écran (liste scrollée),
+      // et le membre voyait « rien ne se passe » au clic sur Terminer.
+      toast.error(msg);
+      setExpertRecapPickerFor(missingExercise.exerciseName);
       return;
     }
 
     setValidationError(null);
+    setExpertFinishing(true);
+    try {
+      const rows = expertRecapGroups.flatMap((group) =>
+        group.rows.map((row) => ({
+          session_id: sessionId,
+          exercise_name: group.exerciseName,
+          set_number: row.setNumber,
+          weight_kg: row.weight,
+          reps: row.reps,
+          rpe: normalizeExpertRpeForStorage(expertRecapRpeByExercise[group.exerciseName]),
+          completed: true,
+        })),
+      );
 
-    const rows = expertRecapGroups.flatMap((group) =>
-      group.rows.map((row) => ({
-        session_id: sessionId,
-        exercise_name: group.exerciseName,
-        set_number: row.setNumber,
-        weight_kg: row.weight,
-        reps: row.reps,
-        rpe: normalizeExpertRpeForStorage(expertRecapRpeByExercise[group.exerciseName]),
-        completed: true,
-      })),
-    );
+      const feedbackRows = buildExpertExerciseFeedbackRows(
+        sessionId,
+        expertRecapGroups,
+        expertRecapRpeByExercise,
+        expertRecapCommentByExercise,
+      );
 
-    const feedbackRows = buildExpertExerciseFeedbackRows(
-      sessionId,
-      expertRecapGroups,
-      expertRecapRpeByExercise,
-      expertRecapCommentByExercise,
-    );
+      const { error: deleteError } = await supabase.from("set_logs").delete().eq("session_id", sessionId);
+      if (deleteError) throw deleteError;
 
-    const { error: deleteError } = await supabase.from("set_logs").delete().eq("session_id", sessionId);
-    if (deleteError) throw deleteError;
+      const { error: deleteFeedbackError } = await supabase.from("exercise_feedbacks").delete().eq("session_id", sessionId);
+      if (deleteFeedbackError) throw deleteFeedbackError;
 
-    const { error: deleteFeedbackError } = await supabase.from("exercise_feedbacks").delete().eq("session_id", sessionId);
-    if (deleteFeedbackError) throw deleteFeedbackError;
+      if (rows.length > 0) {
+        const { error: insertError } = await supabase.from("set_logs").insert(rows);
+        if (insertError) throw insertError;
+      }
 
-    if (rows.length > 0) {
-      const { error: insertError } = await supabase.from("set_logs").insert(rows);
-      if (insertError) throw insertError;
+      if (feedbackRows.length > 0) {
+        const { error: insertFeedbackError } = await supabase.from("exercise_feedbacks").insert(feedbackRows);
+        if (insertFeedbackError) throw insertFeedbackError;
+      }
+
+      await onFinish();
+      clearSnapshot(sessionId);
+    } catch (err) {
+      // Sans ce toast, l'échec DB était avalé par le catch vide de l'appelant :
+      // le bouton semblait ne rien faire. On informe et on garde le snapshot.
+      console.error("[finishExpertRecap]", err);
+      const message =
+        err instanceof Error && err.message
+          ? err.message
+          : "Impossible de terminer la séance. Vérifie ta connexion et réessaie.";
+      toast.error(message);
+      throw err;
+    } finally {
+      setExpertFinishing(false);
     }
-
-    if (feedbackRows.length > 0) {
-      const { error: insertFeedbackError } = await supabase.from("exercise_feedbacks").insert(feedbackRows);
-      if (insertFeedbackError) throw insertFeedbackError;
-    }
-
-    await onFinish();
-    clearSnapshot(sessionId);
   }
 
   /** Calcule les valeurs pré-remplies pour un set donné. */
@@ -1998,11 +2021,11 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
                 /* échec déjà signalé (toast) ; on garde le snapshot pour réessayer */
               }
             }}
-            disabled={finishing}
+            disabled={finishing || expertFinishing}
             className="cst-btn cst-btn-primary"
-            style={{ width: "100%", padding: "18px 0", fontSize: 14, opacity: finishing ? 0.6 : 1 }}
+            style={{ width: "100%", padding: "18px 0", fontSize: 14, opacity: finishing || expertFinishing ? 0.6 : 1 }}
           >
-            {finishing ? "ENREGISTREMENT…" : "TERMINER LA SÉANCE ✓"}
+            {finishing || expertFinishing ? "ENREGISTREMENT…" : "TERMINER LA SÉANCE ✓"}
           </button>
         </div>
         {renderOverlays()}
