@@ -161,7 +161,7 @@ function AssignProgramModal({ program, busy, defaultWeek, onClose, onConfirm }) 
     </div>
   );
 }
-import { useNavigate, useParams } from '@tanstack/react-router';
+import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { useServerFn } from '@tanstack/react-start';
 import CoachSidebar from '../../components/CoachSidebar';
 import { CSTSectionNum, CSTAvatar, CSTStatus } from '../../components/Atoms';
@@ -196,8 +196,12 @@ function statusKind(s) {
   return 'coming';
 }
 
+// Slugs des onglets, alignés sur `tabs` plus bas — utilisés pour le deep link ?tab=…
+const TAB_SLUGS = ['programme', 'suivi', 'historique', 'videos', 'progression', 'profil', 'messages'];
+
 export default function CoachMember() {
   const { memberId } = useParams({ from: '/_authenticated/coach/membre/$memberId' });
+  const search = useSearch({ from: '/_authenticated/coach/membre/$memberId' });
   const navigate = useNavigate();
   const getDetailFn = useServerFn(getMemberDetail);
   const saveNotesFn = useServerFn(updateMemberNotes);
@@ -210,7 +214,14 @@ export default function CoachMember() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
   const [data, setData] = useState(null);
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState(() => Math.max(0, TAB_SLUGS.indexOf(search?.tab)));
+
+  // Deep link : si ?tab= change (ex. clic « Ouvrir » sur une autre vidéo à revoir),
+  // on bascule sur l'onglet demandé.
+  useEffect(() => {
+    const i = TAB_SLUGS.indexOf(search?.tab);
+    if (i >= 0) setActiveTab(i);
+  }, [search?.tab, search?.video]);
   const [notes, setNotes] = useState('');
   const [notesSaved, setNotesSaved] = useState(false);
   const [savingNotes, setSavingNotes] = useState(false);
@@ -683,7 +694,7 @@ export default function CoachMember() {
               <>
                 <CSTSectionNum num={1} label="VIDÉOS TECHNIQUE" sub="ENVOIS DU COACHÉ" />
                 <div style={{ marginTop: 14 }}>
-                  {coachUid && <VideoReviewPanel memberId={memberId} coachUserId={coachUid} />}
+                  {coachUid && <VideoReviewPanel memberId={memberId} coachUserId={coachUid} initialVideoId={search?.video} />}
                 </div>
               </>
             )}

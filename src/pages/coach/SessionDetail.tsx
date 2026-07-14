@@ -122,6 +122,14 @@ export default function CoachSessionDetail() {
   const techniqueVideos = (data as any).techniqueVideos as Array<{ id: string; exerciseName: string | null; url: string | null; thumbnailUrl: string | null }> | undefined ?? [];
   const totalMediaCount = (allMedia?.length ?? 0) + techniqueVideos.length;
 
+  // Un exercice peut avoir une vidéo technique sans aucune série loggée
+  // (mode expert, série non saisie…) : il doit quand même apparaître dans le
+  // détail par exercice pour que le coach voie la vidéo et puisse répondre.
+  for (const v of techniqueVideos) {
+    const key = v.exerciseName || "—";
+    if (!byExo.has(key)) byExo.set(key, []);
+  }
+
   return (
     <div className="cst-screen" style={{ flexDirection: "row" }}>
       <CoachSidebar />
@@ -223,6 +231,21 @@ export default function CoachSessionDetail() {
                   </div>
                 </div>
               )}
+
+              {techniqueVideos.length > 0 && (
+                <div style={{ marginTop: 14 }}>
+                  <div className="cst-mono" style={{ fontSize: 9, opacity: 0.5, letterSpacing: "0.18em", marginBottom: 8 }}>VIDÉOS TECHNIQUE</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 10 }}>
+                    {techniqueVideos.map((v) => (
+                      <MediaThumb
+                        key={v.id}
+                        m={{ id: v.id, type: "video", url: v.url, thumbnailUrl: v.thumbnailUrl, caption: v.exerciseName }}
+                        onOpen={setLightbox}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -253,6 +276,7 @@ export default function CoachSessionDetail() {
                         {planned.rpe_target ? ` · RPE ${planned.rpe_target}` : ""}
                       </div>
                     )}
+                    {logs.length > 0 && (
                     <table style={{ width: "100%", fontSize: 12, borderCollapse: "collapse" }}>
                       <thead>
                         <tr style={{ opacity: 0.55, fontFamily: "var(--cst-mono)", fontSize: 10, letterSpacing: "0.1em" }}>
@@ -275,6 +299,7 @@ export default function CoachSessionDetail() {
                         ))}
                       </tbody>
                     </table>
+                    )}
                     {fb && (fb.rpe != null || fb.member_comment) && (
                       <div style={{ marginTop: 8, fontSize: 12, opacity: 0.85, paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.05)" }}>
                         {fb.rpe != null && <span style={{ marginRight: 12 }}>RPE bloc : <strong>{fb.rpe}</strong></span>}

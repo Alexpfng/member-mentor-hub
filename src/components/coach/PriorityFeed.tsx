@@ -246,7 +246,7 @@ export default function PriorityFeed() {
               </div>
               <div style={{ fontSize: 13 }}><strong>{it.memberName}</strong> · {it.exerciseName || "—"}</div>
               <div style={{ display: "flex", gap: 6 }}>
-                <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" onClick={() => navigate({ to: "/coach/membre/$memberId", params: { memberId: it.memberId } })}>Ouvrir</button>
+                <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" onClick={() => navigate({ to: "/coach/membre/$memberId", params: { memberId: it.memberId }, search: { tab: "videos", video: it.id } })}>Ouvrir</button>
               </div>
             </div>
           );

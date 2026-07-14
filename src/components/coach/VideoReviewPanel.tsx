@@ -16,9 +16,11 @@ type V = {
 export function VideoReviewPanel({
   memberId,
   coachUserId,
+  initialVideoId,
 }: {
   memberId: string;
   coachUserId: string;
+  initialVideoId?: string;
 }) {
   const fetchVideos = useServerFn(listMemberVideos);
   const review = useServerFn(markVideoReviewed);
@@ -31,12 +33,21 @@ export function VideoReviewPanel({
     try {
       const v = await fetchVideos({ data: { memberId } });
       setVideos(v as V[]);
+      return v as V[];
     } finally {
       setLoading(false);
     }
   }
 
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [memberId]);
+  useEffect(() => {
+    load().then((v) => {
+      // Deep link (?video=…) : déplie directement le fil de la vidéo ciblée.
+      if (!initialVideoId) return;
+      const target = (v ?? []).find(x => x.id === initialVideoId);
+      if (target) setOpenKey(`${target.session_id}::${target.exercise_name}`);
+    });
+    // eslint-disable-next-line
+  }, [memberId, initialVideoId]);
 
   async function markDone(id: string) {
     await review({ data: { videoId: id } });
