@@ -75,13 +75,18 @@ function defaultRestFor(color: ExerciseColor): number {
 
 function blockExplain(type?: string | null, isSuperset = false): string | null {
   const t = (type || "").toLowerCase();
-  if (t === "emom") return "EMOM : 1 série au début de chaque minute. Le temps restant dans la minute = ton repos.";
-  if (t === "ladder") return "Ladder : le nombre de reps change à chaque minute (ex : 1, 2, 3, puis on recommence).";
+  if (t === "emom")
+    return "EMOM : 1 série au début de chaque minute. Le temps restant dans la minute = ton repos.";
+  if (t === "ladder")
+    return "Ladder : le nombre de reps change à chaque minute (ex : 1, 2, 3, puis on recommence).";
   if (t === "amrap")
     return "AMRAP : autant de tours/reps que possible dans le temps imparti, avec une technique propre.";
-  if (t === "dropset") return "Dropset : enchaîne sans repos en baissant la charge jusqu'à l'échec technique.";
-  if (t === "circuit") return "Circuit : enchaîne tous les exos du bloc, puis prends la récup et recommence.";
-  if (isSuperset) return "Superset : enchaîne les deux exercices sans repos, puis prends la récup commune.";
+  if (t === "dropset")
+    return "Dropset : enchaîne sans repos en baissant la charge jusqu'à l'échec technique.";
+  if (t === "circuit")
+    return "Circuit : enchaîne tous les exos du bloc, puis prends la récup et recommence.";
+  if (isSuperset)
+    return "Superset : enchaîne les deux exercices sans repos, puis prends la récup commune.";
   return null;
 }
 
@@ -136,14 +141,19 @@ function isPerSide(reps?: string | number | null): boolean {
 
 /** Strips accents and lowercases for robust keyword matching. */
 function normKey(s?: string | null): string {
-  return String(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  return String(s ?? "")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase();
 }
 
 /** True if the exercise NAME denotes a unilateral movement (one leg/arm at a time)
  *  → its timed holds should run one chrono per side even without a "/côté" marker. */
 function isUnilateralByName(name?: string | null): boolean {
   const n = normKey(name);
-  return /(fente|split\s*squat|bulgare|pistol|unilat|step[\s-]?up|side\s*plank|lateral|une\s+jambe|single[\s-]?leg)/.test(n);
+  return /(fente|split\s*squat|bulgare|pistol|unilat|step[\s-]?up|side\s*plank|lateral|une\s+jambe|single[\s-]?leg)/.test(
+    n,
+  );
 }
 
 /** Picks the round-label word for a per-side timed exercise (JAMBE / BRAS / PIED / CÔTÉ). */
@@ -160,7 +170,9 @@ function sideWord(reps?: string | number | null, name?: string | null): string {
  *  - per-side text ("30s/côté", "…par jambe") OR unilateral exercise name → 2 rounds
  *  - otherwise → 1 round */
 function parseTimedRounds(reps?: string | number | null, name?: string | null): number {
-  const r = String(reps ?? "").toLowerCase().trim();
+  const r = String(reps ?? "")
+    .toLowerCase()
+    .trim();
   const m = r.match(/^(\d+)\s*[x×*]\s*\d/);
   if (m) {
     const n = parseInt(m[1], 10);
@@ -176,11 +188,17 @@ function parseLadderPattern(reps: string | number | null | undefined): number[] 
   const raw = String(reps).trim();
   // Doit contenir au moins 2 valeurs séparées par , ; ou /
   if (!/\d+\s*[,;\/]\s*\d+/.test(raw)) return [];
-  return raw.split(/[,;\/]/).map((s) => parseInt(s.trim(), 10)).filter((n) => !isNaN(n) && n > 0);
+  return raw
+    .split(/[,;\/]/)
+    .map((s) => parseInt(s.trim(), 10))
+    .filter((n) => !isNaN(n) && n > 0);
 }
 
 /** Découpe une cible reps en une cible par série (15/12/10) ou répète une fourchette (10-8) */
-function parseRepsPerSet(repsTarget: string | number | null | undefined, seriesCount: number): string[] {
+function parseRepsPerSet(
+  repsTarget: string | number | null | undefined,
+  seriesCount: number,
+): string[] {
   const fallback = Array(seriesCount).fill("");
   if (repsTarget == null || repsTarget === "") return fallback;
   const raw = String(repsTarget).trim();
@@ -269,7 +287,12 @@ function formatRelativeDays(iso?: string | null): string {
   return `il y a ${days}j`;
 }
 
-type LastSet = { weight: number | null; reps: number | null; rpe: number | null; loggedAt: string | null };
+type LastSet = {
+  weight: number | null;
+  reps: number | null;
+  rpe: number | null;
+  loggedAt: string | null;
+};
 
 const RPE_PICKER_VALUES = Array.from({ length: 21 }, (_, index) => index * 0.5);
 
@@ -277,7 +300,10 @@ function formatRpeValue(value: number) {
   if (value > 10) return "KO";
   return Number.isInteger(value) ? String(value) : String(value).replace(".", ",");
 }
-type LastByExo = Record<string, Record<number, LastSet> & { _loggedAt?: string | null; _sets?: LastSet[] }>;
+type LastByExo = Record<
+  string,
+  Record<number, LastSet> & { _loggedAt?: string | null; _sets?: LastSet[] }
+>;
 type ExpertRecapGroup = ReturnType<typeof groupExpertRecapByExercise>[number];
 
 function YtThumbLink({ vid, href }: { vid: string | null; href: string }) {
@@ -288,7 +314,13 @@ function YtThumbLink({ vid, href }: { vid: string | null; href: string }) {
       href={href}
       target="_blank"
       rel="noreferrer"
-      style={{ display: "block", textDecoration: "none", borderRadius: 8, overflow: "hidden", border: "1px solid rgba(255,255,255,0.10)" }}
+      style={{
+        display: "block",
+        textDecoration: "none",
+        borderRadius: 8,
+        overflow: "hidden",
+        border: "1px solid rgba(255,255,255,0.10)",
+      }}
       title="Voir la démo sur YouTube"
     >
       {thumbSrc && imgOk ? (
@@ -297,27 +329,53 @@ function YtThumbLink({ vid, href }: { vid: string | null; href: string }) {
             src={thumbSrc}
             alt="Aperçu vidéo"
             onError={() => setImgOk(false)}
-            style={{ width: "100%", display: "block", objectFit: "cover", maxHeight: 150, aspectRatio: "16/9" }}
+            style={{
+              width: "100%",
+              display: "block",
+              objectFit: "cover",
+              maxHeight: 150,
+              aspectRatio: "16/9",
+            }}
           />
-          <div style={{
-            position: "absolute", inset: 0,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            background: "rgba(0,0,0,0.25)",
-          }}>
-            <div style={{
-              width: 42, height: 42, borderRadius: "50%",
-              background: "rgba(0,0,0,0.65)", display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "rgba(0,0,0,0.25)",
+            }}
+          >
+            <div
+              style={{
+                width: 42,
+                height: 42,
+                borderRadius: "50%",
+                background: "rgba(0,0,0,0.65)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
               <span style={{ color: "#fff", fontSize: 16, marginLeft: 3 }}>▶</span>
             </div>
           </div>
         </div>
       ) : (
-        <div style={{
-          display: "inline-flex", alignItems: "center", gap: 6,
-          padding: "8px 10px", background: "rgba(255,255,255,0.04)",
-          color: "rgba(255,255,255,0.85)", fontSize: 10, letterSpacing: "0.14em",
-        }} className="cst-mono">
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "8px 10px",
+            background: "rgba(255,255,255,0.04)",
+            color: "rgba(255,255,255,0.85)",
+            fontSize: 10,
+            letterSpacing: "0.14em",
+          }}
+          className="cst-mono"
+        >
           ▶ VOIR LA DÉMO
         </div>
       )}
@@ -336,8 +394,25 @@ function ExerciseMediaCard({ exercise }: { exercise: ProgExercise }) {
         style={{ width: "100%", display: "block", objectFit: "cover", maxHeight: 150 }}
       />
     );
-    const cardStyle: React.CSSProperties = { display: "block", textDecoration: "none", borderRadius: 8, overflow: "hidden", border: "1px solid rgba(255,255,255,0.10)" };
-    if (href) return <a href={href} target="_blank" rel="noreferrer" style={cardStyle} title="Voir la démo sur YouTube">{inner}</a>;
+    const cardStyle: React.CSSProperties = {
+      display: "block",
+      textDecoration: "none",
+      borderRadius: 8,
+      overflow: "hidden",
+      border: "1px solid rgba(255,255,255,0.10)",
+    };
+    if (href)
+      return (
+        <a
+          href={href}
+          target="_blank"
+          rel="noreferrer"
+          style={cardStyle}
+          title="Voir la démo sur YouTube"
+        >
+          {inner}
+        </a>
+      );
     return <div style={cardStyle}>{inner}</div>;
   }
   if (!href) return null;
@@ -383,7 +458,14 @@ function ExpertRecapRpeBadge({
         gap: 10,
       }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          gap: 12,
+        }}
+      >
         <div style={{ minWidth: 0, flex: 1 }}>
           <div className="cst-display" style={{ fontSize: 15, lineHeight: 1.2 }}>
             {group.exerciseName}
@@ -473,7 +555,10 @@ function ExpertRecapRpeBadge({
             </button>
           </div>
           <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <span className="cst-mono" style={{ fontSize: 10, opacity: 0.62, letterSpacing: "0.14em" }}>
+            <span
+              className="cst-mono"
+              style={{ fontSize: 10, opacity: 0.62, letterSpacing: "0.14em" }}
+            >
               COMMENTAIRE (OPTIONNEL)
             </span>
             <textarea
@@ -620,7 +705,10 @@ function ExpertOverviewRpeBadge({
             </button>
           </div>
           <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <span className="cst-mono" style={{ fontSize: 10, opacity: 0.62, letterSpacing: "0.14em" }}>
+            <span
+              className="cst-mono"
+              style={{ fontSize: 10, opacity: 0.62, letterSpacing: "0.14em" }}
+            >
               COMMENTAIRE (OPTIONNEL)
             </span>
             <textarea
@@ -681,7 +769,9 @@ function extractYoutubeId(input?: string | null): string | null {
   if (!input) return null;
   const s = String(input).trim();
   if (/^[a-zA-Z0-9_-]{11}$/.test(s)) return s;
-  const m = s.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  const m = s.match(
+    /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+  );
   return m ? m[1] : null;
 }
 
@@ -705,14 +795,20 @@ function hasCues(ex?: ProgExercise | null): boolean {
  * Reps only (durée par défaut 10 min) :
  *   "EMOM3"     → 3 reps/min, 10 min
  */
-function parseEmom(series: string | null, reps: string | null): { durationMin: number; repsPerMin: number | null } {
+function parseEmom(
+  series: string | null,
+  reps: string | null,
+): { durationMin: number; repsPerMin: number | null } {
   // Normalise: apostrophe typographique → droit, minuscule
   const src = `${series ?? ""} ${reps ?? ""}`.toLowerCase().replace(/[‘’ʼ]/g, "'");
 
   // Combined "EMOMreps×dur'" or "EMOMreps/dur'" → e.g. "EMOM3×15'" "EMOM3/10min"
   const combinedMatch = src.match(/emom\s*(\d+)\s*[x×\/]\s*(\d+)\s*(?:'|min\b|m\b)/);
   if (combinedMatch) {
-    return { durationMin: parseInt(combinedMatch[2], 10), repsPerMin: parseInt(combinedMatch[1], 10) };
+    return {
+      durationMin: parseInt(combinedMatch[2], 10),
+      repsPerMin: parseInt(combinedMatch[1], 10),
+    };
   }
 
   // Duration-only: "EMOM15'" or "EMOM15min" or "EMOM15m"
@@ -720,14 +816,18 @@ function parseEmom(series: string | null, reps: string | null): { durationMin: n
   if (durMatch) {
     // Reps may come from separate reps field
     const repsVal = reps?.match(/^(\d+)$/)?.[1] ?? reps?.match(/emom\s*(\d+)\s*reps?/i)?.[1];
-    return { durationMin: parseInt(durMatch[1], 10), repsPerMin: repsVal ? parseInt(repsVal, 10) : null };
+    return {
+      durationMin: parseInt(durMatch[1], 10),
+      repsPerMin: repsVal ? parseInt(repsVal, 10) : null,
+    };
   }
 
   // Type EMOM explicite (sélecteur builder) : durée = champ Séries (nb de minutes),
   // reps/min = champ Reps — y compris alterné « 3/4 » (paires/impaires).
   const repsFromSeries = series?.match(/emom\s*(\d+)/i)?.[1];
   const repsAlt = reps?.match(/^\s*(\d+)\s*\/\s*\d+\s*$/)?.[1];
-  const repsFromReps = reps?.match(/^(\d+)$/)?.[1] ?? repsAlt ?? reps?.match(/emom\s*(\d+)\s*reps?/i)?.[1];
+  const repsFromReps =
+    reps?.match(/^(\d+)$/)?.[1] ?? repsAlt ?? reps?.match(/emom\s*(\d+)\s*reps?/i)?.[1];
   const repsPerMin = repsFromSeries
     ? parseInt(repsFromSeries, 10)
     : repsFromReps
@@ -770,8 +870,8 @@ type EmomBlock = {
   exercise: ProgExercise;
   durationMin: number;
   repsPerMin: number | null;
-  repsLabel: string | null;   // reps affichées telles quelles (ex. "3/4")
-  alternating: boolean;       // reps alternées paires/impaires
+  repsLabel: string | null; // reps affichées telles quelles (ex. "3/4")
+  alternating: boolean; // reps alternées paires/impaires
 };
 
 type CircuitBlock = {
@@ -779,9 +879,9 @@ type CircuitBlock = {
   blockIdx: number;
   blockLetter?: string;
   exercises: ProgExercise[];
-  defaultTotalMin: number;   // total time suggestion (multiple of 5)
+  defaultTotalMin: number; // total time suggestion (multiple of 5)
   workSecPerStation: number; // 60s default
-  restSecBetween: number;    // from recup or 0
+  restSecBetween: number; // from recup or 0
 };
 
 type Step = Brief | WorkSet | EmomBlock | CircuitBlock;
@@ -799,11 +899,27 @@ function buildSteps(exercises: ProgExercise[]): Step[] {
     // EMOM blocks get a dedicated timer step — no brief, no sets
     if (blockType === "emom" && !isSuperset) {
       const ex = b.exercises[0];
-      const { durationMin, repsPerMin } = parseEmom(ex.series != null ? String(ex.series) : null, ex.reps != null ? String(ex.reps) : null);
+      const { durationMin, repsPerMin } = parseEmom(
+        ex.series != null ? String(ex.series) : null,
+        ex.reps != null ? String(ex.reps) : null,
+      );
       const repsRaw = ex.reps != null ? String(ex.reps).trim() : "";
       const altMatch = repsRaw.match(/^(\d+)\s*\/\s*(\d+)$/);
-      const repsLabel = altMatch ? `${altMatch[1]}/${altMatch[2]}` : (repsPerMin != null ? String(repsPerMin) : null);
-      steps.push({ kind: "emom", blockIdx, blockLetter: b.letter, exercise: ex, durationMin, repsPerMin, repsLabel, alternating: !!altMatch });
+      const repsLabel = altMatch
+        ? `${altMatch[1]}/${altMatch[2]}`
+        : repsPerMin != null
+          ? String(repsPerMin)
+          : null;
+      steps.push({
+        kind: "emom",
+        blockIdx,
+        blockLetter: b.letter,
+        exercise: ex,
+        durationMin,
+        repsPerMin,
+        repsLabel,
+        alternating: !!altMatch,
+      });
       return;
     }
 
@@ -831,9 +947,17 @@ function buildSteps(exercises: ProgExercise[]): Step[] {
       let pattern = parseLadderPattern(ex.reps);
       if (pattern.length === 0) {
         // Also check series field: "Ladder 2/3/4" → strip prefix → "2/3/4"
-        const seriesStr = ex.series != null ? String(ex.series).replace(/^ladder\s*/i, "").trim() : "";
+        const seriesStr =
+          ex.series != null
+            ? String(ex.series)
+                .replace(/^ladder\s*/i, "")
+                .trim()
+            : "";
         if (/\d+\s*[,;\/]\s*\d+/.test(seriesStr)) {
-          pattern = seriesStr.split(/[,;\/]/).map((s) => parseInt(s.trim(), 10)).filter((n) => !isNaN(n) && n > 0);
+          pattern = seriesStr
+            .split(/[,;\/]/)
+            .map((s) => parseInt(s.trim(), 10))
+            .filter((n) => !isNaN(n) && n > 0);
         }
       }
       if (pattern.length > 0) {
@@ -847,7 +971,14 @@ function buildSteps(exercises: ProgExercise[]): Step[] {
             : Math.max(1, parseSeriesCount(ex.series));
         const totalSets = rounds * pattern.length;
         const exRest = parseRecupSeconds(ex.recup, 0);
-        steps.push({ kind: "brief", blockIdx, blockLetter: b.letter, isSuperset: false, blockType: "ladder", exercises: [ex] });
+        steps.push({
+          kind: "brief",
+          blockIdx,
+          blockLetter: b.letter,
+          isSuperset: false,
+          blockType: "ladder",
+          exercises: [ex],
+        });
         for (let r = 0; r < rounds; r++) {
           pattern.forEach((repCount, i) => {
             const globalIdx = r * pattern.length + i;
@@ -942,7 +1073,10 @@ type SessionSnapshot = {
   sessionId: string;
   stepIdx: number;
   phase: "intro" | "step" | "rest" | "recap";
-  savedByStep: Record<number, { weight: number | null; reps: number | null; rpe: number | null; exo: string }>;
+  savedByStep: Record<
+    number,
+    { weight: number | null; reps: number | null; rpe: number | null; exo: string }
+  >;
   startedAt: number;
   updatedAt: number;
 };
@@ -970,7 +1104,9 @@ function saveSnapshot(snap: SessionSnapshot) {
 function clearSnapshot(sessionId: string) {
   try {
     localStorage.removeItem(STORAGE_KEY(sessionId));
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
 /* ───────── Main component ───────── */
@@ -987,9 +1123,22 @@ type Props = {
   quitRef?: React.MutableRefObject<(() => void) | null>;
 };
 
-export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFinish, onReset, finishing, initialMode, quitRef }: Props) {
+export function LiveSession({
+  sessionId,
+  userId,
+  sessionLabel,
+  exercises,
+  onFinish,
+  onReset,
+  finishing,
+  initialMode,
+  quitRef,
+}: Props) {
   const steps = useMemo(() => buildSteps(exercises), [exercises]);
-  const totalWorkSets = useMemo(() => steps.filter((s) => s.kind === "set" || s.kind === "emom" || s.kind === "circuit").length, [steps]);
+  const totalWorkSets = useMemo(
+    () => steps.filter((s) => s.kind === "set" || s.kind === "emom" || s.kind === "circuit").length,
+    [steps],
+  );
   const exerciseNames = useMemo(
     () => Array.from(new Set(exercises.map((exercise) => exercise.name).filter(Boolean))),
     [exercises],
@@ -1000,8 +1149,12 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
 
   const [phase, setPhase] = useState<"intro" | "step" | "rest" | "recap">(snap?.phase ?? "intro");
   const [sessionMode] = useState<"expert" | "debutant">(initialMode ?? "debutant");
-  const [expertRecapRpeByExercise, setExpertRecapRpeByExercise] = useState<Record<string, number | null>>({});
-  const [expertRecapCommentByExercise, setExpertRecapCommentByExercise] = useState<Record<string, string>>({});
+  const [expertRecapRpeByExercise, setExpertRecapRpeByExercise] = useState<
+    Record<string, number | null>
+  >({});
+  const [expertRecapCommentByExercise, setExpertRecapCommentByExercise] = useState<
+    Record<string, string>
+  >({});
   const [expertRecapPickerFor, setExpertRecapPickerFor] = useState<string | null>(null);
   // Mode expert : la fin de séance fait ses propres écritures DB (pas via onFinish),
   // il lui faut donc son propre indicateur « en cours » pour le retour visuel.
@@ -1024,14 +1177,16 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
   const [showCues, setShowCues] = useState<ProgExercise | null>(null);
   const [showQuitConfirm, setShowQuitConfirm] = useState(false);
   const [resetting, setResetting] = useState(false);
-  const [showResumeNotice, setShowResumeNotice] = useState(!!snap && Object.keys(snap.savedByStep).length > 0);
+  const [showResumeNotice, setShowResumeNotice] = useState(
+    !!snap && Object.keys(snap.savedByStep).length > 0,
+  );
   /** For timed exercises: tracks whether the countdown has been completed */
   const [timedDone, setTimedDone] = useState(false);
 
   /** Saisies par stepIdx — conservées si on revient en arrière, écrasées si on re-valide. */
-  const [savedByStep, setSavedByStep] = useState<
-    Record<number, ExpertSavedStep>
-  >(snap?.savedByStep ?? {});
+  const [savedByStep, setSavedByStep] = useState<Record<number, ExpertSavedStep>>(
+    snap?.savedByStep ?? {},
+  );
 
   /** Historique de la dernière séance pour le même exercice. */
   const [lastByExo, setLastByExo] = useState<LastByExo>({});
@@ -1049,7 +1204,9 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
         // Récupère les set_logs récents pour ce membre via jointure sessions
         const { data: rec } = await supabase
           .from("set_logs")
-          .select("exercise_name, set_number, weight_kg, reps, rpe, logged_at, sessions!inner(member_id, status)")
+          .select(
+            "exercise_name, set_number, weight_kg, reps, rpe, logged_at, sessions!inner(member_id, status)",
+          )
           .eq("sessions.member_id", userId)
           .in("exercise_name", names)
           .order("logged_at", { ascending: false })
@@ -1082,7 +1239,8 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
             rpe: row.rpe,
             loggedAt: row.logged_at,
           };
-          (entry as Record<string, LastSet | string | null | undefined | LastSet[]>)[String(setN)] = lastSet;
+          (entry as Record<string, LastSet | string | null | undefined | LastSet[]>)[String(setN)] =
+            lastSet;
           (entry._sets as LastSet[]).push(lastSet);
         }
         // Trier _sets par numéro de série croissant n'est pas fiable sans set_number, on garde l'ordre d'insertion inverse
@@ -1116,7 +1274,9 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
   // Expose quit trigger to parent (outer "← QUITTER" button)
   useEffect(() => {
     if (quitRef) quitRef.current = () => setShowQuitConfirm(true);
-    return () => { if (quitRef) quitRef.current = null; };
+    return () => {
+      if (quitRef) quitRef.current = null;
+    };
   }, [quitRef]);
 
   const current = steps[stepIdx];
@@ -1234,7 +1394,10 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
     if (typeof window !== "undefined") window.location.href = "/membre";
   }
 
-  async function saveSetAndAdvance(step: WorkSet, l: { weight: string; reps: string; rpe: number | null }) {
+  async function saveSetAndAdvance(
+    step: WorkSet,
+    l: { weight: string; reps: string; rpe: number | null },
+  ) {
     const bodyweight = isBodyweight(step.exercise.charge);
     const durationMode = isDurationReps(step.exercise.reps);
 
@@ -1320,7 +1483,9 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
   }
 
   async function finishExpertRecap() {
-    const missingExercise = expertRecapGroups.find((group) => expertRecapRpeByExercise[group.exerciseName] == null);
+    const missingExercise = expertRecapGroups.find(
+      (group) => expertRecapRpeByExercise[group.exerciseName] == null,
+    );
     if (missingExercise) {
       const msg = `Renseigne le RPE final de ${missingExercise.exerciseName}.`;
       setValidationError(msg);
@@ -1353,10 +1518,16 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
         expertRecapCommentByExercise,
       );
 
-      const { error: deleteError } = await supabase.from("set_logs").delete().eq("session_id", sessionId);
+      const { error: deleteError } = await supabase
+        .from("set_logs")
+        .delete()
+        .eq("session_id", sessionId);
       if (deleteError) throw deleteError;
 
-      const { error: deleteFeedbackError } = await supabase.from("exercise_feedbacks").delete().eq("session_id", sessionId);
+      const { error: deleteFeedbackError } = await supabase
+        .from("exercise_feedbacks")
+        .delete()
+        .eq("session_id", sessionId);
       if (deleteFeedbackError) throw deleteFeedbackError;
 
       if (rows.length > 0) {
@@ -1365,21 +1536,26 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
       }
 
       if (feedbackRows.length > 0) {
-        const { error: insertFeedbackError } = await supabase.from("exercise_feedbacks").insert(feedbackRows);
+        const { error: insertFeedbackError } = await supabase
+          .from("exercise_feedbacks")
+          .insert(feedbackRows);
         if (insertFeedbackError) throw insertFeedbackError;
       }
 
       await onFinish();
       clearSnapshot(sessionId);
     } catch (err) {
-      // Sans ce toast, l'échec DB était avalé par le catch vide de l'appelant :
-      // le bouton semblait ne rien faire. On informe et on garde le snapshot.
-      console.error("[finishExpertRecap]", err);
+      // PostgrestError (Supabase) n'est pas instanceof Error — extraire .message explicitement.
+      console.error("[finishExpertRecap]", JSON.stringify(err));
+      const supaMsg =
+        err != null && typeof err === "object" && "message" in err
+          ? String((err as { message: unknown }).message)
+          : null;
       const message =
-        err instanceof Error && err.message
-          ? err.message
-          : "Impossible de terminer la séance. Vérifie ta connexion et réessaie.";
-      toast.error(message);
+        supaMsg ??
+        (err instanceof Error ? err.message : null) ??
+        "Impossible de terminer la séance. Vérifie ta connexion et réessaie.";
+      toast.error(`Erreur : ${message}`);
       throw err;
     } finally {
       setExpertFinishing(false);
@@ -1448,14 +1624,43 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
     return (
       <div style={{ padding: "16px 18px 8px", display: "flex", flexDirection: "column", gap: 8 }}>
         {showResumeNotice && (
-          <div style={{ padding: "8px 12px", background: "rgba(45,90,53,0.22)", border: "1px solid rgba(45,90,53,0.55)", borderRadius: 8, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-            <span className="cst-mono" style={{ fontSize: 10, color: "rgba(255,255,255,0.85)", letterSpacing: "0.1em" }}>
-              ⏸ SÉANCE REPRISE · {completedWorkSets} série{completedWorkSets > 1 ? "s" : ""} conservée{completedWorkSets > 1 ? "s" : ""}
+          <div
+            style={{
+              padding: "8px 12px",
+              background: "rgba(45,90,53,0.22)",
+              border: "1px solid rgba(45,90,53,0.55)",
+              borderRadius: 8,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            <span
+              className="cst-mono"
+              style={{ fontSize: 10, color: "rgba(255,255,255,0.85)", letterSpacing: "0.1em" }}
+            >
+              ⏸ SÉANCE REPRISE · {completedWorkSets} série{completedWorkSets > 1 ? "s" : ""}{" "}
+              conservée{completedWorkSets > 1 ? "s" : ""}
             </span>
-            <button onClick={() => setShowResumeNotice(false)} style={{ background: "none", border: 0, color: "rgba(255,255,255,0.5)", fontSize: 14, cursor: "pointer", padding: "0 4px" }}>×</button>
+            <button
+              onClick={() => setShowResumeNotice(false)}
+              style={{
+                background: "none",
+                border: 0,
+                color: "rgba(255,255,255,0.5)",
+                fontSize: 14,
+                cursor: "pointer",
+                padding: "0 4px",
+              }}
+            >
+              ×
+            </button>
           </div>
         )}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+        <div
+          style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}
+        >
           <button
             onClick={handleHeaderBack}
             aria-label="Retour"
@@ -1476,7 +1681,13 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
           </button>
           <span
             className="cst-mono"
-            style={{ fontSize: 9, opacity: 0.55, letterSpacing: "0.22em", flex: 1, textAlign: "center" }}
+            style={{
+              fontSize: 9,
+              opacity: 0.55,
+              letterSpacing: "0.22em",
+              flex: 1,
+              textAlign: "center",
+            }}
           >
             — {sessionLabel?.toUpperCase() || "SÉANCE"}
           </span>
@@ -1491,7 +1702,9 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
             )}
             <button
               onClick={() => setShowOverview(true)}
-              aria-label={sessionMode === "expert" ? "Voir le résumé de séance" : "Voir toute la séance"}
+              aria-label={
+                sessionMode === "expert" ? "Voir le résumé de séance" : "Voir toute la séance"
+              }
               title={sessionMode === "expert" ? "Voir le résumé de séance" : "Voir toute la séance"}
               className="cst-mono"
               style={{
@@ -1511,7 +1724,14 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
             </button>
           </div>
         </div>
-        <div style={{ height: 4, borderRadius: 2, background: "rgba(255,255,255,0.08)", overflow: "hidden" }}>
+        <div
+          style={{
+            height: 4,
+            borderRadius: 2,
+            background: "rgba(255,255,255,0.08)",
+            overflow: "hidden",
+          }}
+        >
           <div
             style={{
               height: "100%",
@@ -1530,7 +1750,11 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
   function renderOverlays(blockColor?: ExerciseColor) {
     return (
       <>
-        <ColorTooltip color={showColor ?? blockColor ?? null} open={!!showColor} onClose={() => setShowColor(null)} />
+        <ColorTooltip
+          color={showColor ?? blockColor ?? null}
+          open={!!showColor}
+          onClose={() => setShowColor(null)}
+        />
         <TempoExplainer
           open={!!showTempo}
           onClose={() => setShowTempo(null)}
@@ -1584,18 +1808,34 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
                 padding: 18,
               }}
             >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 12,
+                }}
+              >
                 <h3 className="cst-display" style={{ margin: 0, fontSize: 20 }}>
                   {sessionMode === "expert" ? "RÉSUMÉ DE SÉANCE" : "PROGRAMME COMPLET"}
                 </h3>
                 <button
                   onClick={() => setShowOverview(false)}
-                  style={{ background: "none", border: 0, color: "#fff", fontSize: 18, cursor: "pointer" }}
+                  style={{
+                    background: "none",
+                    border: 0,
+                    color: "#fff",
+                    fontSize: 18,
+                    cursor: "pointer",
+                  }}
                 >
                   ×
                 </button>
               </div>
-              <p className="cst-mono" style={{ fontSize: 9, opacity: 0.5, letterSpacing: "0.14em", margin: "0 0 10px" }}>
+              <p
+                className="cst-mono"
+                style={{ fontSize: 9, opacity: 0.5, letterSpacing: "0.14em", margin: "0 0 10px" }}
+              >
                 {sessionMode === "expert"
                   ? "Touchez un exercice pour y aller directement. ✓ = fait, … = en cours, □ = pas encore fait. Les exos déjà effectués peuvent recevoir leur RPE ici."
                   : "Touche « ALLER → » pour faire un exercice tout de suite (ex. machine déjà prise)."}
@@ -1603,9 +1843,20 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
               {overviewRows.length > 0 && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 14 }}>
                   {overviewRows.map((row) => {
-                    const tone = row.state === "done" ? "#6EAB76" : row.state === "current" ? "#D4A53B" : "rgba(255,255,255,0.45)";
-                    const label = row.state === "done" ? "FAIT" : row.state === "current" ? "EN COURS" : "À FAIRE";
-                    const statusIcon = row.state === "done" ? "✓" : row.state === "current" ? "…" : "□";
+                    const tone =
+                      row.state === "done"
+                        ? "#6EAB76"
+                        : row.state === "current"
+                          ? "#D4A53B"
+                          : "rgba(255,255,255,0.45)";
+                    const label =
+                      row.state === "done"
+                        ? "FAIT"
+                        : row.state === "current"
+                          ? "EN COURS"
+                          : "À FAIRE";
+                    const statusIcon =
+                      row.state === "done" ? "✓" : row.state === "current" ? "…" : "□";
                     const isClickable = sessionMode === "expert";
                     const canAssignRpe = sessionMode === "expert" && row.completedSteps > 0;
                     return (
@@ -1621,8 +1872,19 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
                           gap: 10,
                         }}
                       >
-                        <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: 1 }}>
-                          <span className="cst-mono" style={{ fontSize: 18, color: tone, width: 16, textAlign: "center" }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 10,
+                            minWidth: 0,
+                            flex: 1,
+                          }}
+                        >
+                          <span
+                            className="cst-mono"
+                            style={{ fontSize: 18, color: tone, width: 16, textAlign: "center" }}
+                          >
                             {statusIcon}
                           </span>
                           <div style={{ minWidth: 0, flex: 1 }}>
@@ -1647,7 +1909,15 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
                             >
                               {row.exerciseName}
                             </button>
-                            <div className="cst-mono" style={{ fontSize: 10, color: tone, letterSpacing: "0.14em", marginTop: 2 }}>
+                            <div
+                              className="cst-mono"
+                              style={{
+                                fontSize: 10,
+                                color: tone,
+                                letterSpacing: "0.14em",
+                                marginTop: 2,
+                              }}
+                            >
                               {label} · {row.completedSteps}/{row.totalSteps || 1}
                             </div>
                           </div>
@@ -1658,7 +1928,9 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
                             comment={expertRecapCommentByExercise[row.exerciseName] ?? ""}
                             open={expertOverviewPickerFor === row.exerciseName}
                             onToggle={() =>
-                              setExpertOverviewPickerFor((current) => (current === row.exerciseName ? null : row.exerciseName))
+                              setExpertOverviewPickerFor((current) =>
+                                current === row.exerciseName ? null : row.exerciseName,
+                              )
                             }
                             onChange={(value) => {
                               setExpertRecapRpeByExercise((currentMap) => ({
@@ -1691,7 +1963,10 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
                 </div>
               )}
               {sessionMode !== "expert" && (
-                <ProgramBlocks exercises={exercises} onExerciseClick={(ex) => jumpToExercise(ex.name)} />
+                <ProgramBlocks
+                  exercises={exercises}
+                  onExerciseClick={(ex) => jumpToExercise(ex.name)}
+                />
               )}
             </div>
           </div>
@@ -1725,18 +2000,36 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
                 padding: 18,
               }}
             >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 12,
+                }}
+              >
                 <h3 className="cst-display" style={{ margin: 0, fontSize: 18 }}>
                   {showThread.toUpperCase()}
                 </h3>
                 <button
                   onClick={() => setShowThread(null)}
-                  style={{ background: "none", border: 0, color: "#fff", fontSize: 18, cursor: "pointer" }}
+                  style={{
+                    background: "none",
+                    border: 0,
+                    color: "#fff",
+                    fontSize: 18,
+                    cursor: "pointer",
+                  }}
                 >
                   ×
                 </button>
               </div>
-              <ExerciseThread sessionId={sessionId} exerciseName={showThread} userId={userId} viewerRole="member" />
+              <ExerciseThread
+                sessionId={sessionId}
+                exerciseName={showThread}
+                userId={userId}
+                viewerRole="member"
+              />
             </div>
           </div>
         )}
@@ -1793,7 +2086,14 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
                     await onFinish();
                   }}
                   className="cst-btn"
-                  style={{ width: "100%", padding: "13px 0", fontSize: 13, background: "rgba(45,190,120,0.18)", border: "1px solid rgba(45,190,120,0.45)", color: "#2DBE9A" }}
+                  style={{
+                    width: "100%",
+                    padding: "13px 0",
+                    fontSize: 13,
+                    background: "rgba(45,190,120,0.18)",
+                    border: "1px solid rgba(45,190,120,0.45)",
+                    color: "#2DBE9A",
+                  }}
                 >
                   ✓ SÉANCE TERMINÉE
                 </button>
@@ -1810,7 +2110,12 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
                   }}
                   disabled={resetting}
                   className="cst-btn cst-btn-ghost-dark"
-                  style={{ width: "100%", padding: "12px 0", fontSize: 12, opacity: resetting ? 0.5 : 1 }}
+                  style={{
+                    width: "100%",
+                    padding: "12px 0",
+                    fontSize: 12,
+                    opacity: resetting ? 0.5 : 1,
+                  }}
                 >
                   {resetting ? "RÉINITIALISATION…" : "ERREUR / JE CONSULTE LE PROGRAMME"}
                 </button>
@@ -1825,7 +2130,12 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
     );
   }
 
-  const shellStyle: React.CSSProperties = { display: "flex", flexDirection: "column", minHeight: 720, flex: 1 };
+  const shellStyle: React.CSSProperties = {
+    display: "flex",
+    flexDirection: "column",
+    minHeight: 720,
+    flex: 1,
+  };
 
   /* ───────── INTRO ───────── */
 
@@ -1835,9 +2145,20 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
     return (
       <div style={shellStyle}>
         {renderHeader()}
-        <div style={{ padding: "0 22px 24px", display: "flex", flexDirection: "column", gap: 18, flex: 1 }}>
+        <div
+          style={{
+            padding: "0 22px 24px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 18,
+            flex: 1,
+          }}
+        >
           <div>
-            <span className="cst-mono" style={{ fontSize: 10, opacity: 0.5, letterSpacing: "0.2em" }}>
+            <span
+              className="cst-mono"
+              style={{ fontSize: 10, opacity: 0.5, letterSpacing: "0.2em" }}
+            >
               ★ PRÊT
             </span>
             <h1 className="cst-display" style={{ fontSize: 34, margin: "6px 0 0", lineHeight: 1 }}>
@@ -1848,7 +2169,10 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
             </div>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <span className="cst-mono" style={{ fontSize: 9, opacity: 0.5, letterSpacing: "0.2em" }}>
+            <span
+              className="cst-mono"
+              style={{ fontSize: 9, opacity: 0.5, letterSpacing: "0.2em" }}
+            >
               CODE COULEUR (clique pour détails)
             </span>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
@@ -1909,16 +2233,33 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
 
   if (phase === "recap") {
     const savedList = Object.values(savedByStep);
-    const totalVol = savedList.reduce((s, l) => s + (l.weight && l.reps ? l.weight * l.reps : 0), 0);
+    const totalVol = savedList.reduce(
+      (s, l) => s + (l.weight && l.reps ? l.weight * l.reps : 0),
+      0,
+    );
     const rpes = savedList.map((l) => l.rpe).filter((v): v is number => v != null);
-    const avgRpe = rpes.length ? Math.round((rpes.reduce((a, b) => a + b, 0) / rpes.length) * 10) / 10 : null;
+    const avgRpe = rpes.length
+      ? Math.round((rpes.reduce((a, b) => a + b, 0) / rpes.length) * 10) / 10
+      : null;
     const dur = Math.max(1, Math.round((Date.now() - startedAtRef.current) / 60000));
     return (
       <div style={shellStyle}>
         {renderHeader()}
-        <div style={{ padding: "0 22px 24px", display: "flex", flexDirection: "column", gap: 18, flex: 1, overflowY: "auto" }}>
+        <div
+          style={{
+            padding: "0 22px 24px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 18,
+            flex: 1,
+            overflowY: "auto",
+          }}
+        >
           <div>
-            <span className="cst-mono" style={{ fontSize: 10, opacity: 0.5, letterSpacing: "0.2em" }}>
+            <span
+              className="cst-mono"
+              style={{ fontSize: 10, opacity: 0.5, letterSpacing: "0.2em" }}
+            >
               ★ TERMINÉ
             </span>
             <h1 className="cst-display" style={{ fontSize: 32, margin: "6px 0 0" }}>
@@ -1935,11 +2276,20 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
           </div>
           <div
             className="cst-scroll"
-            style={{ maxHeight: 320, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8 }}
+            style={{
+              maxHeight: 320,
+              overflowY: "auto",
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+            }}
           >
             {sessionMode === "expert" ? (
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                <div className="cst-mono" style={{ fontSize: 10, opacity: 0.6, letterSpacing: "0.18em" }}>
+                <div
+                  className="cst-mono"
+                  style={{ fontSize: 10, opacity: 0.6, letterSpacing: "0.18em" }}
+                >
                   EXERCICES RÉELLEMENT FAITS · RENSEIGNE LE RPE FINAL
                 </div>
                 {expertRecapGroups.length === 0 && (
@@ -1955,7 +2305,9 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
                     comment={expertRecapCommentByExercise[group.exerciseName] ?? ""}
                     open={expertRecapPickerFor === group.exerciseName}
                     onToggle={() =>
-                      setExpertRecapPickerFor((current) => (current === group.exerciseName ? null : group.exerciseName))
+                      setExpertRecapPickerFor((current) =>
+                        current === group.exerciseName ? null : group.exerciseName,
+                      )
                     }
                     onChange={(value) => {
                       setExpertRecapRpeByExercise((currentMap) => ({
@@ -2023,7 +2375,12 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
             }}
             disabled={finishing || expertFinishing}
             className="cst-btn cst-btn-primary"
-            style={{ width: "100%", padding: "18px 0", fontSize: 14, opacity: finishing || expertFinishing ? 0.6 : 1 }}
+            style={{
+              width: "100%",
+              padding: "18px 0",
+              fontSize: 14,
+              opacity: finishing || expertFinishing ? 0.6 : 1,
+            }}
           >
             {finishing || expertFinishing ? "ENREGISTREMENT…" : "TERMINER LA SÉANCE ✓"}
           </button>
@@ -2080,9 +2437,11 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
           alternating={current.alternating}
           sessionId={sessionId}
           onFinish={(logs) => {
-            const computedReps = sessionMode === "expert"
-              ? getExpertEmomLoggedValue(current.exercise, logs.length) ?? logs.reduce((s, l) => s + l, 0)
-              : logs.reduce((s, l) => s + l, 0);
+            const computedReps =
+              sessionMode === "expert"
+                ? (getExpertEmomLoggedValue(current.exercise, logs.length) ??
+                  logs.reduce((s, l) => s + l, 0))
+                : logs.reduce((s, l) => s + l, 0);
             // Persist EMOM result as a single "set_log" entry.
             // Refaire le bloc doit remplacer la ligne existante, pas la dupliquer.
             supabase
@@ -2092,18 +2451,26 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
               .eq("exercise_name", current.exercise.name)
               .eq("set_number", 1)
               .then(() => {
-                supabase.from("set_logs").insert({
-                  session_id: sessionId,
-                  exercise_name: current.exercise.name,
-                  set_number: 1,
-                  reps: computedReps,
-                  rpe: null,
-                  completed: true,
-                }).then(() => {});
+                supabase
+                  .from("set_logs")
+                  .insert({
+                    session_id: sessionId,
+                    exercise_name: current.exercise.name,
+                    set_number: 1,
+                    reps: computedReps,
+                    rpe: null,
+                    completed: true,
+                  })
+                  .then(() => {});
               });
             setSavedByStep((m) => ({
               ...m,
-              [stepIdx]: { exo: current.exercise.name, weight: null, reps: computedReps, rpe: null },
+              [stepIdx]: {
+                exo: current.exercise.name,
+                weight: null,
+                reps: computedReps,
+                rpe: null,
+              },
             }));
             goNext();
           }}
@@ -2157,7 +2524,12 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
             })();
             setSavedByStep((m) => ({
               ...m,
-              [stepIdx]: { exo: current.exercises.map((e) => e.name).join("+"), weight: null, reps: null, rpe: null },
+              [stepIdx]: {
+                exo: current.exercises.map((e) => e.name).join("+"),
+                weight: null,
+                reps: null,
+                rpe: null,
+              },
             }));
             goNext();
           }}
@@ -2186,7 +2558,10 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
           }}
         >
           <div>
-            <span className="cst-mono" style={{ fontSize: 10, opacity: 0.55, letterSpacing: "0.22em" }}>
+            <span
+              className="cst-mono"
+              style={{ fontSize: 10, opacity: 0.55, letterSpacing: "0.22em" }}
+            >
               ★ BLOC {current.blockLetter || ""}
               {current.isSuperset ? " · SUPERSET" : ""}
               {current.blockType && current.blockType !== "standard" && !current.isSuperset
@@ -2218,13 +2593,18 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
                 style={{ padding: 14, display: "flex", flexDirection: "column", gap: 10 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  {color && <ColorDot color={color} size={14} onClick={() => setShowColor(color)} />}
+                  {color && (
+                    <ColorDot color={color} size={14} onClick={() => setShowColor(color)} />
+                  )}
                   {ex.code && (
                     <span className="cst-mono" style={{ fontSize: 10, opacity: 0.55 }}>
                       {ex.code}
                     </span>
                   )}
-                  <h2 className="cst-display" style={{ margin: 0, fontSize: 20, flex: 1, color: "#fff" }}>
+                  <h2
+                    className="cst-display"
+                    style={{ margin: 0, fontSize: 20, flex: 1, color: "#fff" }}
+                  >
                     {ex.name.toUpperCase()}
                   </h2>
                   {bodyweight && (
@@ -2243,7 +2623,10 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
                     </span>
                   )}
                   {ex.tempo && (
-                    <TempoBadge tempo={ex.tempo} onClick={() => setShowTempo({ tempo: ex.tempo, name: ex.name })} />
+                    <TempoBadge
+                      tempo={ex.tempo}
+                      onClick={() => setShowTempo({ tempo: ex.tempo, name: ex.name })}
+                    />
                   )}
                 </div>
                 <div
@@ -2302,7 +2685,10 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
                 )}
                 <ExerciseMediaCard exercise={ex} />
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  <button onClick={() => setShowThread(ex.name)} className="cst-btn cst-btn-ghost-dark cst-btn-sm">
+                  <button
+                    onClick={() => setShowThread(ex.name)}
+                    className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+                  >
                     💬 Échanger / Envoyer une vidéo
                   </button>
                   <button
@@ -2353,30 +2739,60 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
     const exStep = current as WorkSet;
     const exColor2 = asColor(exStep.exercise.color);
     const accent2 = colorHex(exColor2) || "var(--cst-mid-green)";
-    const repPlaceholder2 = parseRepsPerSet(exStep.exercise.reps, exStep.totalSets)[exStep.setNumber - 1]
-      || (exStep.exercise.reps ? String(exStep.exercise.reps) : "");
+    const repPlaceholder2 =
+      parseRepsPerSet(exStep.exercise.reps, exStep.totalSets)[exStep.setNumber - 1] ||
+      (exStep.exercise.reps ? String(exStep.exercise.reps) : "");
     return (
       <div style={shellStyle}>
         {renderHeader()}
-        <div className="cst-scroll" style={{ padding: "0 22px 24px", display: "flex", flexDirection: "column", gap: 14, flex: 1, overflowY: "auto" }}>
+        <div
+          className="cst-scroll"
+          style={{
+            padding: "0 22px 24px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 14,
+            flex: 1,
+            overflowY: "auto",
+          }}
+        >
           {/* Mode badge */}
-          <div className="cst-mono" style={{ fontSize: 9, opacity: 0.4, letterSpacing: "0.2em" }}>MODE EXPÉRIMENTÉ</div>
+          <div className="cst-mono" style={{ fontSize: 9, opacity: 0.4, letterSpacing: "0.2em" }}>
+            MODE EXPÉRIMENTÉ
+          </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            {exColor2 && <ColorDot color={exColor2} size={14} onClick={() => setShowColor(exColor2)} />}
+            {exColor2 && (
+              <ColorDot color={exColor2} size={14} onClick={() => setShowColor(exColor2)} />
+            )}
             <h2 className="cst-display" style={{ margin: 0, fontSize: 22, flex: 1, color: "#fff" }}>
               {exStep.exercise.name.toUpperCase()}
             </h2>
             {exStep.exercise.tempo && (
               <TempoBadge
                 tempo={exStep.exercise.tempo}
-                onClick={() => setShowTempo({ tempo: exStep.exercise.tempo, name: exStep.exercise.name })}
+                onClick={() =>
+                  setShowTempo({ tempo: exStep.exercise.tempo, name: exStep.exercise.name })
+                }
               />
             )}
           </div>
 
-          <div style={{ padding: "22px 16px", background: `${accent2}14`, border: `1px solid ${accent2}55`, borderRadius: 12, textAlign: "center" }}>
-            <div className="cst-mono" style={{ fontSize: 10, opacity: 0.65, letterSpacing: "0.22em" }}>SÉRIE</div>
+          <div
+            style={{
+              padding: "22px 16px",
+              background: `${accent2}14`,
+              border: `1px solid ${accent2}55`,
+              borderRadius: 12,
+              textAlign: "center",
+            }}
+          >
+            <div
+              className="cst-mono"
+              style={{ fontSize: 10, opacity: 0.65, letterSpacing: "0.22em" }}
+            >
+              SÉRIE
+            </div>
             <div className="cst-display" style={{ fontSize: 56, lineHeight: 1, marginTop: 4 }}>
               {exStep.setNumber}
               <span style={{ fontSize: 22, opacity: 0.5 }}> / {exStep.totalSets}</span>
@@ -2396,7 +2812,18 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
           {exColor2 && <RPEGuidance color={exColor2} />}
 
           {exStep.exercise.coach_notes && (
-            <div style={{ fontSize: 12, opacity: 0.85, fontStyle: "italic", whiteSpace: "pre-wrap", background: "rgba(45,90,53,0.10)", borderLeft: "2px solid var(--cst-mid-green)", padding: "6px 10px", borderRadius: 3 }}>
+            <div
+              style={{
+                fontSize: 12,
+                opacity: 0.85,
+                fontStyle: "italic",
+                whiteSpace: "pre-wrap",
+                background: "rgba(45,90,53,0.10)",
+                borderLeft: "2px solid var(--cst-mid-green)",
+                padding: "6px 10px",
+                borderRadius: 3,
+              }}
+            >
               « {exStep.exercise.coach_notes} »
             </div>
           )}
@@ -2412,13 +2839,26 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
           <div style={{ flex: 1 }} />
 
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <div className="cst-mono" style={{ fontSize: 10, opacity: 0.65, letterSpacing: "0.18em" }}>
+            <div
+              className="cst-mono"
+              style={{ fontSize: 10, opacity: 0.65, letterSpacing: "0.18em" }}
+            >
               RPE À RENSEIGNER À LA FIN DE LA SÉANCE
             </div>
             <button
               onClick={() => setShowRpeRef(true)}
               className="cst-mono"
-              style={{ background: "none", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.7)", fontSize: 9, padding: "8px 10px", borderRadius: 6, cursor: "pointer", letterSpacing: "0.12em", alignSelf: "flex-start" }}
+              style={{
+                background: "none",
+                border: "1px solid rgba(255,255,255,0.12)",
+                color: "rgba(255,255,255,0.7)",
+                fontSize: 9,
+                padding: "8px 10px",
+                borderRadius: 6,
+                cursor: "pointer",
+                letterSpacing: "0.12em",
+                alignSelf: "flex-start",
+              }}
             >
               ? VOIR L'ÉCHELLE RPE
             </button>
@@ -2429,23 +2869,51 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
             className="cst-btn cst-btn-primary"
             style={{ width: "100%", padding: "18px 0", fontSize: 14 }}
           >
-            VALIDER {exStep.restAfter ? "→ REPOS" : exStep.isLastSetOfExercise ? "→ EXO SUIVANT" : "→ SUIVANT"}
+            VALIDER{" "}
+            {exStep.restAfter
+              ? "→ REPOS"
+              : exStep.isLastSetOfExercise
+                ? "→ EXO SUIVANT"
+                : "→ SUIVANT"}
           </button>
 
           {canGoNextBlock && (
-            <button onClick={goNextBlock} className="cst-btn cst-btn-ghost-dark cst-btn-sm" style={{ width: "100%", borderStyle: "dashed", opacity: 0.9 }}>
+            <button
+              onClick={goNextBlock}
+              className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+              style={{ width: "100%", borderStyle: "dashed", opacity: 0.9 }}
+            >
               ⤼ Passer cet exercice (j'y reviens via ☰)
             </button>
           )}
 
           <div style={{ display: "flex", gap: 8 }}>
             {canGoPrevBlock && (
-              <button onClick={goPrevBlock} className="cst-btn cst-btn-ghost-dark cst-btn-sm" style={{ flex: 1 }}>← BLOC PRÉCÉDENT</button>
+              <button
+                onClick={goPrevBlock}
+                className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+                style={{ flex: 1 }}
+              >
+                ← BLOC PRÉCÉDENT
+              </button>
             )}
-            <button onClick={() => setShowThread(exStep.exercise.name)} className="cst-btn cst-btn-ghost-dark cst-btn-sm" style={{ flex: 1 }}>
+            <button
+              onClick={() => setShowThread(exStep.exercise.name)}
+              className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+              style={{ flex: 1 }}
+            >
               💬 Filmer / Échanger
             </button>
-            <button onClick={() => setPainFor(exStep.exercise.name)} className="cst-btn cst-btn-sm" style={{ flex: 1, background: "rgba(192,57,43,0.15)", border: "1px solid rgba(192,57,43,0.5)", color: "#ff8a7a" }}>
+            <button
+              onClick={() => setPainFor(exStep.exercise.name)}
+              className="cst-btn cst-btn-sm"
+              style={{
+                flex: 1,
+                background: "rgba(192,57,43,0.15)",
+                border: "1px solid rgba(192,57,43,0.5)",
+                color: "#ff8a7a",
+              }}
+            >
               🔴 Douleur
             </button>
           </div>
@@ -2471,9 +2939,13 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
   // Cible reps par série (placeholder)
   const repTargets = parseRepsPerSet(setStep.exercise.reps, setStep.totalSets);
   const repPlaceholder =
-    repTargets[setStep.setNumber - 1] || (setStep.exercise.reps ? String(setStep.exercise.reps) : "");
+    repTargets[setStep.setNumber - 1] ||
+    (setStep.exercise.reps ? String(setStep.exercise.reps) : "");
 
-  const fb = logging?.rpe != null ? rpeFeedbackMessage(exColor, logging.rpe, setStep.isLastSetOfExercise) : null;
+  const fb =
+    logging?.rpe != null
+      ? rpeFeedbackMessage(exColor, logging.rpe, setStep.isLastSetOfExercise)
+      : null;
 
   // Référence : dernière fois
   const lastExo = lastByExo[setStep.exercise.name];
@@ -2541,7 +3013,9 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
           {setStep.exercise.tempo && (
             <TempoBadge
               tempo={setStep.exercise.tempo}
-              onClick={() => setShowTempo({ tempo: setStep.exercise.tempo, name: setStep.exercise.name })}
+              onClick={() =>
+                setShowTempo({ tempo: setStep.exercise.tempo, name: setStep.exercise.name })
+              }
             />
           )}
         </div>
@@ -2555,7 +3029,10 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
             textAlign: "center",
           }}
         >
-          <div className="cst-mono" style={{ fontSize: 10, opacity: 0.65, letterSpacing: "0.22em" }}>
+          <div
+            className="cst-mono"
+            style={{ fontSize: 10, opacity: 0.65, letterSpacing: "0.22em" }}
+          >
             SÉRIE
           </div>
           <div className="cst-display" style={{ fontSize: 56, lineHeight: 1, marginTop: 4 }}>
@@ -2563,9 +3040,7 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
             <span style={{ fontSize: 22, opacity: 0.5 }}> / {setStep.totalSets}</span>
           </div>
           <div className="cst-mono" style={{ fontSize: 11, opacity: 0.8, marginTop: 8 }}>
-            {repPlaceholder && (
-              <>OBJECTIF {formatRepsObjectif(repPlaceholder) ?? repPlaceholder}</>
-            )}
+            {repPlaceholder && <>OBJECTIF {formatRepsObjectif(repPlaceholder) ?? repPlaceholder}</>}
             {setStep.exercise.rpe_target && <> @ RPE {setStep.exercise.rpe_target}</>}
           </div>
           {setStep.exercise.charge && !bodyweight && (
@@ -2576,7 +3051,10 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
         </div>
 
         {lastRefText && (
-          <div className="cst-mono" style={{ fontSize: 10, opacity: 0.55, padding: "4px 0", letterSpacing: "0.04em" }}>
+          <div
+            className="cst-mono"
+            style={{ fontSize: 10, opacity: 0.55, padding: "4px 0", letterSpacing: "0.04em" }}
+          >
             Dernière fois : {lastRefText} ({formatRelativeDays(lastDate)})
           </div>
         )}
@@ -2620,7 +3098,10 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
               {bodyweight ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                  <span className="cst-mono" style={{ fontSize: 9, opacity: 0.55, letterSpacing: "0.18em" }}>
+                  <span
+                    className="cst-mono"
+                    style={{ fontSize: 9, opacity: 0.55, letterSpacing: "0.18em" }}
+                  >
                     POIDS
                   </span>
                   <div
@@ -2662,8 +3143,13 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span className="cst-mono" style={{ fontSize: 10, opacity: 0.6, letterSpacing: "0.18em" }}>
+              <div
+                style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
+              >
+                <span
+                  className="cst-mono"
+                  style={{ fontSize: 10, opacity: 0.6, letterSpacing: "0.18em" }}
+                >
                   RPE PERÇU
                 </span>
                 <button
@@ -2751,7 +3237,12 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
               className="cst-btn cst-btn-primary"
               style={{ width: "100%", padding: "16px 0", fontSize: 14 }}
             >
-              VALIDER {setStep.restAfter ? "→ REPOS" : setStep.isLastSetOfExercise ? "→ EXO SUIVANT" : "→ SUIVANT"}
+              VALIDER{" "}
+              {setStep.restAfter
+                ? "→ REPOS"
+                : setStep.isLastSetOfExercise
+                  ? "→ EXO SUIVANT"
+                  : "→ SUIVANT"}
             </button>
           </div>
         )}
@@ -2769,7 +3260,11 @@ export function LiveSession({ sessionId, userId, sessionLabel, exercises, onFini
 
         <div style={{ display: "flex", gap: 8 }}>
           {canGoPrevBlock && (
-            <button onClick={goPrevBlock} className="cst-btn cst-btn-ghost-dark cst-btn-sm" style={{ flex: 1 }}>
+            <button
+              onClick={goPrevBlock}
+              className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+              style={{ flex: 1 }}
+            >
               ← BLOC PRÉCÉDENT
             </button>
           )}
@@ -2828,7 +3323,9 @@ function RestScreen({
         doneFiredRef.current = true;
         try {
           if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-            (navigator as Navigator & { vibrate: (p: number | number[]) => boolean }).vibrate([200, 80, 200]);
+            (navigator as Navigator & { vibrate: (p: number | number[]) => boolean }).vibrate([
+              200, 80, 200,
+            ]);
           }
         } catch {
           /* ignore */
@@ -2863,7 +3360,14 @@ function RestScreen({
 
       <div style={{ position: "relative", width: 220, height: 220 }}>
         <svg width="220" height="220" viewBox="0 0 220 220">
-          <circle cx="110" cy="110" r={radius} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="8" />
+          <circle
+            cx="110"
+            cy="110"
+            r={radius}
+            fill="none"
+            stroke="rgba(255,255,255,0.08)"
+            strokeWidth="8"
+          />
           <circle
             cx="110"
             cy="110"
@@ -2889,7 +3393,8 @@ function RestScreen({
           }}
         >
           <span className="cst-display" style={{ fontSize: 56, color: "#fff", lineHeight: 1 }}>
-            {Math.max(0, Math.floor(remaining / 60))}:{String(Math.max(0, remaining % 60)).padStart(2, "0")}
+            {Math.max(0, Math.floor(remaining / 60))}:
+            {String(Math.max(0, remaining % 60)).padStart(2, "0")}
           </span>
           <span className="cst-mono" style={{ fontSize: 10, opacity: 0.5, marginTop: 4 }}>
             / {totalRef.current}s
@@ -2924,12 +3429,20 @@ function RestScreen({
       {currentExercise && (hasVideo(currentExercise) || hasCues(currentExercise)) && (
         <div style={{ display: "flex", gap: 6, width: "100%" }}>
           {hasVideo(currentExercise) && (
-            <button onClick={onVideo} className="cst-btn cst-btn-ghost-dark cst-btn-sm" style={{ flex: 1 }}>
+            <button
+              onClick={onVideo}
+              className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+              style={{ flex: 1 }}
+            >
               ▶ DÉMO
             </button>
           )}
           {hasCues(currentExercise) && (
-            <button onClick={onCues} className="cst-btn cst-btn-ghost-dark cst-btn-sm" style={{ flex: 1 }}>
+            <button
+              onClick={onCues}
+              className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+              style={{ flex: 1 }}
+            >
               📋 CONSIGNES
             </button>
           )}
@@ -2992,13 +3505,17 @@ function EmomScreen({
   onFinish: (repsByMinute: number[]) => void;
   onPain: () => void;
 }) {
-  const [adjustedMin, setAdjustedMin] = useState(Math.max(5, Math.round(durationMin / 5) * 5 || 10));
+  const [adjustedMin, setAdjustedMin] = useState(
+    Math.max(5, Math.round(durationMin / 5) * 5 || 10),
+  );
   const totalSec = adjustedMin * 60;
   const [elapsed, setElapsed] = useState(0);
   const [running, setRunning] = useState(false);
   const [done, setDone] = useState(false);
   const [rpe, setRpe] = useState<number | null>(null);
-  const [repsByMinute, setRepsByMinute] = useState<number[]>(Array(adjustedMin).fill(repsPerMin ?? 0));
+  const [repsByMinute, setRepsByMinute] = useState<number[]>(
+    Array(adjustedMin).fill(repsPerMin ?? 0),
+  );
   const doneFiredRef = useRef(false);
 
   const currentMinute = Math.floor(elapsed / 60); // 0-indexed current minute
@@ -3018,9 +3535,13 @@ function EmomScreen({
       setDone(true);
       try {
         if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-          (navigator as Navigator & { vibrate: (p: number | number[]) => boolean }).vibrate([300, 100, 300, 100, 600]);
+          (navigator as Navigator & { vibrate: (p: number | number[]) => boolean }).vibrate([
+            300, 100, 300, 100, 600,
+          ]);
         }
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
   }, [elapsed, totalSec, running]);
 
@@ -3032,9 +3553,13 @@ function EmomScreen({
     if (currentMinute > 0) {
       try {
         if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-          (navigator as Navigator & { vibrate: (p: number | number[]) => boolean }).vibrate([150, 50, 150]);
+          (navigator as Navigator & { vibrate: (p: number | number[]) => boolean }).vibrate([
+            150, 50, 150,
+          ]);
         }
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
   }, [currentMinute, running]);
 
@@ -3047,25 +3572,50 @@ function EmomScreen({
 
   if (!done) {
     return (
-      <div style={{ padding: "0 22px 24px", display: "flex", flexDirection: "column", gap: 14, flex: 1, overflowY: "auto" }}>
+      <div
+        style={{
+          padding: "0 22px 24px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 14,
+          flex: 1,
+          overflowY: "auto",
+        }}
+      >
         <div>
-          <span className="cst-mono" style={{ fontSize: 10, opacity: 0.55, letterSpacing: "0.22em" }}>
-            EMOM · {exercise.code && `${exercise.code} · `}{adjustedMin} MIN
+          <span
+            className="cst-mono"
+            style={{ fontSize: 10, opacity: 0.55, letterSpacing: "0.22em" }}
+          >
+            EMOM · {exercise.code && `${exercise.code} · `}
+            {adjustedMin} MIN
             {repsLabel ? ` · ${repsLabel} REPS/MIN` : repsPerMin ? ` · ${repsPerMin} REPS/MIN` : ""}
           </span>
           <h2 className="cst-display" style={{ margin: "4px 0 0", fontSize: 22, color: "#fff" }}>
             {exercise.name.toUpperCase()}
           </h2>
           {alternating && (
-            <div className="cst-mono" style={{ fontSize: 10, opacity: 0.6, marginTop: 4, color: "#D4A53B" }}>
-              ↔ {repsLabel} : minutes paires {repsLabel?.split("/")[0]} reps · impaires {repsLabel?.split("/")[1]} reps
+            <div
+              className="cst-mono"
+              style={{ fontSize: 10, opacity: 0.6, marginTop: 4, color: "#D4A53B" }}
+            >
+              ↔ {repsLabel} : minutes paires {repsLabel?.split("/")[0]} reps · impaires{" "}
+              {repsLabel?.split("/")[1]} reps
             </div>
           )}
         </div>
 
         {/* Duration adjustment — only before start */}
         {!running && elapsed === 0 && (
-          <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "center", padding: "10px 0 2px" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              justifyContent: "center",
+              padding: "10px 0 2px",
+            }}
+          >
             <button
               onClick={() => {
                 const next = Math.max(5, adjustedMin - 5);
@@ -3074,8 +3624,15 @@ function EmomScreen({
               }}
               className="cst-btn cst-btn-ghost-dark"
               style={{ padding: "8px 14px", fontSize: 16, fontWeight: 700 }}
-            >−5 MIN</button>
-            <span className="cst-display" style={{ fontSize: 26, minWidth: 80, textAlign: "center" }}>{adjustedMin} MIN</span>
+            >
+              −5 MIN
+            </button>
+            <span
+              className="cst-display"
+              style={{ fontSize: 26, minWidth: 80, textAlign: "center" }}
+            >
+              {adjustedMin} MIN
+            </span>
             <button
               onClick={() => {
                 const next = adjustedMin + 5;
@@ -3084,44 +3641,105 @@ function EmomScreen({
               }}
               className="cst-btn cst-btn-ghost-dark"
               style={{ padding: "8px 14px", fontSize: 16, fontWeight: 700 }}
-            >+5 MIN</button>
+            >
+              +5 MIN
+            </button>
           </div>
         )}
 
         <div style={{ position: "relative", width: 220, height: 220, alignSelf: "center" }}>
           <svg width="220" height="220" viewBox="0 0 220 220">
             {/* Outer ring: total progress */}
-            <circle cx="110" cy="110" r={radiusTotal} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
-            <circle cx="110" cy="110" r={radiusTotal} fill="none" stroke="#3A8A4D" strokeWidth="8"
-              strokeDasharray={circTotal} strokeDashoffset={circTotal * (1 - totalProgress)}
-              strokeLinecap="round" transform="rotate(-90 110 110)"
-              style={{ transition: "stroke-dashoffset 1s linear" }} />
+            <circle
+              cx="110"
+              cy="110"
+              r={radiusTotal}
+              fill="none"
+              stroke="rgba(255,255,255,0.06)"
+              strokeWidth="8"
+            />
+            <circle
+              cx="110"
+              cy="110"
+              r={radiusTotal}
+              fill="none"
+              stroke="#3A8A4D"
+              strokeWidth="8"
+              strokeDasharray={circTotal}
+              strokeDashoffset={circTotal * (1 - totalProgress)}
+              strokeLinecap="round"
+              transform="rotate(-90 110 110)"
+              style={{ transition: "stroke-dashoffset 1s linear" }}
+            />
             {/* Inner ring: minute progress */}
-            <circle cx="110" cy="110" r={radiusMin} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="6" />
-            <circle cx="110" cy="110" r={radiusMin} fill="none"
+            <circle
+              cx="110"
+              cy="110"
+              r={radiusMin}
+              fill="none"
+              stroke="rgba(255,255,255,0.06)"
+              strokeWidth="6"
+            />
+            <circle
+              cx="110"
+              cy="110"
+              r={radiusMin}
+              fill="none"
               stroke={secLeftInMinute < 10 ? "#C9483A" : "#D4A53B"}
               strokeWidth="6"
-              strokeDasharray={circMin} strokeDashoffset={circMin * (1 - minuteProgress)}
-              strokeLinecap="round" transform="rotate(-90 110 110)"
-              style={{ transition: "stroke-dashoffset 1s linear" }} />
+              strokeDasharray={circMin}
+              strokeDashoffset={circMin * (1 - minuteProgress)}
+              strokeLinecap="round"
+              transform="rotate(-90 110 110)"
+              style={{ transition: "stroke-dashoffset 1s linear" }}
+            />
           </svg>
-          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column" }}>
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexDirection: "column",
+            }}
+          >
             {!running && elapsed === 0 ? (
-              <span className="cst-mono" style={{ fontSize: 13, opacity: 0.6, textAlign: "center" }}>PRÊT</span>
+              <span
+                className="cst-mono"
+                style={{ fontSize: 13, opacity: 0.6, textAlign: "center" }}
+              >
+                PRÊT
+              </span>
             ) : (
               <>
-                <span className="cst-mono" style={{ fontSize: 11, opacity: 0.5 }}>MIN {currentMinute + 1} / {adjustedMin}</span>
-                <span className="cst-display" style={{ fontSize: 44, color: "#fff", lineHeight: 1 }}>
+                <span className="cst-mono" style={{ fontSize: 11, opacity: 0.5 }}>
+                  MIN {currentMinute + 1} / {adjustedMin}
+                </span>
+                <span
+                  className="cst-display"
+                  style={{ fontSize: 44, color: "#fff", lineHeight: 1 }}
+                >
                   0:{String(secLeftInMinute).padStart(2, "0")}
                 </span>
-                <span className="cst-mono" style={{ fontSize: 10, opacity: 0.5 }}>dans la minute</span>
+                <span className="cst-mono" style={{ fontSize: 10, opacity: 0.5 }}>
+                  dans la minute
+                </span>
               </>
             )}
           </div>
         </div>
 
         {running && repsPerMin != null && (
-          <div style={{ padding: "14px 16px", background: "rgba(45,90,53,0.18)", border: "1px solid rgba(45,90,53,0.45)", borderRadius: 10, textAlign: "center" }}>
+          <div
+            style={{
+              padding: "14px 16px",
+              background: "rgba(45,90,53,0.18)",
+              border: "1px solid rgba(45,90,53,0.45)",
+              borderRadius: 10,
+              textAlign: "center",
+            }}
+          >
             {secInMinute < 15 ? (
               <span className="cst-display" style={{ fontSize: 18, color: "#6EAB76" }}>
                 FAIS {repsPerMin} REPS MAINTENANT
@@ -3143,7 +3761,10 @@ function EmomScreen({
             {running ? "⏸ PAUSE" : elapsed === 0 ? "▶ DÉMARRER" : "▶ REPRENDRE"}
           </button>
           <button
-            onClick={() => { setDone(true); setRunning(false); }}
+            onClick={() => {
+              setDone(true);
+              setRunning(false);
+            }}
             className="cst-btn cst-btn-ghost-dark"
             style={{ flex: 1, padding: "14px 0", fontSize: 11 }}
           >
@@ -3154,11 +3775,21 @@ function EmomScreen({
         {/* Minute-by-minute log */}
         {elapsed > 0 && (
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <span className="cst-mono" style={{ fontSize: 9, opacity: 0.5, letterSpacing: "0.18em" }}>REPS PAR MINUTE</span>
+            <span
+              className="cst-mono"
+              style={{ fontSize: 9, opacity: 0.5, letterSpacing: "0.18em" }}
+            >
+              REPS PAR MINUTE
+            </span>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 4 }}>
               {repsByMinute.slice(0, Math.min(currentMinute + 1, durationMin)).map((r, i) => (
-                <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-                  <span className="cst-mono" style={{ fontSize: 8, opacity: 0.4 }}>{i + 1}</span>
+                <div
+                  key={i}
+                  style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}
+                >
+                  <span className="cst-mono" style={{ fontSize: 8, opacity: 0.4 }}>
+                    {i + 1}
+                  </span>
                   <input
                     type="number"
                     value={r}
@@ -3171,7 +3802,13 @@ function EmomScreen({
                       });
                     }}
                     className="cst-input"
-                    style={{ width: "100%", padding: "6px 4px", fontSize: 14, textAlign: "center", minHeight: 36 }}
+                    style={{
+                      width: "100%",
+                      padding: "6px 4px",
+                      fontSize: 14,
+                      textAlign: "center",
+                      minHeight: 36,
+                    }}
                   />
                 </div>
               ))}
@@ -3179,7 +3816,16 @@ function EmomScreen({
           </div>
         )}
 
-        <button onClick={onPain} className="cst-btn cst-btn-sm" style={{ alignSelf: "flex-start", background: "rgba(192,57,43,0.15)", border: "1px solid rgba(192,57,43,0.5)", color: "#ff8a7a" }}>
+        <button
+          onClick={onPain}
+          className="cst-btn cst-btn-sm"
+          style={{
+            alignSelf: "flex-start",
+            background: "rgba(192,57,43,0.15)",
+            border: "1px solid rgba(192,57,43,0.5)",
+            color: "#ff8a7a",
+          }}
+        >
           🔴 Signaler une douleur
         </button>
       </div>
@@ -3189,9 +3835,20 @@ function EmomScreen({
   // Finished — RPE recap
   const totalReps = repsByMinute.reduce((s, r) => s + r, 0);
   return (
-    <div style={{ padding: "0 22px 24px", display: "flex", flexDirection: "column", gap: 16, flex: 1, overflowY: "auto" }}>
+    <div
+      style={{
+        padding: "0 22px 24px",
+        display: "flex",
+        flexDirection: "column",
+        gap: 16,
+        flex: 1,
+        overflowY: "auto",
+      }}
+    >
       <div>
-        <span className="cst-mono" style={{ fontSize: 10, opacity: 0.55, letterSpacing: "0.22em" }}>✓ EMOM TERMINÉ</span>
+        <span className="cst-mono" style={{ fontSize: 10, opacity: 0.55, letterSpacing: "0.22em" }}>
+          ✓ EMOM TERMINÉ
+        </span>
         <h2 className="cst-display" style={{ margin: "4px 0 0", fontSize: 22, color: "#fff" }}>
           {exercise.name.toUpperCase()}
         </h2>
@@ -3201,13 +3858,29 @@ function EmomScreen({
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        <span className="cst-mono" style={{ fontSize: 10, opacity: 0.6, letterSpacing: "0.18em" }}>RPE GLOBAL SUR CET EMOM</span>
+        <span className="cst-mono" style={{ fontSize: 10, opacity: 0.6, letterSpacing: "0.18em" }}>
+          RPE GLOBAL SUR CET EMOM
+        </span>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 4 }}>
           {RPE_PICKER_VALUES.filter((value) => value > 0).map((v) => {
             const on = rpe === v;
             const hue = v >= 9 ? "#C9483A" : v >= 7 ? "#D4A53B" : "#3A8A4D";
             return (
-              <button key={v} onClick={() => setRpe(v)} className="cst-mono" style={{ padding: "12px 0", borderRadius: 6, border: `1px solid ${on ? hue : "rgba(255,255,255,0.12)"}`, background: on ? `${hue}33` : "transparent", color: on ? "#fff" : "rgba(255,255,255,0.7)", fontSize: 15, cursor: "pointer", ...rpeButtonReset(on ? "#ffffff" : "rgba(255,255,255,0.7)") }}>
+              <button
+                key={v}
+                onClick={() => setRpe(v)}
+                className="cst-mono"
+                style={{
+                  padding: "12px 0",
+                  borderRadius: 6,
+                  border: `1px solid ${on ? hue : "rgba(255,255,255,0.12)"}`,
+                  background: on ? `${hue}33` : "transparent",
+                  color: on ? "#fff" : "rgba(255,255,255,0.7)",
+                  fontSize: 15,
+                  cursor: "pointer",
+                  ...rpeButtonReset(on ? "#ffffff" : "rgba(255,255,255,0.7)"),
+                }}
+              >
                 {formatRpeValue(v)}
               </button>
             );
@@ -3269,9 +3942,12 @@ function CircuitScreen({
   const nextStationIdx = (stationInRound + 1) % n;
   const nextExercise = exercises[nextStationIdx];
   const totalProgress = totalSec > 0 ? elapsed / totalSec : 0;
-  const phaseProgress = (isWorking ? workSecPerStation : restSecBetween) > 0
-    ? (isWorking ? timeInStation / workSecPerStation : (timeInStation - workSecPerStation) / restSecBetween)
-    : 0;
+  const phaseProgress =
+    (isWorking ? workSecPerStation : restSecBetween) > 0
+      ? isWorking
+        ? timeInStation / workSecPerStation
+        : (timeInStation - workSecPerStation) / restSecBetween
+      : 0;
 
   const currentExercise = exercises[stationInRound];
 
@@ -3288,9 +3964,13 @@ function CircuitScreen({
       setDone(true);
       try {
         if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-          (navigator as Navigator & { vibrate: (p: number | number[]) => boolean }).vibrate([300, 100, 300, 100, 600]);
+          (navigator as Navigator & { vibrate: (p: number | number[]) => boolean }).vibrate([
+            300, 100, 300, 100, 600,
+          ]);
         }
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
   }, [elapsed, totalSec, running]);
 
@@ -3302,9 +3982,13 @@ function CircuitScreen({
     if (stationAbsolute > 0) {
       try {
         if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-          (navigator as Navigator & { vibrate: (p: number | number[]) => boolean }).vibrate([150, 50, 150]);
+          (navigator as Navigator & { vibrate: (p: number | number[]) => boolean }).vibrate([
+            150, 50, 150,
+          ]);
         }
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
   }, [stationAbsolute, running]);
 
@@ -3315,27 +3999,56 @@ function CircuitScreen({
 
   if (!done) {
     return (
-      <div style={{ padding: "0 22px 24px", display: "flex", flexDirection: "column", gap: 14, flex: 1, overflowY: "auto" }}>
+      <div
+        style={{
+          padding: "0 22px 24px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 14,
+          flex: 1,
+          overflowY: "auto",
+        }}
+      >
         <div>
-          <span className="cst-mono" style={{ fontSize: 10, opacity: 0.55, letterSpacing: "0.22em" }}>
+          <span
+            className="cst-mono"
+            style={{ fontSize: 10, opacity: 0.55, letterSpacing: "0.22em" }}
+          >
             CIRCUIT {blockLetter ? `· BLOC ${blockLetter} ` : ""}· {n} STATIONS · {totalMin} MIN
           </span>
         </div>
 
         {/* Duration adjustment — only before start */}
         {!running && elapsed === 0 && (
-          <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "center", padding: "10px 0 2px" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              justifyContent: "center",
+              padding: "10px 0 2px",
+            }}
+          >
             <button
               onClick={() => setTotalMin((m) => Math.max(5, m - 5))}
               className="cst-btn cst-btn-ghost-dark"
               style={{ padding: "8px 14px", fontSize: 16, fontWeight: 700 }}
-            >−5 MIN</button>
-            <span className="cst-display" style={{ fontSize: 26, minWidth: 80, textAlign: "center" }}>{totalMin} MIN</span>
+            >
+              −5 MIN
+            </button>
+            <span
+              className="cst-display"
+              style={{ fontSize: 26, minWidth: 80, textAlign: "center" }}
+            >
+              {totalMin} MIN
+            </span>
             <button
               onClick={() => setTotalMin((m) => m + 5)}
               className="cst-btn cst-btn-ghost-dark"
               style={{ padding: "8px 14px", fontSize: 16, fontWeight: 700 }}
-            >+5 MIN</button>
+            >
+              +5 MIN
+            </button>
           </div>
         )}
 
@@ -3343,30 +4056,78 @@ function CircuitScreen({
         <div style={{ position: "relative", width: 220, height: 220, alignSelf: "center" }}>
           <svg width="220" height="220" viewBox="0 0 220 220">
             {/* Outer ring: total progress */}
-            <circle cx="110" cy="110" r={radius} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
-            <circle cx="110" cy="110" r={radius} fill="none" stroke="#3A8A4D" strokeWidth="8"
-              strokeDasharray={circ} strokeDashoffset={circ * (1 - totalProgress)}
-              strokeLinecap="round" transform="rotate(-90 110 110)"
-              style={{ transition: "stroke-dashoffset 1s linear" }} />
+            <circle
+              cx="110"
+              cy="110"
+              r={radius}
+              fill="none"
+              stroke="rgba(255,255,255,0.06)"
+              strokeWidth="8"
+            />
+            <circle
+              cx="110"
+              cy="110"
+              r={radius}
+              fill="none"
+              stroke="#3A8A4D"
+              strokeWidth="8"
+              strokeDasharray={circ}
+              strokeDashoffset={circ * (1 - totalProgress)}
+              strokeLinecap="round"
+              transform="rotate(-90 110 110)"
+              style={{ transition: "stroke-dashoffset 1s linear" }}
+            />
             {/* Inner ring: current phase */}
-            <circle cx="110" cy="110" r={phaseRadius} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="6" />
-            <circle cx="110" cy="110" r={phaseRadius} fill="none"
-              stroke={isWorking ? (phaseCountdown < 10 ? "#C9483A" : "#D4A53B") : "rgba(100,160,220,0.8)"}
+            <circle
+              cx="110"
+              cy="110"
+              r={phaseRadius}
+              fill="none"
+              stroke="rgba(255,255,255,0.06)"
               strokeWidth="6"
-              strokeDasharray={phaseCirc} strokeDashoffset={phaseCirc * (1 - phaseProgress)}
-              strokeLinecap="round" transform="rotate(-90 110 110)"
-              style={{ transition: "stroke-dashoffset 1s linear" }} />
+            />
+            <circle
+              cx="110"
+              cy="110"
+              r={phaseRadius}
+              fill="none"
+              stroke={
+                isWorking ? (phaseCountdown < 10 ? "#C9483A" : "#D4A53B") : "rgba(100,160,220,0.8)"
+              }
+              strokeWidth="6"
+              strokeDasharray={phaseCirc}
+              strokeDashoffset={phaseCirc * (1 - phaseProgress)}
+              strokeLinecap="round"
+              transform="rotate(-90 110 110)"
+              style={{ transition: "stroke-dashoffset 1s linear" }}
+            />
           </svg>
-          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 2 }}>
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexDirection: "column",
+              gap: 2,
+            }}
+          >
             {!running && elapsed === 0 ? (
-              <span className="cst-mono" style={{ fontSize: 13, opacity: 0.6 }}>PRÊT</span>
+              <span className="cst-mono" style={{ fontSize: 13, opacity: 0.6 }}>
+                PRÊT
+              </span>
             ) : (
               <>
                 <span className="cst-mono" style={{ fontSize: 9, opacity: 0.5 }}>
                   {isWorking ? "TRAVAIL" : "TRANSITION"} · TOUR {round + 1}
                 </span>
-                <span className="cst-display" style={{ fontSize: 44, color: "#fff", lineHeight: 1 }}>
-                  {String(Math.floor(phaseCountdown / 60)).padStart(1, "0")}:{String(phaseCountdown % 60).padStart(2, "0")}
+                <span
+                  className="cst-display"
+                  style={{ fontSize: 44, color: "#fff", lineHeight: 1 }}
+                >
+                  {String(Math.floor(phaseCountdown / 60)).padStart(1, "0")}:
+                  {String(phaseCountdown % 60).padStart(2, "0")}
                 </span>
                 <span className="cst-mono" style={{ fontSize: 9, opacity: 0.5 }}>
                   STATION {stationInRound + 1} / {n}
@@ -3378,12 +4139,14 @@ function CircuitScreen({
 
         {/* Current exercise */}
         {(running || elapsed > 0) && currentExercise && (
-          <div style={{
-            padding: "14px 16px",
-            background: isWorking ? "rgba(45,90,53,0.18)" : "rgba(60,80,140,0.15)",
-            border: `1px solid ${isWorking ? "rgba(45,90,53,0.45)" : "rgba(60,80,140,0.45)"}`,
-            borderRadius: 10,
-          }}>
+          <div
+            style={{
+              padding: "14px 16px",
+              background: isWorking ? "rgba(45,90,53,0.18)" : "rgba(60,80,140,0.15)",
+              border: `1px solid ${isWorking ? "rgba(45,90,53,0.45)" : "rgba(60,80,140,0.45)"}`,
+              borderRadius: 10,
+            }}
+          >
             <div className="cst-mono" style={{ fontSize: 9, opacity: 0.6, marginBottom: 4 }}>
               {isWorking ? "▶ EN COURS" : "⏸ TRANSITION"}
             </div>
@@ -3400,25 +4163,65 @@ function CircuitScreen({
 
         {/* Next station preview */}
         {running && n > 1 && (
-          <div style={{ padding: "8px 12px", background: "rgba(255,255,255,0.03)", borderRadius: 8, display: "flex", alignItems: "center", gap: 10 }}>
-            <span className="cst-mono" style={{ fontSize: 9, opacity: 0.5, whiteSpace: "nowrap" }}>SUIVANT →</span>
-            <span className="cst-display" style={{ fontSize: 13, opacity: 0.75 }}>{nextExercise?.name.toUpperCase()}</span>
+          <div
+            style={{
+              padding: "8px 12px",
+              background: "rgba(255,255,255,0.03)",
+              borderRadius: 8,
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+            }}
+          >
+            <span className="cst-mono" style={{ fontSize: 9, opacity: 0.5, whiteSpace: "nowrap" }}>
+              SUIVANT →
+            </span>
+            <span className="cst-display" style={{ fontSize: 13, opacity: 0.75 }}>
+              {nextExercise?.name.toUpperCase()}
+            </span>
           </div>
         )}
 
         {/* Stations list before start */}
         {!running && elapsed === 0 && (
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <span className="cst-mono" style={{ fontSize: 9, opacity: 0.5, letterSpacing: "0.18em" }}>STATIONS</span>
+            <span
+              className="cst-mono"
+              style={{ fontSize: 9, opacity: 0.5, letterSpacing: "0.18em" }}
+            >
+              STATIONS
+            </span>
             {exercises.map((ex, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", background: "rgba(255,255,255,0.03)", borderRadius: 6 }}>
-                <span className="cst-mono" style={{ fontSize: 10, opacity: 0.45, minWidth: 20 }}>{i + 1}.</span>
-                <span className="cst-display" style={{ fontSize: 13 }}>{ex.name.toUpperCase()}</span>
-                {ex.reps && <span className="cst-mono" style={{ fontSize: 10, opacity: 0.6, marginLeft: "auto" }}>{ex.reps}</span>}
+              <div
+                key={i}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  padding: "8px 10px",
+                  background: "rgba(255,255,255,0.03)",
+                  borderRadius: 6,
+                }}
+              >
+                <span className="cst-mono" style={{ fontSize: 10, opacity: 0.45, minWidth: 20 }}>
+                  {i + 1}.
+                </span>
+                <span className="cst-display" style={{ fontSize: 13 }}>
+                  {ex.name.toUpperCase()}
+                </span>
+                {ex.reps && (
+                  <span
+                    className="cst-mono"
+                    style={{ fontSize: 10, opacity: 0.6, marginLeft: "auto" }}
+                  >
+                    {ex.reps}
+                  </span>
+                )}
               </div>
             ))}
             <div className="cst-mono" style={{ fontSize: 9, opacity: 0.45, marginTop: 4 }}>
-              {workSecPerStation}s travail{restSecBetween > 0 ? ` · ${restSecBetween}s transition` : " · pas de repos"}
+              {workSecPerStation}s travail
+              {restSecBetween > 0 ? ` · ${restSecBetween}s transition` : " · pas de repos"}
             </div>
           </div>
         )}
@@ -3432,7 +4235,10 @@ function CircuitScreen({
             {running ? "⏸ PAUSE" : elapsed === 0 ? "▶ DÉMARRER" : "▶ REPRENDRE"}
           </button>
           <button
-            onClick={() => { setDone(true); setRunning(false); }}
+            onClick={() => {
+              setDone(true);
+              setRunning(false);
+            }}
             className="cst-btn cst-btn-ghost-dark"
             style={{ flex: 1, padding: "14px 0", fontSize: 11 }}
           >
@@ -3440,7 +4246,16 @@ function CircuitScreen({
           </button>
         </div>
 
-        <button onClick={onPain} className="cst-btn cst-btn-sm" style={{ alignSelf: "flex-start", background: "rgba(192,57,43,0.15)", border: "1px solid rgba(192,57,43,0.5)", color: "#ff8a7a" }}>
+        <button
+          onClick={onPain}
+          className="cst-btn cst-btn-sm"
+          style={{
+            alignSelf: "flex-start",
+            background: "rgba(192,57,43,0.15)",
+            border: "1px solid rgba(192,57,43,0.5)",
+            color: "#ff8a7a",
+          }}
+        >
           🔴 Signaler une douleur
         </button>
       </div>
@@ -3450,9 +4265,20 @@ function CircuitScreen({
   // Finished — RPE recap
   const minElapsed = Math.round(elapsed / 60);
   return (
-    <div style={{ padding: "0 22px 24px", display: "flex", flexDirection: "column", gap: 16, flex: 1, overflowY: "auto" }}>
+    <div
+      style={{
+        padding: "0 22px 24px",
+        display: "flex",
+        flexDirection: "column",
+        gap: 16,
+        flex: 1,
+        overflowY: "auto",
+      }}
+    >
       <div>
-        <span className="cst-mono" style={{ fontSize: 10, opacity: 0.55, letterSpacing: "0.22em" }}>✓ CIRCUIT TERMINÉ</span>
+        <span className="cst-mono" style={{ fontSize: 10, opacity: 0.55, letterSpacing: "0.22em" }}>
+          ✓ CIRCUIT TERMINÉ
+        </span>
         <h2 className="cst-display" style={{ margin: "4px 0 0", fontSize: 22, color: "#fff" }}>
           {n} STATIONS · {minElapsed} MIN
         </h2>
@@ -3462,13 +4288,29 @@ function CircuitScreen({
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        <span className="cst-mono" style={{ fontSize: 10, opacity: 0.6, letterSpacing: "0.18em" }}>RPE GLOBAL SUR CE CIRCUIT</span>
+        <span className="cst-mono" style={{ fontSize: 10, opacity: 0.6, letterSpacing: "0.18em" }}>
+          RPE GLOBAL SUR CE CIRCUIT
+        </span>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 4 }}>
           {RPE_PICKER_VALUES.filter((value) => value > 0).map((v) => {
             const on = rpe === v;
             const hue = v >= 9 ? "#C9483A" : v >= 7 ? "#D4A53B" : "#3A8A4D";
             return (
-              <button key={v} onClick={() => setRpe(v)} className="cst-mono" style={{ padding: "12px 0", borderRadius: 6, border: `1px solid ${on ? hue : "rgba(255,255,255,0.12)"}`, background: on ? `${hue}33` : "transparent", color: on ? "#fff" : "rgba(255,255,255,0.7)", fontSize: 15, cursor: "pointer", ...rpeButtonReset(on ? "#ffffff" : "rgba(255,255,255,0.7)") }}>
+              <button
+                key={v}
+                onClick={() => setRpe(v)}
+                className="cst-mono"
+                style={{
+                  padding: "12px 0",
+                  borderRadius: 6,
+                  border: `1px solid ${on ? hue : "rgba(255,255,255,0.12)"}`,
+                  background: on ? `${hue}33` : "transparent",
+                  color: on ? "#fff" : "rgba(255,255,255,0.7)",
+                  fontSize: 15,
+                  cursor: "pointer",
+                  ...rpeButtonReset(on ? "#ffffff" : "rgba(255,255,255,0.7)"),
+                }}
+              >
                 {formatRpeValue(v)}
               </button>
             );
@@ -3526,9 +4368,13 @@ function TimedSetScreen({
       setFinished(true);
       try {
         if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-          (navigator as Navigator & { vibrate: (p: number | number[]) => boolean }).vibrate([200, 80, 200, 80, 400]);
+          (navigator as Navigator & { vibrate: (p: number | number[]) => boolean }).vibrate([
+            200, 80, 200, 80, 400,
+          ]);
         }
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
   }, [remaining, running]);
 
@@ -3572,21 +4418,47 @@ function TimedSetScreen({
 
       <div style={{ position: "relative", width: 200, height: 200 }}>
         <svg width="200" height="200" viewBox="0 0 200 200">
-          <circle cx="100" cy="100" r={radius} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="8" />
           <circle
-            cx="100" cy="100" r={radius} fill="none" stroke={color} strokeWidth="8"
-            strokeDasharray={circ} strokeDashoffset={off} strokeLinecap="round"
+            cx="100"
+            cy="100"
+            r={radius}
+            fill="none"
+            stroke="rgba(255,255,255,0.08)"
+            strokeWidth="8"
+          />
+          <circle
+            cx="100"
+            cy="100"
+            r={radius}
+            fill="none"
+            stroke={color}
+            strokeWidth="8"
+            strokeDasharray={circ}
+            strokeDashoffset={off}
+            strokeLinecap="round"
             transform="rotate(-90 100 100)"
             style={{ transition: "stroke-dashoffset 1s linear, stroke 0.3s" }}
           />
         </svg>
-        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column" }}>
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexDirection: "column",
+          }}
+        >
           {finished ? (
-            <span className="cst-display" style={{ fontSize: 40, color: "#3A8A4D" }}>✓</span>
+            <span className="cst-display" style={{ fontSize: 40, color: "#3A8A4D" }}>
+              ✓
+            </span>
           ) : (
             <>
               <span className="cst-display" style={{ fontSize: 52, color: "#fff", lineHeight: 1 }}>
-                {Math.max(0, Math.floor(remaining / 60))}:{String(Math.max(0, remaining % 60)).padStart(2, "0")}
+                {Math.max(0, Math.floor(remaining / 60))}:
+                {String(Math.max(0, remaining % 60)).padStart(2, "0")}
               </span>
               <span className="cst-mono" style={{ fontSize: 10, opacity: 0.5, marginTop: 4 }}>
                 / {totalRef.current}s
@@ -3606,7 +4478,10 @@ function TimedSetScreen({
             {running ? "⏸ PAUSE" : remaining === seconds ? "▶ DÉMARRER" : "▶ REPRENDRE"}
           </button>
           <button
-            onClick={() => { setFinished(true); setRunning(false); }}
+            onClick={() => {
+              setFinished(true);
+              setRunning(false);
+            }}
             className="cst-btn cst-btn-ghost-dark"
             style={{ flex: 1, padding: "14px 0", fontSize: 11 }}
           >
@@ -3616,13 +4491,21 @@ function TimedSetScreen({
       )}
 
       {finished && !isLastRound && (
-        <button onClick={startNextRound} className="cst-btn cst-btn-primary" style={{ width: "100%", padding: "16px 0", fontSize: 14 }}>
+        <button
+          onClick={startNextRound}
+          className="cst-btn cst-btn-primary"
+          style={{ width: "100%", padding: "16px 0", fontSize: 14 }}
+        >
           ✓ {sideLabel} {roundIdx + 1} OK — {sideLabel} {roundIdx + 2} →
         </button>
       )}
 
       {finished && isLastRound && (
-        <button onClick={onDone} className="cst-btn cst-btn-primary" style={{ width: "100%", padding: "16px 0", fontSize: 14 }}>
+        <button
+          onClick={onDone}
+          className="cst-btn cst-btn-primary"
+          style={{ width: "100%", padding: "16px 0", fontSize: 14 }}
+        >
           ✓ TERMINÉ — NOTER LE RPE →
         </button>
       )}
@@ -3693,7 +4576,13 @@ const LabeledInput = React.memo(function LabeledInput({
         className="cst-input"
         type="text"
         inputMode={inputMode}
-        pattern={inputMode === "decimal" ? "[0-9]*[.,]?[0-9]*" : inputMode === "numeric" ? "[0-9]*" : undefined}
+        pattern={
+          inputMode === "decimal"
+            ? "[0-9]*[.,]?[0-9]*"
+            : inputMode === "numeric"
+              ? "[0-9]*"
+              : undefined
+        }
         value={local}
         placeholder={placeholder}
         autoComplete="off"
@@ -3754,12 +4643,20 @@ function CuesActionBar({
   return (
     <div style={{ display: "flex", gap: 6 }}>
       {v && (
-        <button onClick={onVideo} className="cst-btn cst-btn-ghost-dark cst-btn-sm" style={{ flex: 1 }}>
+        <button
+          onClick={onVideo}
+          className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+          style={{ flex: 1 }}
+        >
           ▶ DÉMO
         </button>
       )}
       {c && (
-        <button onClick={onCues} className="cst-btn cst-btn-ghost-dark cst-btn-sm" style={{ flex: 1 }}>
+        <button
+          onClick={onCues}
+          className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+          style={{ flex: 1 }}
+        >
           📋 CONSIGNES
         </button>
       )}
@@ -3812,18 +4709,39 @@ function SessionMediaUploader({ sessionId, userId }: { sessionId: string; userId
   }
 
   return (
-    <div style={{ padding: "14px 16px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.10)", borderRadius: 10, display: "flex", flexDirection: "column", gap: 10 }}>
+    <div
+      style={{
+        padding: "14px 16px",
+        background: "rgba(255,255,255,0.04)",
+        border: "1px solid rgba(255,255,255,0.10)",
+        borderRadius: 10,
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+      }}
+    >
       <div className="cst-mono" style={{ fontSize: 10, opacity: 0.65, letterSpacing: "0.18em" }}>
         🎥 PARTAGER DES VIDÉOS DE LA SÉANCE
       </div>
       <div style={{ fontSize: 12, opacity: 0.7, lineHeight: 1.4 }}>
-        En plus des vidéos par exercice, partage ici des vidéos ou photos globales sur ta séance. Ouvre le sélecteur de fichiers — pas de caméra en direct.
+        En plus des vidéos par exercice, partage ici des vidéos ou photos globales sur ta séance.
+        Ouvre le sélecteur de fichiers — pas de caméra en direct.
       </div>
 
       {uploaded.length > 0 && (
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           {uploaded.map((name, i) => (
-            <div key={i} className="cst-mono" style={{ fontSize: 10, opacity: 0.8, padding: "4px 8px", background: "rgba(45,90,53,0.18)", borderRadius: 4 }}>
+            <div
+              key={i}
+              className="cst-mono"
+              style={{
+                fontSize: 10,
+                opacity: 0.8,
+                padding: "4px 8px",
+                background: "rgba(45,90,53,0.18)",
+                borderRadius: 4,
+              }}
+            >
               ✓ {name}
             </div>
           ))}
@@ -3831,7 +4749,9 @@ function SessionMediaUploader({ sessionId, userId }: { sessionId: string; userId
       )}
 
       {uploading && (
-        <div className="cst-mono" style={{ fontSize: 10, opacity: 0.6 }}>ENVOI… {progress}%</div>
+        <div className="cst-mono" style={{ fontSize: 10, opacity: 0.6 }}>
+          ENVOI… {progress}%
+        </div>
       )}
 
       <button
@@ -3861,7 +4781,9 @@ function SessionMediaUploader({ sessionId, userId }: { sessionId: string; userId
 function VideoModal({ exercise, onClose }: { exercise: ProgExercise | null; onClose: () => void }) {
   if (!exercise) return null;
   const id =
-    exercise.youtube_id || extractYoutubeId(exercise.youtube_url) || extractYoutubeId(exercise.youtube_alt_url);
+    exercise.youtube_id ||
+    extractYoutubeId(exercise.youtube_url) ||
+    extractYoutubeId(exercise.youtube_alt_url);
   const fallbackUrl = exercise.youtube_url || exercise.youtube_alt_url || null;
   return (
     <div
@@ -3886,12 +4808,21 @@ function VideoModal({ exercise, onClose }: { exercise: ProgExercise | null; onCl
         }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span className="cst-mono" style={{ fontSize: 10, opacity: 0.75, letterSpacing: "0.2em", color: "#fff" }}>
+          <span
+            className="cst-mono"
+            style={{ fontSize: 10, opacity: 0.75, letterSpacing: "0.2em", color: "#fff" }}
+          >
             ▶ {exercise.name?.toUpperCase()}
           </span>
           <button
             onClick={onClose}
-            style={{ background: "none", border: 0, color: "#fff", fontSize: 22, cursor: "pointer" }}
+            style={{
+              background: "none",
+              border: 0,
+              color: "#fff",
+              fontSize: 22,
+              cursor: "pointer",
+            }}
             aria-label="Fermer"
           >
             ×
@@ -3915,7 +4846,14 @@ function VideoModal({ exercise, onClose }: { exercise: ProgExercise | null; onCl
               style={{ width: "100%", height: "100%", border: 0 }}
             />
           ) : (
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                height: "100%",
+              }}
+            >
               <a
                 href={fallbackUrl || "#"}
                 target="_blank"
@@ -3951,7 +4889,8 @@ function CuesModal({
   if (!exercise) return null;
   const color = (() => {
     const v = (exercise.color || "").toLowerCase();
-    if (v === "red" || v === "green" || v === "yellow" || v === "lime" || v === "blue") return v as ExerciseColor;
+    if (v === "red" || v === "green" || v === "yellow" || v === "lime" || v === "blue")
+      return v as ExerciseColor;
     return null;
   })();
   return (
@@ -3991,7 +4930,13 @@ function CuesModal({
           </h3>
           <button
             onClick={onClose}
-            style={{ background: "none", border: 0, color: "#fff", fontSize: 18, cursor: "pointer" }}
+            style={{
+              background: "none",
+              border: 0,
+              color: "#fff",
+              fontSize: 18,
+              cursor: "pointer",
+            }}
             aria-label="Fermer"
           >
             ×
@@ -4098,7 +5043,10 @@ function CuesModal({
         )}
 
         {hasVideo(exercise) && (
-          <div className="cst-mono" style={{ fontSize: 10, opacity: 0.55, letterSpacing: "0.18em" }}>
+          <div
+            className="cst-mono"
+            style={{ fontSize: 10, opacity: 0.55, letterSpacing: "0.18em" }}
+          >
             ASTUCE — bouton ▶ DÉMO pour la vidéo
           </div>
         )}
