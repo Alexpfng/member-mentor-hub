@@ -33,11 +33,15 @@ export function ExerciseThread({
   exerciseName,
   userId,
   viewerRole = "member",
+  expandVideos = false,
 }: {
   sessionId: string;
   exerciseName: string;
   userId: string;
   viewerRole?: "coach" | "member";
+  // Lecture directe : affiche le lecteur vidéo déplié d'emblée (sans clic).
+  // Utilisé dans le détail de séance côté coach.
+  expandVideos?: boolean;
 }) {
   const fetchThread = useServerFn(getExerciseThread);
   const postComment = useServerFn(postExerciseComment);
@@ -55,8 +59,28 @@ export function ExerciseThread({
   async function load() {
     try {
       const res = await fetchThread({ data: { sessionId, exerciseName } });
-      setVideos(res.videos as Video[]);
+      const vids = res.videos as Video[];
+      setVideos(vids);
       setComments(res.comments as Comment[]);
+      // Lecture directe : précharge les URLs signées pour afficher le lecteur
+      // sans que le coach ait à déplier chaque vidéo.
+      if (expandVideos && vids.length > 0) {
+        const entries = await Promise.all(
+          vids.map(async (v) => {
+            try {
+              const r = await sign({ data: { storagePath: v.storage_path } });
+              return [v.id, r.url] as const;
+            } catch {
+              return null;
+            }
+          }),
+        );
+        setSigned((s) => {
+          const next = { ...s };
+          for (const e of entries) if (e) next[e[0]] = e[1];
+          return next;
+        });
+      }
     } catch (e) {
       console.error(e);
     }
@@ -143,7 +167,9 @@ export function ExerciseThread({
       {/* Videos gallery */}
       {videos.length > 0 && (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {videos.map(v => (
+          {videos.map(v => {
+            const open = expandVideos || openVideoId === v.id;
+            return (
             <div key={v.id} style={{
               borderRadius: 8,
               border: "1px solid rgba(255,255,255,0.08)",
@@ -154,7 +180,7 @@ export function ExerciseThread({
                 width: "100%", padding: "8px 10px", display: "flex",
                 alignItems: "center", justifyContent: "space-between", gap: 8,
                 background: "transparent", border: "none", color: "#fff",
-                cursor: "pointer", textAlign: "left",
+                cursor: expandVideos ? "default" : "pointer", textAlign: "left",
               }}>
                 <span style={{ fontFamily: "var(--cst-mono)", fontSize: 10 }}>
                   🎥 {new Date(v.created_at).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
@@ -166,17 +192,17 @@ export function ExerciseThread({
                   {v.unread_for_member && !isCoachView && (
                     <span className="cst-mono" style={{ fontSize: 8, padding: "2px 6px", borderRadius: 3, background: "rgba(45,90,53,0.3)", color: "#6EAB76" }}>NOUVEAU</span>
                   )}
-                  <span style={{ opacity: 0.5, fontSize: 11 }}>{openVideoId === v.id ? "▾" : "▸"}</span>
+                  {!expandVideos && <span style={{ opacity: 0.5, fontSize: 11 }}>{open ? "▾" : "▸"}</span>}
                 </span>
               </button>
-              {openVideoId === v.id && signed[v.id] && (
+              {open && signed[v.id] && (
                 <video src={signed[v.id]} controls playsInline style={{ width: "100%", maxHeight: 360, background: "#000", display: "block" }} />
               )}
-              {openVideoId === v.id && !signed[v.id] && (
+              {open && !signed[v.id] && (
                 <div style={{ padding: 16, textAlign: "center", fontSize: 11, opacity: 0.6 }}>Chargement…</div>
               )}
             </div>
-          ))}
+          );})}
         </div>
       )}
 

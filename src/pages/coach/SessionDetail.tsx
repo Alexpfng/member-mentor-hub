@@ -120,7 +120,11 @@ export default function CoachSessionDetail() {
   const sessionMedia = allMedia?.filter((m) => m.isSessionLevel) ?? [];
   const exerciseMedia = allMedia?.filter((m) => !m.isSessionLevel) ?? [];
   const techniqueVideos = (data as any).techniqueVideos as Array<{ id: string; exerciseName: string | null; url: string | null; thumbnailUrl: string | null }> | undefined ?? [];
-  const totalMediaCount = (allMedia?.length ?? 0) + techniqueVideos.length;
+  // Les photos/vidéos « médias de séance » (table session_media) et les vidéos
+  // technique (table technique_videos) sont distinctes : les technique vivent
+  // désormais raccrochées à leur exercice dans « Détail par exercice », pas dans
+  // cette section groupée.
+  const totalMediaCount = allMedia?.length ?? 0;
 
   // Un exercice peut avoir une vidéo technique sans aucune série loggée
   // (mode expert, série non saisie…) : il doit quand même apparaître dans le
@@ -210,7 +214,7 @@ export default function CoachSessionDetail() {
           )}
 
           {/* Médias (photos / vidéos) — niveau séance */}
-          {(sessionMedia.length > 0 || exerciseMedia.length > 0 || techniqueVideos.length > 0) && (
+          {(sessionMedia.length > 0 || exerciseMedia.length > 0) && (
             <div>
               <CSTSectionNum num={isFree ? 3 : 2} label="PHOTOS & VIDÉOS" sub={`${totalMediaCount} fichier${totalMediaCount > 1 ? "s" : ""}`} />
 
@@ -228,21 +232,6 @@ export default function CoachSessionDetail() {
                   <div className="cst-mono" style={{ fontSize: 9, opacity: 0.5, letterSpacing: "0.18em", marginBottom: 8 }}>MÉDIAS PAR EXERCICE</div>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 10 }}>
                     {exerciseMedia.map((m) => <MediaThumb key={m.id} m={m} onOpen={setLightbox} />)}
-                  </div>
-                </div>
-              )}
-
-              {techniqueVideos.length > 0 && (
-                <div style={{ marginTop: 14 }}>
-                  <div className="cst-mono" style={{ fontSize: 9, opacity: 0.5, letterSpacing: "0.18em", marginBottom: 8 }}>VIDÉOS TECHNIQUE</div>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 10 }}>
-                    {techniqueVideos.map((v) => (
-                      <MediaThumb
-                        key={v.id}
-                        m={{ id: v.id, type: "video", url: v.url, thumbnailUrl: v.thumbnailUrl, caption: v.exerciseName }}
-                        onOpen={setLightbox}
-                      />
-                    ))}
                   </div>
                 </div>
               )}
@@ -312,7 +301,7 @@ export default function CoachSessionDetail() {
                     {/* Échange en contexte (notes athlète + vidéos technique + réponse coach) */}
                     {coachUserId && (
                       <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-                        <ExerciseThread sessionId={sessionId} exerciseName={name} userId={coachUserId} viewerRole="coach" />
+                        <ExerciseThread sessionId={sessionId} exerciseName={name} userId={coachUserId} viewerRole="coach" expandVideos />
                       </div>
                     )}
                   </div>
