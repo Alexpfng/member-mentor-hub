@@ -2436,7 +2436,7 @@ export function LiveSession({
           repsLabel={current.repsLabel}
           alternating={current.alternating}
           sessionId={sessionId}
-          onFinish={(logs) => {
+          onFinish={(logs, emomRpe) => {
             const computedReps =
               sessionMode === "expert"
                 ? (getExpertEmomLoggedValue(current.exercise, logs.length) ??
@@ -2458,7 +2458,7 @@ export function LiveSession({
                     exercise_name: current.exercise.name,
                     set_number: 1,
                     reps: computedReps,
-                    rpe: null,
+                    rpe: emomRpe,
                     completed: true,
                   })
                   .then(() => {});
@@ -2469,9 +2469,18 @@ export function LiveSession({
                 exo: current.exercise.name,
                 weight: null,
                 reps: computedReps,
-                rpe: null,
+                rpe: emomRpe,
               },
             }));
+            // Mode expert : pré-remplit le RPE du récap final avec celui saisi
+            // sur l'écran EMOM, pour qu'il ne soit ni redemandé ni perdu.
+            if (sessionMode === "expert" && emomRpe != null) {
+              setExpertRecapRpeByExercise((prev) =>
+                prev[current.exercise.name] != null
+                  ? prev
+                  : { ...prev, [current.exercise.name]: emomRpe },
+              );
+            }
             goNext();
           }}
           onPain={() => setPainFor(current.exercise.name)}
@@ -3502,7 +3511,7 @@ function EmomScreen({
   repsLabel?: string | null;
   alternating?: boolean;
   sessionId: string;
-  onFinish: (repsByMinute: number[]) => void;
+  onFinish: (repsByMinute: number[], rpe: number | null) => void;
   onPain: () => void;
 }) {
   const [adjustedMin, setAdjustedMin] = useState(
@@ -3857,6 +3866,35 @@ function EmomScreen({
         </div>
       </div>
 
+      {/* Reps par minute — éditables ici pour corriger/compléter la dernière
+          minute (le chrono passait à l'écran RPE avant qu'on puisse la saisir). */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <span className="cst-mono" style={{ fontSize: 10, opacity: 0.6, letterSpacing: "0.18em" }}>
+          REPS PAR MINUTE
+        </span>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 4 }}>
+          {repsByMinute.map((r, i) => (
+            <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+              <span className="cst-mono" style={{ fontSize: 8, opacity: 0.4 }}>{i + 1}</span>
+              <input
+                type="number"
+                value={r}
+                onChange={(e) => {
+                  const v = parseInt(e.target.value, 10);
+                  setRepsByMinute((prev) => {
+                    const next = [...prev];
+                    next[i] = isNaN(v) ? 0 : v;
+                    return next;
+                  });
+                }}
+                className="cst-input"
+                style={{ width: "100%", padding: "6px 4px", fontSize: 14, textAlign: "center", minHeight: 36 }}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span className="cst-mono" style={{ fontSize: 10, opacity: 0.6, letterSpacing: "0.18em" }}>
           RPE GLOBAL SUR CET EMOM
@@ -3889,7 +3927,7 @@ function EmomScreen({
       </div>
 
       <button
-        onClick={() => onFinish(repsByMinute)}
+        onClick={() => onFinish(repsByMinute, rpe)}
         disabled={rpe == null}
         className="cst-btn cst-btn-primary"
         style={{ width: "100%", padding: "16px 0", fontSize: 14, opacity: rpe == null ? 0.5 : 1 }}
