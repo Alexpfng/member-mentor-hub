@@ -17,6 +17,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as OnboardingStepRouteImport } from './routes/onboarding.$step'
 import { Route as AuthenticatedMembreIndexRouteImport } from './routes/_authenticated.membre.index'
 import { Route as AuthenticatedCoachIndexRouteImport } from './routes/_authenticated.coach.index'
+import { Route as AuthenticatedMembreRetoursRouteImport } from './routes/_authenticated.membre.retours'
 import { Route as AuthenticatedMembreProgressionRouteImport } from './routes/_authenticated.membre.progression'
 import { Route as AuthenticatedMembreProgrammeRouteImport } from './routes/_authenticated.membre.programme'
 import { Route as AuthenticatedMembreProfilRouteImport } from './routes/_authenticated.membre.profil'
@@ -95,6 +96,12 @@ const AuthenticatedCoachIndexRoute = AuthenticatedCoachIndexRouteImport.update({
   path: '/coach/',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedMembreRetoursRoute =
+  AuthenticatedMembreRetoursRouteImport.update({
+    id: '/membre/retours',
+    path: '/membre/retours',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedMembreProgressionRoute =
   AuthenticatedMembreProgressionRouteImport.update({
     id: '/membre/progression',
@@ -344,6 +351,7 @@ export interface FileRoutesByFullPath {
   '/membre/profil': typeof AuthenticatedMembreProfilRoute
   '/membre/programme': typeof AuthenticatedMembreProgrammeRoute
   '/membre/progression': typeof AuthenticatedMembreProgressionRoute
+  '/membre/retours': typeof AuthenticatedMembreRetoursRoute
   '/coach/': typeof AuthenticatedCoachIndexRoute
   '/membre/': typeof AuthenticatedMembreIndexRoute
   '/coach/builder/$id': typeof AuthenticatedCoachBuilderIdRoute
@@ -388,6 +396,7 @@ export interface FileRoutesByTo {
   '/membre/profil': typeof AuthenticatedMembreProfilRoute
   '/membre/programme': typeof AuthenticatedMembreProgrammeRoute
   '/membre/progression': typeof AuthenticatedMembreProgressionRoute
+  '/membre/retours': typeof AuthenticatedMembreRetoursRoute
   '/coach': typeof AuthenticatedCoachIndexRoute
   '/membre': typeof AuthenticatedMembreIndexRoute
   '/coach/builder/$id': typeof AuthenticatedCoachBuilderIdRoute
@@ -435,6 +444,7 @@ export interface FileRoutesById {
   '/_authenticated/membre/profil': typeof AuthenticatedMembreProfilRoute
   '/_authenticated/membre/programme': typeof AuthenticatedMembreProgrammeRoute
   '/_authenticated/membre/progression': typeof AuthenticatedMembreProgressionRoute
+  '/_authenticated/membre/retours': typeof AuthenticatedMembreRetoursRoute
   '/_authenticated/coach/': typeof AuthenticatedCoachIndexRoute
   '/_authenticated/membre/': typeof AuthenticatedMembreIndexRoute
   '/_authenticated/coach/builder/$id': typeof AuthenticatedCoachBuilderIdRoute
@@ -483,6 +493,7 @@ export interface FileRouteTypes {
     | '/membre/profil'
     | '/membre/programme'
     | '/membre/progression'
+    | '/membre/retours'
     | '/coach/'
     | '/membre/'
     | '/coach/builder/$id'
@@ -527,6 +538,7 @@ export interface FileRouteTypes {
     | '/membre/profil'
     | '/membre/programme'
     | '/membre/progression'
+    | '/membre/retours'
     | '/coach'
     | '/membre'
     | '/coach/builder/$id'
@@ -573,6 +585,7 @@ export interface FileRouteTypes {
     | '/_authenticated/membre/profil'
     | '/_authenticated/membre/programme'
     | '/_authenticated/membre/progression'
+    | '/_authenticated/membre/retours'
     | '/_authenticated/coach/'
     | '/_authenticated/membre/'
     | '/_authenticated/coach/builder/$id'
@@ -661,6 +674,13 @@ declare module '@tanstack/react-router' {
       path: '/coach'
       fullPath: '/coach/'
       preLoaderRoute: typeof AuthenticatedCoachIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/membre/retours': {
+      id: '/_authenticated/membre/retours'
+      path: '/membre/retours'
+      fullPath: '/membre/retours'
+      preLoaderRoute: typeof AuthenticatedMembreRetoursRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/membre/progression': {
@@ -1013,6 +1033,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedMembreProfilRoute: typeof AuthenticatedMembreProfilRoute
   AuthenticatedMembreProgrammeRoute: typeof AuthenticatedMembreProgrammeRoute
   AuthenticatedMembreProgressionRoute: typeof AuthenticatedMembreProgressionRoute
+  AuthenticatedMembreRetoursRoute: typeof AuthenticatedMembreRetoursRoute
   AuthenticatedCoachIndexRoute: typeof AuthenticatedCoachIndexRoute
   AuthenticatedMembreIndexRoute: typeof AuthenticatedMembreIndexRoute
   AuthenticatedCoachMembreMemberIdRoute: typeof AuthenticatedCoachMembreMemberIdRouteWithChildren
@@ -1045,6 +1066,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedMembreProfilRoute: AuthenticatedMembreProfilRoute,
   AuthenticatedMembreProgrammeRoute: AuthenticatedMembreProgrammeRoute,
   AuthenticatedMembreProgressionRoute: AuthenticatedMembreProgressionRoute,
+  AuthenticatedMembreRetoursRoute: AuthenticatedMembreRetoursRoute,
   AuthenticatedCoachIndexRoute: AuthenticatedCoachIndexRoute,
   AuthenticatedMembreIndexRoute: AuthenticatedMembreIndexRoute,
   AuthenticatedCoachMembreMemberIdRoute:

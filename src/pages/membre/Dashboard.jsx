@@ -10,6 +10,7 @@ import ThemeToggle from "../../components/ThemeToggle";
 import { WeightLogDialog } from "../../components/cst/WeightLogDialog";
 import { usePRConfetti } from "@/hooks/usePRConfetti";
 import { getMemberDashboard } from "@/lib/member-stats.functions";
+import { getMemberCoachFeedback } from "@/lib/member-feedback.functions";
 import { listWeekPlan, upsertPlannedSession } from "@/lib/planning.functions";
 import { sanitizeDurationMin } from "@/lib/format";
 import { localDateISO, addDaysISO } from "@/lib/local-date";
@@ -43,12 +44,14 @@ export default function MemberDashboard() {
   const [weightRefresh, setWeightRefresh] = useState(0);
   const [streak, setStreak] = useState(0);
   const [coachMessage, setCoachMessage] = useState(null);
+  const [coachFeedback, setCoachFeedback] = useState(null);
   const [choosing, setChoosing] = useState(false);
   const [busy, setBusy] = useState(false);
 
   usePRConfetti(userId);
 
   const fetchDashboard = useServerFn(getMemberDashboard);
+  const fetchFeedback = useServerFn(getMemberCoachFeedback);
   const fetchPlan = useServerFn(listWeekPlan);
   const upsertPlanned = useServerFn(upsertPlannedSession);
 
@@ -87,6 +90,13 @@ export default function MemberDashboard() {
           setCoachMessage(dash.coachMessage ?? null);
         } catch (err) {
           console.error("getMemberDashboard failed", err);
+        }
+
+        try {
+          const fb = await fetchFeedback();
+          setCoachFeedback(fb ?? null);
+        } catch (err) {
+          console.error("getMemberCoachFeedback failed", err);
         }
       } catch (e) {
         console.error(e);
@@ -362,6 +372,28 @@ export default function MemberDashboard() {
                 </>
               )}
             </div>
+
+            {/* Retours du coach */}
+            {coachFeedback?.sessions?.length > 0 && (
+              <button
+                onClick={() => navigate("/membre/retours")}
+                style={{ all: "unset", cursor: "pointer", marginTop: 12, padding: 14, display: "flex", alignItems: "center", gap: 12, borderRadius: 10, border: "1px solid rgba(110,171,118,0.45)", background: "rgba(110,171,118,0.1)", width: "100%", boxSizing: "border-box" }}
+              >
+                <span style={{ fontSize: 20 }}>💬</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <span className="cst-mono" style={{ fontSize: 9, color: "var(--cst-mid-green)", letterSpacing: "0.14em" }}>VOIR LES RETOURS DE LÉO</span>
+                  <div style={{ marginTop: 3, fontSize: 12, color: "rgba(255,255,255,0.75)" }}>
+                    {coachFeedback.sessions.length} séance{coachFeedback.sessions.length > 1 ? "s" : ""} commentée{coachFeedback.sessions.length > 1 ? "s" : ""}
+                  </div>
+                </div>
+                {coachFeedback.unseenCount > 0 && (
+                  <span className="cst-mono" style={{ fontSize: 9, padding: "3px 8px", borderRadius: 999, background: "var(--cst-mid-green)", color: "#fff", letterSpacing: "0.1em", flexShrink: 0 }}>
+                    {coachFeedback.unseenCount} NOUVEAU{coachFeedback.unseenCount > 1 ? "X" : ""}
+                  </span>
+                )}
+                <span style={{ opacity: 0.5, flexShrink: 0 }}>→</span>
+              </button>
+            )}
 
             <button
               className="cst-btn cst-btn-ghost-dark"
