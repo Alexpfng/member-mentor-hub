@@ -84,15 +84,45 @@ export default function MemberCarnet() {
           <div className="w-10" />
         </div>
 
-        <div className="text-center mb-6">
-          <div className="font-mono text-xs opacity-60 tracking-widest">
-            SEMAINE {logbook.week_number}
-          </div>
-          <div className="text-sm opacity-70">
-            Du {new Date(logbook.period_start).toLocaleDateString("fr-FR")} au{" "}
-            {new Date(logbook.period_end).toLocaleDateString("fr-FR")}
-          </div>
-        </div>
+        {(() => {
+          const wk = logbook.week_number;
+          const curWk = logbook.current_week_number ?? wk;
+          const canPrev = wk > 1;
+          const canNext = wk < curWk;
+          const goWeek = (n: number) =>
+            navigate({ to: "/membre/carnet/$week", params: { week: String(n) } });
+          return (
+            <div className="flex items-center justify-center gap-4 mb-6">
+              <button
+                onClick={() => canPrev && goWeek(wk - 1)}
+                disabled={!canPrev}
+                aria-label="Semaine précédente"
+                className="text-lg px-2 disabled:opacity-25"
+                style={{ background: "transparent", border: "none", color: "inherit", cursor: canPrev ? "pointer" : "default" }}
+              >
+                ‹
+              </button>
+              <div className="text-center">
+                <div className="font-mono text-xs opacity-60 tracking-widest">
+                  SEMAINE {wk}
+                </div>
+                <div className="text-sm opacity-70">
+                  Du {new Date(logbook.period_start).toLocaleDateString("fr-FR")} au{" "}
+                  {new Date(logbook.period_end).toLocaleDateString("fr-FR")}
+                </div>
+              </div>
+              <button
+                onClick={() => canNext && goWeek(wk + 1)}
+                disabled={!canNext}
+                aria-label="Semaine suivante"
+                className="text-lg px-2 disabled:opacity-25"
+                style={{ background: "transparent", border: "none", color: "inherit", cursor: canNext ? "pointer" : "default" }}
+              >
+                ›
+              </button>
+            </div>
+          );
+        })()}
 
         <div className="p-4 rounded-lg bg-primary/10 border border-primary/30 mb-6 text-center">
           {intro}

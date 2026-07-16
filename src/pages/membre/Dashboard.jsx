@@ -426,7 +426,15 @@ export default function MemberDashboard() {
               <CSTSectionNum num={2} label="MA SEMAINE" sub={`${doneSessions} / ${plannedPerWeek} SÉANCES`} />
               <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: 6, marginTop: 12 }}>
                 {weekDates.map((date, i) => {
-                  const sess = weekSessions.find((s) => s.date === date);
+                  const daySessions = weekSessions.filter((s) => s.date === date);
+                  // Séance « principale » pour l'icône : en cours > terminée > 1re.
+                  // (Avant : .find() masquait les séances multiples d'un même jour,
+                  // ex. renfo + course → une seule visible.)
+                  const sess = daySessions.find((s) => s.status === "in_progress")
+                    ?? daySessions.find((s) => s.status === "completed")
+                    ?? daySessions[0]
+                    ?? null;
+                  const extraCount = daySessions.length > 1 ? daySessions.length - 1 : 0;
                   const planned = plannedByDate.get(date);
                   const isToday = date === todayISO;
                   const isDone = sess?.status === "completed";
@@ -459,6 +467,11 @@ export default function MemberDashboard() {
                       <div style={{ marginTop: 6, fontSize: 14, color: isToday ? "#fff" : isDone ? "var(--cst-mid-green)" : isInProgress ? "#F5A623" : planned ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.5)" }}>
                         {isDone ? "✓" : isInProgress ? "⏱" : planned ? "●" : isToday ? "●" : "○"}
                       </div>
+                      {extraCount > 0 && (
+                        <div className="cst-mono" style={{ fontSize: 7, marginTop: 1, color: isToday ? "rgba(255,255,255,0.9)" : "var(--cst-mid-green)" }} title={`${daySessions.length} séances ce jour`}>
+                          +{extraCount}
+                        </div>
+                      )}
                       {label && (
                         <div
                           className="cst-mono"

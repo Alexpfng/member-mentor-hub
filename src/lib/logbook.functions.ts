@@ -156,31 +156,33 @@ export const getLogbook = createServerFn({ method: "GET" })
     const start = assignment.start_date ? new Date(assignment.start_date) : new Date();
     const diff = Math.floor((Date.now() - start.getTime()) / 86400000);
     const currentWeekNumber = Math.max(1, Math.floor(diff / 7) + 1);
-    // Par défaut : la dernière semaine terminée (la précédente), 1-based.
-    const weekNumber = data.weekNumber ?? Math.max(1, currentWeekNumber - 1);
+    // Par défaut : la semaine EN COURS, pour que le carnet reflète les séances
+    // du moment (avant, on affichait la semaine précédente → « ma semaine ne se
+    // met pas à jour »). On borne à la semaine courante pour la navigation.
+    const weekNumber = Math.min(data.weekNumber ?? currentWeekNumber, currentWeekNumber);
 
-    // Try existing first
-    const { data: existing } = await supabaseAdmin
-      .from("weekly_logbooks")
-      .select("*")
-      .eq("member_id", context.userId)
-      .eq("week_number", weekNumber)
-      .maybeSingle();
-
-    const row = existing ?? (await upsertLogbook(context.userId, weekNumber));
+    // Toujours recalculer (upsert) plutôt que de renvoyer un instantané figé :
+    // une séance ajoutée après la 1re génération n'était jamais reflétée.
+    // upsertLogbook préserve le message du coach.
+    const row = await upsertLogbook(context.userId, weekNumber);
     if (!row) return null;
 
-    // Count free sessions in that period (not persisted in weekly_logbooks)
-    const { count: freeCount } = await supabaseAdmin
+    // Séances « extra » (libres + composées) sur la période — non persistées
+    // dans weekly_logbooks, comptées en direct.
+    const { count: extraCount } = await supabaseAdmin
       .from("sessions")
       .select("id", { count: "exact", head: true })
       .eq("member_id", context.userId)
       .eq("status", "completed")
-      .eq("session_type", "free")
+      .in("session_type", ["free", "self"])
       .gte("date", row.period_start)
       .lte("date", row.period_end);
 
-    return { ...row, free_sessions_done: freeCount ?? 0 };
+    return {
+      ...row,
+      free_sessions_done: extraCount ?? 0,
+      current_week_number: currentWeekNumber,
+    };
   });
 
 export const setCoachLogbookMessage = createServerFn({ method: "POST" })
