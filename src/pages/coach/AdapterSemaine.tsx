@@ -38,6 +38,7 @@ type ProgExercise = {
   rpe_target?: string | number | null;
   color?: string | null;
   coach_notes?: string | null;
+  film_requested?: boolean | null;
   youtube_url?: string | null;
 };
 type DayStructure = { label?: string; exercises?: ProgExercise[] };
@@ -573,6 +574,21 @@ function ExoEditModal({
               }}
             />,
           )}
+        </div>
+
+        <div style={{ marginBottom: 12 }}>
+          <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
+            <input
+              type="checkbox"
+              checked={!!ex.film_requested}
+              onChange={(e) =>
+                onChange((x) => ({ ...x, film_requested: e.target.checked || null }))
+              }
+            />
+            <span className="cst-mono" style={{ fontSize: 11, letterSpacing: "0.12em" }}>
+              📹 DEMANDER UNE VIDÉO AU MEMBRE
+            </span>
+          </label>
         </div>
 
         <div style={{ marginBottom: 12 }}>

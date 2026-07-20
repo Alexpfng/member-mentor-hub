@@ -2692,6 +2692,25 @@ export function LiveSession({
                     « {ex.coach_notes} »
                   </div>
                 )}
+                {ex.film_requested && (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      background: "rgba(212,168,46,0.12)",
+                      border: "1px solid rgba(212,168,46,0.45)",
+                      borderRadius: 6,
+                      padding: "8px 12px",
+                      fontSize: 12,
+                    }}
+                  >
+                    <span>📹</span>
+                    <span className="cst-mono" style={{ letterSpacing: "0.1em", color: "#D4A82E" }}>
+                      FILME-TOI SUR CET EXERCICE ET ENVOIE À LÉO
+                    </span>
+                  </div>
+                )}
                 <ExerciseMediaCard exercise={ex} />
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   <button
@@ -2834,6 +2853,26 @@ export function LiveSession({
               }}
             >
               « {exStep.exercise.coach_notes} »
+            </div>
+          )}
+
+          {exStep.exercise.film_requested && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                background: "rgba(212,168,46,0.12)",
+                border: "1px solid rgba(212,168,46,0.45)",
+                borderRadius: 6,
+                padding: "8px 12px",
+                fontSize: 12,
+              }}
+            >
+              <span>📹</span>
+              <span className="cst-mono" style={{ letterSpacing: "0.1em", color: "#D4A82E" }}>
+                FILME-TOI SUR CET EXERCICE ET ENVOIE À LÉO
+              </span>
             </div>
           )}
 
@@ -3874,8 +3913,13 @@ function EmomScreen({
         </span>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 4 }}>
           {repsByMinute.map((r, i) => (
-            <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-              <span className="cst-mono" style={{ fontSize: 8, opacity: 0.4 }}>{i + 1}</span>
+            <div
+              key={i}
+              style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}
+            >
+              <span className="cst-mono" style={{ fontSize: 8, opacity: 0.4 }}>
+                {i + 1}
+              </span>
               <input
                 type="number"
                 value={r}
@@ -3888,7 +3932,13 @@ function EmomScreen({
                   });
                 }}
                 className="cst-input"
-                style={{ width: "100%", padding: "6px 4px", fontSize: 14, textAlign: "center", minHeight: 36 }}
+                style={{
+                  width: "100%",
+                  padding: "6px 4px",
+                  fontSize: 14,
+                  textAlign: "center",
+                  minHeight: 36,
+                }}
               />
             </div>
           ))}

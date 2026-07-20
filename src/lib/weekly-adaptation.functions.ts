@@ -24,6 +24,7 @@ type ProgExercise = {
   rpe_target?: string | number | null;
   color?: string | null;
   coach_notes?: string | null;
+  film_requested?: boolean | null;
   youtube_url?: string | null;
   youtube_id?: string | null;
 };

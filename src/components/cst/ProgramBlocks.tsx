@@ -12,6 +12,7 @@ export type ProgExercise = {
   rpe_target?: string | number | null;
   color?: string | null;
   coach_notes?: string | null;
+  film_requested?: boolean | null;
   youtube_url?: string | null;
   youtube_id?: string | null;
   youtube_alt_url?: string | null;
@@ -170,11 +171,15 @@ function isCardioExercise(ex: ProgExercise): boolean {
 
 function cardioConsignes(ex: ProgExercise): string | null {
   const rpe = String(ex.rpe_target ?? "").trim();
-  return (rpe && isNaN(Number(rpe))) ? rpe : null;
+  return rpe && isNaN(Number(rpe)) ? rpe : null;
 }
 
 /** Carte cardio fusionnée : tous les blocs cardio consécutifs en une seule carte. */
-function MergedCardioRow({ exercises, threadSlot, onExerciseClick }: {
+function MergedCardioRow({
+  exercises,
+  threadSlot,
+  onExerciseClick,
+}: {
   exercises: ProgExercise[];
   threadSlot?: (ex: ProgExercise) => React.ReactNode;
   onExerciseClick?: (ex: ProgExercise) => void;
@@ -210,7 +215,9 @@ function MergedCardioRow({ exercises, threadSlot, onExerciseClick }: {
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         {colorDot(main.color)}
         {main.code && (
-          <span className="cst-mono" style={{ fontSize: 11, opacity: 0.7, minWidth: 24 }}>{main.code}</span>
+          <span className="cst-mono" style={{ fontSize: 11, opacity: 0.7, minWidth: 24 }}>
+            {main.code}
+          </span>
         )}
         <span style={{ fontWeight: 600, fontSize: 14, flex: 1, minWidth: 0 }}>{main.name}</span>
         <YouTubeButton id={main.youtube_id} url={main.youtube_url} />
@@ -218,9 +225,16 @@ function MergedCardioRow({ exercises, threadSlot, onExerciseClick }: {
           <button
             onClick={() => onExerciseClick(main)}
             style={{
-              background: "var(--cst-mid-green)", border: "none", color: "#fff",
-              fontFamily: "var(--cst-mono)", fontSize: 10, letterSpacing: "0.1em",
-              padding: "5px 9px", borderRadius: 6, cursor: "pointer", flexShrink: 0,
+              background: "var(--cst-mid-green)",
+              border: "none",
+              color: "#fff",
+              fontFamily: "var(--cst-mono)",
+              fontSize: 10,
+              letterSpacing: "0.1em",
+              padding: "5px 9px",
+              borderRadius: 6,
+              cursor: "pointer",
+              flexShrink: 0,
             }}
           >
             ALLER →
@@ -228,11 +242,34 @@ function MergedCardioRow({ exercises, threadSlot, onExerciseClick }: {
         )}
       </div>
       {/* Métriques du premier exercice */}
-      <div className="cst-mono" style={{ fontSize: 11, opacity: 0.85, display: "flex", gap: 16, flexWrap: "wrap" }}>
-        {main.tempo && <span><span style={{ opacity: 0.5 }}>DURÉE </span>{val(main.tempo)}</span>}
-        {main.charge && <span><span style={{ opacity: 0.5 }}>INTENSITÉ </span>{fmtCharge(main.charge)}</span>}
-        {main.reps && <span><span style={{ opacity: 0.5 }}>FRÉQUENCE </span>{val(main.reps)}</span>}
-        {main.recup && <span><span style={{ opacity: 0.5 }}>RÉCUP </span>{val(main.recup)}</span>}
+      <div
+        className="cst-mono"
+        style={{ fontSize: 11, opacity: 0.85, display: "flex", gap: 16, flexWrap: "wrap" }}
+      >
+        {main.tempo && (
+          <span>
+            <span style={{ opacity: 0.5 }}>DURÉE </span>
+            {val(main.tempo)}
+          </span>
+        )}
+        {main.charge && (
+          <span>
+            <span style={{ opacity: 0.5 }}>INTENSITÉ </span>
+            {fmtCharge(main.charge)}
+          </span>
+        )}
+        {main.reps && (
+          <span>
+            <span style={{ opacity: 0.5 }}>FRÉQUENCE </span>
+            {val(main.reps)}
+          </span>
+        )}
+        {main.recup && (
+          <span>
+            <span style={{ opacity: 0.5 }}>RÉCUP </span>
+            {val(main.recup)}
+          </span>
+        )}
       </div>
       {/* Bloc OBJECTIF / CONSIGNES fusionné */}
       {hasContent && (
@@ -249,18 +286,40 @@ function MergedCardioRow({ exercises, threadSlot, onExerciseClick }: {
             gap: 6,
           }}
         >
-          <span className="cst-mono" style={{ fontSize: 9, opacity: 0.6, letterSpacing: "0.14em" }}>OBJECTIF / CONSIGNES</span>
-          {sections.map((s, i) => (
-            (s.title || s.consignes || s.notes) ? (
+          <span className="cst-mono" style={{ fontSize: 9, opacity: 0.6, letterSpacing: "0.14em" }}>
+            OBJECTIF / CONSIGNES
+          </span>
+          {sections.map((s, i) =>
+            s.title || s.consignes || s.notes ? (
               <div key={i} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                 {s.title && i > 0 && (
-                  <div style={{ fontWeight: 600, fontSize: 13, opacity: 0.9, marginTop: i > 0 ? 4 : 0 }}>{s.title}</div>
+                  <div
+                    style={{
+                      fontWeight: 600,
+                      fontSize: 13,
+                      opacity: 0.9,
+                      marginTop: i > 0 ? 4 : 0,
+                    }}
+                  >
+                    {s.title}
+                  </div>
                 )}
                 {s.consignes && <div style={{ whiteSpace: "pre-wrap" }}>{s.consignes}</div>}
-                {s.notes && <div style={{ fontSize: 12, opacity: 0.75, fontStyle: "italic", whiteSpace: "pre-wrap" }}>{s.notes}</div>}
+                {s.notes && (
+                  <div
+                    style={{
+                      fontSize: 12,
+                      opacity: 0.75,
+                      fontStyle: "italic",
+                      whiteSpace: "pre-wrap",
+                    }}
+                  >
+                    {s.notes}
+                  </div>
+                )}
               </div>
-            ) : null
-          ))}
+            ) : null,
+          )}
         </div>
       )}
       {threadSlot && threadSlot(main)}
@@ -269,15 +328,29 @@ function MergedCardioRow({ exercises, threadSlot, onExerciseClick }: {
 }
 
 const EXERCISE_COLOR_MAP: Record<string, string> = {
-  red: "#C44A3A", green: "#5BA85A", yellow: "#D4A82E", lime: "#E8D44A", blue: "#4A8BC4",
+  red: "#C44A3A",
+  green: "#5BA85A",
+  yellow: "#D4A82E",
+  lime: "#E8D44A",
+  blue: "#4A8BC4",
 };
 function exCardColor(c?: string | null): string {
   return EXERCISE_COLOR_MAP[(c || "").toLowerCase()] || "";
 }
 
-function ExerciseRow({ ex, threadSlot, onExerciseClick }: { ex: ProgExercise; threadSlot?: (ex: ProgExercise) => React.ReactNode; onExerciseClick?: (ex: ProgExercise) => void }) {
+function ExerciseRow({
+  ex,
+  threadSlot,
+  onExerciseClick,
+}: {
+  ex: ProgExercise;
+  threadSlot?: (ex: ProgExercise) => React.ReactNode;
+  onExerciseClick?: (ex: ProgExercise) => void;
+}) {
   if (isCardioExercise(ex)) {
-    return <MergedCardioRow exercises={[ex]} threadSlot={threadSlot} onExerciseClick={onExerciseClick} />;
+    return (
+      <MergedCardioRow exercises={[ex]} threadSlot={threadSlot} onExerciseClick={onExerciseClick} />
+    );
   }
   const col = exCardColor(ex.color);
   return (
@@ -294,10 +367,7 @@ function ExerciseRow({ ex, threadSlot, onExerciseClick }: { ex: ProgExercise; th
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         {colorDot(ex.color)}
         {ex.code && (
-          <span
-            className="cst-mono"
-            style={{ fontSize: 11, opacity: 0.7, minWidth: 24 }}
-          >
+          <span className="cst-mono" style={{ fontSize: 11, opacity: 0.7, minWidth: 24 }}>
             {ex.code}
           </span>
         )}
@@ -333,12 +403,30 @@ function ExerciseRow({ ex, threadSlot, onExerciseClick }: { ex: ProgExercise; th
           gap: "4px 12px",
         }}
       >
-        <span><span style={{ opacity: 0.5 }}>SÉRIES </span>{val(ex.series)}</span>
-        <span><span style={{ opacity: 0.5 }}>REPS </span>{val(ex.reps)}</span>
-        <span><span style={{ opacity: 0.5 }}>CHARGE </span>{fmtCharge(ex.charge)}</span>
-        <span><span style={{ opacity: 0.5 }}>TEMPO </span>{val(ex.tempo)}</span>
-        <span><span style={{ opacity: 0.5 }}>RÉCUP </span>{val(ex.recup)}</span>
-        <span><span style={{ opacity: 0.5 }}>RPE </span>{val(ex.rpe_target)}</span>
+        <span>
+          <span style={{ opacity: 0.5 }}>SÉRIES </span>
+          {val(ex.series)}
+        </span>
+        <span>
+          <span style={{ opacity: 0.5 }}>REPS </span>
+          {val(ex.reps)}
+        </span>
+        <span>
+          <span style={{ opacity: 0.5 }}>CHARGE </span>
+          {fmtCharge(ex.charge)}
+        </span>
+        <span>
+          <span style={{ opacity: 0.5 }}>TEMPO </span>
+          {val(ex.tempo)}
+        </span>
+        <span>
+          <span style={{ opacity: 0.5 }}>RÉCUP </span>
+          {val(ex.recup)}
+        </span>
+        <span>
+          <span style={{ opacity: 0.5 }}>RPE </span>
+          {val(ex.rpe_target)}
+        </span>
       </div>
       {ex.coach_notes && (
         <div
@@ -374,7 +462,12 @@ function mergeCardioBlocks(blocks: Block[]): Array<Block & { mergedCardio?: bool
         i++;
         mergedExercises.push(...blocks[i].exercises);
       }
-      result.push({ letter: block.letter, exercises: mergedExercises, isSuperset: false, mergedCardio: true });
+      result.push({
+        letter: block.letter,
+        exercises: mergedExercises,
+        isSuperset: false,
+        mergedCardio: true,
+      });
     } else {
       result.push(block);
     }
@@ -394,9 +487,7 @@ export function ProgramBlocks({
 }) {
   const blocks = mergeCardioBlocks(groupBlocks(exercises || []));
   if (blocks.length === 0) {
-    return (
-      <div style={{ padding: 16, opacity: 0.5, fontSize: 12 }}>Aucun exercice.</div>
-    );
+    return <div style={{ padding: 16, opacity: 0.5, fontSize: 12 }}>Aucun exercice.</div>;
   }
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -413,7 +504,11 @@ export function ProgramBlocks({
                 overflow: "hidden",
               }}
             >
-              <MergedCardioRow exercises={b.exercises} threadSlot={threadSlot} onExerciseClick={onExerciseClick} />
+              <MergedCardioRow
+                exercises={b.exercises}
+                threadSlot={threadSlot}
+                onExerciseClick={onExerciseClick}
+              />
             </div>
           );
         }
@@ -421,7 +516,10 @@ export function ProgramBlocks({
         const firstType = b.exercises[0]?.block_type;
         const badge = blockBadge(firstType) ?? (b.isSuperset ? "SUPERSET" : null);
         const supersetRest = b.isSuperset
-          ? ([...b.exercises].reverse().map((e) => e.recup).find((r) => r != null && String(r).trim() !== "") ?? null)
+          ? ([...b.exercises]
+              .reverse()
+              .map((e) => e.recup)
+              .find((r) => r != null && String(r).trim() !== "") ?? null)
           : null;
         return (
           <div
@@ -449,7 +547,12 @@ export function ProgramBlocks({
               </div>
             )}
             {b.exercises.map((ex, j) => (
-              <ExerciseRow key={j} ex={ex} threadSlot={threadSlot} onExerciseClick={onExerciseClick} />
+              <ExerciseRow
+                key={j}
+                ex={ex}
+                threadSlot={threadSlot}
+                onExerciseClick={onExerciseClick}
+              />
             ))}
             {b.isSuperset && (
               <div
