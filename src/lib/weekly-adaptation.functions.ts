@@ -516,9 +516,25 @@ function computeChanges(
           label: `${name} : ${old.series ?? "—"}×${old.reps ?? "—"} → ${ex.series ?? "—"}×${ex.reps ?? "—"}`,
         });
       }
+      const oldNote = (old.coach_notes ?? "").trim();
+      const newNote = (ex.coach_notes ?? "").trim();
+      if (newNote !== oldNote) {
+        if (!oldNote && newNote) {
+          const preview = newNote.length > 60 ? newNote.slice(0, 60) + "…" : newNote;
+          changes.push({ type: "consigne", label: `${name} : nouvelle consigne — "${preview}"` });
+        } else if (oldNote && !newNote) {
+          changes.push({ type: "consigne", label: `${name} : consigne retirée` });
+        } else {
+          const preview = newNote.length > 60 ? newNote.slice(0, 60) + "…" : newNote;
+          changes.push({
+            type: "consigne",
+            label: `${name} : consigne mise à jour — "${preview}"`,
+          });
+        }
+      }
       // Les variations de RPE ne sont volontairement PAS listées dans le récap :
       // elles n'apportent pas d'info utile et noient les vrais changements (charge,
-      // volume). Seuls charges, séries/reps et exos ajoutés/retirés apparaissent.
+      // volume). Seuls charges, séries/reps, consignes et exos ajoutés/retirés apparaissent.
     }
     for (const [name] of prevByName) {
       if (!nextByName.has(name)) {
