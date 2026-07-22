@@ -17,6 +17,7 @@ import {
   normalizeExpertRpeForStorage,
 } from "@/lib/live-session-feedback";
 import { getExpertEmomLoggedValue, getExpertSetLoggedValue } from "@/lib/session-prescription";
+import { parseRpeCell } from "@/lib/rpe-cell";
 import {
   ColorDot,
   ColorTooltip,
@@ -2671,10 +2672,16 @@ export function LiveSession({
                   {ex.rpe_target && (
                     <span>
                       <span style={{ opacity: 0.5 }}>RPE </span>
-                      {ex.rpe_target}
+                      {parseRpeCell(ex.rpe_target).rpe?.replace(".", ",") ?? ex.rpe_target}
                     </span>
                   )}
                 </div>
+                {parseRpeCell(ex.rpe_target).comment && (
+                  <div className="cst-mono" style={{ fontSize: 11, opacity: 0.85, marginTop: 2 }}>
+                    <span style={{ opacity: 0.55 }}>RPE · </span>
+                    <span style={{ fontStyle: "italic" }}>{parseRpeCell(ex.rpe_target).comment}</span>
+                  </div>
+                )}
                 {color && <RPEGuidance color={color} />}
                 {ex.coach_notes && (
                   <div
@@ -3089,7 +3096,7 @@ export function LiveSession({
           </div>
           <div className="cst-mono" style={{ fontSize: 11, opacity: 0.8, marginTop: 8 }}>
             {repPlaceholder && <>OBJECTIF {formatRepsObjectif(repPlaceholder) ?? repPlaceholder}</>}
-            {setStep.exercise.rpe_target && <> @ RPE {setStep.exercise.rpe_target}</>}
+            {setStep.exercise.rpe_target && <> @ RPE {parseRpeCell(setStep.exercise.rpe_target).rpe?.replace(".", ",") ?? setStep.exercise.rpe_target}</>}
           </div>
           {setStep.exercise.charge && !bodyweight && (
             <div className="cst-mono" style={{ fontSize: 11, opacity: 0.7, marginTop: 4 }}>
@@ -5088,7 +5095,12 @@ function CuesModal({
             {exercise.rpe_target && (
               <div className="cst-mono" style={{ fontSize: 11, color: "#fff" }}>
                 <span style={{ opacity: 0.55 }}>RPE CIBLE </span>
-                {exercise.rpe_target}
+                {parseRpeCell(exercise.rpe_target).rpe?.replace(".", ",") ?? exercise.rpe_target}
+                {parseRpeCell(exercise.rpe_target).comment && (
+                  <span style={{ opacity: 0.8, fontStyle: "italic", fontWeight: 400 }}>
+                    {" · "}{parseRpeCell(exercise.rpe_target).comment}
+                  </span>
+                )}
               </div>
             )}
             {color && <RPEGuidance color={color} />}

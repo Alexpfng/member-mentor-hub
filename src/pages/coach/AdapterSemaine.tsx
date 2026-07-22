@@ -14,6 +14,7 @@ import { normalizeWeekId } from "@/lib/coach-navigation";
 import { getExerciseFeedback } from "@/lib/exercise-feedback";
 import { listExercises } from "@/lib/exercises.functions";
 import { setExerciseQuickCoachNote, setExerciseQuickRpe } from "@/lib/adapter-week-rpe";
+import { parseRpeCell } from "@/lib/rpe-cell";
 
 type LibExercise = {
   id: string;
@@ -662,13 +663,14 @@ function isEnduranceSession(day: { label?: string | null } | null | undefined): 
 // course — exercice réel + lignes de consignes — en une seule carte (comme côté membre).
 function isCardioExo(ex: ProgExercise): boolean {
   if ((ex.block_type ?? "").toLowerCase() === "cardio") return true;
-  const rpe = String(ex.rpe_target ?? "").trim();
-  return !!(rpe && Number.isNaN(Number(rpe.replace(",", "."))) && rpe.length > 3);
+  // Consigne texte libre = cardio. Un « 10 (10kg trop lourd) » n'est PAS une consigne
+  // (c'est un RPE + commentaire) → parseRpeCell.consigne est null, donc pas cardio.
+  const consigne = parseRpeCell(ex.rpe_target).consigne;
+  return !!(consigne && consigne.length > 3);
 }
 // Texte de consigne porté par un exercice cardio (stocké dans rpe_target non numérique).
 function cardioConsigneText(ex: ProgExercise): string | null {
-  const rpe = String(ex.rpe_target ?? "").trim();
-  return rpe && Number.isNaN(Number(rpe.replace(",", "."))) ? rpe : null;
+  return parseRpeCell(ex.rpe_target).consigne;
 }
 
 // Code de bloc (A1, B2…) → lettre du groupe. Deux exercices ou plus qui partagent
@@ -1235,12 +1237,13 @@ export default function AdapterSemaine() {
                   // est acceptée. Tout texte libre hérité d'un ancien import cardio reste
                   // affiché sous la carte, mais ne s'affiche plus comme un badge « CONSIGNE ».
                   const rpeStr = ex.rpe_target == null ? "" : String(ex.rpe_target).trim();
-                  const rpeNum = rpeStr === "" ? NaN : Number(rpeStr.replace(",", "."));
-                  const rpeIsNumeric = !Number.isNaN(rpeNum);
-                  const rpeDisplay = rpeIsNumeric ? rpeStr.replace(".", ",") : null;
-                  const rpeIsFailure = /^(échec|echec)$/i.test(rpeStr);
-                  const rpeConsigne =
-                    rpeStr !== "" && !rpeIsNumeric && !rpeIsFailure ? rpeStr : null;
+                  // « 10 (10kg trop lourd) » → RPE 10 dans le badge + commentaire sur sa ligne dédiée.
+                  const parsedRpe = parseRpeCell(ex.rpe_target);
+                  const rpeIsNumeric = parsedRpe.rpe != null;
+                  const rpeDisplay = parsedRpe.rpe != null ? parsedRpe.rpe.replace(".", ",") : null;
+                  const rpeIsFailure = parsedRpe.isFailure;
+                  const rpeComment = parsedRpe.comment;
+                  const rpeConsigne = parsedRpe.consigne;
                   return (
                     <Fragment key={ei}>
                       {isBlockStart && (
@@ -1420,7 +1423,7 @@ export default function AdapterSemaine() {
                                           borderRadius: 6,
                                           border: "1px solid rgba(255,255,255,0.1)",
                                           background:
-                                            Number(rpeStr.replace(",", ".")) === value
+                                            parsedRpe.rpe != null && Number(parsedRpe.rpe) === value
                                               ? `${cardColor}44`
                                               : "rgba(255,255,255,0.05)",
                                           color: "#fff",
@@ -1547,6 +1550,12 @@ export default function AdapterSemaine() {
                             )}
                             {ex.tempo && <span>⏱{ex.tempo}</span>}
                           </div>
+                          {rpeComment && (
+                            <div className="cst-mono" style={{ fontSize: 10, display: "flex", gap: 5, alignItems: "baseline", flexWrap: "wrap" }}>
+                              <span style={{ opacity: 0.5, letterSpacing: "0.06em" }}>RPE ·</span>
+                              <span style={{ fontStyle: "italic", opacity: 0.9, color: cardColor }}>{rpeComment}</span>
+                            </div>
+                          )}
                           {rpeConsigne && (
                             <div
                               style={{

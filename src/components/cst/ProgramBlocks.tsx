@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { parseRpeCell } from "@/lib/rpe-cell";
 
 export type ProgExercise = {
   code?: string | null;
@@ -164,14 +165,14 @@ function YouTubeButton({ id, url }: { id?: string | null; url?: string | null })
 
 function isCardioExercise(ex: ProgExercise): boolean {
   if (ex.block_type === "cardio") return true;
-  const rpe = String(ex.rpe_target ?? "").trim();
-  if (rpe && isNaN(Number(rpe)) && rpe.length > 3) return true;
-  return false;
+  // Consigne texte libre = cardio. « 10 (10kg trop lourd) » est un RPE + commentaire,
+  // pas une consigne → parseRpeCell.consigne est null, donc pas classé cardio à tort.
+  const consigne = parseRpeCell(ex.rpe_target).consigne;
+  return !!(consigne && consigne.length > 3);
 }
 
 function cardioConsignes(ex: ProgExercise): string | null {
-  const rpe = String(ex.rpe_target ?? "").trim();
-  return rpe && isNaN(Number(rpe)) ? rpe : null;
+  return parseRpeCell(ex.rpe_target).consigne;
 }
 
 /** Carte cardio fusionnée : tous les blocs cardio consécutifs en une seule carte. */
@@ -353,6 +354,9 @@ function ExerciseRow({
     );
   }
   const col = exCardColor(ex.color);
+  // « 10 (10kg trop lourd) » → RPE 10 dans la case RPE + commentaire sur sa ligne dédiée.
+  const parsedRpe = parseRpeCell(ex.rpe_target);
+  const rpeCellDisplay = parsedRpe.rpe != null ? parsedRpe.rpe.replace(".", ",") : parsedRpe.isFailure ? "échec" : "—";
   return (
     <div
       style={{
@@ -425,9 +429,18 @@ function ExerciseRow({
         </span>
         <span>
           <span style={{ opacity: 0.5 }}>RPE </span>
-          {val(ex.rpe_target)}
+          {rpeCellDisplay}
         </span>
       </div>
+      {parsedRpe.comment && (
+        <div
+          className="cst-mono"
+          style={{ fontSize: 11, display: "flex", gap: 6, alignItems: "baseline", flexWrap: "wrap", opacity: 0.9 }}
+        >
+          <span style={{ opacity: 0.55, letterSpacing: "0.06em" }}>RPE ·</span>
+          <span style={{ fontStyle: "italic" }}>{parsedRpe.comment}</span>
+        </div>
+      )}
       {ex.coach_notes && (
         <div
           style={{
