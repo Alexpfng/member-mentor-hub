@@ -439,7 +439,7 @@ export const getRecentSessions = createServerFn({ method: "GET" })
       .limit(data.limit ?? 20);
 
     const ids = (sessions ?? []).map((s) => s.id);
-    let painsBySession = new Map<string, number>();
+    const painsBySession = new Map<string, number>();
     if (ids.length) {
       const { data: pains } = await supabaseAdmin
         .from("pain_reports")
@@ -989,20 +989,18 @@ export const getMemberFollowup = createServerFn({ method: "GET" })
       openPains,
       pastPains: (painsR.data ?? []).filter((p) => p.resolved_at).slice(0, 10),
       watchList,
-      recentSessions: completed
-        .slice(0, 8)
-        .map((s) => ({
-          id: s.id,
-          label: s.session_label,
-          week: s.week_number,
-          day: s.day_number,
-          endedAt: s.ended_at,
-          averageRpe: s.average_rpe,
-          coachSeen: s.coach_seen,
-          sessionType: s.session_type ?? "program",
-          freeTitle: s.free_title ?? null,
-          freeCategory: s.free_category ?? null,
-        })),
+      recentSessions: completed.slice(0, 8).map((s) => ({
+        id: s.id,
+        label: s.session_label,
+        week: s.week_number,
+        day: s.day_number,
+        endedAt: s.ended_at,
+        averageRpe: s.average_rpe,
+        coachSeen: s.coach_seen,
+        sessionType: s.session_type ?? "program",
+        freeTitle: s.free_title ?? null,
+        freeCategory: s.free_category ?? null,
+      })),
     };
   });
 
@@ -1210,7 +1208,9 @@ export const getCoachWeeklyPlan = createServerFn({ method: "GET" })
 
       for (const p of memberPlanned) {
         if (!p.planned_date) continue;
-        const linked = p.session_id ? sessionById.get(p.session_id) : null;
+        const linked = p.session_id
+          ? sessionById.get(p.session_id)
+          : (memberSessions.find((s) => s.date?.slice(0, 10) === p.planned_date) ?? null);
         let cellStatus: DayCell["status"];
         if (p.status === "done") cellStatus = "done";
         else if (p.status === "rest") cellStatus = "rest";

@@ -390,7 +390,9 @@ export const getMyCoach = createServerFn({ method: "GET" })
       .eq("id", roleRow.user_id)
       .maybeSingle();
     if (pErr) throw new Error(pErr.message);
-    return { coach: profile ?? { id: roleRow.user_id, first_name: "Coach", last_name: "", email: "" } };
+    return {
+      coach: profile ?? { id: roleRow.user_id, first_name: "Coach", last_name: "", email: "" },
+    };
   });
 
 export const getUnreadCount = createServerFn({ method: "GET" })
@@ -404,7 +406,6 @@ export const getUnreadCount = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     return { count: count ?? 0 };
   });
-
 
 // ─── EXERCISES ────────────────────────────────────────────────────────────────
 
@@ -501,7 +502,6 @@ export const duplicateProgram = createServerFn({ method: "POST" })
     return { program: row };
   });
 
-
 // ─── MEMBER DETAIL ────────────────────────────────────────────────────────────
 
 export const getMemberDetail = createServerFn({ method: "GET" })
@@ -589,11 +589,20 @@ export const getMemberDetail = createServerFn({ method: "GET" })
     const lastWeight = (weightLogs ?? [])[0]?.weight_kg ?? memberProfile?.weight_kg ?? null;
 
     const [{ data: coachNotesRow }, { data: latestWeekRow }] = await Promise.all([
-      supabaseAdmin.from("member_coach_notes").select("notes").eq("member_id", memberId).maybeSingle(),
+      supabaseAdmin
+        .from("member_coach_notes")
+        .select("notes")
+        .eq("member_id", memberId)
+        .maybeSingle(),
       assignment?.id
-        ? supabaseAdmin.from("assignment_weeks").select("week_number")
-            .eq("member_id", memberId).eq("assignment_id", assignment.id)
-            .order("week_number", { ascending: false }).limit(1).maybeSingle()
+        ? supabaseAdmin
+            .from("assignment_weeks")
+            .select("week_number")
+            .eq("member_id", memberId)
+            .eq("assignment_id", assignment.id)
+            .order("week_number", { ascending: false })
+            .limit(1)
+            .maybeSingle()
         : Promise.resolve({ data: null }),
     ]);
 
@@ -611,6 +620,45 @@ export const getMemberDetail = createServerFn({ method: "GET" })
       last_weight_kg: lastWeight,
       current_week_number: latestWeekRow?.week_number ?? null,
     };
+  });
+
+export const getUpcomingPlannedSessions = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ member_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertCoach(context.userId);
+    const today = localDateISO();
+    const d = new Date(today + "T00:00:00");
+    d.setDate(d.getDate() + 13);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const inTwoWeeks = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    const { data: rows } = await supabaseAdmin
+      .from("planned_sessions")
+      .select("id, day_label, planned_date, status, session_id")
+      .eq("member_id", data.member_id)
+      .gte("planned_date", today)
+      .lte("planned_date", inTwoWeeks)
+      .in("status", ["planned", "rest"])
+      .order("planned_date", { ascending: true });
+    return rows ?? [];
+  });
+
+export const togglePlannedSessionRest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ planned_session_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertCoach(context.userId);
+    const { data: row } = await supabaseAdmin
+      .from("planned_sessions")
+      .select("status")
+      .eq("id", data.planned_session_id)
+      .single();
+    const nextStatus = row?.status === "rest" ? "planned" : "rest";
+    await supabaseAdmin
+      .from("planned_sessions")
+      .update({ status: nextStatus })
+      .eq("id", data.planned_session_id);
+    return { status: nextStatus };
   });
 
 export const updateMemberNotes = createServerFn({ method: "POST" })
@@ -660,15 +708,18 @@ export const updateMemberProfile = createServerFn({ method: "POST" })
       const patch: { first_name?: string | null; last_name?: string | null } = {};
       if (data.first_name !== undefined) patch.first_name = data.first_name || null;
       if (data.last_name !== undefined) patch.last_name = data.last_name || null;
-      const { error } = await supabaseAdmin
-        .from("profiles")
-        .update(patch)
-        .eq("id", data.member_id);
+      const { error } = await supabaseAdmin.from("profiles").update(patch).eq("id", data.member_id);
       if (error) throw new Error(error.message);
     }
 
     // 2. member_profiles upsert
-    const mpPatch: { weight_kg?: number | null; height_cm?: number | null; level?: string | null; goal?: string | null; injuries?: string | null } = {};
+    const mpPatch: {
+      weight_kg?: number | null;
+      height_cm?: number | null;
+      level?: string | null;
+      goal?: string | null;
+      injuries?: string | null;
+    } = {};
     if (data.weight_kg !== undefined) mpPatch.weight_kg = data.weight_kg;
     if (data.height_cm !== undefined) mpPatch.height_cm = data.height_cm;
     if (data.level !== undefined) mpPatch.level = data.level || null;
@@ -705,12 +756,6 @@ export const updateMemberProfile = createServerFn({ method: "POST" })
 
     return { ok: true };
   });
-
-
-
-
-
-
 
 // ─── ELEVATION PROXY (server-side → no CORS/rate-limit issues) ───────────────
 
@@ -802,7 +847,6 @@ export const listRunningRoutes = createServerFn({ method: "GET" })
     return { routes: data ?? [] };
   });
 
-
 // ─── PROGRAM FOR CURRENT MEMBER ───────────────────────────────────────────────
 
 export const getMyAssignedProgram = createServerFn({ method: "GET" })
@@ -842,7 +886,6 @@ export const getMyAssignedProgram = createServerFn({ method: "GET" })
     return { assignment, program: program ?? null };
   });
 
-
 export const deleteProgram = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
@@ -855,7 +898,9 @@ export const deleteProgram = createServerFn({ method: "POST" })
       .eq("program_id", data.id)
       .eq("active", true);
     if (count && count > 0) {
-      throw new Error(`Programme actif chez ${count} membre(s) — change leur programme avant de le supprimer.`);
+      throw new Error(
+        `Programme actif chez ${count} membre(s) — change leur programme avant de le supprimer.`,
+      );
     }
     await supabaseAdmin.from("assignments").delete().eq("program_id", data.id);
     const { error } = await supabaseAdmin
@@ -870,10 +915,12 @@ export const deleteProgram = createServerFn({ method: "POST" })
 export const setAssignmentSessionMode = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({
-      member_id: z.string().uuid(),
-      session_mode: z.enum(["expert", "debutant"]),
-    }).parse(d)
+    z
+      .object({
+        member_id: z.string().uuid(),
+        session_mode: z.enum(["expert", "debutant"]),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     await assertCoach(context.userId);
