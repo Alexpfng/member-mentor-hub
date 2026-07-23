@@ -489,11 +489,11 @@ function ExpertRecapRpeBadge({
             borderRadius: 8,
             border: `1px solid ${tone}`,
             background: value == null ? "transparent" : `${tone}22`,
-            color: value == null ? "rgba(255,255,255,0.78)" : "#fff",
+            color: value == null ? "var(--cst-text-muted)" : "var(--cst-text)",
             fontSize: 11,
             letterSpacing: "0.12em",
             cursor: "pointer",
-            ...rpeButtonReset(value == null ? "rgba(255,255,255,0.78)" : "#ffffff"),
+            ...rpeButtonReset(value == null ? "var(--cst-text-muted)" : "var(--cst-text)"),
           }}
         >
           {value == null ? "RPE —" : `RPE ${formatRpeValue(value)}`}
@@ -634,11 +634,11 @@ function ExpertOverviewRpeBadge({
           borderRadius: 8,
           border: `1px solid ${tone}`,
           background: value == null ? "transparent" : `${tone}22`,
-          color: value == null ? "rgba(255,255,255,0.78)" : "#fff",
+          color: value == null ? "var(--cst-text-muted)" : "var(--cst-text)",
           fontSize: 11,
           letterSpacing: "0.12em",
           cursor: "pointer",
-          ...rpeButtonReset(value == null ? "rgba(255,255,255,0.78)" : "#ffffff"),
+          ...rpeButtonReset(value == null ? "var(--cst-text-muted)" : "var(--cst-text)"),
         }}
       >
         {value == null ? "RPE —" : `RPE ${formatRpeValue(value)}`}
@@ -2315,6 +2315,7 @@ export function LiveSession({
                         ...currentMap,
                         [group.exerciseName]: value,
                       }));
+                      setExpertRecapPickerFor(null);
                     }}
                     onCommentChange={(value) => {
                       setExpertRecapCommentByExercise((currentMap) => ({
@@ -3646,7 +3647,10 @@ function EmomScreen({
             {adjustedMin} MIN
             {repsLabel ? ` · ${repsLabel} REPS/MIN` : repsPerMin ? ` · ${repsPerMin} REPS/MIN` : ""}
           </span>
-          <h2 className="cst-display" style={{ margin: "4px 0 0", fontSize: 22, color: "#fff" }}>
+          <h2
+            className="cst-display"
+            style={{ margin: "4px 0 0", fontSize: 22, color: "var(--cst-text)" }}
+          >
             {exercise.name.toUpperCase()}
           </h2>
           {alternating && (
@@ -3904,7 +3908,10 @@ function EmomScreen({
         <span className="cst-mono" style={{ fontSize: 10, opacity: 0.55, letterSpacing: "0.22em" }}>
           ✓ EMOM TERMINÉ
         </span>
-        <h2 className="cst-display" style={{ margin: "4px 0 0", fontSize: 22, color: "#fff" }}>
+        <h2
+          className="cst-display"
+          style={{ margin: "4px 0 0", fontSize: 22, color: "var(--cst-text)" }}
+        >
           {exercise.name.toUpperCase()}
         </h2>
         <div className="cst-mono" style={{ fontSize: 12, opacity: 0.7, marginTop: 4 }}>
@@ -3968,12 +3975,12 @@ function EmomScreen({
                 style={{
                   padding: "12px 0",
                   borderRadius: 6,
-                  border: `1px solid ${on ? hue : "rgba(255,255,255,0.12)"}`,
+                  border: `1px solid ${on ? hue : "var(--cst-card-border)"}`,
                   background: on ? `${hue}33` : "transparent",
-                  color: on ? "#fff" : "rgba(255,255,255,0.7)",
+                  color: on ? "var(--cst-text)" : "var(--cst-text-muted)",
                   fontSize: 15,
                   cursor: "pointer",
-                  ...rpeButtonReset(on ? "#ffffff" : "rgba(255,255,255,0.7)"),
+                  ...rpeButtonReset(on ? "var(--cst-text)" : "var(--cst-text-muted)"),
                 }}
               >
                 {formatRpeValue(v)}
@@ -4374,7 +4381,10 @@ function CircuitScreen({
         <span className="cst-mono" style={{ fontSize: 10, opacity: 0.55, letterSpacing: "0.22em" }}>
           ✓ CIRCUIT TERMINÉ
         </span>
-        <h2 className="cst-display" style={{ margin: "4px 0 0", fontSize: 22, color: "#fff" }}>
+        <h2
+          className="cst-display"
+          style={{ margin: "4px 0 0", fontSize: 22, color: "var(--cst-text)" }}
+        >
           {n} STATIONS · {minElapsed} MIN
         </h2>
         <div className="cst-mono" style={{ fontSize: 12, opacity: 0.7, marginTop: 4 }}>
@@ -4398,12 +4408,12 @@ function CircuitScreen({
                 style={{
                   padding: "12px 0",
                   borderRadius: 6,
-                  border: `1px solid ${on ? hue : "rgba(255,255,255,0.12)"}`,
+                  border: `1px solid ${on ? hue : "var(--cst-card-border)"}`,
                   background: on ? `${hue}33` : "transparent",
-                  color: on ? "#fff" : "rgba(255,255,255,0.7)",
+                  color: on ? "var(--cst-text)" : "var(--cst-text-muted)",
                   fontSize: 15,
                   cursor: "pointer",
-                  ...rpeButtonReset(on ? "#ffffff" : "rgba(255,255,255,0.7)"),
+                  ...rpeButtonReset(on ? "var(--cst-text)" : "var(--cst-text-muted)"),
                 }}
               >
                 {formatRpeValue(v)}
