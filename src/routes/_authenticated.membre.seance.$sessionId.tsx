@@ -38,9 +38,6 @@ type ProgramStructure = {
   }>;
 };
 
-
-
-
 function SeancePage() {
   const { sessionId } = useParams({ from: "/_authenticated/membre/seance/$sessionId" });
   const navigate = useNavigate();
@@ -60,7 +57,10 @@ function SeancePage() {
       const { data: u } = await supabase.auth.getUser();
       setUserId(u.user?.id ?? null);
       const { data: s } = await supabase
-        .from("sessions").select("*").eq("id", sessionId).maybeSingle();
+        .from("sessions")
+        .select("*")
+        .eq("id", sessionId)
+        .maybeSingle();
       setSession(s as SessionRow | null);
 
       let activeAssignment:
@@ -150,44 +150,67 @@ function SeancePage() {
     })();
   }, [sessionId]);
 
-
   async function resetSession() {
     // Supprime les logs + remet la séance à "non commencée" → le coach ne voit plus "en cours"
     await supabase.from("set_logs").delete().eq("session_id", sessionId);
-    await supabase.from("sessions").update({
-      status: null,
-      started_at: null,
-      ended_at: null,
-      total_volume_kg: null,
-      average_rpe: null,
-      duration_minutes: null,
-    }).eq("id", sessionId);
+    await supabase
+      .from("sessions")
+      .update({
+        status: null,
+        started_at: null,
+        ended_at: null,
+        total_volume_kg: null,
+        average_rpe: null,
+        duration_minutes: null,
+      })
+      .eq("id", sessionId);
     navigate({ to: "/membre" });
   }
 
   async function finishSession() {
     setFinishing(true);
     try {
-      // Compute totals from set_logs
-      const { data: logs } = await supabase
-        .from("set_logs").select("weight_kg, reps, rpe").eq("session_id", sessionId);
+      // Compute totals from set_logs + block-level RPE from exercise_feedbacks
+      const [{ data: logs }, { data: feedbacks }] = await Promise.all([
+        supabase.from("set_logs").select("weight_kg, reps, rpe").eq("session_id", sessionId),
+        supabase
+          .from("exercise_feedbacks")
+          .select("rpe")
+          .eq("session_id", sessionId)
+          .not("rpe", "is", null),
+      ]);
       let totalVol = 0;
       let rpeSum = 0;
       let rpeCount = 0;
       (logs ?? []).forEach((l) => {
         if (l.weight_kg && l.reps) totalVol += Number(l.weight_kg) * l.reps;
-        if (l.rpe != null) { rpeSum += l.rpe; rpeCount += 1; }
+        if (l.rpe != null) {
+          rpeSum += l.rpe;
+          rpeCount += 1;
+        }
       });
+      // Fallback: si aucun RPE par série, utiliser les RPE de bloc
+      if (rpeCount === 0) {
+        (feedbacks ?? []).forEach((f) => {
+          if (f.rpe != null) {
+            rpeSum += f.rpe;
+            rpeCount += 1;
+          }
+        });
+      }
       // Durée bornée : null si pas de début connu ou séance laissée ouverte (>4 h).
       const duration = computeSessionDurationMin(session?.started_at);
 
-      const { error: updateErr } = await supabase.from("sessions").update({
-        ended_at: new Date().toISOString(),
-        status: "completed",
-        total_volume_kg: totalVol,
-        average_rpe: rpeCount ? Math.round((rpeSum / rpeCount) * 10) / 10 : null,
-        duration_minutes: duration,
-      }).eq("id", sessionId);
+      const { error: updateErr } = await supabase
+        .from("sessions")
+        .update({
+          ended_at: new Date().toISOString(),
+          status: "completed",
+          total_volume_kg: totalVol,
+          average_rpe: rpeCount ? Math.round((rpeSum / rpeCount) * 10) / 10 : null,
+          duration_minutes: duration,
+        })
+        .eq("id", sessionId);
       if (updateErr) throw new Error(updateErr.message);
 
       // Séance auto-composée : prévenir le coach (non-bloquant).
@@ -208,7 +231,18 @@ function SeancePage() {
 
   if (loading || !userId) {
     return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--cst-dark-green)", color: "rgba(255,255,255,0.5)", fontFamily: "var(--cst-mono)", fontSize: 11 }}>
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "var(--cst-dark-green)",
+          color: "rgba(255,255,255,0.5)",
+          fontFamily: "var(--cst-mono)",
+          fontSize: 11,
+        }}
+      >
         CHARGEMENT…
       </div>
     );
@@ -216,13 +250,33 @@ function SeancePage() {
 
   if (celebrate) {
     return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#111" }}>
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "#111",
+        }}
+      >
         <div style={{ width: 390, minHeight: 780, position: "relative" }}>
           <div
             className="cst-screen cst-hatch"
-            style={{ minHeight: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "40px 28px", gap: 22 }}
+            style={{
+              minHeight: "100%",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              textAlign: "center",
+              padding: "40px 28px",
+              gap: 22,
+            }}
           >
-            <span className="cst-mono" style={{ fontSize: 10, opacity: 0.5, letterSpacing: "0.24em" }}>
+            <span
+              className="cst-mono"
+              style={{ fontSize: 10, opacity: 0.5, letterSpacing: "0.24em" }}
+            >
               ★ SÉANCE TERMINÉE
             </span>
 
@@ -232,7 +286,12 @@ function SeancePage() {
               alt="Bière du repos bien mérité"
               width={180}
               height={180}
-              style={{ width: 180, height: "auto", objectFit: "contain", filter: "drop-shadow(0 8px 24px rgba(0,0,0,0.45))" }}
+              style={{
+                width: 180,
+                height: "auto",
+                objectFit: "contain",
+                filter: "drop-shadow(0 8px 24px rgba(0,0,0,0.45))",
+              }}
             />
 
             <h1 className="cst-display" style={{ fontSize: 34, margin: 0, lineHeight: 1.05 }}>
@@ -259,9 +318,21 @@ function SeancePage() {
 
   if ((loadError || exercises.length === 0) && !running) {
     return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--cst-dark-green)", padding: 24 }}>
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "var(--cst-dark-green)",
+          padding: 24,
+        }}
+      >
         <div style={{ maxWidth: 360, textAlign: "center", color: "rgba(255,255,255,0.85)" }}>
-          <div className="cst-mono" style={{ fontSize: 10, letterSpacing: "0.18em", color: "#C56A60", marginBottom: 10 }}>
+          <div
+            className="cst-mono"
+            style={{ fontSize: 10, letterSpacing: "0.18em", color: "#C56A60", marginBottom: 10 }}
+          >
             SÉANCE INDISPONIBLE
           </div>
           <div className="cst-display" style={{ fontSize: 22, lineHeight: 1.2, marginBottom: 12 }}>
@@ -281,7 +352,16 @@ function SeancePage() {
             <button
               onClick={() => navigate({ to: "/membre" })}
               className="cst-mono"
-              style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.7)", borderRadius: 6, padding: "10px 16px", fontSize: 11, cursor: "pointer", letterSpacing: "0.12em" }}
+              style={{
+                background: "transparent",
+                border: "1px solid rgba(255,255,255,0.2)",
+                color: "rgba(255,255,255,0.7)",
+                borderRadius: 6,
+                padding: "10px 16px",
+                fontSize: 11,
+                cursor: "pointer",
+                letterSpacing: "0.12em",
+              }}
             >
               ACCUEIL
             </button>
@@ -291,17 +371,43 @@ function SeancePage() {
     );
   }
 
-
   return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#111" }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "#111",
+      }}
+    >
       <div style={{ width: 390, minHeight: 780, position: "relative" }}>
-        <div className="cst-screen cst-hatch" style={{ minHeight: "100%", display: "flex", flexDirection: "column" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "22px 22px 4px" }}>
+        <div
+          className="cst-screen cst-hatch"
+          style={{ minHeight: "100%", display: "flex", flexDirection: "column" }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: "22px 22px 4px",
+            }}
+          >
             <CSTLogo size={11} />
             <button
-              onClick={() => quitRef.current ? quitRef.current() : navigate({ to: "/membre" })}
+              onClick={() => (quitRef.current ? quitRef.current() : navigate({ to: "/membre" }))}
               className="cst-mono"
-              style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", borderRadius: 6, padding: "4px 10px", fontSize: 10, cursor: "pointer", letterSpacing: "0.12em" }}
+              style={{
+                background: "transparent",
+                border: "1px solid rgba(255,255,255,0.1)",
+                color: "rgba(255,255,255,0.6)",
+                borderRadius: 6,
+                padding: "4px 10px",
+                fontSize: 10,
+                cursor: "pointer",
+                letterSpacing: "0.12em",
+              }}
             >
               ← QUITTER
             </button>

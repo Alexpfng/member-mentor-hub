@@ -9,6 +9,7 @@ import {
   markSessionSeen,
   setSessionCoachNote,
 } from "@/lib/coach-dashboard.functions";
+import { forceCompleteSession } from "@/lib/coach.functions";
 import { resolvePainReport } from "@/lib/pain-reports.functions";
 import { timeAgo, sanitizeDurationMin } from "@/lib/format";
 import { toast } from "sonner";
@@ -47,9 +48,11 @@ export default function CoachSessionDetail() {
     caption: string | null;
   } | null>(null);
   const saveCoachNoteFn = useServerFn(setSessionCoachNote);
+  const forceCompleteFn = useServerFn(forceCompleteSession);
   const [coachUserId, setCoachUserId] = useState<string | null>(null);
   const [coachNote, setCoachNote] = useState("");
   const [savingNote, setSavingNote] = useState(false);
+  const [forcingComplete, setForcingComplete] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["coach", "session", sessionId],
@@ -82,6 +85,26 @@ export default function CoachSessionDetail() {
       toast.error(e instanceof Error ? e.message : "Erreur");
     } finally {
       setSavingNote(false);
+    }
+  }
+
+  async function handleForceComplete() {
+    if (
+      !window.confirm(
+        "Forcer la fin de cette séance ? Le RPE et le volume seront calculés depuis les séries enregistrées.",
+      )
+    )
+      return;
+    setForcingComplete(true);
+    try {
+      await forceCompleteFn({ data: { session_id: sessionId } });
+      toast.success("Séance marquée comme terminée");
+      qc.invalidateQueries({ queryKey: ["coach", "session", sessionId] });
+      qc.invalidateQueries({ queryKey: ["coach"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur");
+    } finally {
+      setForcingComplete(false);
     }
   }
 
@@ -688,6 +711,40 @@ export default function CoachSessionDetail() {
             </div>
           </div>
 
+          {(s as any).status === "in_progress" && (
+            <div
+              style={{
+                padding: "12px 16px",
+                background: "rgba(224,123,57,0.1)",
+                border: "1px solid rgba(224,123,57,0.35)",
+                borderRadius: 8,
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                flexWrap: "wrap",
+              }}
+            >
+              <span
+                className="cst-mono"
+                style={{ fontSize: 10, color: "#E07B39", letterSpacing: "0.12em" }}
+              >
+                ⚠ SÉANCE EN COURS — membre n'a pas appuyé sur « Terminer »
+              </span>
+              <button
+                className="cst-btn cst-btn-sm"
+                style={{
+                  background: "rgba(224,123,57,0.25)",
+                  color: "#E07B39",
+                  border: "1px solid rgba(224,123,57,0.5)",
+                }}
+                onClick={handleForceComplete}
+                disabled={forcingComplete}
+              >
+                {forcingComplete ? "…" : "Forcer la fin de séance"}
+              </button>
+            </div>
+          )}
+
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             <button
               className="cst-btn cst-btn-primary"
@@ -718,7 +775,11 @@ export default function CoachSessionDetail() {
             </button>
           </div>
           <div style={{ fontSize: 11, opacity: 0.5, fontFamily: "var(--cst-mono)" }}>
-            Terminée {timeAgo(s.ended_at)}
+            {(s as any).status === "completed"
+              ? `Terminée ${timeAgo(s.ended_at)}`
+              : (s as any).status === "in_progress"
+                ? "En cours"
+                : ""}
           </div>
         </div>
       </div>

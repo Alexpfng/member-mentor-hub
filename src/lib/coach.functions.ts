@@ -566,14 +566,32 @@ export const getMemberDetail = createServerFn({ method: "GET" })
 
     const sessionIds = (sessions ?? []).map((s) => s.id);
     let setLogs: any[] = [];
+    const feedbackRpeBySession = new Map<string, number>();
     if (sessionIds.length > 0) {
-      const { data: sl } = await supabaseAdmin
-        .from("set_logs")
-        .select("exercise_name, weight_kg, reps, logged_at, session_id")
-        .in("session_id", sessionIds)
-        .order("logged_at", { ascending: false })
-        .limit(200);
+      const [{ data: sl }, { data: efRpe }] = await Promise.all([
+        supabaseAdmin
+          .from("set_logs")
+          .select("exercise_name, weight_kg, reps, logged_at, session_id")
+          .in("session_id", sessionIds)
+          .order("logged_at", { ascending: false })
+          .limit(200),
+        supabaseAdmin
+          .from("exercise_feedbacks")
+          .select("session_id, rpe")
+          .in("session_id", sessionIds)
+          .not("rpe", "is", null),
+      ]);
       setLogs = sl ?? [];
+      // Compute per-session average RPE from exercise_feedbacks as fallback
+      const sums = new Map<string, { sum: number; count: number }>();
+      for (const f of efRpe ?? []) {
+        if (f.rpe == null) continue;
+        const cur = sums.get(f.session_id) ?? { sum: 0, count: 0 };
+        sums.set(f.session_id, { sum: cur.sum + Number(f.rpe), count: cur.count + 1 });
+      }
+      sums.forEach((v, sid) => {
+        feedbackRpeBySession.set(sid, Math.round((v.sum / v.count) * 10) / 10);
+      });
     }
 
     let program: any = null;
@@ -615,7 +633,10 @@ export const getMemberDetail = createServerFn({ method: "GET" })
         : null,
       assignment: assignment ?? null,
       program,
-      sessions: sessions ?? [],
+      sessions: (sessions ?? []).map((s) => ({
+        ...s,
+        average_rpe: s.average_rpe ?? feedbackRpeBySession.get(s.id) ?? null,
+      })),
       set_logs: setLogs,
       weight_logs: weightLogs ?? [],
       unread_messages_count: unreadCount ?? 0,
@@ -970,6 +991,73 @@ export const setAssignmentSessionMode = createServerFn({ method: "POST" })
       .update({ session_mode: data.session_mode } as any)
       .eq("member_id", data.member_id)
       .eq("active", true);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const forceCompleteSession = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ session_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertCoach(context.userId);
+
+    const [{ data: logs }, { data: efRpe }] = await Promise.all([
+      supabaseAdmin
+        .from("set_logs")
+        .select("weight_kg, reps, rpe")
+        .eq("session_id", data.session_id),
+      supabaseAdmin
+        .from("exercise_feedbacks")
+        .select("rpe")
+        .eq("session_id", data.session_id)
+        .not("rpe", "is", null),
+    ]);
+
+    let totalVol = 0;
+    let rpeSum = 0;
+    let rpeCount = 0;
+    (logs ?? []).forEach((l) => {
+      if (l.weight_kg && l.reps) totalVol += Number(l.weight_kg) * Number(l.reps);
+      if (l.rpe != null) {
+        rpeSum += Number(l.rpe);
+        rpeCount += 1;
+      }
+    });
+    if (rpeCount === 0) {
+      (efRpe ?? []).forEach((f) => {
+        if (f.rpe != null) {
+          rpeSum += Number(f.rpe);
+          rpeCount += 1;
+        }
+      });
+    }
+
+    const { data: session } = await supabaseAdmin
+      .from("sessions")
+      .select("started_at")
+      .eq("id", data.session_id)
+      .single();
+
+    const now = new Date().toISOString();
+    let durationMinutes: number | null = null;
+    if (session?.started_at) {
+      const diffMs = Date.now() - new Date(session.started_at).getTime();
+      const diffMin = Math.round(diffMs / 60000);
+      durationMinutes = diffMin > 0 && diffMin < 240 ? diffMin : null;
+    }
+
+    const { error } = await supabaseAdmin
+      .from("sessions")
+      .update({
+        status: "completed",
+        ended_at: now,
+        total_volume_kg: totalVol > 0 ? totalVol : null,
+        average_rpe: rpeCount > 0 ? Math.round((rpeSum / rpeCount) * 10) / 10 : null,
+        duration_minutes: durationMinutes,
+      })
+      .eq("id", data.session_id)
+      .eq("status", "in_progress");
+
     if (error) throw new Error(error.message);
     return { ok: true };
   });

@@ -1069,7 +1069,9 @@ export default function CoachMember() {
                         prevWeek > 0 ? data.sessions.filter((s) => s.week_number === prevWeek) : [];
                       const recentFallback =
                         prevWeek <= 0
-                          ? data.sessions.filter((s) => s.status === "done").slice(0, 5)
+                          ? data.sessions
+                              .filter((s) => s.status === "completed" || s.status === "done")
+                              .slice(0, 5)
                           : [];
                       const toShow = prevSessions.length > 0 ? prevSessions : recentFallback;
                       const label =
