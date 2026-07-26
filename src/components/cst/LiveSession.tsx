@@ -519,7 +519,10 @@ function ExpertRecapRpeBadge({
                 <button
                   key={score}
                   type="button"
-                  onClick={() => onChange(score)}
+                  onClick={() => {
+                    onChange(score);
+                    onToggle();
+                  }}
                   className="cst-mono"
                   style={{
                     padding: "12px 0",
@@ -538,7 +541,10 @@ function ExpertRecapRpeBadge({
             })}
             <button
               type="button"
-              onClick={() => onChange(11)}
+              onClick={() => {
+                onChange(11);
+                onToggle();
+              }}
               className="cst-mono"
               style={{
                 gridColumn: "span 1",
@@ -669,7 +675,10 @@ function ExpertOverviewRpeBadge({
                 <button
                   key={score}
                   type="button"
-                  onClick={() => onChange(score)}
+                  onClick={() => {
+                    onChange(score);
+                    onToggle();
+                  }}
                   className="cst-mono"
                   style={{
                     padding: "10px 0",
@@ -688,7 +697,10 @@ function ExpertOverviewRpeBadge({
             })}
             <button
               type="button"
-              onClick={() => onChange(11)}
+              onClick={() => {
+                onChange(11);
+                onToggle();
+              }}
               className="cst-mono"
               style={{
                 gridColumn: "span 1",
@@ -2680,7 +2692,9 @@ export function LiveSession({
                 {parseRpeCell(ex.rpe_target).comment && (
                   <div className="cst-mono" style={{ fontSize: 11, opacity: 0.85, marginTop: 2 }}>
                     <span style={{ opacity: 0.55 }}>RPE · </span>
-                    <span style={{ fontStyle: "italic" }}>{parseRpeCell(ex.rpe_target).comment}</span>
+                    <span style={{ fontStyle: "italic" }}>
+                      {parseRpeCell(ex.rpe_target).comment}
+                    </span>
                   </div>
                 )}
                 {color && <RPEGuidance color={color} />}
@@ -3097,7 +3111,14 @@ export function LiveSession({
           </div>
           <div className="cst-mono" style={{ fontSize: 11, opacity: 0.8, marginTop: 8 }}>
             {repPlaceholder && <>OBJECTIF {formatRepsObjectif(repPlaceholder) ?? repPlaceholder}</>}
-            {setStep.exercise.rpe_target && <> @ RPE {parseRpeCell(setStep.exercise.rpe_target).rpe?.replace(".", ",") ?? setStep.exercise.rpe_target}</>}
+            {setStep.exercise.rpe_target && (
+              <>
+                {" "}
+                @ RPE{" "}
+                {parseRpeCell(setStep.exercise.rpe_target).rpe?.replace(".", ",") ??
+                  setStep.exercise.rpe_target}
+              </>
+            )}
           </div>
           {setStep.exercise.charge && !bodyweight && (
             <div className="cst-mono" style={{ fontSize: 11, opacity: 0.7, marginTop: 4 }}>
@@ -5108,7 +5129,8 @@ function CuesModal({
                 {parseRpeCell(exercise.rpe_target).rpe?.replace(".", ",") ?? exercise.rpe_target}
                 {parseRpeCell(exercise.rpe_target).comment && (
                   <span style={{ opacity: 0.8, fontStyle: "italic", fontWeight: 400 }}>
-                    {" · "}{parseRpeCell(exercise.rpe_target).comment}
+                    {" · "}
+                    {parseRpeCell(exercise.rpe_target).comment}
                   </span>
                 )}
               </div>
