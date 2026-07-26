@@ -92,7 +92,7 @@ export const listMembers = createServerFn({ method: "GET" })
     const [{ data: profiles }, { data: assignments }] = await Promise.all([
       supabaseAdmin
         .from("profiles")
-        .select("id, email, first_name, last_name, created_at")
+        .select("id, email, first_name, last_name, created_at, is_archived")
         .in("id", ids),
       supabaseAdmin
         .from("assignments")
@@ -118,18 +118,20 @@ export const listMembers = createServerFn({ method: "GET" })
       assignMap.set(a.member_id, a);
     });
 
-    const members = (profiles ?? []).map((p) => {
-      const a = assignMap.get(p.id);
-      return {
-        id: p.id,
-        email: p.email,
-        first_name: p.first_name,
-        last_name: p.last_name,
-        created_at: p.created_at,
-        program_name: a ? (programsById.get(a.program_id) ?? null) : null,
-        program_id: a?.program_id ?? null,
-      };
-    });
+    const members = (profiles ?? [])
+      .filter((p: any) => !p.is_archived)
+      .map((p) => {
+        const a = assignMap.get(p.id);
+        return {
+          id: p.id,
+          email: p.email,
+          first_name: p.first_name,
+          last_name: p.last_name,
+          created_at: p.created_at,
+          program_name: a ? (programsById.get(a.program_id) ?? null) : null,
+          program_id: a?.program_id ?? null,
+        };
+      });
     return { members };
   });
 
@@ -521,7 +523,7 @@ export const getMemberDetail = createServerFn({ method: "GET" })
     ] = await Promise.all([
       supabaseAdmin
         .from("profiles")
-        .select("id, email, first_name, last_name, avatar_url, created_at")
+        .select("id, email, first_name, last_name, avatar_url, created_at, is_archived")
         .eq("id", memberId)
         .maybeSingle(),
       supabaseAdmin
@@ -908,6 +910,44 @@ export const deleteProgram = createServerFn({ method: "POST" })
       .delete()
       .eq("id", data.id)
       .eq("coach_id", context.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const toggleMemberArchived = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ member_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertCoach(context.userId);
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("is_archived")
+      .eq("id", data.member_id)
+      .single();
+    const nextArchived = !(profile as any)?.is_archived;
+    await supabaseAdmin
+      .from("profiles")
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .update({ is_archived: nextArchived } as any)
+      .eq("id", data.member_id);
+    if (nextArchived) {
+      await supabaseAdmin.auth.admin.updateUserById(data.member_id, {
+        ban_duration: "876000h",
+      });
+    } else {
+      await supabaseAdmin.auth.admin.updateUserById(data.member_id, {
+        ban_duration: "none",
+      });
+    }
+    return { is_archived: nextArchived };
+  });
+
+export const deleteMemberAccount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ member_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertCoach(context.userId);
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(data.member_id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });

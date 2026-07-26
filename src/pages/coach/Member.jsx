@@ -240,6 +240,8 @@ import {
   setAssignmentSessionMode,
   getUpcomingPlannedSessions,
   togglePlannedSessionRest,
+  toggleMemberArchived,
+  deleteMemberAccount,
 } from "@/lib/coach.functions";
 import { VideoReviewPanel } from "../../components/coach/VideoReviewPanel";
 import MemberFollowupTab from "../../components/coach/MemberFollowupTab";
@@ -297,6 +299,8 @@ export default function CoachMember() {
   const setModeFn = useServerFn(setAssignmentSessionMode);
   const getUpcomingFn = useServerFn(getUpcomingPlannedSessions);
   const toggleRestFn = useServerFn(togglePlannedSessionRest);
+  const toggleArchivedFn = useServerFn(toggleMemberArchived);
+  const deleteMemberFn = useServerFn(deleteMemberAccount);
 
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
@@ -322,6 +326,9 @@ export default function CoachMember() {
   const [sessionModeBusy, setSessionModeBusy] = useState(false);
   const [upcomingSessions, setUpcomingSessions] = useState([]);
   const [skipBusy, setSkipBusy] = useState(null);
+  const [archiveBusy, setArchiveBusy] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleteBusy, setDeleteBusy] = useState(false);
 
   async function reload() {
     setLoading(true);
@@ -369,6 +376,33 @@ export default function CoachMember() {
       // ignore
     } finally {
       setSkipBusy(null);
+    }
+  }
+
+  async function handleToggleArchive() {
+    setArchiveBusy(true);
+    try {
+      const res = await toggleArchivedFn({ data: { member_id: memberId } });
+      setData((prev) => ({
+        ...prev,
+        profile: { ...prev.profile, is_archived: res.is_archived },
+      }));
+    } catch (ex) {
+      alert(ex?.message || "Erreur");
+    } finally {
+      setArchiveBusy(false);
+    }
+  }
+
+  async function handleDeleteMember() {
+    setDeleteBusy(true);
+    try {
+      await deleteMemberFn({ data: { member_id: memberId } });
+      navigate({ to: "/coach" });
+    } catch (ex) {
+      alert(ex?.message || "Erreur");
+    } finally {
+      setDeleteBusy(false);
     }
   }
 
@@ -1414,6 +1448,73 @@ export default function CoachMember() {
                     )}
                   </div>
                 </form>
+
+                {/* GESTION DU COMPTE */}
+                <div
+                  style={{
+                    marginTop: 32,
+                    padding: "20px 20px 20px",
+                    border: "1px solid rgba(220,60,60,0.2)",
+                    borderRadius: 8,
+                    background: "rgba(220,60,60,0.04)",
+                  }}
+                >
+                  <div
+                    className="cst-mono"
+                    style={{
+                      fontSize: 9,
+                      letterSpacing: "0.18em",
+                      color: "rgba(220,80,80,0.7)",
+                      marginBottom: 14,
+                    }}
+                  >
+                    ZONE DANGER — GESTION DU COMPTE
+                  </div>
+                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                    <button
+                      onClick={handleToggleArchive}
+                      disabled={archiveBusy}
+                      className="cst-btn cst-btn-sm"
+                      style={{
+                        fontSize: 11,
+                        border: "1px solid rgba(255,200,80,0.35)",
+                        color: "rgba(255,200,80,0.85)",
+                        background: "transparent",
+                        opacity: archiveBusy ? 0.5 : 1,
+                      }}
+                    >
+                      {archiveBusy
+                        ? "…"
+                        : data?.profile?.is_archived
+                          ? "↩ RÉACTIVER LE COMPTE"
+                          : "⊘ ARCHIVER LE COMPTE"}
+                    </button>
+                    <button
+                      onClick={() => setConfirmDelete(true)}
+                      className="cst-btn cst-btn-sm"
+                      style={{
+                        fontSize: 11,
+                        border: "1px solid rgba(220,60,60,0.4)",
+                        color: "rgba(220,80,80,0.9)",
+                        background: "transparent",
+                      }}
+                    >
+                      ✕ SUPPRIMER DÉFINITIVEMENT
+                    </button>
+                  </div>
+                  {data?.profile?.is_archived && (
+                    <p
+                      style={{
+                        fontSize: 11,
+                        color: "rgba(255,200,80,0.65)",
+                        marginTop: 10,
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      Compte archivé — connexion bloquée, n&apos;apparaît plus dans la liste.
+                    </p>
+                  )}
+                </div>
               </>
             )}
 
@@ -1482,6 +1583,69 @@ export default function CoachMember() {
           </div>
         </div>
       </div>
+
+      {/* Modale confirmation suppression */}
+      {confirmDelete && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 999,
+            background: "rgba(0,0,0,0.72)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 24,
+          }}
+        >
+          <div
+            className="cst-card-dark"
+            style={{ maxWidth: 420, width: "100%", padding: "28px 24px" }}
+          >
+            <div className="cst-display" style={{ fontSize: 16, marginBottom: 12 }}>
+              SUPPRIMER LE COMPTE
+            </div>
+            <p
+              style={{
+                fontSize: 13,
+                color: "rgba(255,255,255,0.7)",
+                lineHeight: 1.6,
+                marginBottom: 20,
+              }}
+            >
+              Cette action est <strong>irréversible</strong>. Toutes les données de{" "}
+              <strong>{fullName}</strong> seront supprimées définitivement — séances, progression,
+              messages, historique.
+            </p>
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+              <button
+                onClick={() => setConfirmDelete(false)}
+                className="cst-btn cst-btn-sm"
+                style={{ fontSize: 11 }}
+              >
+                ANNULER
+              </button>
+              <button
+                onClick={() => {
+                  setConfirmDelete(false);
+                  handleDeleteMember();
+                }}
+                disabled={deleteBusy}
+                className="cst-btn cst-btn-sm"
+                style={{
+                  fontSize: 11,
+                  background: "rgba(220,60,60,0.15)",
+                  border: "1px solid rgba(220,60,60,0.5)",
+                  color: "#ef4444",
+                  opacity: deleteBusy ? 0.5 : 1,
+                }}
+              >
+                {deleteBusy ? "SUPPRESSION…" : "SUPPRIMER DÉFINITIVEMENT"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
