@@ -33,6 +33,7 @@ type Member = {
   first_name: string | null;
   last_name: string | null;
   email: string | null;
+  is_archived: boolean;
 };
 
 async function listCoachMembers() {
@@ -45,13 +46,14 @@ async function listCoachMembers() {
   if (!ids.length) return [] as Member[];
   const { data: profs } = await supabaseAdmin
     .from("profiles")
-    .select("id, first_name, last_name, email")
+    .select("id, first_name, last_name, email, is_archived")
     .in("id", ids);
   return (profs ?? []).map((p) => ({
     user_id: p.id,
     first_name: p.first_name,
     last_name: p.last_name,
     email: p.email,
+    is_archived: (p as any).is_archived ?? false,
   })) as Member[];
 }
 
@@ -617,6 +619,7 @@ export const getMembersOverview = createServerFn({ method: "GET" })
           adherence7d: adherence,
           status,
           statusLabel,
+          isArchived: m.is_archived,
         };
       })
       .sort((a, b) => {
