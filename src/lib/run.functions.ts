@@ -184,7 +184,7 @@ async function fetchPreviousRun(
   };
 }
 
-async function upsertRunStats(input: {
+export async function upsertRunStats(input: {
   sessionId: string;
   memberId: string;
   metrics: RunMetrics;
