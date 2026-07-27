@@ -676,6 +676,131 @@ export type Database = {
           },
         ]
       }
+      member_strava_activities: {
+        Row: {
+          activity_type: string
+          average_heartrate: number | null
+          average_speed_mps: number | null
+          created_at: string
+          distance_m: number | null
+          elapsed_time_s: number | null
+          elevation_gain_m: number | null
+          id: string
+          member_id: string
+          moving_time_s: number | null
+          name: string | null
+          raw_payload: Json | null
+          session_id: string | null
+          started_at: string
+          strava_activity_id: number
+          sync_error: string | null
+          sync_status: string
+          updated_at: string
+        }
+        Insert: {
+          activity_type: string
+          average_heartrate?: number | null
+          average_speed_mps?: number | null
+          created_at?: string
+          distance_m?: number | null
+          elapsed_time_s?: number | null
+          elevation_gain_m?: number | null
+          id?: string
+          member_id: string
+          moving_time_s?: number | null
+          name?: string | null
+          raw_payload?: Json | null
+          session_id?: string | null
+          started_at: string
+          strava_activity_id: number
+          sync_error?: string | null
+          sync_status?: string
+          updated_at?: string
+        }
+        Update: {
+          activity_type?: string
+          average_heartrate?: number | null
+          average_speed_mps?: number | null
+          created_at?: string
+          distance_m?: number | null
+          elapsed_time_s?: number | null
+          elevation_gain_m?: number | null
+          id?: string
+          member_id?: string
+          moving_time_s?: number | null
+          name?: string | null
+          raw_payload?: Json | null
+          session_id?: string | null
+          started_at?: string
+          strava_activity_id?: number
+          sync_error?: string | null
+          sync_status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_strava_activities_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_strava_activities_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      member_strava_connections: {
+        Row: {
+          access_token: string
+          created_at: string
+          expires_at: string
+          last_sync_at: string | null
+          last_webhook_at: string | null
+          member_id: string
+          refresh_token: string
+          scope: string[]
+          strava_athlete_id: number
+          updated_at: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string
+          expires_at: string
+          last_sync_at?: string | null
+          last_webhook_at?: string | null
+          member_id: string
+          refresh_token: string
+          scope?: string[]
+          strava_athlete_id: number
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string
+          expires_at?: string
+          last_sync_at?: string | null
+          last_webhook_at?: string | null
+          member_id?: string
+          refresh_token?: string
+          scope?: string[]
+          strava_athlete_id?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_strava_connections_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           content: string

@@ -17,6 +17,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as OnboardingStepRouteImport } from './routes/onboarding.$step'
 import { Route as AuthenticatedMembreIndexRouteImport } from './routes/_authenticated.membre.index'
 import { Route as AuthenticatedCoachIndexRouteImport } from './routes/_authenticated.coach.index'
+import { Route as ApiStravaWebhookRouteImport } from './routes/api/strava/webhook'
+import { Route as ApiStravaCallbackRouteImport } from './routes/api/strava/callback'
 import { Route as AuthenticatedMembreRetoursRouteImport } from './routes/_authenticated.membre.retours'
 import { Route as AuthenticatedMembreProgressionRouteImport } from './routes/_authenticated.membre.progression'
 import { Route as AuthenticatedMembreProgrammeRouteImport } from './routes/_authenticated.membre.programme'
@@ -95,6 +97,16 @@ const AuthenticatedCoachIndexRoute = AuthenticatedCoachIndexRouteImport.update({
   id: '/coach/',
   path: '/coach/',
   getParentRoute: () => AuthenticatedRoute,
+} as any)
+const ApiStravaWebhookRoute = ApiStravaWebhookRouteImport.update({
+  id: '/api/strava/webhook',
+  path: '/api/strava/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiStravaCallbackRoute = ApiStravaCallbackRouteImport.update({
+  id: '/api/strava/callback',
+  path: '/api/strava/callback',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedMembreRetoursRoute =
   AuthenticatedMembreRetoursRouteImport.update({
@@ -352,6 +364,8 @@ export interface FileRoutesByFullPath {
   '/membre/programme': typeof AuthenticatedMembreProgrammeRoute
   '/membre/progression': typeof AuthenticatedMembreProgressionRoute
   '/membre/retours': typeof AuthenticatedMembreRetoursRoute
+  '/api/strava/callback': typeof ApiStravaCallbackRoute
+  '/api/strava/webhook': typeof ApiStravaWebhookRoute
   '/coach/': typeof AuthenticatedCoachIndexRoute
   '/membre/': typeof AuthenticatedMembreIndexRoute
   '/coach/builder/$id': typeof AuthenticatedCoachBuilderIdRoute
@@ -397,6 +411,8 @@ export interface FileRoutesByTo {
   '/membre/programme': typeof AuthenticatedMembreProgrammeRoute
   '/membre/progression': typeof AuthenticatedMembreProgressionRoute
   '/membre/retours': typeof AuthenticatedMembreRetoursRoute
+  '/api/strava/callback': typeof ApiStravaCallbackRoute
+  '/api/strava/webhook': typeof ApiStravaWebhookRoute
   '/coach': typeof AuthenticatedCoachIndexRoute
   '/membre': typeof AuthenticatedMembreIndexRoute
   '/coach/builder/$id': typeof AuthenticatedCoachBuilderIdRoute
@@ -445,6 +461,8 @@ export interface FileRoutesById {
   '/_authenticated/membre/programme': typeof AuthenticatedMembreProgrammeRoute
   '/_authenticated/membre/progression': typeof AuthenticatedMembreProgressionRoute
   '/_authenticated/membre/retours': typeof AuthenticatedMembreRetoursRoute
+  '/api/strava/callback': typeof ApiStravaCallbackRoute
+  '/api/strava/webhook': typeof ApiStravaWebhookRoute
   '/_authenticated/coach/': typeof AuthenticatedCoachIndexRoute
   '/_authenticated/membre/': typeof AuthenticatedMembreIndexRoute
   '/_authenticated/coach/builder/$id': typeof AuthenticatedCoachBuilderIdRoute
@@ -494,6 +512,8 @@ export interface FileRouteTypes {
     | '/membre/programme'
     | '/membre/progression'
     | '/membre/retours'
+    | '/api/strava/callback'
+    | '/api/strava/webhook'
     | '/coach/'
     | '/membre/'
     | '/coach/builder/$id'
@@ -539,6 +559,8 @@ export interface FileRouteTypes {
     | '/membre/programme'
     | '/membre/progression'
     | '/membre/retours'
+    | '/api/strava/callback'
+    | '/api/strava/webhook'
     | '/coach'
     | '/membre'
     | '/coach/builder/$id'
@@ -586,6 +608,8 @@ export interface FileRouteTypes {
     | '/_authenticated/membre/programme'
     | '/_authenticated/membre/progression'
     | '/_authenticated/membre/retours'
+    | '/api/strava/callback'
+    | '/api/strava/webhook'
     | '/_authenticated/coach/'
     | '/_authenticated/membre/'
     | '/_authenticated/coach/builder/$id'
@@ -612,6 +636,8 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
   OnboardingStepRoute: typeof OnboardingStepRoute
+  ApiStravaCallbackRoute: typeof ApiStravaCallbackRoute
+  ApiStravaWebhookRoute: typeof ApiStravaWebhookRoute
   ApiPublicHooksGenerateLogbooksRoute: typeof ApiPublicHooksGenerateLogbooksRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -675,6 +701,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/coach/'
       preLoaderRoute: typeof AuthenticatedCoachIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/api/strava/webhook': {
+      id: '/api/strava/webhook'
+      path: '/api/strava/webhook'
+      fullPath: '/api/strava/webhook'
+      preLoaderRoute: typeof ApiStravaWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/strava/callback': {
+      id: '/api/strava/callback'
+      path: '/api/strava/callback'
+      fullPath: '/api/strava/callback'
+      preLoaderRoute: typeof ApiStravaCallbackRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/membre/retours': {
       id: '/_authenticated/membre/retours'
@@ -1090,6 +1130,8 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
   OnboardingStepRoute: OnboardingStepRoute,
+  ApiStravaCallbackRoute: ApiStravaCallbackRoute,
+  ApiStravaWebhookRoute: ApiStravaWebhookRoute,
   ApiPublicHooksGenerateLogbooksRoute: ApiPublicHooksGenerateLogbooksRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
