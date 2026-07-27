@@ -358,10 +358,31 @@ export const getMemberWeekContext = createServerFn({ method: "POST" })
         .eq("week_number", weekRow.based_on_week);
       const total = srcSessions?.length ?? 0;
       const done = (srcSessions ?? []).filter((s) => s.status === "completed").length;
-      const rpes = (srcSessions ?? [])
-        .map((s) => s.average_rpe)
-        .filter((v): v is number => v != null);
       adherence = { done, total };
+
+      // Fallback: sessions whose average_rpe is null → read from exercise_feedbacks
+      const srcIds = (srcSessions ?? []).map((s) => s.id);
+      const nullRpeIds = (srcSessions ?? []).filter((s) => s.average_rpe == null).map((s) => s.id);
+      const fallbackRpe = new Map<string, number>();
+      if (nullRpeIds.length > 0) {
+        const { data: efRows } = await supabaseAdmin
+          .from("exercise_feedbacks")
+          .select("session_id, rpe")
+          .in("session_id", nullRpeIds)
+          .not("rpe", "is", null);
+        const sums = new Map<string, { sum: number; count: number }>();
+        for (const f of efRows ?? []) {
+          if (f.rpe == null || !f.session_id) continue;
+          const cur = sums.get(f.session_id) ?? { sum: 0, count: 0 };
+          sums.set(f.session_id, { sum: cur.sum + Number(f.rpe), count: cur.count + 1 });
+        }
+        sums.forEach((v, sid) => {
+          fallbackRpe.set(sid, Math.round((v.sum / v.count) * 10) / 10);
+        });
+      }
+      const rpes = (srcSessions ?? [])
+        .map((s) => s.average_rpe ?? fallbackRpe.get(s.id) ?? null)
+        .filter((v): v is number => v != null);
       avgRpe = rpes.length
         ? Math.round((rpes.reduce((a, b) => a + b, 0) / rpes.length) * 10) / 10
         : null;
@@ -812,20 +833,39 @@ export const listMemberPastSessions = createServerFn({ method: "POST" })
 
     const ids = (sessions ?? []).map((s) => s.id);
     const exoCountBySession = new Map<string, number>();
+    const fallbackRpe = new Map<string, number>();
 
     if (ids.length) {
-      const { data: sets } = await supabaseAdmin
-        .from("set_logs")
-        .select("session_id, exercise_name")
-        .in("session_id", ids);
+      const nullRpeIds = (sessions ?? []).filter((s) => s.average_rpe == null).map((s) => s.id);
+
+      const [setsResult, efResult] = await Promise.all([
+        supabaseAdmin.from("set_logs").select("session_id, exercise_name").in("session_id", ids),
+        nullRpeIds.length > 0
+          ? supabaseAdmin
+              .from("exercise_feedbacks")
+              .select("session_id, rpe")
+              .in("session_id", nullRpeIds)
+              .not("rpe", "is", null)
+          : Promise.resolve({ data: [] }),
+      ]);
 
       const exosBySession = new Map<string, Set<string>>();
-      for (const s of sets ?? []) {
+      for (const s of setsResult.data ?? []) {
         if (!s.session_id || !s.exercise_name) continue;
         if (!exosBySession.has(s.session_id)) exosBySession.set(s.session_id, new Set());
         exosBySession.get(s.session_id)!.add(s.exercise_name);
       }
       for (const [sid, exos] of exosBySession) exoCountBySession.set(sid, exos.size);
+
+      const sums = new Map<string, { sum: number; count: number }>();
+      for (const f of efResult.data ?? []) {
+        if (f.rpe == null || !f.session_id) continue;
+        const cur = sums.get(f.session_id) ?? { sum: 0, count: 0 };
+        sums.set(f.session_id, { sum: cur.sum + Number(f.rpe), count: cur.count + 1 });
+      }
+      sums.forEach((v, sid) => {
+        fallbackRpe.set(sid, Math.round((v.sum / v.count) * 10) / 10);
+      });
     }
 
     return (sessions ?? []).map((s) => ({
@@ -837,7 +877,7 @@ export const listMemberPastSessions = createServerFn({ method: "POST" })
       weekNumber: s.week_number,
       dayNumber: s.day_number,
       endedAt: s.ended_at,
-      averageRpe: s.average_rpe,
+      averageRpe: s.average_rpe ?? fallbackRpe.get(s.id) ?? null,
       exerciseCount: exoCountBySession.get(s.id) ?? 0,
       sessionType: s.session_type ?? "program",
     }));
