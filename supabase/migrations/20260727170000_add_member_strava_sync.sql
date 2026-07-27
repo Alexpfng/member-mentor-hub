@@ -71,14 +71,7 @@ begin
     on public.member_strava_connections
     for select
     to authenticated
-    using (
-      exists (
-        select 1
-        from public.member_profiles mp
-        where mp.member_id = member_strava_connections.member_id
-          and mp.coach_id = (select auth.uid())
-      )
-    );
+    using (public.has_role((select auth.uid()), 'coach'));
   end if;
 
   if not exists (
@@ -104,13 +97,6 @@ begin
     on public.member_strava_activities
     for select
     to authenticated
-    using (
-      exists (
-        select 1
-        from public.member_profiles mp
-        where mp.member_id = member_strava_activities.member_id
-          and mp.coach_id = (select auth.uid())
-      )
-    );
+    using (public.has_role((select auth.uid()), 'coach'));
   end if;
 end $$;

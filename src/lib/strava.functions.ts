@@ -336,6 +336,7 @@ async function createCompletedSessionFromPlanned(input: {
   memberId: string;
   activity: StravaActivityLike;
   candidate: {
+    plannedId?: string;
     programId?: string | null;
     weekNumber?: number | null;
     dayLabel?: string | null;
@@ -375,6 +376,19 @@ async function createCompletedSessionFromPlanned(input: {
     .single();
   if (error) throw new Error(error.message);
   return data.id;
+}
+
+async function linkPlannedSessionToCompletedSession(plannedId: string, sessionId: string) {
+  const { error } = await supabaseAdmin
+    .from("planned_sessions")
+    .update({
+      session_id: sessionId,
+      status: "done",
+      updated_at: new Date().toISOString(),
+    } as never)
+    .eq("id", plannedId);
+
+  if (error) throw new Error(error.message);
 }
 
 async function upsertStravaActivityRecord(input: {
@@ -466,6 +480,9 @@ export async function syncStravaActivityForAthlete(athleteId: number, activityId
         candidate: matchedCandidate,
         metrics,
       });
+      if (matchedCandidate.plannedId) {
+        await linkPlannedSessionToCompletedSession(matchedCandidate.plannedId, sessionId);
+      }
     } else {
       sessionId = match.sessionId;
     }
