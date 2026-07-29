@@ -10,7 +10,18 @@ import { LiveSession } from "../components/cst/LiveSession";
 import { RunningSession, isRunningSession } from "../components/cst/RunningSession";
 import { computeSessionDurationMin } from "@/lib/format";
 import { resolveMemberSessionExercises } from "@/lib/program-weeks";
+import { listLibraryForMember } from "@/lib/member-stats.functions";
 import { toast } from "sonner";
+
+// Clé de rapprochement exercice ↔ bibliothèque : nom normalisé (casse/espaces/accents).
+function normExName(name: unknown): string {
+  return String(name ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
 export const Route = createFileRoute("/_authenticated/membre/seance/$sessionId")({
   component: SeancePage,
@@ -42,6 +53,7 @@ function SeancePage() {
   const { sessionId } = useParams({ from: "/_authenticated/membre/seance/$sessionId" });
   const navigate = useNavigate();
   const notifyCoach = useServerFn(notifyCoachComposedSession);
+  const fetchLibrary = useServerFn(listLibraryForMember);
   const [session, setSession] = useState<SessionRow | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [exercises, setExercises] = useState<ProgExercise[]>([]);
@@ -144,6 +156,37 @@ function SeancePage() {
       } else {
         resolutionError = "Séance introuvable.";
       }
+
+      // Enrichissement vidéo depuis la bibliothèque : une démo ajoutée manuellement
+      // par le coach APRÈS la création du programme n'est pas dans le JSONB de la
+      // séance. On la récupère par nom d'exercice quand la carte n'a aucune vidéo.
+      if (exos.some((ex) => !ex.youtube_id && !ex.youtube_url && !ex.youtube_alt_url)) {
+        try {
+          const lib = (await fetchLibrary()) as {
+            exercises?: Array<{ name?: string | null; youtube_url?: string | null; youtube_id?: string | null; image_url?: string | null }>;
+          };
+          const byName = new Map<string, { youtube_url?: string | null; youtube_id?: string | null; image_url?: string | null }>();
+          for (const libEx of lib.exercises ?? []) {
+            const key = normExName(libEx.name);
+            if (key && !byName.has(key)) byName.set(key, libEx);
+          }
+          exos = exos.map((ex) => {
+            const hasVid = ex.youtube_id || ex.youtube_url || ex.youtube_alt_url;
+            if (hasVid) return ex;
+            const match = byName.get(normExName(ex.name));
+            if (!match || (!match.youtube_url && !match.youtube_id)) return ex;
+            return {
+              ...ex,
+              youtube_url: match.youtube_url ?? ex.youtube_url ?? null,
+              youtube_id: match.youtube_id ?? ex.youtube_id ?? null,
+              image_url: ex.image_url ?? match.image_url ?? null,
+            };
+          });
+        } catch (e) {
+          console.warn("[seance] enrichissement vidéo biblio échoué", e);
+        }
+      }
+
       setExercises(exos);
       setLoadError(resolutionError);
       setLoading(false);
