@@ -22,8 +22,18 @@ import {
 } from "@/lib/planning.functions";
 import { createFreeSession } from "@/lib/free-session.functions";
 
-const DAY_LABELS = ["LUN", "MAR", "MER", "JEU", "VEN", "SAM", "DIM"];
-const FR_DAYS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
+// Libellé du jour déduit de la DATE réelle (et non de la position dans la grille).
+// Le programme peut démarrer un autre jour que lundi ; la case doit afficher le vrai
+// jour de la semaine — sinon décalage (la séance du jour s'affichait sous « MARDI »
+// et le mercredi passait pour « en avance »).
+const WD_SHORT = ["DIM", "LUN", "MAR", "MER", "JEU", "VEN", "SAM"];
+const WD_LONG = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
+function weekdayShortISO(iso: string) {
+  return WD_SHORT[new Date(`${iso}T00:00:00Z`).getUTCDay()];
+}
+function weekdayLongISO(iso: string) {
+  return WD_LONG[new Date(`${iso}T00:00:00Z`).getUTCDay()];
+}
 
 function isoDay(d: Date) {
   return d.toISOString().slice(0, 10);
@@ -423,9 +433,9 @@ export default function MemberPlanning() {
   /* ── Render ── */
 
   const frDate = (date: string) => {
-    const d = new Date(date);
-    const dayIdx = weekDates.indexOf(date);
-    return `${FR_DAYS[dayIdx] ?? ""} ${d.getDate()} ${d.toLocaleDateString("fr-FR", { month: "long" })}`;
+    const d = new Date(`${date}T00:00:00Z`);
+    const month = d.toLocaleDateString("fr-FR", { month: "long", timeZone: "UTC" });
+    return `${weekdayLongISO(date)} ${d.getUTCDate()} ${month}`;
   };
 
   return (
@@ -491,14 +501,14 @@ export default function MemberPlanning() {
             )}
 
             <div className="flex flex-col gap-2 sm:grid sm:grid-cols-7">
-              {weekDates.map((date, i) => {
+              {weekDates.map((date) => {
                 const sess = sessionByDate.get(date);
                 const planned = plannedByDate.get(date);
                 return (
                   <DroppableDay
                     key={date}
                     date={date}
-                    label={DAY_LABELS[i]}
+                    label={weekdayShortISO(date)}
                     isToday={date === todayISO}
                   >
                     {sess?.status === "completed" && (
@@ -579,7 +589,7 @@ export default function MemberPlanning() {
           <div className="font-mono" style={{ fontSize: 9, letterSpacing: "0.16em", padding: "8px 20px 4px", color: "rgba(255,255,255,0.45)", textTransform: "uppercase" }}>
             Choisis un jour
           </div>
-          {weekDates.map((date, i) => {
+          {weekDates.map((date) => {
             const occupied = sessionByDate.get(date) ?? plannedByDate.get(date);
             const def = modal.def;
             return (
@@ -589,7 +599,7 @@ export default function MemberPlanning() {
                 disabled={busy}
                 muted={!!occupied}
               >
-                {FR_DAYS[i]} {new Date(date).getDate()}
+                {weekdayLongISO(date)} {new Date(`${date}T00:00:00Z`).getUTCDate()}
                 {occupied ? " · occupé" : date === todayISO ? " · aujourd'hui" : ""}
               </SheetBtn>
             );
