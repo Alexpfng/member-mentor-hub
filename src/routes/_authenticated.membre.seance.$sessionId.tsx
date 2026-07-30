@@ -11,17 +11,8 @@ import { RunningSession, isRunningSession } from "../components/cst/RunningSessi
 import { computeSessionDurationMin } from "@/lib/format";
 import { resolveMemberSessionExercises } from "@/lib/program-weeks";
 import { listLibraryForMember } from "@/lib/member-stats.functions";
+import { enrichVideosFromLibrary } from "@/lib/enrich-videos";
 import { toast } from "sonner";
-
-// Clé de rapprochement exercice ↔ bibliothèque : nom normalisé (casse/espaces/accents).
-function normExName(name: unknown): string {
-  return String(name ?? "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/\s+/g, " ")
-    .trim();
-}
 
 export const Route = createFileRoute("/_authenticated/membre/seance/$sessionId")({
   component: SeancePage,
@@ -162,26 +153,8 @@ function SeancePage() {
       // séance. On la récupère par nom d'exercice quand la carte n'a aucune vidéo.
       if (exos.some((ex) => !ex.youtube_id && !ex.youtube_url && !ex.youtube_alt_url)) {
         try {
-          const lib = (await fetchLibrary()) as {
-            exercises?: Array<{ name?: string | null; youtube_url?: string | null; youtube_id?: string | null; image_url?: string | null }>;
-          };
-          const byName = new Map<string, { youtube_url?: string | null; youtube_id?: string | null; image_url?: string | null }>();
-          for (const libEx of lib.exercises ?? []) {
-            const key = normExName(libEx.name);
-            if (key && !byName.has(key)) byName.set(key, libEx);
-          }
-          exos = exos.map((ex) => {
-            const hasVid = ex.youtube_id || ex.youtube_url || ex.youtube_alt_url;
-            if (hasVid) return ex;
-            const match = byName.get(normExName(ex.name));
-            if (!match || (!match.youtube_url && !match.youtube_id)) return ex;
-            return {
-              ...ex,
-              youtube_url: match.youtube_url ?? ex.youtube_url ?? null,
-              youtube_id: match.youtube_id ?? ex.youtube_id ?? null,
-              image_url: ex.image_url ?? match.image_url ?? null,
-            };
-          });
+          const lib = (await fetchLibrary()) as { exercises?: unknown[] };
+          exos = enrichVideosFromLibrary(exos, (lib.exercises ?? []) as Parameters<typeof enrichVideosFromLibrary>[1]);
         } catch (e) {
           console.warn("[seance] enrichissement vidéo biblio échoué", e);
         }

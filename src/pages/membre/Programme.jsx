@@ -4,6 +4,8 @@ import { useNavigate } from '@tanstack/react-router';
 import MemberNav from '../../components/MemberNav';
 import { CSTSectionNum, CSTDuoTitle } from '../../components/Atoms';
 import { getMyAssignedProgram } from '@/lib/coach.functions';
+import { listLibraryForMember } from '@/lib/member-stats.functions';
+import { enrichVideosFromLibrary } from '@/lib/enrich-videos';
 import { ProgramBlocks } from '../../components/cst/ProgramBlocks';
 import { supabase } from '@/integrations/supabase/client';
 import { SUPABASE_ENABLED } from '@/lib/app-mode';
@@ -15,6 +17,8 @@ function diffDays(a, b) {
 export default function MemberProgramme() {
   const navigate = useNavigate();
   const fn = useServerFn(getMyAssignedProgram);
+  const fetchLibrary = useServerFn(listLibraryForMember);
+  const [libVideos, setLibVideos] = useState([]);
   const [data, setData] = useState(null);
   const [openWeek, setOpenWeek] = useState(null);
   const [openDaysByWeek, setOpenDaysByWeek] = useState({});
@@ -28,6 +32,10 @@ export default function MemberProgramme() {
       try {
         const r = await fn();
         setData(r);
+        // Bibliothèque : retrouver les démos ajoutées manuellement après coup.
+        fetchLibrary()
+          .then((lib) => setLibVideos(lib?.exercises ?? []))
+          .catch(() => {});
         const start = r.assignment?.start_date ? new Date(r.assignment.start_date) : null;
         const w = start ? Math.max(0, Math.floor(diffDays(new Date(), start) / 7)) : 0;
         setOpenWeek(w);
@@ -225,7 +233,7 @@ export default function MemberProgramme() {
                                     d.type === 'Repos' ? (
                                       <div className="cst-mono" style={{ fontSize: 10, opacity: 0.5, padding: '8px 0' }}>RÉCUPÉRATION</div>
                                     ) : (
-                                      <ProgramBlocks exercises={d.exercises || []} />
+                                      <ProgramBlocks exercises={enrichVideosFromLibrary(d.exercises || [], libVideos)} />
                                     )
                                   )}
                                 </div>
