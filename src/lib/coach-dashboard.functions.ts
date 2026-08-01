@@ -437,6 +437,11 @@ export const getRecentSessions = createServerFn({ method: "GET" })
       )
       .eq("status", "completed")
       .is("coach_hidden_at", null)
+      // Tri par date de COMPLÉTION (toujours renseignée en fin de séance), pas par
+      // started_at : une séance terminée récemment mais dont le started_at est
+      // null/ancien était reléguée en fin de liste et disparaissait au-delà de la
+      // 20ᵉ position (visible en « À traiter » mais absente de « Séances terminées »).
+      .order("ended_at", { ascending: false, nullsFirst: false })
       .order("started_at", { ascending: false, nullsFirst: false })
       .limit(data.limit ?? 20);
 

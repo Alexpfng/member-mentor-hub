@@ -3392,27 +3392,66 @@ function RestScreen({
   const [running, setRunning] = useState(true);
   const totalRef = useRef(seconds);
   const doneFiredRef = useRef(false);
+  // Instant de fin absolu : le décompte se calcule par rapport à l'horloge réelle
+  // (et se resynchronise au retour au premier plan) pour rester juste même quand
+  // l'appli passe en arrière-plan — sinon le navigateur gèle le setTimeout et le
+  // repos « ne se décompte pas » quand le membre répond à un message.
+  const endAtRef = useRef(Date.now() + seconds * 1000);
 
   useEffect(() => {
     if (!running) return;
-    if (remaining <= 0) {
-      if (!doneFiredRef.current) {
-        doneFiredRef.current = true;
-        try {
-          if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-            (navigator as Navigator & { vibrate: (p: number | number[]) => boolean }).vibrate([
-              200, 80, 200,
-            ]);
-          }
-        } catch {
-          /* ignore */
+    const tick = () =>
+      setRemaining(Math.max(0, Math.round((endAtRef.current - Date.now()) / 1000)));
+    tick();
+    const id = setInterval(tick, 250);
+    const onVisible = () => { if (!document.hidden) tick(); };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+    };
+  }, [running]);
+
+  // Vibration de fin, une seule fois.
+  useEffect(() => {
+    if (running && remaining <= 0 && !doneFiredRef.current) {
+      doneFiredRef.current = true;
+      try {
+        if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+          (navigator as Navigator & { vibrate: (p: number | number[]) => boolean }).vibrate([
+            200, 80, 200,
+          ]);
         }
+      } catch {
+        /* ignore */
       }
-      return;
     }
-    const t = setTimeout(() => setRemaining((r) => r - 1), 1000);
-    return () => clearTimeout(t);
   }, [remaining, running]);
+
+  function adjustRest(delta: number) {
+    if (running) {
+      endAtRef.current += delta * 1000;
+      setRemaining(Math.max(0, Math.round((endAtRef.current - Date.now()) / 1000)));
+    } else {
+      setRemaining((r) => Math.max(0, r + delta));
+    }
+  }
+
+  function togglePause() {
+    setRunning((wasRunning) => {
+      if (wasRunning) {
+        // Passe en pause : fige le temps restant courant.
+        setRemaining(Math.max(0, Math.round((endAtRef.current - Date.now()) / 1000)));
+        return false;
+      }
+      // Reprend : recale l'instant de fin sur le temps restant figé.
+      endAtRef.current = Date.now() + remaining * 1000;
+      if (remaining > 0) doneFiredRef.current = false;
+      return true;
+    });
+  }
 
   const pct = totalRef.current > 0 ? remaining / totalRef.current : 0;
   const radius = 80;
@@ -3481,21 +3520,21 @@ function RestScreen({
 
       <div style={{ display: "flex", gap: 6, width: "100%" }}>
         <button
-          onClick={() => setRemaining((r) => Math.max(0, r - 15))}
+          onClick={() => adjustRest(-15)}
           className="cst-btn cst-btn-ghost-dark cst-btn-sm"
           style={{ flex: 1 }}
         >
           −15s
         </button>
         <button
-          onClick={() => setRunning((r) => !r)}
+          onClick={togglePause}
           className="cst-btn cst-btn-ghost-dark cst-btn-sm"
           style={{ flex: 1 }}
         >
           {running ? "❚❚ PAUSE" : "▶ REPRENDRE"}
         </button>
         <button
-          onClick={() => setRemaining((r) => r + 15)}
+          onClick={() => adjustRest(15)}
           className="cst-btn cst-btn-ghost-dark cst-btn-sm"
           style={{ flex: 1 }}
         >
