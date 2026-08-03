@@ -3622,7 +3622,10 @@ function EmomScreen({
   onPain: () => void;
 }) {
   const [adjustedMin, setAdjustedMin] = useState(
-    Math.max(5, Math.round(durationMin / 5) * 5 || 10),
+    // Respecte la durée prescrite par le coach (SÉRIES = nb de minutes) au lieu
+    // de l'arrondir au multiple de 5 le plus proche : une prescription à 3, 7 ou
+    // 12 min devenait 5, 5 ou 10 → durée (et total de reps) faussés.
+    Math.max(1, Math.round(durationMin) || 10),
   );
   const totalSec = adjustedMin * 60;
   const [elapsed, setElapsed] = useState(0);
