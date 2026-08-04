@@ -11,7 +11,7 @@ import {
   previewWeekChanges,
 } from "@/lib/weekly-adaptation.functions";
 import { normalizeWeekId } from "@/lib/coach-navigation";
-import { getExerciseFeedback } from "@/lib/exercise-feedback";
+import { findExerciseFeedback } from "@/lib/exercise-feedback";
 import { listExercises } from "@/lib/exercises.functions";
 import { setExerciseQuickCoachNote, setExerciseQuickRpe } from "@/lib/adapter-week-rpe";
 import { parseRpeCell } from "@/lib/rpe-cell";
@@ -1219,7 +1219,8 @@ export default function AdapterSemaine() {
                     }
                   }
                   const blockLen = 1 + cardioFragments.length;
-                  const fb = getExerciseFeedback(ctx.feedback, ex.name);
+                  const fbMatch = findExerciseFeedback(ctx.feedback, ex.name);
+                  const fb = fbMatch?.feedback;
                   const sugg = suggestFor(ex, fb);
                   const cardColor = COLOR_MAP[(ex.color || "").toLowerCase()]?.bg || "#555";
                   const lastIdx = (day.exercises?.length ?? 1) - 1;
@@ -1551,9 +1552,20 @@ export default function AdapterSemaine() {
                             {ex.tempo && <span>⏱{ex.tempo}</span>}
                           </div>
                           {rpeComment && (
-                            <div className="cst-mono" style={{ fontSize: 10, display: "flex", gap: 5, alignItems: "baseline", flexWrap: "wrap" }}>
+                            <div
+                              className="cst-mono"
+                              style={{
+                                fontSize: 10,
+                                display: "flex",
+                                gap: 5,
+                                alignItems: "baseline",
+                                flexWrap: "wrap",
+                              }}
+                            >
                               <span style={{ opacity: 0.5, letterSpacing: "0.06em" }}>RPE ·</span>
-                              <span style={{ fontStyle: "italic", opacity: 0.9, color: cardColor }}>{rpeComment}</span>
+                              <span style={{ fontStyle: "italic", opacity: 0.9, color: cardColor }}>
+                                {rpeComment}
+                              </span>
                             </div>
                           )}
                           {rpeConsigne && (
@@ -1580,6 +1592,13 @@ export default function AdapterSemaine() {
                               }}
                             >
                               Retour membre S{ctx.sourceSummary.weekNumber ?? "?"} · RPE {fb.rpe}
+                              {/* Nom rapproché quand il diffère : le coach doit pouvoir
+                                  juger lui-même si c'est bien le même mouvement. */}
+                              {fbMatch && !fbMatch.exact && (
+                                <span style={{ display: "block", fontWeight: 400, opacity: 0.65 }}>
+                                  sur « {fbMatch.key} »
+                                </span>
+                              )}
                             </div>
                           )}
                           {ex.coach_notes && (
@@ -1835,7 +1854,7 @@ export default function AdapterSemaine() {
         structure.days?.[editTarget.dayIdx]?.exercises?.[editTarget.exoIdx] &&
         (() => {
           const ex = structure.days![editTarget.dayIdx].exercises![editTarget.exoIdx];
-          const fb = getExerciseFeedback(ctx.feedback, ex.name);
+          const fb = findExerciseFeedback(ctx.feedback, ex.name)?.feedback;
           return (
             <ExoEditModal
               ex={ex}
