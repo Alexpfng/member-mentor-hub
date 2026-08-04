@@ -9,6 +9,8 @@
 export type MilestoneKind = "activity" | "sessions" | "streak" | "volume" | "record";
 
 export type Milestone = {
+  /** Clé stable de l'événement, support des cololikes. */
+  key: string;
   memberId: string;
   memberName: string;
   kind: MilestoneKind;
@@ -24,6 +26,7 @@ export type MemberActivity = {
   memberName: string;
   /** Séances terminées, triées par date croissante. */
   sessions: Array<{
+    id?: string | null;
     date: string | null;
     volumeKg: number | null;
     label?: string | null;
@@ -83,6 +86,7 @@ export function buildMilestones(activity: MemberActivity): Milestone[] {
     // Chaque séance terminée alimente le fil : les jalons seuls sont trop
     // rares pour qu'une petite communauté ait quelque chose à lire.
     out.push({
+      key: session.id ? `activity:${session.id}` : `activity:${activity.memberId}:${date}:${index}`,
       memberId: activity.memberId,
       memberName: activity.memberName,
       kind: "activity",
@@ -93,6 +97,7 @@ export function buildMilestones(activity: MemberActivity): Milestone[] {
 
     if (SESSION_TIERS.includes(count)) {
       out.push({
+        key: `tier:${activity.memberId}:${count}`,
         memberId: activity.memberId,
         memberName: activity.memberName,
         kind: "sessions",
@@ -106,6 +111,7 @@ export function buildMilestones(activity: MemberActivity): Milestone[] {
       const tier = remainingVolumeTiers[0];
       remainingVolumeTiers = remainingVolumeTiers.slice(1);
       out.push({
+        key: `volume:${activity.memberId}:${tier}`,
         memberId: activity.memberId,
         memberName: activity.memberName,
         kind: "volume",
@@ -115,9 +121,18 @@ export function buildMilestones(activity: MemberActivity): Milestone[] {
     }
   });
 
+  // Un même record peut être enregistré plusieurs fois le même jour (séries
+  // successives) : le fil affichait alors deux ou trois lignes identiques.
+  const seenRecords = new Set<string>();
   for (const record of activity.records) {
     if (!record.date) continue;
+    const recordKey = `record:${activity.memberId}:${record.date}:${(record.exerciseName ?? "")
+      .trim()
+      .toLowerCase()}`;
+    if (seenRecords.has(recordKey)) continue;
+    seenRecords.add(recordKey);
     out.push({
+      key: recordKey,
       memberId: activity.memberId,
       memberName: activity.memberName,
       kind: "record",

@@ -8,7 +8,6 @@ import MemberNav from "../../components/MemberNav";
 import { CSTLogo, CSTSectionNum, CSTAvatar } from "../../components/Atoms";
 import ThemeToggle from "../../components/ThemeToggle";
 import { WeightLogDialog } from "../../components/cst/WeightLogDialog";
-import CommunityPanel from "@/components/cst/CommunityPanel";
 import { usePRConfetti } from "@/hooks/usePRConfetti";
 import { getMemberDashboard } from "@/lib/member-stats.functions";
 import { getMemberCoachFeedback } from "@/lib/member-feedback.functions";
@@ -566,10 +565,19 @@ export default function MemberDashboard() {
               </button>
             )}
 
-            {/* Communauté : défi collectif + jalons des membres qui partagent */}
-            <div style={{ marginTop: 14 }}>
-              <CommunityPanel />
-            </div>
+            {/* Communauté : simple porte d'entrée, le fil vit sur sa propre page */}
+            <button
+              onClick={() => navigate("/membre/communaute")}
+              style={{ all: "unset", cursor: "pointer", marginTop: 14, padding: 16, display: "block", borderRadius: 10, border: "1px solid rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.03)", width: "100%", boxSizing: "border-box" }}
+            >
+              <span className="cst-mono" style={{ fontSize: 9, letterSpacing: "0.18em", opacity: 0.55 }}>COMMUNAUTÉ</span>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginTop: 6 }}>
+                <span style={{ fontSize: 14, lineHeight: 1.4 }}>
+                  Vois ce que font les autres coachés, et envoie-leur un cololike
+                </span>
+                <span className="cst-display" style={{ fontSize: 16, color: "var(--cst-mid-green)" }}>→</span>
+              </div>
+            </button>
 
             {/* Quick links */}
             <div style={{ marginTop: 14, display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8 }}>

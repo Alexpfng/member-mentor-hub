@@ -44,6 +44,8 @@ type ProfileRow = {
   share_milestones: boolean | null;
 };
 
+type CololikeRow = { event_key: string; liker_id: string };
+
 type ChallengeRow = {
   id: string;
   title: string;
@@ -103,7 +105,7 @@ export const getCommunityFeed = createServerFn({ method: "GET" })
     const [{ data: sessions }, { data: records }] = await Promise.all([
       supabaseAdmin
         .from("sessions")
-        .select("member_id, date, total_volume_kg, session_label, free_title, duration_minutes")
+        .select("id, member_id, date, total_volume_kg, session_label, free_title, duration_minutes")
         .in("member_id", memberIds)
         .eq("status", "completed")
         .order("date", { ascending: true }),
@@ -120,6 +122,7 @@ export const getCommunityFeed = createServerFn({ method: "GET" })
     }
     for (const session of sessions ?? []) {
       activities.get(session.member_id)?.sessions.push({
+        id: session.id,
         date: session.date,
         volumeKg: session.total_volume_kg != null ? Number(session.total_volume_kg) : 0,
         // Une séance libre n'a pas de libellé de programme, elle porte un titre.
@@ -136,8 +139,32 @@ export const getCommunityFeed = createServerFn({ method: "GET" })
     const sharing =
       (profiles ?? []).find((p) => p.id === context.userId)?.share_milestones ?? false;
 
+    const milestones = buildFeed([...activities.values()], { since: sinceISO, limit: 30 });
+
+    // Cololikes des entrées affichées : un seul aller-retour, quel que soit le
+    // nombre d'entrées.
+    const { data: likes } = await db
+      .from<CololikeRow[]>("cololikes")
+      .select("event_key, liker_id")
+      .in(
+        "event_key",
+        milestones.map((m) => m.key),
+      );
+
+    const countByKey = new Map<string, number>();
+    const likedByMe = new Set<string>();
+    for (const like of likes ?? []) {
+      countByKey.set(like.event_key, (countByKey.get(like.event_key) ?? 0) + 1);
+      if (like.liker_id === context.userId) likedByMe.add(like.event_key);
+    }
+
     return {
-      milestones: buildFeed([...activities.values()], { since: sinceISO, limit: 20 }),
+      milestones: milestones.map((m) => ({
+        ...m,
+        likes: countByKey.get(m.key) ?? 0,
+        likedByMe: likedByMe.has(m.key),
+        isMine: m.memberId === context.userId,
+      })),
       sharing: !!sharing,
     };
   });
@@ -312,4 +339,26 @@ export const upsertChallenge = createServerFn({ method: "POST" })
     const { data: row, error } = await query;
     if (error) throw new Error(error.message);
     return row;
+  });
+
+/** Pose ou retire un cololike sur une entrée du fil. */
+export const toggleCololike = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ eventKey: z.string().min(1).max(200), liked: z.boolean() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const table = db.from<CololikeRow>("cololikes");
+    const { error } = data.liked
+      ? await table.upsert(
+          { event_key: data.eventKey, liker_id: context.userId },
+          { onConflict: "event_key,liker_id" },
+        )
+      : await db
+          .from<CololikeRow>("cololikes")
+          .delete()
+          .eq("event_key", data.eventKey)
+          .eq("liker_id", context.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });

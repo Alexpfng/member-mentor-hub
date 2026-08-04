@@ -28,6 +28,7 @@ import { Route as AuthenticatedMembreMessagesRouteImport } from './routes/_authe
 import { Route as AuthenticatedMembreLoggerRouteImport } from './routes/_authenticated.membre.logger'
 import { Route as AuthenticatedMembreHistoriqueRouteImport } from './routes/_authenticated.membre.historique'
 import { Route as AuthenticatedMembreComposerRouteImport } from './routes/_authenticated.membre.composer'
+import { Route as AuthenticatedMembreCommunauteRouteImport } from './routes/_authenticated.membre.communaute'
 import { Route as AuthenticatedMembreCommencerRouteImport } from './routes/_authenticated.membre.commencer'
 import { Route as AuthenticatedMembreCarnetRouteImport } from './routes/_authenticated.membre.carnet'
 import { Route as AuthenticatedMembreBibliothequeRouteImport } from './routes/_authenticated.membre.bibliotheque'
@@ -160,6 +161,12 @@ const AuthenticatedMembreComposerRoute =
   AuthenticatedMembreComposerRouteImport.update({
     id: '/membre/composer',
     path: '/membre/composer',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedMembreCommunauteRoute =
+  AuthenticatedMembreCommunauteRouteImport.update({
+    id: '/membre/communaute',
+    path: '/membre/communaute',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedMembreCommencerRoute =
@@ -355,6 +362,7 @@ export interface FileRoutesByFullPath {
   '/membre/bibliotheque': typeof AuthenticatedMembreBibliothequeRoute
   '/membre/carnet': typeof AuthenticatedMembreCarnetRouteWithChildren
   '/membre/commencer': typeof AuthenticatedMembreCommencerRoute
+  '/membre/communaute': typeof AuthenticatedMembreCommunauteRoute
   '/membre/composer': typeof AuthenticatedMembreComposerRoute
   '/membre/historique': typeof AuthenticatedMembreHistoriqueRoute
   '/membre/logger': typeof AuthenticatedMembreLoggerRoute
@@ -402,6 +410,7 @@ export interface FileRoutesByTo {
   '/membre/bibliotheque': typeof AuthenticatedMembreBibliothequeRoute
   '/membre/carnet': typeof AuthenticatedMembreCarnetRouteWithChildren
   '/membre/commencer': typeof AuthenticatedMembreCommencerRoute
+  '/membre/communaute': typeof AuthenticatedMembreCommunauteRoute
   '/membre/composer': typeof AuthenticatedMembreComposerRoute
   '/membre/historique': typeof AuthenticatedMembreHistoriqueRoute
   '/membre/logger': typeof AuthenticatedMembreLoggerRoute
@@ -452,6 +461,7 @@ export interface FileRoutesById {
   '/_authenticated/membre/bibliotheque': typeof AuthenticatedMembreBibliothequeRoute
   '/_authenticated/membre/carnet': typeof AuthenticatedMembreCarnetRouteWithChildren
   '/_authenticated/membre/commencer': typeof AuthenticatedMembreCommencerRoute
+  '/_authenticated/membre/communaute': typeof AuthenticatedMembreCommunauteRoute
   '/_authenticated/membre/composer': typeof AuthenticatedMembreComposerRoute
   '/_authenticated/membre/historique': typeof AuthenticatedMembreHistoriqueRoute
   '/_authenticated/membre/logger': typeof AuthenticatedMembreLoggerRoute
@@ -503,6 +513,7 @@ export interface FileRouteTypes {
     | '/membre/bibliotheque'
     | '/membre/carnet'
     | '/membre/commencer'
+    | '/membre/communaute'
     | '/membre/composer'
     | '/membre/historique'
     | '/membre/logger'
@@ -550,6 +561,7 @@ export interface FileRouteTypes {
     | '/membre/bibliotheque'
     | '/membre/carnet'
     | '/membre/commencer'
+    | '/membre/communaute'
     | '/membre/composer'
     | '/membre/historique'
     | '/membre/logger'
@@ -599,6 +611,7 @@ export interface FileRouteTypes {
     | '/_authenticated/membre/bibliotheque'
     | '/_authenticated/membre/carnet'
     | '/_authenticated/membre/commencer'
+    | '/_authenticated/membre/communaute'
     | '/_authenticated/membre/composer'
     | '/_authenticated/membre/historique'
     | '/_authenticated/membre/logger'
@@ -777,6 +790,13 @@ declare module '@tanstack/react-router' {
       path: '/membre/composer'
       fullPath: '/membre/composer'
       preLoaderRoute: typeof AuthenticatedMembreComposerRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/membre/communaute': {
+      id: '/_authenticated/membre/communaute'
+      path: '/membre/communaute'
+      fullPath: '/membre/communaute'
+      preLoaderRoute: typeof AuthenticatedMembreCommunauteRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/membre/commencer': {
@@ -1065,6 +1085,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedMembreBibliothequeRoute: typeof AuthenticatedMembreBibliothequeRoute
   AuthenticatedMembreCarnetRoute: typeof AuthenticatedMembreCarnetRouteWithChildren
   AuthenticatedMembreCommencerRoute: typeof AuthenticatedMembreCommencerRoute
+  AuthenticatedMembreCommunauteRoute: typeof AuthenticatedMembreCommunauteRoute
   AuthenticatedMembreComposerRoute: typeof AuthenticatedMembreComposerRoute
   AuthenticatedMembreHistoriqueRoute: typeof AuthenticatedMembreHistoriqueRoute
   AuthenticatedMembreLoggerRoute: typeof AuthenticatedMembreLoggerRoute
@@ -1098,6 +1119,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedMembreBibliothequeRoute: AuthenticatedMembreBibliothequeRoute,
   AuthenticatedMembreCarnetRoute: AuthenticatedMembreCarnetRouteWithChildren,
   AuthenticatedMembreCommencerRoute: AuthenticatedMembreCommencerRoute,
+  AuthenticatedMembreCommunauteRoute: AuthenticatedMembreCommunauteRoute,
   AuthenticatedMembreComposerRoute: AuthenticatedMembreComposerRoute,
   AuthenticatedMembreHistoriqueRoute: AuthenticatedMembreHistoriqueRoute,
   AuthenticatedMembreLoggerRoute: AuthenticatedMembreLoggerRoute,

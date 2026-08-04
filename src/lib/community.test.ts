@@ -106,6 +106,39 @@ describe("buildMilestones", () => {
     );
   });
 
+  it("ne répète pas un record enregistré plusieurs fois le même jour", () => {
+    // Vu en production : trois lignes « a battu son record sur Pistol squat »
+    // le même jour, une par série validée.
+    const milestones = buildMilestones(
+      activity({
+        records: [
+          { exerciseName: "Pistol squat", date: "2026-07-29" },
+          { exerciseName: "Pistol squat", date: "2026-07-29" },
+          { exerciseName: "Pistol squat", date: "2026-08-02" },
+        ],
+      }),
+    );
+    expect(milestones.filter((m) => m.kind === "record")).toHaveLength(2);
+  });
+
+  it("donne à chaque entrée une clé stable, support des cololikes", () => {
+    const milestones = buildMilestones(
+      activity({ sessions: [{ id: "sess-1", date: "2026-01-05", volumeKg: 100 }] }),
+    );
+    expect(milestones.find((m) => m.kind === "activity")?.key).toBe("activity:sess-1");
+    expect(milestones.find((m) => m.kind === "sessions")?.key).toBe("tier:m1:1");
+  });
+
+  it("ne mélange pas les clés de deux membres", () => {
+    const mine = buildMilestones(
+      activity({ records: [{ exerciseName: "Squat", date: "2026-01-05" }] }),
+    )[0];
+    const other = buildMilestones(
+      activity({ memberId: "m2", records: [{ exerciseName: "Squat", date: "2026-01-05" }] }),
+    )[0];
+    expect(mine.key).not.toBe(other.key);
+  });
+
   it("met le jalon avant la séance ordinaire du même jour", () => {
     const feed = buildFeed([activity({ sessions: sessions(1, "2026-01-01") })]);
     expect(feed[0].kind).toBe("sessions");
