@@ -3,6 +3,8 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { buildAxisIndex, buildMovementProfile, type LoggedSet } from "@/lib/movement-profile";
+import { summarizeBadges } from "@/lib/badges";
+import { weeklyStreak } from "@/lib/streak";
 
 function isoDay(d: Date) {
   return d.toISOString().slice(0, 10);
@@ -92,28 +94,11 @@ export const getMemberDashboard = createServerFn({ method: "GET" })
     const volume = allDone.reduce((a, s) => a + Number(s.total_volume_kg ?? 0), 0);
     const duration = allDone.reduce((a, s) => a + (s.duration_minutes ?? 0), 0);
 
-    // Streak: weeks consécutives avec >= 3 séances done (semaine en cours tolérée)
-    const counts = new Map<string, number>();
-    for (const s of streakSessions ?? []) {
-      if (!s.date) continue;
-      const d = new Date(s.date);
-      const day = (d.getDay() + 6) % 7;
-      d.setDate(d.getDate() - day);
-      d.setHours(0, 0, 0, 0);
-      const k = isoDay(d);
-      counts.set(k, (counts.get(k) ?? 0) + 1);
-    }
-    const currentKey = isoDay(monday);
-    let streak = 0;
-    for (let i = 0; i < 26; i++) {
-      const ws = new Date(monday);
-      ws.setDate(monday.getDate() - i * 7);
-      const k = isoDay(ws);
-      const c = counts.get(k) ?? 0;
-      if (c >= 3) streak++;
-      else if (k === currentKey) continue;
-      else break;
-    }
+    // Semaines consécutives à 3 séances ou plus, semaine en cours tolérée.
+    const streak = weeklyStreak(
+      (streakSessions ?? []).map((s) => s.date),
+      monday,
+    );
 
     const w0 = weights?.[0];
     const w1 = weights?.[1];
@@ -354,4 +339,55 @@ export const getMovementProfile = createServerFn({ method: "GET" })
     }));
 
     return buildMovementProfile(sets, axisIndex);
+  });
+
+/**
+ * Trophées du membre. Tout est recalculé depuis les séances, séries et records
+ * existants : rien n'est stocké, donc rien à migrer ni à resynchroniser.
+ */
+export const getMemberBadges = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const [{ data: sessions }, { count: prCount }] = await Promise.all([
+      supabaseAdmin
+        .from("sessions")
+        .select("id, date, total_volume_kg")
+        .eq("member_id", context.userId)
+        .eq("status", "completed"),
+      supabaseAdmin
+        .from("personal_records")
+        .select("id", { count: "exact", head: true })
+        .eq("member_id", context.userId),
+    ]);
+
+    const sessionIds = (sessions ?? []).map((s) => s.id);
+    let fullyRatedSessions = 0;
+    if (sessionIds.length > 0) {
+      const { data: logs } = await supabaseAdmin
+        .from("set_logs")
+        .select("session_id, rpe")
+        .in("session_id", sessionIds);
+      // Une séance ne compte que si TOUTES ses séries portent un ressenti :
+      // c'est précisément le comportement qu'on cherche à encourager.
+      const rated = new Map<string, { total: number; missing: number }>();
+      for (const log of logs ?? []) {
+        const current = rated.get(log.session_id) ?? { total: 0, missing: 0 };
+        current.total += 1;
+        if (log.rpe == null) current.missing += 1;
+        rated.set(log.session_id, current);
+      }
+      for (const entry of rated.values()) {
+        if (entry.total > 0 && entry.missing === 0) fullyRatedSessions += 1;
+      }
+    }
+
+    const stats = {
+      sessionsDone: (sessions ?? []).length,
+      streakWeeks: weeklyStreak((sessions ?? []).map((s) => s.date)),
+      totalVolumeKg: (sessions ?? []).reduce((a, s) => a + Number(s.total_volume_kg ?? 0), 0),
+      personalRecords: prCount ?? 0,
+      fullyRatedSessions,
+    };
+
+    return { stats, ...summarizeBadges(stats) };
   });

@@ -3,8 +3,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ComposedChart, Bar, Legend } from "recharts";
 import MemberNav from "../../components/MemberNav";
 import { CSTSectionNum, CSTDuoTitle } from "../../components/Atoms";
-import { getMemberProgression, listMyExercises, getMyExerciseProgression, getMovementProfile } from "@/lib/member-stats.functions";
+import { getMemberProgression, listMyExercises, getMyExerciseProgression, getMovementProfile, getMemberBadges } from "@/lib/member-stats.functions";
 import MovementRadar from "@/components/cst/MovementRadar";
+import BadgeShelf from "@/components/cst/BadgeShelf";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -24,12 +25,14 @@ export default function Progression() {
   const fetchExercises = useServerFn(listMyExercises);
   const fetchExProg = useServerFn(getMyExerciseProgression);
   const fetchProfile = useServerFn(getMovementProfile);
+  const fetchBadges = useServerFn(getMemberBadges);
 
   const [data, setData] = useState(null);
   const [exercises, setExercises] = useState([]);
   const [selected, setSelected] = useState("");
   const [exData, setExData] = useState(null);
   const [profile, setProfile] = useState(null);
+  const [badges, setBadges] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // ─ Suivi corporel (mensurations + photos) — P2
@@ -45,13 +48,15 @@ export default function Progression() {
   useEffect(() => {
     (async () => {
       try {
-        const [p, ex, prof] = await Promise.all([
+        const [p, ex, prof, bdg] = await Promise.all([
           fetchProgression(),
           fetchExercises(),
           fetchProfile({ data: {} }),
+          fetchBadges(),
         ]);
         setData(p);
         setProfile(prof);
+        setBadges(bdg);
         setExercises(ex.exercises ?? []);
         if (ex.exercises?.[0]) setSelected(ex.exercises[0]);
       } catch (e) {
@@ -201,10 +206,20 @@ export default function Progression() {
                   </div>
                 </div>
 
+                {/* Trophées : le membre se mesure à lui-même, jamais aux autres */}
+                {badges && badges.earnedCount > 0 && (
+                  <div style={{ marginTop: 24 }}>
+                    <CSTSectionNum num={3} label="TROPHÉES" sub={`${badges.earnedCount} DÉCROCHÉS`} />
+                    <div className="cst-card-dark" style={{ marginTop: 12, padding: 16 }}>
+                      <BadgeShelf {...badges} />
+                    </div>
+                  </div>
+                )}
+
                 {/* Toile d'araignée : où le travail se répartit, et où il a grossi */}
                 {profile && !profile.empty && (
                   <div style={{ marginTop: 24 }}>
-                    <CSTSectionNum num={3} label="PROFIL DE MOUVEMENT" />
+                    <CSTSectionNum num={4} label="PROFIL DE MOUVEMENT" />
                     <div className="cst-card-dark" style={{ marginTop: 12, padding: 14 }}>
                       <MovementRadar profile={profile} title="Familles de mouvement" />
                     </div>
@@ -214,7 +229,7 @@ export default function Progression() {
                 {/* Weight chart */}
                 {weightSeries.length > 1 && (
                   <div style={{ marginTop: 24 }}>
-                    <CSTSectionNum num={4} label="POIDS DU CORPS" sub="8 SEMAINES" />
+                    <CSTSectionNum num={5} label="POIDS DU CORPS" sub="8 SEMAINES" />
                     <div className="cst-card-dark" style={{ marginTop: 12, padding: 14, height: 200 }}>
                       <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={weightSeries} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
@@ -232,7 +247,7 @@ export default function Progression() {
                 {/* Exercise progression */}
                 {exercises.length > 0 && (
                   <div style={{ marginTop: 24 }}>
-                    <CSTSectionNum num={5} label="PROGRESSION EXERCICE" />
+                    <CSTSectionNum num={6} label="PROGRESSION EXERCICE" />
                     <div className="cst-card-dark" style={{ marginTop: 12, padding: 14 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, gap: 10 }}>
                         <span className="cst-mono" style={{ fontSize: 9, opacity: 0.7 }}>EXERCICE</span>
@@ -269,7 +284,7 @@ export default function Progression() {
                 {/* PR list */}
                 {prs.length > 0 && (
                   <div style={{ marginTop: 24 }}>
-                    <CSTSectionNum num={6} label="RECORDS PERSONNELS" sub={`${prs.length} PR`} />
+                    <CSTSectionNum num={7} label="RECORDS PERSONNELS" sub={`${prs.length} PR`} />
                     <div className="cst-col" style={{ gap: 8, marginTop: 12 }}>
                       {prs.map((p, i) => (
                         <div key={i} className="cst-card-dark" style={{ padding: 12 }}>
@@ -290,7 +305,7 @@ export default function Progression() {
 
                 {/* Suivi corporel — mensurations */}
                 <div style={{ marginTop: 24 }}>
-                  <CSTSectionNum num={7} label="SUIVI CORPOREL" sub="MENSURATIONS (CM)" />
+                  <CSTSectionNum num={8} label="SUIVI CORPOREL" sub="MENSURATIONS (CM)" />
                   <div className="cst-card-dark" style={{ marginTop: 12, padding: 14 }}>
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 8 }}>
                       {MEASURE_FIELDS.map(([key, label]) => (
@@ -338,7 +353,7 @@ export default function Progression() {
 
                 {/* Photos d'évolution */}
                 <div style={{ marginTop: 24 }}>
-                  <CSTSectionNum num={8} label="PHOTOS D'ÉVOLUTION" sub="PRIVÉ · VISIBLE PAR TON COACH" />
+                  <CSTSectionNum num={9} label="PHOTOS D'ÉVOLUTION" sub="PRIVÉ · VISIBLE PAR TON COACH" />
                   <label
                     className="cst-btn cst-btn-ghost-dark"
                     style={{ display: "block", textAlign: "center", marginTop: 12, cursor: uploadingPhoto ? "wait" : "pointer", opacity: uploadingPhoto || !userId ? 0.6 : 1 }}
