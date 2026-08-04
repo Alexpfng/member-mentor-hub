@@ -2,6 +2,8 @@ import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMemberFollowup, getMemberCharts, markSessionSeen } from "@/lib/coach-dashboard.functions";
+import { getMovementProfile } from "@/lib/member-stats.functions";
+import MovementRadar from "@/components/cst/MovementRadar";
 import { resolvePainReport } from "@/lib/pain-reports.functions";
 import { timeAgo } from "@/lib/format";
 import AdherenceChart from "./AdherenceChart";
@@ -19,12 +21,17 @@ export default function MemberFollowupTab({ memberId }: { memberId: string }) {
   const qc = useQueryClient();
   const followupFn = useServerFn(getMemberFollowup);
   const chartsFn = useServerFn(getMemberCharts);
+  const profileFn = useServerFn(getMovementProfile);
   const resolveFn = useServerFn(resolvePainReport);
   const markSeenFn = useServerFn(markSessionSeen);
 
   const { data: followup, isLoading } = useQuery({
     queryKey: ["coach", "member-followup", memberId],
     queryFn: () => followupFn({ data: { memberId } }),
+  });
+  const { data: profile } = useQuery({
+    queryKey: ["coach", "member-movement-profile", memberId],
+    queryFn: () => profileFn({ data: { memberId } }),
   });
   const { data: charts } = useQuery({
     queryKey: ["coach", "member-charts", memberId],
@@ -141,6 +148,14 @@ export default function MemberFollowupTab({ memberId }: { memberId: string }) {
           <RpeChart data={charts?.rpe7 ?? []} />
         </div>
       </div>
+
+      {/* Toile d'araignée : support de discussion avec le membre, et argument
+          visuel en rendez-vous commercial. */}
+      {profile && !profile.empty && (
+        <div className="cst-card-dark" style={{ padding: 16 }}>
+          <MovementRadar profile={profile} title="Profil de mouvement" />
+        </div>
+      )}
 
       <ExerciseProgressionChart memberId={memberId} />
 

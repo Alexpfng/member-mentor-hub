@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { buildAxisIndex, buildMovementProfile, type LoggedSet } from "@/lib/movement-profile";
 
 function isoDay(d: Date) {
   return d.toISOString().slice(0, 10);
@@ -264,4 +265,93 @@ export const getMyExerciseProgression = createServerFn({ method: "GET" })
       }));
 
     return { exercises, series, selected: target };
+  });
+
+/**
+ * Profil de mouvement (radar) : réparti le travail réellement logué sur les cinq
+ * familles du code couleur, et compare le premier mois au dernier.
+ * Le coach peut le demander pour un de ses membres, un membre uniquement pour
+ * lui-même.
+ */
+export const getMovementProfile = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ memberId: z.string().uuid().optional() }).parse(d ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    const memberId = data.memberId ?? context.userId;
+    if (memberId !== context.userId) {
+      // Un membre ne consulte que son propre profil ; le coach, ceux de ses membres.
+      const { data: role } = await supabaseAdmin
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", context.userId)
+        .eq("role", "coach")
+        .maybeSingle();
+      if (!role) throw new Error("Accès refusé");
+    }
+
+    const { data: sessions } = await supabaseAdmin
+      .from("sessions")
+      .select("id, date, ended_at")
+      .eq("member_id", memberId)
+      .eq("status", "completed")
+      .order("date", { ascending: true });
+
+    const sessionIds = (sessions ?? []).map((s) => s.id);
+    if (sessionIds.length === 0) {
+      return buildMovementProfile([], new Map());
+    }
+
+    const dateBySession = new Map<string, string | null>();
+    for (const s of sessions ?? []) {
+      dateBySession.set(s.id, s.date ?? (s.ended_at ? s.ended_at.slice(0, 10) : null));
+    }
+
+    // La couleur d'un exercice vit dans la bibliothèque ET dans les programmes
+    // (un coach peut coloriser un exercice directement dans le builder sans
+    // qu'il soit en bibliothèque) : on croise les deux sources.
+    const [{ data: logs }, { data: library }, { data: programs }] = await Promise.all([
+      supabaseAdmin
+        .from("set_logs")
+        .select("session_id, exercise_name, weight_kg, reps")
+        .in("session_id", sessionIds),
+      supabaseAdmin
+        .from("exercises")
+        .select("name, color")
+        .or("is_archived.is.null,is_archived.eq.false")
+        .limit(2000),
+      supabaseAdmin
+        .from("assignment_weeks")
+        .select("structure")
+        .eq("member_id", memberId)
+        .limit(60),
+    ]);
+
+    const fromPrograms: Array<{ name: string | null; color: string | null }> = [];
+    for (const week of programs ?? []) {
+      const days = (week.structure as { days?: Array<{ exercises?: unknown[] }> } | null)?.days;
+      for (const day of days ?? []) {
+        for (const exercise of (day.exercises ?? []) as Array<{
+          name?: string | null;
+          color?: string | null;
+        }>) {
+          fromPrograms.push({ name: exercise?.name ?? null, color: exercise?.color ?? null });
+        }
+      }
+    }
+
+    const axisIndex = buildAxisIndex([
+      ...((library ?? []) as Array<{ name: string | null; color: string | null }>),
+      ...fromPrograms,
+    ]);
+
+    const sets: LoggedSet[] = (logs ?? []).map((log) => ({
+      exerciseName: log.exercise_name,
+      weightKg: log.weight_kg != null ? Number(log.weight_kg) : null,
+      reps: log.reps,
+      date: dateBySession.get(log.session_id) ?? null,
+    }));
+
+    return buildMovementProfile(sets, axisIndex);
   });
