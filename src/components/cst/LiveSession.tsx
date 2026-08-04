@@ -1255,7 +1255,27 @@ export function LiveSession({
   }, [quitRef]);
 
   const current = steps[stepIdx];
-  const completedWorkSets = useMemo(() => Object.keys(savedByStep).length, [savedByStep]);
+  // Enregistrements en arrière-plan. Le membre attendait deux allers-retours
+  // réseau à CHAQUE série validée (suppression puis insertion) : sur mobile ça
+  // se voyait comme une appli qui rame. On rend la main tout de suite et on
+  // pousse en tâche de fond — mais en file sérialisée, sinon une série
+  // revalidée pourrait s'insérer avant la suppression de la précédente.
+  const writeQueueRef = useRef<Promise<unknown>>(Promise.resolve());
+  const queueWrite = (task: () => Promise<void>, label: string) => {
+    writeQueueRef.current = writeQueueRef.current.then(task).catch((e) => {
+      console.error(label, e);
+      toast.error("Enregistrement en attente — vérifie ta connexion.");
+    });
+    return writeQueueRef.current;
+  };
+
+  // Une étape peut porter plusieurs entrées (circuit : une par exercice, avec
+  // une clé décimale) — on compte les étapes, pas les lignes, sinon la
+  // progression dépasse 100 % dès qu'un circuit est validé.
+  const completedWorkSets = useMemo(
+    () => new Set(Object.keys(savedByStep).map((key) => Math.floor(Number(key)))).size,
+    [savedByStep],
+  );
   const progressSteps = useMemo<SessionProgressStep[]>(
     () =>
       steps.flatMap((step, index): SessionProgressStep[] => {
@@ -1404,7 +1424,7 @@ export function LiveSession({
     const weight_kg = bodyweight ? null : isNaN(w) ? null : w;
     const reps = isNaN(r) ? null : r;
 
-    try {
+    queueWrite(async () => {
       // Revalider une série (retour en arrière) doit REMPLACER la ligne existante,
       // pas en ajouter une deuxième — sinon volume et RPE moyens sont gonflés.
       await supabase
@@ -1413,7 +1433,7 @@ export function LiveSession({
         .eq("session_id", sessionId)
         .eq("exercise_name", step.exercise.name)
         .eq("set_number", step.setNumber);
-      await supabase.from("set_logs").insert({
+      const { error } = await supabase.from("set_logs").insert({
         session_id: sessionId,
         exercise_name: step.exercise.name,
         set_number: step.setNumber,
@@ -1422,9 +1442,8 @@ export function LiveSession({
         rpe: l.rpe,
         completed: true,
       });
-    } catch (e) {
-      console.error("set_logs insert failed", e);
-    }
+      if (error) throw error;
+    }, "set_logs insert failed");
     setSavedByStep((m) => ({
       ...m,
       [stepIdx]: { exo: step.exercise.name, weight: weight_kg, reps, rpe: l.rpe },
@@ -1493,29 +1512,29 @@ export function LiveSession({
         expertRecapCommentByExercise,
       );
 
-      const { error: deleteError } = await supabase
-        .from("set_logs")
-        .delete()
-        .eq("session_id", sessionId);
-      if (deleteError) throw deleteError;
+      // Les écritures de séance partaient en tâche de fond : on les laisse
+      // atterrir avant de recalculer les totaux, sinon volume et RPE moyen sont
+      // comptés sur des séries encore en vol.
+      await writeQueueRef.current;
 
-      const { error: deleteFeedbackError } = await supabase
-        .from("exercise_feedbacks")
-        .delete()
-        .eq("session_id", sessionId);
-      if (deleteFeedbackError) throw deleteFeedbackError;
+      // Les deux suppressions puis les deux insertions sont indépendantes :
+      // les enchaîner ajoutait deux allers-retours réseau sur l'écran de fin,
+      // là où le membre voyait justement l'appli « ramer ».
+      const [deleteLogs, deleteFeedbacks] = await Promise.all([
+        supabase.from("set_logs").delete().eq("session_id", sessionId),
+        supabase.from("exercise_feedbacks").delete().eq("session_id", sessionId),
+      ]);
+      if (deleteLogs.error) throw deleteLogs.error;
+      if (deleteFeedbacks.error) throw deleteFeedbacks.error;
 
-      if (rows.length > 0) {
-        const { error: insertError } = await supabase.from("set_logs").insert(rows);
-        if (insertError) throw insertError;
-      }
-
-      if (feedbackRows.length > 0) {
-        const { error: insertFeedbackError } = await supabase
-          .from("exercise_feedbacks")
-          .insert(feedbackRows);
-        if (insertFeedbackError) throw insertFeedbackError;
-      }
+      const [insertLogs, insertFeedbacks] = await Promise.all([
+        rows.length > 0 ? supabase.from("set_logs").insert(rows) : Promise.resolve({ error: null }),
+        feedbackRows.length > 0
+          ? supabase.from("exercise_feedbacks").insert(feedbackRows)
+          : Promise.resolve({ error: null }),
+      ]);
+      if (insertLogs.error) throw insertLogs.error;
+      if (insertFeedbacks.error) throw insertFeedbacks.error;
 
       await onFinish();
       clearSnapshot(sessionId);
@@ -2058,6 +2077,7 @@ export function LiveSession({
                 <button
                   onClick={async () => {
                     setShowQuitConfirm(false);
+                    await writeQueueRef.current;
                     await onFinish();
                   }}
                   className="cst-btn"
@@ -2342,6 +2362,9 @@ export function LiveSession({
                 if (sessionMode === "expert") {
                   await finishExpertRecap();
                 } else {
+                  // Idem : les séries encore en vol doivent être en base avant
+                  // que la clôture ne calcule volume et RPE moyen.
+                  await writeQueueRef.current;
                   await onFinish();
                   clearSnapshot(sessionId); // seulement si la fin a réussi
                 }
@@ -2421,25 +2444,23 @@ export function LiveSession({
                 : logs.reduce((s, l) => s + l, 0);
             // Persist EMOM result as a single "set_log" entry.
             // Refaire le bloc doit remplacer la ligne existante, pas la dupliquer.
-            supabase
-              .from("set_logs")
-              .delete()
-              .eq("session_id", sessionId)
-              .eq("exercise_name", current.exercise.name)
-              .eq("set_number", 1)
-              .then(() => {
-                supabase
-                  .from("set_logs")
-                  .insert({
-                    session_id: sessionId,
-                    exercise_name: current.exercise.name,
-                    set_number: 1,
-                    reps: computedReps,
-                    rpe: emomRpe,
-                    completed: true,
-                  })
-                  .then(() => {});
+            queueWrite(async () => {
+              await supabase
+                .from("set_logs")
+                .delete()
+                .eq("session_id", sessionId)
+                .eq("exercise_name", current.exercise.name)
+                .eq("set_number", 1);
+              const { error } = await supabase.from("set_logs").insert({
+                session_id: sessionId,
+                exercise_name: current.exercise.name,
+                set_number: 1,
+                reps: computedReps,
+                rpe: emomRpe,
+                completed: true,
               });
+              if (error) throw error;
+            }, "emom set_logs insert failed");
             setSavedByStep((m) => ({
               ...m,
               [stepIdx]: {
@@ -2481,42 +2502,58 @@ export function LiveSession({
           restSecBetween={current.restSecBetween}
           blockLetter={current.blockLetter}
           sessionId={sessionId}
-          onFinish={() => {
+          onFinish={(circuitRpe) => {
             // Persiste le circuit dans set_logs (1 ligne par exercice), comme les
             // EMOM : sinon il est invisible côté coach, historique et pré-remplissage.
-            (async () => {
-              try {
-                for (const ex of current.exercises) {
-                  await supabase
+            // Le RPE du circuit est porté par CHAQUE exercice du bloc : c'est le
+            // seul ressenti disponible pour eux, et l'écran d'adaptation lit les
+            // retours exercice par exercice.
+            queueWrite(async () => {
+              await Promise.all(
+                current.exercises.map((ex) =>
+                  supabase
                     .from("set_logs")
                     .delete()
                     .eq("session_id", sessionId)
                     .eq("exercise_name", ex.name)
-                    .eq("set_number", 1);
-                }
-                await supabase.from("set_logs").insert(
-                  current.exercises.map((ex) => ({
-                    session_id: sessionId,
-                    exercise_name: ex.name,
-                    set_number: 1,
-                    reps: null,
-                    rpe: null,
-                    completed: true,
-                  })),
-                );
-              } catch (e) {
-                console.error("circuit set_logs insert failed", e);
-              }
-            })();
-            setSavedByStep((m) => ({
-              ...m,
-              [stepIdx]: {
-                exo: current.exercises.map((e) => e.name).join("+"),
-                weight: null,
-                reps: null,
-                rpe: null,
-              },
-            }));
+                    .eq("set_number", 1),
+                ),
+              );
+              const { error } = await supabase.from("set_logs").insert(
+                current.exercises.map((ex) => ({
+                  session_id: sessionId,
+                  exercise_name: ex.name,
+                  set_number: 1,
+                  reps: null,
+                  rpe: circuitRpe,
+                  completed: true,
+                })),
+              );
+              if (error) throw error;
+            }, "circuit set_logs insert failed");
+            // Un exercice par ligne de récap : le libellé « A+B+C » créait un
+            // groupe fantôme en mode expert, rattaché à aucun exercice réel.
+            setSavedByStep((m) => {
+              const next = { ...m };
+              current.exercises.forEach((ex, i) => {
+                next[stepIdx + i / 100] = {
+                  exo: ex.name,
+                  weight: null,
+                  reps: null,
+                  rpe: circuitRpe,
+                };
+              });
+              return next;
+            });
+            if (sessionMode === "expert" && circuitRpe != null) {
+              setExpertRecapRpeByExercise((prev) => {
+                const next = { ...prev };
+                current.exercises.forEach((ex) => {
+                  if (next[ex.name] == null) next[ex.name] = circuitRpe;
+                });
+                return next;
+              });
+            }
             goNext();
           }}
           onPain={() => setPainFor(current.exercises[0]?.name ?? "")}
@@ -4075,7 +4112,8 @@ function CircuitScreen({
   restSecBetween: number;
   blockLetter?: string;
   sessionId: string;
-  onFinish: () => void;
+  /** Le RPE saisi sur l'écran de fin : sans lui, le circuit ne remontait aucun ressenti. */
+  onFinish: (rpe: number | null) => void;
   onPain: () => void;
 }) {
   const [totalMin, setTotalMin] = React.useState(defaultTotalMin);
@@ -4480,7 +4518,7 @@ function CircuitScreen({
       </div>
 
       <button
-        onClick={onFinish}
+        onClick={() => onFinish(rpe)}
         disabled={rpe == null}
         className="cst-btn cst-btn-primary"
         style={{ width: "100%", padding: "16px 0", fontSize: 14, opacity: rpe == null ? 0.5 : 1 }}
