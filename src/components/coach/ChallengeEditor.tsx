@@ -33,6 +33,7 @@ export default function ChallengeEditor() {
     progress: { total: number; target: number; percent: number; participants: number } | null;
   } | null>(null);
   const [editing, setEditing] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState(() => ({
     title: "",
@@ -44,8 +45,13 @@ export default function ChallengeEditor() {
   async function reload() {
     try {
       setActive(await activeFn());
+      setLoadError(null);
     } catch (e) {
+      // Tant que la migration communauté n'est pas passée, les tables n'existent
+      // pas et le panneau disparaissait sans un mot : impossible de comprendre
+      // pourquoi la fonctionnalité « ne marche pas ».
       console.error("[défi]", e);
+      setLoadError(e instanceof Error ? e.message : "Erreur inconnue");
     }
   }
 
@@ -143,7 +149,18 @@ export default function ChallengeEditor() {
         </div>
       )}
 
-      {!editing && !current && (
+      {loadError && (
+        <p style={{ margin: "8px 0 0", fontSize: 12, color: "#E07070", lineHeight: 1.5 }}>
+          Le défi collectif n'est pas encore branché sur la base :{" "}
+          <span style={{ opacity: 0.8 }}>{loadError}</span>
+          <br />
+          <span style={{ opacity: 0.7 }}>
+            Passe la migration <code>20260804120000_add_community.sql</code> dans l'éditeur SQL.
+          </span>
+        </p>
+      )}
+
+      {!editing && !current && !loadError && (
         <p style={{ margin: "8px 0 0", fontSize: 12, opacity: 0.7 }}>
           Aucun défi en cours. Un objectif collectif sur le mois donne un cap commun à tes membres,
           sans les comparer entre eux.

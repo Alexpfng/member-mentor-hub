@@ -47,7 +47,8 @@ type ProfileRow = {
 type ChallengeRow = {
   id: string;
   title: string;
-  metric: string;
+  // La contrainte CHECK de la table garantit ces trois valeurs.
+  metric: ChallengeMetric;
   target: number;
   starts_on: string;
   ends_on: string;
@@ -228,7 +229,7 @@ export const getActiveChallenge = createServerFn({ method: "GET" })
     const nameById = new Map<string, string>((profiles ?? []).map((p) => [p.id, nameOf(p)]));
 
     const contributions = await contributionsFor(
-      challenge.metric as ChallengeMetric,
+      challenge.metric,
       memberIds,
       nameById,
       challenge.starts_on,
