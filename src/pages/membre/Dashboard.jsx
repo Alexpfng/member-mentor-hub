@@ -8,6 +8,7 @@ import MemberNav from "../../components/MemberNav";
 import { CSTLogo, CSTSectionNum, CSTAvatar } from "../../components/Atoms";
 import ThemeToggle from "../../components/ThemeToggle";
 import { WeightLogDialog } from "../../components/cst/WeightLogDialog";
+import CommunityPanel from "@/components/cst/CommunityPanel";
 import { usePRConfetti } from "@/hooks/usePRConfetti";
 import { getMemberDashboard } from "@/lib/member-stats.functions";
 import { getMemberCoachFeedback } from "@/lib/member-feedback.functions";
@@ -564,6 +565,11 @@ export default function MemberDashboard() {
                 </div>
               </button>
             )}
+
+            {/* Communauté : défi collectif + jalons des membres qui partagent */}
+            <div style={{ marginTop: 14 }}>
+              <CommunityPanel />
+            </div>
 
             {/* Quick links */}
             <div style={{ marginTop: 14, display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8 }}>

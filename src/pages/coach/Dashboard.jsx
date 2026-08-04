@@ -8,6 +8,7 @@ import { listMembers, listPrograms } from '@/lib/coach.functions';
 import { createInvitation } from '@/lib/invitations.functions';
 import { seedColosmartData } from '@/lib/seed.functions';
 import { getDashboardMetrics } from '@/lib/coach-dashboard.functions';
+import ChallengeEditor from '@/components/coach/ChallengeEditor';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 
@@ -262,6 +263,8 @@ function CoachDashboardInner() {
             </div>
           </div>
         )}
+
+        <ChallengeEditor />
 
         {/* Légende intensités */}
         <div className="cst-card-dark" style={{ padding: 14, marginTop: 24, margin: '0 32px 32px' }}>
