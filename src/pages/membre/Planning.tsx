@@ -340,6 +340,19 @@ export default function MemberPlanning() {
     return map;
   }, [data]);
 
+  // Une séance planifiée n'est visible que si sa date tombe dans la fenêtre
+  // affichée. Une ligne sans date, ou datée hors de cette fenêtre, n'apparaissait
+  // nulle part TOUT EN consommant sa pastille « À planifier » : la séance
+  // devenait introuvable, sans aucun moyen de la replacer.
+  const weekDateSet = useMemo(() => new Set(weekDates), [weekDates]);
+  const strandedPlanned = useMemo(
+    () =>
+      (data?.planned ?? []).filter(
+        (p: any) => !p.planned_date || !weekDateSet.has(p.planned_date),
+      ),
+    [data, weekDateSet],
+  );
+
   const unplanned = useMemo(() => {
     const defs = (data?.dayDefs ?? []).filter((d: any) => d.type !== "Repos") as any[];
     // Déduplication PAR OCCURRENCE (et non par label) : si une séance est définie
@@ -347,7 +360,11 @@ export default function MemberPlanning() {
     // planifiée/faite — sinon un jour disparaissait à tort (bug Brice : 2 affichées sur 3).
     const usedCount = new Map<string, number>();
     [
-      ...(data?.planned ?? []).map((p: any) => p.day_label),
+      // Seules les séances réellement posées sur un jour de la semaine
+      // consomment leur pastille.
+      ...(data?.planned ?? [])
+        .filter((p: any) => p.planned_date && weekDateSet.has(p.planned_date))
+        .map((p: any) => p.day_label),
       // in_progress compte aussi : une séance commencée ne doit pas réapparaître
       // « à planifier » (elle se reprend depuis Commencer / le Dashboard).
       ...(data?.sessions ?? [])
@@ -365,7 +382,7 @@ export default function MemberPlanning() {
       result.push(d);
     }
     return result;
-  }, [data]);
+  }, [data, weekDateSet]);
 
   // Un jour est « occupé » s'il porte déjà une carte : séance faite/en cours ou
   // séance planifiée. On le signale sans l'interdire — le membre reste maître
@@ -421,8 +438,12 @@ export default function MemberPlanning() {
     if (busy) return;
     setBusy(true);
     try {
+      // Si une ligne orpheline traînait pour cette séance, on la répare en la
+      // datant plutôt que d'en créer une seconde à côté.
+      const stranded = strandedPlanned.find((p: any) => p.day_label === def.label);
       await upsertFn({
         data: {
+          id: stranded?.id,
           programId: data.assignment?.program_id ?? null,
           weekNumber: data.weekNumber,
           dayLabel: def.label,
