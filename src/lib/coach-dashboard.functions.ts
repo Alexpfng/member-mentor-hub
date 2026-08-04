@@ -270,7 +270,7 @@ export const getPriorityFeed = createServerFn({ method: "GET" })
     // Les séances terminées « à voir » ne sont plus listées ici : elles vivent dans
     // la colonne « SÉANCES TERMINÉES ». Cette colonne ne garde que les vraies alertes
     // (douleur, RPE élevé, vidéo à revoir, message non lu).
-    const [pains, videos, msgs, highRpe] = await Promise.all([
+    const [pains, videos, msgs, highRpe, draftWeeks] = await Promise.all([
       supabaseAdmin
         .from("pain_reports")
         .select("id, member_id, session_id, exercise_name, zone, intensity, comment, created_at")
@@ -302,6 +302,15 @@ export const getPriorityFeed = createServerFn({ method: "GET" })
         .is("sessions.coach_hidden_at", null)
         .order("created_at", { ascending: false })
         .limit(30),
+      // Semaine laissée en brouillon alors qu'elle a déjà commencé : le membre
+      // ne voit RIEN et rien ne le signale (cas Pierre Pratil, semaine 6 restée
+      // en brouillon — il a failli quitter l'app pour revenir à son tableur).
+      supabaseAdmin
+        .from("assignment_weeks")
+        .select("id, member_id, week_number, start_date, updated_at, assignments(start_date)")
+        .eq("status", "draft")
+        .order("week_number", { ascending: true })
+        .limit(50),
     ]);
 
     type Item =
@@ -346,6 +355,16 @@ export const getPriorityFeed = createServerFn({ method: "GET" })
           memberId: string;
           memberName: string;
           content: string;
+          createdAt: string;
+        }
+      | {
+          type: "draft_week";
+          id: string;
+          priority: number;
+          memberId: string;
+          memberName: string;
+          weekNumber: number;
+          weekStart: string;
           createdAt: string;
         };
 
@@ -410,6 +429,37 @@ export const getPriorityFeed = createServerFn({ method: "GET" })
         content: m.content,
         createdAt: m.created_at ?? new Date().toISOString(),
       });
+
+    const todayISO = new Date().toISOString().slice(0, 10);
+    for (const w of (draftWeeks.data ?? []) as unknown as Array<{
+      id: string;
+      member_id: string;
+      week_number: number;
+      start_date: string | null;
+      updated_at: string | null;
+      assignments: { start_date: string | null } | null;
+    }>) {
+      // Un membre suivi par un autre coach n'a pas à remonter ici.
+      if (!nameOf.has(w.member_id)) continue;
+      let weekStart = w.start_date;
+      if (!weekStart && w.assignments?.start_date) {
+        const start = new Date(w.assignments.start_date);
+        start.setDate(start.getDate() + (w.week_number - 1) * 7);
+        weekStart = start.toISOString().slice(0, 10);
+      }
+      // Une semaine à venir en brouillon est normale : le coach la prépare.
+      if (!weekStart || weekStart > todayISO) continue;
+      items.push({
+        type: "draft_week",
+        id: w.id,
+        priority: 90,
+        memberId: w.member_id,
+        memberName: nameOf.get(w.member_id) || "Membre",
+        weekNumber: w.week_number,
+        weekStart,
+        createdAt: w.updated_at ?? weekStart,
+      });
+    }
 
     items.sort((a, b) => b.priority - a.priority || (a.createdAt < b.createdAt ? 1 : -1));
     return items.slice(0, 50);

@@ -251,6 +251,27 @@ export default function PriorityFeed() {
             </div>
           );
         }
+        if (it.type === "draft_week") {
+          const weekNumber = (it as unknown as { weekNumber: number }).weekNumber;
+          return (
+            <div key={it.id} style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 8, ...common }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ fontSize: 18 }}>👁️</span>
+                <span className="cst-mono" style={{ fontSize: 10, letterSpacing: "0.18em", color: "#D4A82E" }}>SEMAINE INVISIBLE</span>
+                <span className="cst-mono" style={{ fontSize: 10, opacity: 0.55, marginLeft: "auto" }}>{timeAgo(it.createdAt)}</span>
+              </div>
+              <div style={{ fontSize: 13 }}>
+                <strong>{it.memberName}</strong> · semaine {weekNumber} restée en brouillon
+              </div>
+              <div style={{ fontSize: 12, opacity: 0.8 }}>
+                Elle a déjà commencé : tant qu'elle n'est pas publiée, il ne voit aucune séance.
+              </div>
+              <div style={{ display: "flex", gap: 6 }}>
+                <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" onClick={() => navigate({ to: "/coach/membre/$memberId", params: { memberId: it.memberId } })}>Publier la semaine</button>
+              </div>
+            </div>
+          );
+        }
         if (it.type !== "message") return null;
         const msgContent = (it as unknown as { content: string }).content;
         return (
