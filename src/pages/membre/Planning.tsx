@@ -672,6 +672,14 @@ export default function MemberPlanning() {
                 const isDone = sess?.status === "completed";
                 const isRunning = sess?.status === "in_progress";
                 const dayTaken = isDone || isRunning;
+                // Une séance faite ce jour-là ne solde la carte planifiée que si
+                // c'est LA MÊME séance. Sinon (le membre en a fait une autre à la
+                // place), la carte restait masquée derrière le ✓ tout en
+                // consommant sa pastille « À planifier » : elle n'existait plus
+                // nulle part et ne pouvait plus être replacée.
+                const plannedAlreadyDone =
+                  !!planned && !!sess && planned.day_label === sess.session_label;
+                const showPlanned = !!planned && !plannedAlreadyDone;
                 return (
                   <DroppableDay
                     key={date}
@@ -692,7 +700,7 @@ export default function MemberPlanning() {
                         ▶ {sess.session_label ?? "Séance"} · en cours
                       </button>
                     )}
-                    {!dayTaken && planned && (
+                    {showPlanned && (
                       <DraggableSession
                         id={`plan-${planned.id}`}
                         label={planned.day_label}
