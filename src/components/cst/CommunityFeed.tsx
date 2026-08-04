@@ -297,54 +297,66 @@ export default function CommunityFeed({ canShare = true }: { canShare?: boolean 
 
                   {/* Démo du mouvement : illustre un record sans exposer quoi que
                       ce soit du membre, la vidéo vient de la bibliothèque. */}
+                  {/* Vignette compacte : la démo illustre le mouvement, elle ne
+                      doit pas manger la carte. */}
                   {entry.youtubeId && (
                     <a
                       href={`https://www.youtube.com/watch?v=${entry.youtubeId}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{
-                        position: "relative",
-                        display: "block",
-                        borderRadius: 8,
-                        overflow: "hidden",
-                        lineHeight: 0,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 10,
+                        textDecoration: "none",
+                        color: "inherit",
+                        alignSelf: "flex-start",
                       }}
                     >
-                      <img
-                        src={`https://img.youtube.com/vi/${entry.youtubeId}/mqdefault.jpg`}
-                        alt=""
-                        loading="lazy"
-                        width={320}
-                        height={180}
-                        style={{ width: "100%", height: "auto", display: "block", opacity: 0.9 }}
-                      />
                       <span
                         style={{
-                          position: "absolute",
-                          inset: 0,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: 26,
-                          color: "#fff",
-                          textShadow: "0 2px 12px rgba(0,0,0,0.7)",
+                          position: "relative",
+                          width: 88,
+                          height: 50,
+                          flexShrink: 0,
+                          borderRadius: 6,
+                          overflow: "hidden",
+                          lineHeight: 0,
+                          border: "1px solid rgba(255,255,255,0.10)",
                         }}
-                        aria-hidden
                       >
-                        ▶
+                        <img
+                          src={`https://img.youtube.com/vi/${entry.youtubeId}/default.jpg`}
+                          alt=""
+                          loading="lazy"
+                          width={88}
+                          height={50}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                            opacity: 0.85,
+                          }}
+                        />
+                        <span
+                          aria-hidden
+                          style={{
+                            position: "absolute",
+                            inset: 0,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: 14,
+                            color: "#fff",
+                            textShadow: "0 1px 6px rgba(0,0,0,0.8)",
+                          }}
+                        >
+                          ▶
+                        </span>
                       </span>
                       <span
                         className="cst-mono"
-                        style={{
-                          position: "absolute",
-                          left: 8,
-                          bottom: 8,
-                          fontSize: 9,
-                          letterSpacing: "0.14em",
-                          background: "rgba(0,0,0,0.55)",
-                          padding: "3px 6px",
-                          borderRadius: 4,
-                        }}
+                        style={{ fontSize: 9.5, letterSpacing: "0.14em", opacity: 0.55 }}
                       >
                         VOIR LE MOUVEMENT
                       </span>
