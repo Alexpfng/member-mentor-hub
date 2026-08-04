@@ -19,6 +19,13 @@ import {
 import { getExpertEmomLoggedValue, getExpertSetLoggedValue } from "@/lib/session-prescription";
 import { parseRpeCell } from "@/lib/rpe-cell";
 import {
+  buildLadderCycle,
+  formatLadderLabel,
+  ladderRepsForMinute,
+  parseLadderPattern,
+  resolveLadderMinutes,
+} from "@/lib/ladder";
+import {
   ColorDot,
   ColorTooltip,
   TempoBadge,
@@ -79,7 +86,7 @@ function blockExplain(type?: string | null, isSuperset = false): string | null {
   if (t === "emom")
     return "EMOM : 1 série au début de chaque minute. Le temps restant dans la minute = ton repos.";
   if (t === "ladder")
-    return "Ladder : le nombre de reps change à chaque minute (ex : 1, 2, 3, puis on recommence).";
+    return "Ladder : 1 série au début de chaque minute, avec des reps qui montent puis redescendent (ex : 3, 4, 5, 4, 3, 4…).";
   if (t === "amrap")
     return "AMRAP : autant de tours/reps que possible dans le temps imparti, avec une technique propre.";
   if (t === "dropset")
@@ -180,19 +187,6 @@ function parseTimedRounds(reps?: string | number | null, name?: string | null): 
     if (n >= 1 && n <= 10) return n;
   }
   return isPerSide(reps) || isUnilateralByName(name) ? 2 : 1;
-}
-
-/** Parse le pattern de reps d'un Ladder (ex: "2, 3, 4" → [2, 3, 4]).
- *  Retourne un tableau vide si le champ ne ressemble pas à une liste. */
-function parseLadderPattern(reps: string | number | null | undefined): number[] {
-  if (reps == null || reps === "") return [];
-  const raw = String(reps).trim();
-  // Doit contenir au moins 2 valeurs séparées par , ; ou /
-  if (!/\d+\s*[,;\/]\s*\d+/.test(raw)) return [];
-  return raw
-    .split(/[,;\/]/)
-    .map((s) => parseInt(s.trim(), 10))
-    .filter((n) => !isNaN(n) && n > 0);
 }
 
 /** Découpe une cible reps en une cible par série (15/12/10) ou répète une fourchette (10-8) */
@@ -885,6 +879,8 @@ type EmomBlock = {
   repsPerMin: number | null;
   repsLabel: string | null; // reps affichées telles quelles (ex. "3/4")
   alternating: boolean; // reps alternées paires/impaires
+  /** Ladder : cycle de reps rejoué en boucle, une valeur par minute (3,4,5,4…). */
+  repsCycle?: number[] | null;
 };
 
 type CircuitBlock = {
@@ -950,69 +946,35 @@ function buildSteps(exercises: ProgExercise[]): Step[] {
       return;
     }
 
-    // Ladder blocks: generate one WorkSet per minute with the exact rep count for that minute.
-    // Supports two notations Léo uses:
-    //   A) series="3"          reps="2,3,4"        → pattern from reps, rounds=series
-    //   B) series="Ladder 2/3/4"  reps="27 en tout" → pattern from series, rounds inferred (27/(2+3+4)=3)
+    // Ladder : format à la minute (comme un EMOM), mais les reps montent puis
+    // redescendent, en boucle jusqu'à la durée du bloc — « 3/4/5 » donne
+    // 3, 4, 5, 4, 3, 4, 5… Deux notations acceptées :
+    //   A) « Durée (min) » = 10 · « Reps / min » = « 3/4/5 » (ou « 3-5 », ou « 5/4/3 »)
+    //   B) legacy : Séries = « Ladder 2/3/4 » · Reps = « 27 en tout »
     if (blockType === "ladder" && !isSuperset) {
       const ex = b.exercises[0];
-      // 1. Try to find the pattern (comma/slash-separated numbers)
-      let pattern = parseLadderPattern(ex.reps);
-      if (pattern.length === 0) {
-        // Also check series field: "Ladder 2/3/4" → strip prefix → "2/3/4"
-        const seriesStr =
-          ex.series != null
-            ? String(ex.series)
-                .replace(/^ladder\s*/i, "")
-                .trim()
-            : "";
-        if (/\d+\s*[,;\/]\s*\d+/.test(seriesStr)) {
-          pattern = seriesStr
-            .split(/[,;\/]/)
-            .map((s) => parseInt(s.trim(), 10))
-            .filter((n) => !isNaN(n) && n > 0);
-        }
-      }
+      const patternFromReps = parseLadderPattern(ex.reps);
+      const pattern = patternFromReps.length > 0 ? patternFromReps : parseLadderPattern(ex.series);
       if (pattern.length > 0) {
-        // 2. Infer rounds: if reps starts with a total number (e.g. "27 en tout"), divide by pattern sum
-        const patternSum = pattern.reduce((a, c) => a + c, 0);
-        const totalMatch = ex.reps != null ? String(ex.reps).match(/^(\d+)/) : null;
-        const totalReps = totalMatch ? parseInt(totalMatch[1], 10) : null;
-        const rounds =
-          totalReps && patternSum > 0 && totalReps % patternSum === 0
-            ? totalReps / patternSum
-            : Math.max(1, parseSeriesCount(ex.series));
-        const totalSets = rounds * pattern.length;
-        const exRest = parseRecupSeconds(ex.recup, 0);
+        // Le motif occupe l'un des deux champs : la durée se lit dans l'autre.
+        const minutes = resolveLadderMinutes(pattern, {
+          durationRaw: patternFromReps.length > 0 ? ex.series : null,
+          totalRepsRaw: patternFromReps.length > 0 ? null : ex.reps,
+        });
         steps.push({
-          kind: "brief",
+          kind: "emom",
           blockIdx,
           blockLetter: b.letter,
-          isSuperset: false,
-          blockType: "ladder",
-          exercises: [ex],
+          exercise: ex,
+          durationMin: minutes,
+          repsPerMin: null,
+          repsLabel: formatLadderLabel(pattern),
+          alternating: false,
+          repsCycle: buildLadderCycle(pattern),
         });
-        for (let r = 0; r < rounds; r++) {
-          pattern.forEach((repCount, i) => {
-            const globalIdx = r * pattern.length + i;
-            const isLast = globalIdx === totalSets - 1;
-            steps.push({
-              kind: "set",
-              blockIdx,
-              exercise: { ...ex, reps: String(repCount) },
-              exerciseIdxInBlock: 0,
-              setNumber: globalIdx + 1,
-              totalSets,
-              restAfter: !isLast && exRest > 0,
-              restSeconds: exRest,
-              isLastSetOfExercise: isLast,
-              nextPreview: !isLast ? { name: ex.name, setNumber: globalIdx + 2, totalSets } : null,
-            });
-          });
-        }
         return;
       }
-      // No valid pattern → fall through to regular set handling
+      // Pas d'échelle exploitable → on retombe sur des séries classiques.
     }
 
     steps.push({
@@ -2449,6 +2411,7 @@ export function LiveSession({
           repsPerMin={current.repsPerMin}
           repsLabel={current.repsLabel}
           alternating={current.alternating}
+          repsCycle={current.repsCycle}
           sessionId={sessionId}
           onFinish={(logs, emomRpe) => {
             const computedReps =
@@ -3404,7 +3367,9 @@ function RestScreen({
       setRemaining(Math.max(0, Math.round((endAtRef.current - Date.now()) / 1000)));
     tick();
     const id = setInterval(tick, 250);
-    const onVisible = () => { if (!document.hidden) tick(); };
+    const onVisible = () => {
+      if (!document.hidden) tick();
+    };
     document.addEventListener("visibilitychange", onVisible);
     window.addEventListener("focus", onVisible);
     return () => {
@@ -3600,7 +3565,9 @@ function RestScreen({
   );
 }
 
-/* ───────── EMOM screen — minute-by-minute guided timer ───────── */
+/* ───────── EMOM screen — minute-by-minute guided timer ─────────
+   Sert aussi les blocs Ladder : même chrono à la minute, mais la cible de
+   reps change à chaque minute en suivant `repsCycle` (3,4,5,4… en boucle). */
 
 function EmomScreen({
   exercise,
@@ -3608,6 +3575,7 @@ function EmomScreen({
   repsPerMin,
   repsLabel,
   alternating,
+  repsCycle,
   sessionId,
   onFinish,
   onPain,
@@ -3617,10 +3585,20 @@ function EmomScreen({
   repsPerMin: number | null;
   repsLabel?: string | null;
   alternating?: boolean;
+  repsCycle?: number[] | null;
   sessionId: string;
   onFinish: (repsByMinute: number[], rpe: number | null) => void;
   onPain: () => void;
 }) {
+  const cycle = repsCycle ?? [];
+  const isLadder = cycle.length > 0;
+  const blockLabel = isLadder ? "LADDER" : "EMOM";
+  // Cible de la minute : constante en EMOM, variable en Ladder.
+  const targetAtMinute = (minuteIdx: number) =>
+    isLadder ? ladderRepsForMinute(cycle, minuteIdx) : repsPerMin;
+  const planFor = (minutes: number) =>
+    Array.from({ length: minutes }, (_, i) => targetAtMinute(i) ?? 0);
+
   const [adjustedMin, setAdjustedMin] = useState(
     // Respecte la durée prescrite par le coach (SÉRIES = nb de minutes) au lieu
     // de l'arrondir au multiple de 5 le plus proche : une prescription à 3, 7 ou
@@ -3632,8 +3610,8 @@ function EmomScreen({
   const [running, setRunning] = useState(false);
   const [done, setDone] = useState(false);
   const [rpe, setRpe] = useState<number | null>(null);
-  const [repsByMinute, setRepsByMinute] = useState<number[]>(
-    Array(adjustedMin).fill(repsPerMin ?? 0),
+  const [repsByMinute, setRepsByMinute] = useState<number[]>(() =>
+    planFor(Math.max(1, Math.round(durationMin) || 10)),
   );
   const doneFiredRef = useRef(false);
 
@@ -3706,7 +3684,7 @@ function EmomScreen({
             className="cst-mono"
             style={{ fontSize: 10, opacity: 0.55, letterSpacing: "0.22em" }}
           >
-            EMOM · {exercise.code && `${exercise.code} · `}
+            {blockLabel} · {exercise.code && `${exercise.code} · `}
             {adjustedMin} MIN
             {repsLabel ? ` · ${repsLabel} REPS/MIN` : repsPerMin ? ` · ${repsPerMin} REPS/MIN` : ""}
           </span>
@@ -3740,14 +3718,17 @@ function EmomScreen({
           >
             <button
               onClick={() => {
-                const next = Math.max(5, adjustedMin - 5);
+                // Pas de 1 min sur un ladder : ±5 ferait sauter plusieurs
+                // marches d'un coup et déformerait la pyramide.
+                const step = isLadder ? 1 : 5;
+                const next = Math.max(isLadder ? 1 : 5, adjustedMin - step);
                 setAdjustedMin(next);
-                setRepsByMinute(Array(next).fill(repsPerMin ?? 0));
+                setRepsByMinute(planFor(next));
               }}
               className="cst-btn cst-btn-ghost-dark"
               style={{ padding: "8px 14px", fontSize: 16, fontWeight: 700 }}
             >
-              −5 MIN
+              {isLadder ? "−1 MIN" : "−5 MIN"}
             </button>
             <span
               className="cst-display"
@@ -3757,14 +3738,14 @@ function EmomScreen({
             </span>
             <button
               onClick={() => {
-                const next = adjustedMin + 5;
+                const next = adjustedMin + (isLadder ? 1 : 5);
                 setAdjustedMin(next);
-                setRepsByMinute(Array(next).fill(repsPerMin ?? 0));
+                setRepsByMinute(planFor(next));
               }}
               className="cst-btn cst-btn-ghost-dark"
               style={{ padding: "8px 14px", fontSize: 16, fontWeight: 700 }}
             >
-              +5 MIN
+              {isLadder ? "+1 MIN" : "+5 MIN"}
             </button>
           </div>
         )}
@@ -3852,7 +3833,7 @@ function EmomScreen({
           </div>
         </div>
 
-        {running && repsPerMin != null && (
+        {running && targetAtMinute(currentMinute) != null && (
           <div
             style={{
               padding: "14px 16px",
@@ -3864,12 +3845,22 @@ function EmomScreen({
           >
             {secInMinute < 15 ? (
               <span className="cst-display" style={{ fontSize: 18, color: "#6EAB76" }}>
-                FAIS {repsPerMin} REPS MAINTENANT
+                FAIS {targetAtMinute(currentMinute)} REPS MAINTENANT
               </span>
             ) : (
               <span className="cst-mono" style={{ fontSize: 11, opacity: 0.7 }}>
                 repos · prochain signal dans {secLeftInMinute}s
               </span>
+            )}
+            {/* Sur un ladder la cible bouge : l'annoncer évite de découvrir la
+                marche suivante au moment où le bip tombe. */}
+            {isLadder && currentMinute + 1 < adjustedMin && (
+              <div
+                className="cst-mono"
+                style={{ fontSize: 10, opacity: 0.6, marginTop: 6, color: "#D4A53B" }}
+              >
+                ↗ minute suivante : {targetAtMinute(currentMinute + 1)} reps
+              </div>
             )}
           </div>
         )}
@@ -3904,7 +3895,9 @@ function EmomScreen({
               REPS PAR MINUTE
             </span>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 4 }}>
-              {repsByMinute.slice(0, Math.min(currentMinute + 1, durationMin)).map((r, i) => (
+              {/* borné sur adjustedMin (et non durationMin) : sinon les minutes
+                  ajoutées avec +MIN n'étaient jamais saisissables. */}
+              {repsByMinute.slice(0, Math.min(currentMinute + 1, adjustedMin)).map((r, i) => (
                 <div
                   key={i}
                   style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}
@@ -3969,7 +3962,7 @@ function EmomScreen({
     >
       <div>
         <span className="cst-mono" style={{ fontSize: 10, opacity: 0.55, letterSpacing: "0.22em" }}>
-          ✓ EMOM TERMINÉ
+          ✓ {blockLabel} TERMINÉ
         </span>
         <h2
           className="cst-display"
@@ -4024,7 +4017,7 @@ function EmomScreen({
 
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span className="cst-mono" style={{ fontSize: 10, opacity: 0.6, letterSpacing: "0.18em" }}>
-          RPE GLOBAL SUR CET EMOM
+          RPE GLOBAL SUR CE {blockLabel}
         </span>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 4 }}>
           {RPE_PICKER_VALUES.filter((value) => value > 0).map((v) => {

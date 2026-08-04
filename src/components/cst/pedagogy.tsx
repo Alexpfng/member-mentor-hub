@@ -683,8 +683,9 @@ export function EmomExplainer({ open, onClose }: { open: boolean; onClose: () =>
         ...
       </div>
       <p style={{ marginTop: 12, fontSize: 12.5, lineHeight: 1.55, opacity: 0.85 }}>
-        💡 <strong>Ladder 1/2/3</strong> : Min 1→1 rep, Min 2→2 reps, Min 3→3 reps, Min 4→1 rep…
-        Densifie la séance avec une meilleure qualité.
+        💡 <strong>Ladder 3/4/5</strong> : Min 1→3 reps, Min 2→4, Min 3→5, puis on redescend — Min
+        4→4, Min 5→3, Min 6→4… La pyramide tourne jusqu'à la fin du bloc. Densifie la séance avec
+        une meilleure qualité.
       </p>
     </CSTModal>
   );

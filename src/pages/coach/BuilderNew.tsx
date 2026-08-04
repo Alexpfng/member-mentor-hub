@@ -324,10 +324,11 @@ function QuickConfig({ ex, onChange, onClose, canChain }: PopoverProps) {
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
-            {/* Pour un EMOM, ces deux cases changent de sens : « Séries » = durée
-                totale en minutes, « Reps » = répétitions par minute. On renomme
-                les libellés en conséquence pour éviter la confusion. */}
-            {(local.block_type === 'emom'
+            {/* Pour un EMOM et un Ladder, ces deux cases changent de sens :
+                « Séries » = durée totale en minutes, « Reps » = répétitions par
+                minute (l'échelle pour un Ladder). On renomme les libellés en
+                conséquence pour éviter la confusion. */}
+            {(local.block_type === 'emom' || local.block_type === 'ladder'
               ? [['Durée (min)', 'sets', 'number'], ['Reps / min', 'reps', 'text'], ['Charge', 'weight', 'text']]
               : [['Séries', 'sets', 'number'], ['Reps', 'reps', 'text'], ['Charge', 'weight', 'text']]
             ).map(([label, key, type]) => (
@@ -417,6 +418,11 @@ function QuickConfig({ ex, onChange, onClose, canChain }: PopoverProps) {
           {local.block_type === 'emom' && (
             <p style={{ margin: '6px 0 0', fontSize: 10, color: 'var(--cst-text-muted)', fontFamily: 'var(--cst-mono)', letterSpacing: '0.05em' }}>
               DURÉE (MIN) = durée totale · REPS / MIN = répétitions par minute (ex. « 3/4 » = paires 3 / impaires 4)
+            </p>
+          )}
+          {local.block_type === 'ladder' && (
+            <p style={{ margin: '6px 0 0', fontSize: 10, color: 'var(--cst-text-muted)', fontFamily: 'var(--cst-mono)', letterSpacing: '0.05em' }}>
+              DURÉE (MIN) = durée totale · REPS / MIN = l'échelle : montante « 3/4/5 » (ou « 3-5 »), ou descendante « 5/4/3 ». Elle monte puis redescend, en boucle : 3, 4, 5, 4, 3, 4…
             </p>
           )}
         </div>
