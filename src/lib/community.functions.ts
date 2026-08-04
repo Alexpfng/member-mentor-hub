@@ -82,11 +82,15 @@ async function assertCoach(userId: string) {
 export const getCommunityFeed = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: profiles } = await db
+    const { data: profiles, error: profilesError } = await db
       .from<ProfileRow[]>("profiles")
       .select("id, first_name, last_name, share_milestones")
       .or(`share_milestones.eq.true,id.eq.${context.userId}`)
       .limit(200);
+    // Sans ce contrôle, une colonne manquante (migration non passée) renvoyait
+    // simplement zéro profil : le fil annonçait « rien à afficher » au lieu de
+    // dire que la base n'était pas prête.
+    if (profilesError) throw new Error(profilesError.message);
 
     const nameById = new Map<string, string>((profiles ?? []).map((p) => [p.id, nameOf(p)]));
     const memberIds = [...nameById.keys()];

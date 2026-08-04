@@ -70,15 +70,23 @@ export default function CommunityPanel() {
     joined: boolean;
   } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   async function reload() {
-    try {
-      const [f, c] = await Promise.all([feedFn(), challengeFn()]);
-      setFeed(f);
-      setChallenge(c);
-    } catch (e) {
-      console.error("[communauté]", e);
+    // Les deux appels sont indépendants : un défi non configuré ne doit pas
+    // priver le membre du fil, et inversement.
+    const [f, c] = await Promise.allSettled([feedFn(), challengeFn()]);
+    if (f.status === "fulfilled") {
+      setFeed(f.value);
+      setLoadError(null);
+    } else {
+      // Sans ça, une base pas encore migrée se traduisait par « rien à
+      // afficher » : le membre croyait la communauté vide, pas cassée.
+      console.error("[communauté] fil", f.reason);
+      setLoadError(f.reason instanceof Error ? f.reason.message : "Erreur inconnue");
     }
+    if (c.status === "fulfilled") setChallenge(c.value);
+    else console.error("[communauté] défi", c.reason);
   }
 
   useEffect(() => {
@@ -123,7 +131,7 @@ export default function CommunityPanel() {
   // On n'attend pas d'avoir du contenu pour s'afficher : le fil vide est
   // précisément le moment où il faut proposer d'activer le partage, sinon
   // personne ne peut jamais rejoindre la communauté.
-  if (!feed && !challenge) return null;
+  if (!feed && !challenge && !loadError) return null;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -220,10 +228,15 @@ export default function CommunityPanel() {
             style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}
             aria-live="polite"
           >
-            {!hasFeed && (
+            {!hasFeed && !loadError && (
               <p style={{ margin: 0, fontSize: 12, opacity: 0.6, lineHeight: 1.5 }}>
                 Rien à afficher pour l'instant. Les séances et les paliers des membres qui partagent
                 apparaîtront ici.
+              </p>
+            )}
+            {loadError && (
+              <p style={{ margin: 0, fontSize: 12, color: "#E07070", lineHeight: 1.5 }}>
+                La communauté n'est pas encore disponible.
               </p>
             )}
             {feed?.milestones.map((milestone, index) => (
@@ -262,26 +275,28 @@ export default function CommunityPanel() {
           </div>
 
           {/* Le partage reste un choix explicite, réversible d'un tap. */}
-          <label
-            style={{
-              marginTop: 14,
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              fontSize: 11.5,
-              opacity: 0.8,
-              cursor: busy ? "wait" : "pointer",
-            }}
-          >
-            <input
-              type="checkbox"
-              checked={!!feed?.sharing}
-              onChange={toggleShare}
-              disabled={busy}
-              style={{ width: 15, height: 15, accentColor: "var(--cst-mid-green)" }}
-            />
-            Partager mes séances avec les autres membres
-          </label>
+          {!loadError && (
+            <label
+              style={{
+                marginTop: 14,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                fontSize: 11.5,
+                opacity: 0.8,
+                cursor: busy ? "wait" : "pointer",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={!!feed?.sharing}
+                onChange={toggleShare}
+                disabled={busy}
+                style={{ width: 15, height: 15, accentColor: "var(--cst-mid-green)" }}
+              />
+              Partager mes séances avec les autres membres
+            </label>
+          )}
         </div>
       )}
     </div>
