@@ -16,8 +16,10 @@ export type Milestone = {
   kind: MilestoneKind;
   /** Phrase affichée telle quelle dans le fil. */
   label: string;
-  /** Chiffres de la séance (durée, tonnage), affichés en second plan. */
+  /** Chiffres de la séance (durée, tonnage, course), affichés en second plan. */
   detail?: string;
+  /** Démo YouTube de l'exercice, pour illustrer un record. */
+  youtubeId?: string | null;
   date: string;
 };
 
@@ -31,9 +33,17 @@ export type MemberActivity = {
     volumeKg: number | null;
     label?: string | null;
     durationMin?: number | null;
+    /** Chiffres de course quand la séance en porte. */
+    run?: RunStats | null;
   }>;
-  /** Records personnels, avec leur date. */
-  records: Array<{ exerciseName: string | null; date: string | null }>;
+  /** Records personnels, avec leur date et la démo du mouvement. */
+  records: Array<{ exerciseName: string | null; date: string | null; youtubeId?: string | null }>;
+};
+
+export type RunStats = {
+  distanceKm?: number | null;
+  paceSecPerKm?: number | null;
+  elevationM?: number | null;
 };
 
 const SESSION_TIERS = [1, 10, 25, 50, 100, 200];
@@ -51,10 +61,31 @@ function frDuration(minutes: number) {
   return m === 0 ? `${h} h` : `${h} h ${String(m).padStart(2, "0")}`;
 }
 
-/** Chiffres d'une séance, omis quand ils ne sont pas renseignés. */
-function sessionDetail(durationMin?: number | null, volumeKg?: number | null) {
+/** Allure au format course : 5'42/km. */
+function frPace(secPerKm: number) {
+  const minutes = Math.floor(secPerKm / 60);
+  const seconds = Math.round(secPerKm % 60);
+  return `${minutes}'${String(seconds).padStart(2, "0")}/km`;
+}
+
+/**
+ * Chiffres d'une séance, omis quand ils ne sont pas renseignés.
+ * Une sortie course parle en distance et en allure, pas en tonnage.
+ */
+function sessionDetail(
+  durationMin?: number | null,
+  volumeKg?: number | null,
+  run?: RunStats | null,
+) {
   const parts: string[] = [];
+  if (run?.distanceKm != null && run.distanceKm > 0) {
+    parts.push(`${run.distanceKm.toFixed(1).replace(".", ",")} km`);
+  }
   if (durationMin != null && durationMin > 0) parts.push(frDuration(Math.round(durationMin)));
+  if (run?.paceSecPerKm != null && run.paceSecPerKm > 0) parts.push(frPace(run.paceSecPerKm));
+  if (run?.elevationM != null && run.elevationM > 0) {
+    parts.push(`${Math.round(run.elevationM)} m D+`);
+  }
   if (volumeKg != null && volumeKg > 0) {
     parts.push(
       volumeKg >= 1000
@@ -91,7 +122,7 @@ export function buildMilestones(activity: MemberActivity): Milestone[] {
       memberName: activity.memberName,
       kind: "activity",
       label: session.label ? `a fait ${session.label}` : "a fait une séance",
-      detail: sessionDetail(session.durationMin, session.volumeKg),
+      detail: sessionDetail(session.durationMin, session.volumeKg, session.run),
       date,
     });
 
@@ -139,6 +170,7 @@ export function buildMilestones(activity: MemberActivity): Milestone[] {
       label: record.exerciseName
         ? `a battu son record sur ${record.exerciseName}`
         : "a battu un record personnel",
+      youtubeId: record.youtubeId ?? null,
       date: record.date,
     });
   }

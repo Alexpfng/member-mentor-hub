@@ -231,50 +231,72 @@ async function contributionsFor(
   }));
 }
 
-/** Défi en cours : celui dont la période couvre aujourd'hui. */
-export const getActiveChallenge = createServerFn({ method: "GET" })
+/**
+ * Tous les objectifs dont la période couvre aujourd'hui. Léo en mène plusieurs
+ * de front (un kilométrage d'équipe, un nombre de séances…), chacun avec ses
+ * propres inscrits.
+ */
+export const listActiveChallenges = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const today = todayISO();
-    const { data: challenge } = await db
-      .from<ChallengeRow>("challenges")
+    const { data: challenges } = await db
+      .from<ChallengeRow[]>("challenges")
       .select("id, title, metric, target, starts_on, ends_on")
       .lte("starts_on", today)
       .gte("ends_on", today)
-      .order("starts_on", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .order("ends_on", { ascending: true })
+      .limit(10);
 
-    if (!challenge) return { challenge: null, progress: null, joined: false };
+    if (!challenges || challenges.length === 0) return { challenges: [] };
 
     const { data: participants } = await db
-      .from<Array<{ member_id: string }>>("challenge_participants")
-      .select("member_id")
-      .eq("challenge_id", challenge.id);
+      .from<Array<{ challenge_id: string; member_id: string }>>("challenge_participants")
+      .select("challenge_id, member_id")
+      .in(
+        "challenge_id",
+        challenges.map((c) => c.id),
+      );
 
-    const memberIds = (participants ?? []).map((p) => p.member_id);
+    const byChallenge = new Map<string, string[]>();
+    for (const row of participants ?? []) {
+      byChallenge.set(row.challenge_id, [
+        ...(byChallenge.get(row.challenge_id) ?? []),
+        row.member_id,
+      ]);
+    }
+
+    const allMemberIds = [...new Set((participants ?? []).map((p) => p.member_id))];
     const { data: profiles } =
-      memberIds.length > 0
+      allMemberIds.length > 0
         ? await supabaseAdmin
             .from("profiles")
             .select("id, first_name, last_name")
-            .in("id", memberIds)
+            .in("id", allMemberIds)
         : { data: [] };
     const nameById = new Map<string, string>((profiles ?? []).map((p) => [p.id, nameOf(p)]));
 
-    const contributions = await contributionsFor(
-      challenge.metric,
-      memberIds,
-      nameById,
-      challenge.starts_on,
-      challenge.ends_on,
+    // Une requête de contributions par objectif : les périodes et les inscrits
+    // diffèrent. Le nombre d'objectifs simultanés est borné à dix.
+    const withProgress = await Promise.all(
+      challenges.map(async (challenge) => {
+        const memberIds = byChallenge.get(challenge.id) ?? [];
+        const contributions = await contributionsFor(
+          challenge.metric,
+          memberIds,
+          nameById,
+          challenge.starts_on,
+          challenge.ends_on,
+        );
+        return {
+          challenge,
+          progress: buildChallengeProgress(contributions, Number(challenge.target), context.userId),
+          joined: memberIds.includes(context.userId),
+        };
+      }),
     );
 
-    return {
-      challenge,
-      progress: buildChallengeProgress(contributions, Number(challenge.target), context.userId),
-      joined: memberIds.includes(context.userId),
-    };
+    return { challenges: withProgress };
   });
 
 export const joinChallenge = createServerFn({ method: "POST" })
@@ -359,6 +381,17 @@ export const toggleCololike = createServerFn({ method: "POST" })
           .delete()
           .eq("event_key", data.eventKey)
           .eq("liker_id", context.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/** Retire un objectif. Ses inscriptions et ses cololikes partent avec lui. */
+export const deleteChallenge = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertCoach(context.userId);
+    const { error } = await db.from<ChallengeRow>("challenges").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
