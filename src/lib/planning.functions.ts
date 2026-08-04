@@ -8,14 +8,27 @@ const dateStr = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
 function frDate(iso: string | null | undefined): string {
   if (!iso) return "";
-  return new Date(iso).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "long" });
+  return new Date(iso).toLocaleDateString("fr-FR", {
+    weekday: "short",
+    day: "numeric",
+    month: "long",
+  });
 }
 
 async function notifyCoachPlanning(memberId: string, content: string) {
   try {
     const [{ data: assignment }, { data: profile }] = await Promise.all([
-      supabaseAdmin.from("assignments").select("program_id, programs(coach_id)").eq("member_id", memberId).eq("active", true).maybeSingle(),
-      supabaseAdmin.from("profiles").select("first_name, last_name").eq("id", memberId).maybeSingle(),
+      supabaseAdmin
+        .from("assignments")
+        .select("program_id, programs(coach_id)")
+        .eq("member_id", memberId)
+        .eq("active", true)
+        .maybeSingle(),
+      supabaseAdmin
+        .from("profiles")
+        .select("first_name, last_name")
+        .eq("id", memberId)
+        .maybeSingle(),
     ]);
     const coachId = (assignment as any)?.programs?.coach_id as string | undefined;
     if (!coachId) return;
@@ -117,15 +130,21 @@ export const listWeekPlan = createServerFn({ method: "GET" })
 export const upsertPlannedSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({
-      id: z.string().uuid().optional(),
-      programId: z.string().uuid().optional().nullable(),
-      weekNumber: z.number().int().min(1),
-      dayLabel: z.string().min(1).max(120),
-      plannedDate: dateStr.nullable().optional(),
-      reminderTime: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/).nullable().optional(),
-      status: z.enum(["planned", "done", "skipped", "rest"]).optional(),
-    }).parse(d),
+    z
+      .object({
+        id: z.string().uuid().optional(),
+        programId: z.string().uuid().optional().nullable(),
+        weekNumber: z.number().int().min(1),
+        dayLabel: z.string().min(1).max(120),
+        plannedDate: dateStr.nullable().optional(),
+        reminderTime: z
+          .string()
+          .regex(/^\d{2}:\d{2}(:\d{2})?$/)
+          .nullable()
+          .optional(),
+        status: z.enum(["planned", "done", "skipped", "rest"]).optional(),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     const payload = {
@@ -203,13 +222,50 @@ export const deletePlannedSession = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/**
+ * Libère une séance restée « en cours ». Sans ça, une séance commencée puis
+ * abandonnée occupait son jour ET disparaissait de « À planifier » : le membre
+ * n'avait plus aucune porte d'entrée pour la replacer.
+ * On ne supprime pas la ligne (les séries déjà loguées restent traçables) : le
+ * statut « abandoned » la sort du planning et des compteurs coach, qui ne
+ * comptent que completed/in_progress.
+ */
+export const abandonSession = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: session } = await supabaseAdmin
+      .from("sessions")
+      .select("session_label")
+      .eq("id", data.id)
+      .eq("member_id", context.userId)
+      .maybeSingle();
+
+    const { error } = await supabaseAdmin
+      .from("sessions")
+      .update({ status: "abandoned" })
+      .eq("id", data.id)
+      .eq("member_id", context.userId)
+      .eq("status", "in_progress");
+    if (error) throw new Error(error.message);
+
+    await notifyCoachPlanning(
+      context.userId,
+      `↩︎ a annulé la séance « ${session?.session_label ?? "sans titre"} » commencée puis abandonnée`,
+    );
+
+    return { ok: true };
+  });
+
 export const markDayRest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({
-      weekNumber: z.number().int().min(1),
-      plannedDate: dateStr,
-    }).parse(d),
+    z
+      .object({
+        weekNumber: z.number().int().min(1),
+        plannedDate: dateStr,
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     const { data: row, error } = await supabaseAdmin

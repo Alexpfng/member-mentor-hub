@@ -19,6 +19,7 @@ import {
   upsertPlannedSession,
   deletePlannedSession,
   markDayRest,
+  abandonSession,
 } from "@/lib/planning.functions";
 import { createFreeSession } from "@/lib/free-session.functions";
 
@@ -115,27 +116,55 @@ type ModalState =
   | { kind: "empty"; date: string; dayIdx: number }
   | { kind: "planned"; date: string; dayIdx: number; planned: any }
   | { kind: "place"; def: any }
+  // Déplacer une séance DÉJÀ placée sans passer par le glisser-déposer : sur
+  // mobile le drag est inutilisable pour une partie des membres.
+  | { kind: "move"; planned: any }
+  // Séance commencée puis abandonnée : sans cette entrée, son jour devenait
+  // une case morte (ni carte, ni bouton +).
+  | { kind: "running"; date: string; sess: any }
   | null;
 
 function Overlay({ onClose }: { onClose: () => void }) {
   return (
     <div
-      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 40, touchAction: "none" }}
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.55)",
+        zIndex: 40,
+        touchAction: "none",
+      }}
     />
   );
 }
 
 function BottomSheet({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{
-      position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 50,
-      background: "var(--cst-dark-green, #1a2e20)",
-      borderTopLeftRadius: 18, borderTopRightRadius: 18,
-      padding: "8px 0 env(safe-area-inset-bottom,16px)",
-      boxShadow: "0 -4px 40px rgba(0,0,0,0.45)",
-      maxHeight: "82vh", overflowY: "auto",
-    }}>
-      <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.18)", margin: "0 auto 16px" }} />
+    <div
+      style={{
+        position: "fixed",
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 50,
+        background: "var(--cst-dark-green, #1a2e20)",
+        borderTopLeftRadius: 18,
+        borderTopRightRadius: 18,
+        padding: "8px 0 env(safe-area-inset-bottom,16px)",
+        boxShadow: "0 -4px 40px rgba(0,0,0,0.45)",
+        maxHeight: "82vh",
+        overflowY: "auto",
+      }}
+    >
+      <div
+        style={{
+          width: 36,
+          height: 4,
+          borderRadius: 2,
+          background: "rgba(255,255,255,0.18)",
+          margin: "0 auto 16px",
+        }}
+      />
       {children}
     </div>
   );
@@ -143,7 +172,17 @@ function BottomSheet({ children }: { children: React.ReactNode }) {
 
 function ModalTitle({ text }: { text: string }) {
   return (
-    <div className="font-mono" style={{ fontSize: 10, letterSpacing: "0.18em", opacity: 0.55, padding: "0 20px 8px", textTransform: "uppercase", color: "#fff" }}>
+    <div
+      className="font-mono"
+      style={{
+        fontSize: 10,
+        letterSpacing: "0.18em",
+        opacity: 0.55,
+        padding: "0 20px 8px",
+        textTransform: "uppercase",
+        color: "#fff",
+      }}
+    >
       {text}
     </div>
   );
@@ -167,7 +206,9 @@ function SheetBtn({
       onClick={onClick}
       disabled={disabled}
       style={{
-        display: "block", width: "100%", textAlign: "left",
+        display: "block",
+        width: "100%",
+        textAlign: "left",
         padding: "14px 20px",
         background: "transparent",
         border: "none",
@@ -184,6 +225,53 @@ function SheetBtn({
   );
 }
 
+/**
+ * Choix du jour au doigt, sans glisser-déposer : c'est la voie de secours (et
+ * en pratique la voie principale sur mobile) pour placer ou déplacer une séance.
+ */
+function DayChoiceList({
+  dates,
+  todayISO,
+  currentDate,
+  busy,
+  isOccupied,
+  onPick,
+}: {
+  dates: string[];
+  todayISO: string;
+  currentDate?: string | null;
+  busy: boolean;
+  isOccupied: (date: string) => boolean;
+  onPick: (date: string) => void;
+}) {
+  return (
+    <>
+      {dates.map((date) => {
+        const isCurrent = currentDate === date;
+        const occupied = !isCurrent && isOccupied(date);
+        const suffix = isCurrent
+          ? " · actuel"
+          : occupied
+            ? " · occupé"
+            : date === todayISO
+              ? " · aujourd'hui"
+              : "";
+        return (
+          <SheetBtn
+            key={date}
+            onClick={() => onPick(date)}
+            disabled={busy || isCurrent}
+            muted={occupied || isCurrent}
+          >
+            {weekdayLongISO(date)} {new Date(`${date}T00:00:00Z`).getUTCDate()}
+            {suffix}
+          </SheetBtn>
+        );
+      })}
+    </>
+  );
+}
+
 /* ── Main component ── */
 
 export default function MemberPlanning() {
@@ -193,6 +281,7 @@ export default function MemberPlanning() {
   const deleteFn = useServerFn(deletePlannedSession);
   const restFn = useServerFn(markDayRest);
   const createFree = useServerFn(createFreeSession);
+  const abandonFn = useServerFn(abandonSession);
 
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -277,6 +366,15 @@ export default function MemberPlanning() {
     }
     return result;
   }, [data]);
+
+  // Un jour est « occupé » s'il porte déjà une carte : séance faite/en cours ou
+  // séance planifiée. On le signale sans l'interdire — le membre reste maître
+  // de son planning (deux séances le même jour, ça arrive).
+  const isDayOccupied = (date: string) => {
+    const sess = sessionByDate.get(date);
+    const taken = sess?.status === "completed" || sess?.status === "in_progress";
+    return taken || plannedByDate.has(date);
+  };
 
   const handleDragEnd = async (e: DragEndEvent) => {
     const { active, over } = e;
@@ -410,6 +508,48 @@ export default function MemberPlanning() {
     }
   }
 
+  async function movePlanned(planned: any, date: string) {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await upsertFn({
+        data: {
+          id: planned.id,
+          programId: planned.program_id ?? null,
+          weekNumber: planned.week_number ?? data.weekNumber,
+          dayLabel: planned.day_label,
+          plannedDate: date,
+        },
+      });
+      setModal(null);
+      await reload();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erreur");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function abandonRunning(sess: any) {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await abandonFn({ data: { id: sess.id } });
+      setModal(null);
+      await reload();
+      toast.success("Séance annulée — tu peux la replanifier");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erreur");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function resumeRunning(sess: any) {
+    setModal(null);
+    navigate({ to: "/membre/seance/$sessionId", params: { sessionId: sess.id } });
+  }
+
   function startPlannedNow(planned: any) {
     setModal(null);
     navigate({
@@ -504,6 +644,13 @@ export default function MemberPlanning() {
               {weekDates.map((date) => {
                 const sess = sessionByDate.get(date);
                 const planned = plannedByDate.get(date);
+                // Seules une séance faite ou en cours occupent réellement le jour.
+                // Tout autre statut (abandonnée, valeur inattendue) ne doit PAS
+                // bloquer la case : sinon elle n'affiche ni carte ni bouton +,
+                // et la séance devient irrécupérable depuis le planning.
+                const isDone = sess?.status === "completed";
+                const isRunning = sess?.status === "in_progress";
+                const dayTaken = isDone || isRunning;
                 return (
                   <DroppableDay
                     key={date}
@@ -511,12 +658,20 @@ export default function MemberPlanning() {
                     label={weekdayShortISO(date)}
                     isToday={date === todayISO}
                   >
-                    {sess?.status === "completed" && (
+                    {isDone && (
                       <div className="rounded-md px-2 py-1 text-xs bg-emerald-600 text-white break-words">
                         ✓ {sess.session_label ?? "Séance"}
                       </div>
                     )}
-                    {!sess && planned && (
+                    {isRunning && (
+                      <button
+                        onClick={() => setModal({ kind: "running", date, sess })}
+                        className="text-left rounded-md px-2 py-1 text-xs break-words bg-amber-500/20 text-amber-500 border border-amber-500/50"
+                      >
+                        ▶ {sess.session_label ?? "Séance"} · en cours
+                      </button>
+                    )}
+                    {!dayTaken && planned && (
                       <DraggableSession
                         id={`plan-${planned.id}`}
                         label={planned.day_label}
@@ -524,7 +679,7 @@ export default function MemberPlanning() {
                         onTap={() => openPlannedDay(date, planned)}
                       />
                     )}
-                    {!sess && !planned && (
+                    {!dayTaken && !planned && (
                       <button
                         onClick={() => openEmptyDay(date)}
                         className="w-full sm:w-auto rounded-md px-2 py-1 text-xs opacity-40 hover:opacity-100 border border-dashed border-border"
@@ -557,18 +712,40 @@ export default function MemberPlanning() {
 
           {unplanned.length > 0 && (
             <>
-              <div className="font-mono" style={{ fontSize: 9, letterSpacing: "0.16em", padding: "8px 20px 4px", color: "rgba(255,255,255,0.45)", textTransform: "uppercase" }}>
+              <div
+                className="font-mono"
+                style={{
+                  fontSize: 9,
+                  letterSpacing: "0.16em",
+                  padding: "8px 20px 4px",
+                  color: "rgba(255,255,255,0.45)",
+                  textTransform: "uppercase",
+                }}
+              >
                 Depuis mon programme
               </div>
               {unplanned.map((def: any) => (
-                <SheetBtn key={def.label} onClick={() => scheduleDayDef(def, modal.date)} disabled={busy}>
+                <SheetBtn
+                  key={def.label}
+                  onClick={() => scheduleDayDef(def, modal.date)}
+                  disabled={busy}
+                >
                   ● {def.label}
                 </SheetBtn>
               ))}
             </>
           )}
 
-          <div className="font-mono" style={{ fontSize: 9, letterSpacing: "0.16em", padding: "12px 20px 4px", color: "rgba(255,255,255,0.45)", textTransform: "uppercase" }}>
+          <div
+            className="font-mono"
+            style={{
+              fontSize: 9,
+              letterSpacing: "0.16em",
+              padding: "12px 20px 4px",
+              color: "rgba(255,255,255,0.45)",
+              textTransform: "uppercase",
+            }}
+          >
             Autre
           </div>
           <SheetBtn onClick={() => startFreeSession(modal.date)} disabled={busy}>
@@ -586,26 +763,83 @@ export default function MemberPlanning() {
       {modal?.kind === "place" && (
         <BottomSheet>
           <ModalTitle text={`Placer : ${modal.def.label}`} />
-          <div className="font-mono" style={{ fontSize: 9, letterSpacing: "0.16em", padding: "8px 20px 4px", color: "rgba(255,255,255,0.45)", textTransform: "uppercase" }}>
+          <div
+            className="font-mono"
+            style={{
+              fontSize: 9,
+              letterSpacing: "0.16em",
+              padding: "8px 20px 4px",
+              color: "rgba(255,255,255,0.45)",
+              textTransform: "uppercase",
+            }}
+          >
             Choisis un jour
           </div>
-          {weekDates.map((date) => {
-            const occupied = sessionByDate.get(date) ?? plannedByDate.get(date);
-            const def = modal.def;
-            return (
-              <SheetBtn
-                key={date}
-                onClick={() => scheduleDayDef(def, date)}
-                disabled={busy}
-                muted={!!occupied}
-              >
-                {weekdayLongISO(date)} {new Date(`${date}T00:00:00Z`).getUTCDate()}
-                {occupied ? " · occupé" : date === todayISO ? " · aujourd'hui" : ""}
-              </SheetBtn>
-            );
-          })}
+          <DayChoiceList
+            dates={weekDates}
+            todayISO={todayISO}
+            busy={busy}
+            isOccupied={isDayOccupied}
+            onPick={(date) => scheduleDayDef(modal.def, date)}
+          />
           <SheetBtn onClick={() => setModal(null)} muted>
             Annuler
+          </SheetBtn>
+        </BottomSheet>
+      )}
+
+      {modal?.kind === "move" && (
+        <BottomSheet>
+          <ModalTitle text={`Déplacer : ${modal.planned.day_label}`} />
+          <div
+            className="font-mono"
+            style={{
+              fontSize: 9,
+              letterSpacing: "0.16em",
+              padding: "8px 20px 4px",
+              color: "rgba(255,255,255,0.45)",
+              textTransform: "uppercase",
+            }}
+          >
+            Choisis un nouveau jour
+          </div>
+          <DayChoiceList
+            dates={weekDates}
+            todayISO={todayISO}
+            currentDate={modal.planned.planned_date}
+            busy={busy}
+            isOccupied={isDayOccupied}
+            onPick={(date) => movePlanned(modal.planned, date)}
+          />
+          <SheetBtn onClick={() => setModal(null)} muted>
+            Annuler
+          </SheetBtn>
+        </BottomSheet>
+      )}
+
+      {modal?.kind === "running" && (
+        <BottomSheet>
+          <ModalTitle text={`${modal.sess.session_label ?? "Séance"} · ${frDate(modal.date)}`} />
+          <div
+            className="font-mono"
+            style={{
+              fontSize: 9,
+              letterSpacing: "0.16em",
+              padding: "8px 20px 4px",
+              color: "rgba(255,255,255,0.45)",
+              textTransform: "uppercase",
+            }}
+          >
+            Séance commencée, pas terminée
+          </div>
+          <SheetBtn onClick={() => resumeRunning(modal.sess)} disabled={busy}>
+            ▶ Reprendre là où j'en étais
+          </SheetBtn>
+          <SheetBtn onClick={() => abandonRunning(modal.sess)} disabled={busy} danger>
+            ↩︎ Annuler cette séance et la replanifier
+          </SheetBtn>
+          <SheetBtn onClick={() => setModal(null)} muted>
+            Fermer
           </SheetBtn>
         </BottomSheet>
       )}
@@ -618,6 +852,12 @@ export default function MemberPlanning() {
               sa séance (c'était le seul écran sans porte d'entrée pour la lancer). */}
           <SheetBtn onClick={() => startPlannedNow(modal.planned)} disabled={busy}>
             {modal.date <= todayISO ? "▶ Démarrer maintenant" : "▶ Démarrer en avance"}
+          </SheetBtn>
+          <SheetBtn
+            onClick={() => setModal({ kind: "move", planned: modal.planned })}
+            disabled={busy}
+          >
+            📅 Déplacer à un autre jour
           </SheetBtn>
           <SheetBtn onClick={() => deletePlanned(modal.planned.id)} disabled={busy} danger>
             Supprimer du planning
