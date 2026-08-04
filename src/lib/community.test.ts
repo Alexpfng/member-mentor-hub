@@ -5,6 +5,7 @@ import {
   buildFeed,
   buildMilestones,
   daysLeft,
+  formatLikers,
   type MemberActivity,
   type Milestone,
 } from "./community";
@@ -218,5 +219,24 @@ describe("daysLeft", () => {
 
   it("accepte un horodatage complet pour aujourd'hui", () => {
     expect(daysLeft("2026-08-06", "2026-08-04T18:00:00.000Z")).toBe(2);
+  });
+});
+
+describe("formatLikers", () => {
+  it("nomme un soutien isolé", () => {
+    expect(formatLikers(["Toi"])).toBe("Toi");
+  });
+
+  it("relie deux soutiens", () => {
+    expect(formatLikers(["Toi", "Gaëtan"])).toBe("Toi et Gaëtan");
+  });
+
+  it("résume au-delà de deux", () => {
+    expect(formatLikers(["Toi", "Gaëtan", "Léo"])).toBe("Toi, Gaëtan et 1 autre");
+    expect(formatLikers(["Toi", "Gaëtan", "Léo", "Teddy"])).toBe("Toi, Gaëtan et 2 autres");
+  });
+
+  it("retombe sur le compteur si les noms manquent", () => {
+    expect(formatLikers([], 3)).toBe("3 cololikes");
   });
 });

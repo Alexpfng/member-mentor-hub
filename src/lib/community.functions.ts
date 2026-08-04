@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { normalizeExerciseFeedbackKey } from "@/lib/exercise-feedback";
 import {
   buildChallengeProgress,
   buildFeed,
@@ -102,7 +103,7 @@ export const getCommunityFeed = createServerFn({ method: "GET" })
     since.setDate(since.getDate() - FEED_WINDOW_DAYS);
     const sinceISO = since.toISOString().slice(0, 10);
 
-    const [{ data: sessions }, { data: records }] = await Promise.all([
+    const [{ data: sessions }, { data: records }, { data: library }] = await Promise.all([
       supabaseAdmin
         .from("sessions")
         .select("id, member_id, date, total_volume_kg, session_label, free_title, duration_minutes")
@@ -114,7 +115,41 @@ export const getCommunityFeed = createServerFn({ method: "GET" })
         .select("member_id, exercise_name, date")
         .in("member_id", memberIds)
         .gte("date", sinceISO),
+      // Démo du mouvement : elle vient de la bibliothèque, pas du membre.
+      supabaseAdmin
+        .from("exercises")
+        .select("name, youtube_id")
+        .not("youtube_id", "is", null)
+        .limit(2000),
     ]);
+
+    const demoByExercise = new Map<string, string>();
+    for (const exercise of library ?? []) {
+      const key = normalizeExerciseFeedbackKey(exercise.name);
+      if (key && exercise.youtube_id && !demoByExercise.has(key)) {
+        demoByExercise.set(key, exercise.youtube_id);
+      }
+    }
+
+    // Chiffres de course, rattachés à la séance.
+    const sessionIds = (sessions ?? []).map((s) => s.id);
+    const { data: runs } =
+      sessionIds.length > 0
+        ? await supabaseAdmin
+            .from("run_stats")
+            .select("session_id, distance_km, pace_sec_per_km, elevation_m")
+            .in("session_id", sessionIds)
+        : { data: [] };
+    const runBySession = new Map(
+      (runs ?? []).map((r) => [
+        r.session_id,
+        {
+          distanceKm: r.distance_km,
+          paceSecPerKm: r.pace_sec_per_km,
+          elevationM: r.elevation_m,
+        },
+      ]),
+    );
 
     const activities = new Map<string, MemberActivity>();
     for (const [memberId, memberName] of nameById) {
@@ -128,12 +163,15 @@ export const getCommunityFeed = createServerFn({ method: "GET" })
         // Une séance libre n'a pas de libellé de programme, elle porte un titre.
         label: session.session_label ?? session.free_title ?? null,
         durationMin: session.duration_minutes,
+        run: runBySession.get(session.id) ?? null,
       });
     }
     for (const record of records ?? []) {
-      activities
-        .get(record.member_id)
-        ?.records.push({ exerciseName: record.exercise_name, date: record.date });
+      activities.get(record.member_id)?.records.push({
+        exerciseName: record.exercise_name,
+        date: record.date,
+        youtubeId: demoByExercise.get(normalizeExerciseFeedbackKey(record.exercise_name)) ?? null,
+      });
     }
 
     const sharing =
@@ -151,17 +189,34 @@ export const getCommunityFeed = createServerFn({ method: "GET" })
         milestones.map((m) => m.key),
       );
 
-    const countByKey = new Map<string, number>();
+    // Un compteur anonyme n'encourage personne : on nomme les auteurs.
+    const likerIds = [...new Set((likes ?? []).map((l) => l.liker_id))];
+    const { data: likerProfiles } =
+      likerIds.length > 0
+        ? await supabaseAdmin
+            .from("profiles")
+            .select("id, first_name, last_name")
+            .in("id", likerIds)
+        : { data: [] };
+    const likerName = new Map<string, string>((likerProfiles ?? []).map((p) => [p.id, nameOf(p)]));
+
+    const likersByKey = new Map<string, string[]>();
     const likedByMe = new Set<string>();
     for (const like of likes ?? []) {
-      countByKey.set(like.event_key, (countByKey.get(like.event_key) ?? 0) + 1);
+      const who =
+        like.liker_id === context.userId ? "Toi" : (likerName.get(like.liker_id) ?? "Un membre");
+      likersByKey.set(like.event_key, [...(likersByKey.get(like.event_key) ?? []), who]);
       if (like.liker_id === context.userId) likedByMe.add(like.event_key);
     }
 
     return {
       milestones: milestones.map((m) => ({
         ...m,
-        likes: countByKey.get(m.key) ?? 0,
+        likes: likersByKey.get(m.key)?.length ?? 0,
+        // « Toi » d'abord : on se reconnaît avant de lire les autres.
+        likers: (likersByKey.get(m.key) ?? []).sort((a, b) =>
+          a === "Toi" ? -1 : b === "Toi" ? 1 : a.localeCompare(b),
+        ),
         likedByMe: likedByMe.has(m.key),
         isMine: m.memberId === context.userId,
       })),

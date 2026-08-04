@@ -241,3 +241,15 @@ export function daysLeft(endsOn: string, today: string): number {
   const now = new Date(`${today.slice(0, 10)}T00:00:00Z`).getTime();
   return Math.max(0, Math.round((end - now) / 86_400_000));
 }
+
+/**
+ * « Toi », « Toi et Gaëtan », « Toi, Gaëtan et 2 autres ».
+ * Un compteur anonyme n'encourage personne : on nomme qui a soutenu.
+ */
+export function formatLikers(likers: string[], total = likers.length): string {
+  if (likers.length === 0) return `${total} cololike${total > 1 ? "s" : ""}`;
+  if (likers.length === 1) return likers[0];
+  if (likers.length === 2) return `${likers[0]} et ${likers[1]}`;
+  const rest = likers.length - 2;
+  return `${likers[0]}, ${likers[1]} et ${rest} autre${rest > 1 ? "s" : ""}`;
+}

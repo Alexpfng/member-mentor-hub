@@ -11,7 +11,7 @@ import {
   setShareMilestones,
   toggleCololike,
 } from "@/lib/community.functions";
-import type { ChallengeMetric } from "@/lib/community";
+import { formatLikers, type ChallengeMetric } from "@/lib/community";
 
 type FeedEntry = {
   key: string;
@@ -23,6 +23,7 @@ type FeedEntry = {
   youtubeId?: string | null;
   date: string;
   likes: number;
+  likers?: string[];
   likedByMe: boolean;
   isMine: boolean;
 };
@@ -291,7 +292,7 @@ export default function CommunityFeed({ canShare = true }: { canShare?: boolean 
                   </header>
 
                   <div style={{ fontSize: 14, lineHeight: 1.4 }}>
-                    {entry.label.replace(/^a /, "").replace(/^fait /, "")}
+                    {entry.label.charAt(0).toUpperCase() + entry.label.slice(1)}
                   </div>
 
                   {/* Démo du mouvement : illustre un record sans exposer quoi que
@@ -392,8 +393,8 @@ export default function CommunityFeed({ canShare = true }: { canShare?: boolean 
                       Cololike
                     </button>
                     {entry.likes > 0 && (
-                      <span className="cst-mono" style={{ fontSize: 11, opacity: 0.6 }}>
-                        {entry.likes} cololike{entry.likes > 1 ? "s" : ""}
+                      <span style={{ fontSize: 11, opacity: 0.65, lineHeight: 1.4 }}>
+                        {formatLikers(entry.likers ?? [], entry.likes)}
                       </span>
                     )}
                   </footer>
