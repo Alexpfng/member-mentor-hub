@@ -6,6 +6,7 @@ import {
   buildMilestones,
   daysLeft,
   type MemberActivity,
+  type Milestone,
 } from "./community";
 
 function activity(patch: Partial<MemberActivity> = {}): MemberActivity {
@@ -26,9 +27,40 @@ function sessions(count: number, from = "2026-01-01", volumeKg = 0) {
   });
 }
 
+const milestonesOnly = (list: Milestone[]) => list.filter((m) => m.kind !== "activity");
+
 describe("buildMilestones", () => {
   it("ne produit rien sans séance ni record", () => {
     expect(buildMilestones(activity())).toEqual([]);
+  });
+
+  it("publie chaque séance terminée, avec ses chiffres", () => {
+    const milestones = buildMilestones(
+      activity({
+        sessions: [
+          { date: "2026-01-05", volumeKg: 3_200, label: "Upper 1 focus pull", durationMin: 95 },
+        ],
+      }),
+    );
+    const feedEntry = milestones.find((m) => m.kind === "activity");
+    expect(feedEntry?.label).toBe("a fait Upper 1 focus pull");
+    expect(feedEntry?.detail).toBe("1 h 35 · 3,2 t soulevées");
+  });
+
+  it("reste lisible quand la séance n'a ni titre ni chiffres", () => {
+    const milestones = buildMilestones(
+      activity({ sessions: [{ date: "2026-01-05", volumeKg: null }] }),
+    );
+    const feedEntry = milestones.find((m) => m.kind === "activity");
+    expect(feedEntry?.label).toBe("a fait une séance");
+    expect(feedEntry?.detail).toBeUndefined();
+  });
+
+  it("affiche les petits tonnages en kilos", () => {
+    const milestones = buildMilestones(
+      activity({ sessions: [{ date: "2026-01-05", volumeKg: 420, durationMin: 45 }] }),
+    );
+    expect(milestones.find((m) => m.kind === "activity")?.detail).toBe("45 min · 420 kg soulevés");
   });
 
   it("date le jalon à la séance qui l'a déclenché", () => {
@@ -39,7 +71,7 @@ describe("buildMilestones", () => {
 
   it("célèbre la première séance", () => {
     const milestones = buildMilestones(activity({ sessions: sessions(1) }));
-    expect(milestones[0].label).toBe("a fait sa toute première séance");
+    expect(milestonesOnly(milestones)[0].label).toBe("a fait sa toute première séance");
   });
 
   it("ne déclenche un palier de tonnage qu'une fois", () => {
@@ -65,13 +97,19 @@ describe("buildMilestones", () => {
     const milestones = buildMilestones(
       activity({ records: [{ exerciseName: "Back squat", date: "2026-03-02" }] }),
     );
-    expect(milestones[0].label).toBe("a battu son record sur Back squat");
+    expect(milestonesOnly(milestones)[0].label).toBe("a battu son record sur Back squat");
   });
 
   it("ignore un record sans date, qu'on ne saurait pas placer dans le fil", () => {
     expect(buildMilestones(activity({ records: [{ exerciseName: "Squat", date: null }] }))).toEqual(
       [],
     );
+  });
+
+  it("met le jalon avant la séance ordinaire du même jour", () => {
+    const feed = buildFeed([activity({ sessions: sessions(1, "2026-01-01") })]);
+    expect(feed[0].kind).toBe("sessions");
+    expect(feed[1].kind).toBe("activity");
   });
 });
 
@@ -89,7 +127,8 @@ describe("buildFeed", () => {
   });
 
   it("respecte la fenêtre demandée", () => {
-    expect(buildFeed([teddy, gaetan], { since: "2026-05-01" })).toHaveLength(1);
+    // Une séance + son jalon « première séance » pour le seul Gaétan.
+    expect(buildFeed([teddy, gaetan], { since: "2026-05-01" })).toHaveLength(2);
   });
 
   it("respecte la limite", () => {

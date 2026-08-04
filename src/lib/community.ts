@@ -6,7 +6,7 @@
  * le fil se corrige tout seul, sans table d'événements à réparer.
  */
 
-export type MilestoneKind = "sessions" | "streak" | "volume" | "record";
+export type MilestoneKind = "activity" | "sessions" | "streak" | "volume" | "record";
 
 export type Milestone = {
   memberId: string;
@@ -14,6 +14,8 @@ export type Milestone = {
   kind: MilestoneKind;
   /** Phrase affichée telle quelle dans le fil. */
   label: string;
+  /** Chiffres de la séance (durée, tonnage), affichés en second plan. */
+  detail?: string;
   date: string;
 };
 
@@ -21,7 +23,12 @@ export type MemberActivity = {
   memberId: string;
   memberName: string;
   /** Séances terminées, triées par date croissante. */
-  sessions: Array<{ date: string | null; volumeKg: number | null }>;
+  sessions: Array<{
+    date: string | null;
+    volumeKg: number | null;
+    label?: string | null;
+    durationMin?: number | null;
+  }>;
   /** Records personnels, avec leur date. */
   records: Array<{ exerciseName: string | null; date: string | null }>;
 };
@@ -31,6 +38,28 @@ const VOLUME_TIERS_KG = [10_000, 50_000, 100_000, 250_000, 500_000];
 
 function frTons(kg: number) {
   return `${Math.round(kg / 1000)} tonnes`;
+}
+
+/** Durée lisible : « 45 min », « 1 h 35 ». */
+function frDuration(minutes: number) {
+  if (minutes < 60) return `${minutes} min`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return m === 0 ? `${h} h` : `${h} h ${String(m).padStart(2, "0")}`;
+}
+
+/** Chiffres d'une séance, omis quand ils ne sont pas renseignés. */
+function sessionDetail(durationMin?: number | null, volumeKg?: number | null) {
+  const parts: string[] = [];
+  if (durationMin != null && durationMin > 0) parts.push(frDuration(Math.round(durationMin)));
+  if (volumeKg != null && volumeKg > 0) {
+    parts.push(
+      volumeKg >= 1000
+        ? `${(volumeKg / 1000).toFixed(1).replace(".", ",")} t soulevées`
+        : `${Math.round(volumeKg)} kg soulevés`,
+    );
+  }
+  return parts.length > 0 ? parts.join(" · ") : undefined;
 }
 
 /**
@@ -50,6 +79,18 @@ export function buildMilestones(activity: MemberActivity): Milestone[] {
   sessions.forEach((session, index) => {
     const date = String(session.date);
     const count = index + 1;
+
+    // Chaque séance terminée alimente le fil : les jalons seuls sont trop
+    // rares pour qu'une petite communauté ait quelque chose à lire.
+    out.push({
+      memberId: activity.memberId,
+      memberName: activity.memberName,
+      kind: "activity",
+      label: session.label ? `a fait ${session.label}` : "a fait une séance",
+      detail: sessionDetail(session.durationMin, session.volumeKg),
+      date,
+    });
+
     if (SESSION_TIERS.includes(count)) {
       out.push({
         memberId: activity.memberId,
@@ -98,7 +139,11 @@ export function buildFeed(
   return activities
     .flatMap(buildMilestones)
     .filter((milestone) => (since ? milestone.date >= since : true))
-    .sort((a, b) => b.date.localeCompare(a.date))
+    .sort(
+      (a, b) =>
+        b.date.localeCompare(a.date) ||
+        Number(a.kind === "activity") - Number(b.kind === "activity"),
+    )
     .slice(0, limit);
 }
 

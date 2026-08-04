@@ -21,6 +21,7 @@ type Challenge = {
 };
 
 const KIND_MARK: Record<string, string> = {
+  activity: "•",
   sessions: "▲",
   volume: "■",
   record: "★",
@@ -47,7 +48,13 @@ export default function CommunityPanel() {
   const shareFn = useServerFn(setShareMilestones);
 
   const [feed, setFeed] = useState<{
-    milestones: Array<{ memberName: string; label: string; date: string; kind: string }>;
+    milestones: Array<{
+      memberName: string;
+      label: string;
+      detail?: string;
+      date: string;
+      kind: string;
+    }>;
     sharing: boolean;
   } | null>(null);
   const [challenge, setChallenge] = useState<{
@@ -101,7 +108,7 @@ export default function CommunityPanel() {
       await shareFn({ data: { share: !feed.sharing } });
       await reload();
       toast.success(
-        feed.sharing ? "Tes jalons redeviennent privés" : "Tes jalons apparaîtront dans le fil",
+        feed.sharing ? "Tes séances redeviennent privées" : "Tes séances apparaîtront dans le fil",
       );
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : "Erreur");
@@ -113,7 +120,10 @@ export default function CommunityPanel() {
   const active = challenge?.challenge;
   const progress = challenge?.progress;
   const hasFeed = (feed?.milestones.length ?? 0) > 0;
-  if (!active && !hasFeed) return null;
+  // On n'attend pas d'avoir du contenu pour s'afficher : le fil vide est
+  // précisément le moment où il faut proposer d'activer le partage, sinon
+  // personne ne peut jamais rejoindre la communauté.
+  if (!feed && !challenge) return null;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -198,7 +208,7 @@ export default function CommunityPanel() {
         </div>
       )}
 
-      {hasFeed && (
+      {feed && (
         <div className="cst-card-dark" style={{ padding: 16 }}>
           <span
             className="cst-mono"
@@ -210,16 +220,39 @@ export default function CommunityPanel() {
             style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}
             aria-live="polite"
           >
+            {!hasFeed && (
+              <p style={{ margin: 0, fontSize: 12, opacity: 0.6, lineHeight: 1.5 }}>
+                Rien à afficher pour l'instant. Les séances et les paliers des membres qui partagent
+                apparaîtront ici.
+              </p>
+            )}
             {feed?.milestones.map((milestone, index) => (
               <div
                 key={`${milestone.date}-${milestone.memberName}-${index}`}
                 style={{ display: "flex", gap: 8, alignItems: "baseline", fontSize: 12.5 }}
               >
-                <span style={{ color: "var(--cst-mid-green)", fontSize: 10 }} aria-hidden>
+                <span
+                  style={{
+                    color:
+                      milestone.kind === "activity"
+                        ? "rgba(255,255,255,0.35)"
+                        : "var(--cst-mid-green)",
+                    fontSize: 10,
+                  }}
+                  aria-hidden
+                >
                   {KIND_MARK[milestone.kind] ?? "•"}
                 </span>
                 <span style={{ flex: 1, lineHeight: 1.4 }}>
                   <strong>{milestone.memberName}</strong> {milestone.label}
+                  {milestone.detail && (
+                    <span
+                      className="cst-mono"
+                      style={{ display: "block", fontSize: 10, opacity: 0.5 }}
+                    >
+                      {milestone.detail}
+                    </span>
+                  )}
                 </span>
                 <span className="cst-mono" style={{ fontSize: 9, opacity: 0.45 }}>
                   {frDate(milestone.date)}
@@ -247,7 +280,7 @@ export default function CommunityPanel() {
               disabled={busy}
               style={{ width: 15, height: 15, accentColor: "var(--cst-mid-green)" }}
             />
-            Partager mes jalons avec les autres membres
+            Partager mes séances avec les autres membres
           </label>
         </div>
       )}

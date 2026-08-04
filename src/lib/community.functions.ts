@@ -99,7 +99,7 @@ export const getCommunityFeed = createServerFn({ method: "GET" })
     const [{ data: sessions }, { data: records }] = await Promise.all([
       supabaseAdmin
         .from("sessions")
-        .select("member_id, date, total_volume_kg")
+        .select("member_id, date, total_volume_kg, session_label, free_title, duration_minutes")
         .in("member_id", memberIds)
         .eq("status", "completed")
         .order("date", { ascending: true }),
@@ -118,6 +118,9 @@ export const getCommunityFeed = createServerFn({ method: "GET" })
       activities.get(session.member_id)?.sessions.push({
         date: session.date,
         volumeKg: session.total_volume_kg != null ? Number(session.total_volume_kg) : 0,
+        // Une séance libre n'a pas de libellé de programme, elle porte un titre.
+        label: session.session_label ?? session.free_title ?? null,
+        durationMin: session.duration_minutes,
       });
     }
     for (const record of records ?? []) {
