@@ -1396,28 +1396,39 @@ export default function AdapterSemaine() {
                                 {sugg.type === "pain" ? "🔴" : "⚠"}
                               </span>
                             )}
+                          </div>
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "flex-end",
+                              alignItems: "center",
+                              gap: 6,
+                              minHeight: 24,
+                            }}
+                          >
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                void addCurrentExoToLibrary(ex);
+                              }}
+                              title="Ajouter cet exercice à la bibliothèque"
+                              className="cst-mono"
+                              style={{
+                                background: "rgba(255,255,255,0.04)",
+                                border: "1px solid rgba(255,255,255,0.12)",
+                                color: "var(--cst-text-soft)",
+                                borderRadius: 6,
+                                padding: "4px 7px",
+                                fontSize: 9,
+                                letterSpacing: "0.12em",
+                                cursor: "pointer",
+                                flexShrink: 0,
+                              }}
+                            >
+                              ↥ BIBLIO
+                            </button>
                             <div style={{ position: "relative", flexShrink: 0 }}>
-                              <button
-                                type="button"
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  void addCurrentExoToLibrary(ex);
-                                }}
-                                title="Ajouter cet exercice à la bibliothèque"
-                                style={{
-                                  marginRight: 6,
-                                  background: "rgba(255,255,255,0.04)",
-                                  border: "1px solid rgba(255,255,255,0.12)",
-                                  color: "var(--cst-text-soft)",
-                                  borderRadius: 6,
-                                  padding: "4px 6px",
-                                  fontSize: 9,
-                                  letterSpacing: "0.12em",
-                                  cursor: "pointer",
-                                }}
-                              >
-                                ↥ BIBLIO
-                              </button>
                               <button
                                 type="button"
                                 onClick={(event) => {
