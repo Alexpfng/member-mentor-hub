@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { localDateISO } from "@/lib/local-date";
 import { buildCoachExerciseFeedback } from "@/lib/coach-rpe-feedback";
+import { normalizeWeekStructure } from "@/lib/week-structure-normalizer";
 
 /**
  * Adaptation hebdomadaire des programmes (coach).
@@ -54,7 +55,9 @@ type WeekRowLike = { status?: string | null; structure?: unknown; draft_structur
 
 /** Structure « en cours d'édition » : le brouillon en attente s'il existe, sinon la version live. */
 function effectiveStructure(week: WeekRowLike): WeekStructure {
-  return ((week.draft_structure ?? week.structure) as WeekStructure) ?? { days: [] };
+  return normalizeWeekStructure(
+    ((week.draft_structure ?? week.structure) as WeekStructure) ?? { days: [] },
+  );
 }
 
 /** Patch d'écriture : direct sur `structure` en draft, sinon vers `draft_structure`. */
@@ -409,6 +412,7 @@ export const saveDraftWeek = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await requireCoach(context.userId);
+    const normalizedStructure = normalizeWeekStructure(data.structure as WeekStructure);
     const { data: week } = await supabaseAdmin
       .from("assignment_weeks")
       .select("id, status")
@@ -418,7 +422,7 @@ export const saveDraftWeek = createServerFn({ method: "POST" })
     if (week.status === "done") throw new Error("Semaine terminée, non modifiable.");
     const { error } = await supabaseAdmin
       .from("assignment_weeks")
-      .update(structurePatch(week, data.structure))
+      .update(structurePatch(week, normalizedStructure))
       .eq("id", data.weekId);
     if (error) throw new Error(error.message);
     return { ok: true, pendingPublish: week.status !== "draft" };
@@ -579,7 +583,7 @@ export const publishWeek = createServerFn({ method: "POST" })
 
     // La publication bascule le brouillon de révision (s'il existe) dans la
     // structure live — c'est le seul moment où le membre voit les éditions.
-    const nextStructure = effectiveStructure(week);
+    const nextStructure = normalizeWeekStructure(effectiveStructure(week));
     let prev: WeekStructure | null = null;
     if (week.draft_structure != null) {
       prev = week.structure as WeekStructure;
@@ -658,7 +662,9 @@ export const duplicateWeekTo = createServerFn({ method: "POST" })
     for (let i = 0; i < sorted.length; i++) {
       const tw = sorted[i];
       // Duplique la version en cours d'édition (brouillon de révision inclus).
-      const structure = JSON.parse(JSON.stringify(effectiveStructure(week))) as WeekStructure;
+      const structure = normalizeWeekStructure(
+        JSON.parse(JSON.stringify(effectiveStructure(week))) as WeekStructure,
+      );
       let factor = 1;
       if (data.progression === "plus5_cumulative") factor = 1 + 0.05 * (i + 1);
       if (data.progression === "deload_last" && i === lastIdx) factor = 0.6;
@@ -1079,7 +1085,9 @@ export const replaceExercise = createServerFn({ method: "POST" })
       .maybeSingle();
     if (exErr || !exo) throw new Error("Exercice introuvable.");
 
-    const structure = JSON.parse(JSON.stringify(effectiveStructure(week))) as WeekStructure;
+    const structure = normalizeWeekStructure(
+      JSON.parse(JSON.stringify(effectiveStructure(week))) as WeekStructure,
+    );
     const day = (structure.days ?? [])[data.dayIndex];
     const source = day?.exercises?.[data.exoIndex];
     if (!day || !source) throw new Error("Exercice source introuvable dans la semaine.");
