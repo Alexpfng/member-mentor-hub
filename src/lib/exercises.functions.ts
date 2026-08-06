@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import seedExercises from "@/data/seed-exercises-v2.json";
+import { sanitizeLibraryExerciseNotes } from "./library-exercise-payload";
 
 type SeedRow = {
   id: string;
@@ -52,7 +53,9 @@ const exerciseInputSchema = z.object({
   default_tempo: z.string().max(40).optional().nullable(),
   youtube_url: z.string().trim().max(500).optional().nullable(),
   image_url: z.string().trim().max(500).optional().nullable(),
-  coach_notes: z.string().max(2000).optional().nullable(),
+  coach_notes: z
+    .preprocess((value) => sanitizeLibraryExerciseNotes(value as string | null | undefined), z.string().max(2000).nullable())
+    .optional(),
   is_archived: z.boolean().optional(),
   movement_patterns: z.array(z.string().max(20)).max(8).optional().nullable(),
 });
@@ -121,7 +124,7 @@ export const upsertExercise = createServerFn({ method: "POST" })
       youtube_url: data.youtube_url?.trim() || null,
       youtube_id: extractYoutubeId(data.youtube_url),
       image_url: data.image_url?.trim() || null,
-      coach_notes: data.coach_notes?.trim() || null,
+      coach_notes: sanitizeLibraryExerciseNotes(data.coach_notes),
       is_archived: data.is_archived ?? false,
       is_global: true,
       created_by: context.userId,

@@ -17,6 +17,7 @@ import { createLibraryExerciseFromProgram, listExercises } from "@/lib/exercises
 import { setExerciseQuickCoachNote, setExerciseQuickRpe } from "@/lib/adapter-week-rpe";
 import { parseRpeCell } from "@/lib/rpe-cell";
 import { getQuickRpePopoverPlacement } from "@/lib/coach-rpe-feedback";
+import { sanitizeLibraryExerciseNotes } from "@/lib/library-exercise-payload";
 
 type LibExercise = {
   id: string;
@@ -861,7 +862,7 @@ export default function AdapterSemaine() {
           color: ex.color ?? null,
           tempo: ex.tempo ?? null,
           youtube_url: ex.youtube_url ?? null,
-          coach_notes: ex.coach_notes ?? null,
+          coach_notes: sanitizeLibraryExerciseNotes(ex.coach_notes),
         },
       });
       toast(
@@ -1151,7 +1152,8 @@ export default function AdapterSemaine() {
                 className="cst-card-dark"
                 style={{
                   padding: 14,
-                  width: 280,
+                  width: 360,
+                  minWidth: 360,
                   flexShrink: 0,
                   display: "flex",
                   flexDirection: "column",
@@ -1358,7 +1360,14 @@ export default function AdapterSemaine() {
                             gap: 4,
                           }}
                         >
-                          <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: "auto minmax(0, 1fr) auto",
+                              alignItems: "start",
+                              columnGap: 7,
+                            }}
+                          >
                             <ColorDot c={ex.color} />
                             {ex.code && (
                               <span
@@ -1385,7 +1394,9 @@ export default function AdapterSemaine() {
                                 fontSize: 13,
                                 fontWeight: 600,
                                 whiteSpace: "normal",
-                                wordBreak: "break-word",
+                                overflowWrap: "break-word",
+                                wordBreak: "normal",
+                                hyphens: "auto",
                                 lineHeight: 1.3,
                               }}
                             >
