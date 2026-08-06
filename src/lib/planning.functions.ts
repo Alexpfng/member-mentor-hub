@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { mergeAssignmentWeeks } from "@/lib/program-weeks";
+import { currentPlanningWeekNumber, planningWeekBounds } from "@/lib/planning-weeks";
 
 const dateStr = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
@@ -66,18 +67,14 @@ export const listWeekPlan = createServerFn({ method: "GET" })
       return { weekNumber: 1, weekStart: null, weekEnd: null, days: [], assignment: null };
     }
 
-    const start = assignment.start_date ? new Date(assignment.start_date) : new Date();
-    const now = new Date();
-    const diffDays = Math.floor((now.getTime() - start.getTime()) / 86400000);
-    const currentWeekNumber = Math.max(1, Math.floor(diffDays / 7) + 1);
+    const currentWeekNumber = currentPlanningWeekNumber(assignment.start_date);
     const weekNumber = data.weekNumber ?? currentWeekNumber;
     const weekIdx = weekNumber - 1;
 
-    // Week monday/sunday
-    const weekStart = new Date(start);
-    weekStart.setDate(start.getDate() + weekIdx * 7);
-    const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekStart.getDate() + 6);
+    const { weekStart: startISO, weekEnd: endISO } = planningWeekBounds(
+      assignment.start_date,
+      weekNumber,
+    );
 
     const program = (assignment as any).programs ?? null;
     // Fusionne les semaines adaptées (assignment_weeks) sur le template : le planning
@@ -99,16 +96,17 @@ export const listWeekPlan = createServerFn({ method: "GET" })
 
     // Existing planned_sessions for that week — scopé au programme actif pour
     // éviter que le planning d'un ancien programme « fuite » (on garde les nulls par compat).
-    const { data: planned } = await supabaseAdmin
+    const { data: allPlanned } = await supabaseAdmin
       .from("planned_sessions")
       .select("*")
       .eq("member_id", context.userId)
-      .eq("week_number", weekNumber)
       .or(`program_id.eq.${assignment.program_id},program_id.is.null`);
+    const planned = (allPlanned ?? []).filter((row: any) => {
+      if (row.planned_date) return row.planned_date >= startISO && row.planned_date <= endISO;
+      return row.week_number === weekNumber;
+    });
 
     // Completed sessions for the week
-    const startISO = weekStart.toISOString().slice(0, 10);
-    const endISO = weekEnd.toISOString().slice(0, 10);
     const { data: sessions } = await supabaseAdmin
       .from("sessions")
       .select("id, date, session_label, status, duration_minutes, week_number, day_number")

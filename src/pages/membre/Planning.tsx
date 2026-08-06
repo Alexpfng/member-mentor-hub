@@ -40,6 +40,10 @@ function isoDay(d: Date) {
   return d.toISOString().slice(0, 10);
 }
 
+function displayDateFR(iso: string) {
+  return new Date(`${iso}T00:00:00Z`).toLocaleDateString("fr-FR", { timeZone: "UTC" });
+}
+
 function DroppableDay({
   date,
   label,
@@ -235,6 +239,7 @@ function DayChoiceList({
   currentDate,
   busy,
   isOccupied,
+  isUnavailable,
   onPick,
 }: {
   dates: string[];
@@ -242,15 +247,19 @@ function DayChoiceList({
   currentDate?: string | null;
   busy: boolean;
   isOccupied: (date: string) => boolean;
+  isUnavailable?: (date: string) => boolean;
   onPick: (date: string) => void;
 }) {
   return (
     <>
       {dates.map((date) => {
         const isCurrent = currentDate === date;
+        const unavailable = isUnavailable?.(date) ?? false;
         const occupied = !isCurrent && isOccupied(date);
         const suffix = isCurrent
           ? " · actuel"
+          : unavailable
+            ? " · indisponible"
           : occupied
             ? " · occupé"
             : date === todayISO
@@ -260,8 +269,8 @@ function DayChoiceList({
           <SheetBtn
             key={date}
             onClick={() => onPick(date)}
-            disabled={busy || isCurrent}
-            muted={occupied || isCurrent}
+            disabled={busy || isCurrent || unavailable}
+            muted={occupied || isCurrent || unavailable}
           >
             {weekdayLongISO(date)} {new Date(`${date}T00:00:00Z`).getUTCDate()}
             {suffix}
@@ -323,6 +332,7 @@ export default function MemberPlanning() {
   }, [data?.weekStart]);
 
   const todayISO = localDateISO();
+  const assignmentStartISO = data?.assignment?.start_date?.slice(0, 10) ?? null;
 
   const plannedByDate = useMemo(() => {
     const map = new Map<string, any>();
@@ -392,6 +402,9 @@ export default function MemberPlanning() {
     const taken = sess?.status === "completed" || sess?.status === "in_progress";
     return taken || plannedByDate.has(date);
   };
+
+  const isBeforeAssignmentStart = (date: string) =>
+    assignmentStartISO != null && data?.weekNumber === 1 && date < assignmentStartISO;
 
   const handleDragEnd = async (e: DragEndEvent) => {
     const { active, over } = e;
@@ -625,8 +638,7 @@ export default function MemberPlanning() {
             <div className="text-sm font-semibold">
               Semaine {data.weekNumber}{" "}
               <span className="opacity-60 text-xs">
-                ({new Date(data.weekStart).toLocaleDateString("fr-FR")} →{" "}
-                {new Date(data.weekEnd).toLocaleDateString("fr-FR")})
+                ({displayDateFR(data.weekStart)} → {displayDateFR(data.weekEnd)})
               </span>
             </div>
             <button
@@ -708,13 +720,18 @@ export default function MemberPlanning() {
                         onTap={() => openPlannedDay(date, planned)}
                       />
                     )}
-                    {!dayTaken && !planned && (
+                    {!dayTaken && !planned && !isBeforeAssignmentStart(date) && (
                       <button
                         onClick={() => openEmptyDay(date)}
                         className="w-full sm:w-auto rounded-md px-2 py-1 text-xs opacity-40 hover:opacity-100 border border-dashed border-border"
                       >
                         +
                       </button>
+                    )}
+                    {!dayTaken && !planned && isBeforeAssignmentStart(date) && (
+                      <div className="rounded-md px-2 py-1 text-xs opacity-35 border border-dashed border-border">
+                        Indispo
+                      </div>
                     )}
                   </DroppableDay>
                 );
@@ -809,6 +826,7 @@ export default function MemberPlanning() {
             todayISO={todayISO}
             busy={busy}
             isOccupied={isDayOccupied}
+            isUnavailable={isBeforeAssignmentStart}
             onPick={(date) => scheduleDayDef(modal.def, date)}
           />
           <SheetBtn onClick={() => setModal(null)} muted>
@@ -838,6 +856,7 @@ export default function MemberPlanning() {
             currentDate={modal.planned.planned_date}
             busy={busy}
             isOccupied={isDayOccupied}
+            isUnavailable={isBeforeAssignmentStart}
             onPick={(date) => movePlanned(modal.planned, date)}
           />
           <SheetBtn onClick={() => setModal(null)} muted>
