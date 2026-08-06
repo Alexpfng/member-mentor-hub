@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { localDateISO } from "@/lib/local-date";
-import { normalizeExerciseFeedbackKey } from "@/lib/exercise-feedback";
+import { buildCoachExerciseFeedback } from "@/lib/coach-rpe-feedback";
 
 /**
  * Adaptation hebdomadaire des programmes (coach).
@@ -125,78 +125,19 @@ async function aggregateFeedback(
   const [{ data: logs }, { data: feedbacks }, { data: pains }] = await Promise.all([
     supabaseAdmin
       .from("set_logs")
-      .select("exercise_name, rpe, reps, completed")
+      .select("exercise_name, rpe, reps, completed, logged_at")
       .in("session_id", sessionIds),
     supabaseAdmin
       .from("exercise_feedbacks")
-      .select("exercise_name, felt_too_hard, felt_too_easy, could_not_do, rpe")
+      .select("exercise_name, felt_too_hard, felt_too_easy, could_not_do, rpe, created_at")
       .in("session_id", sessionIds),
     supabaseAdmin.from("pain_reports").select("exercise_name").in("session_id", sessionIds),
   ]);
-
-  const acc: Record<
-    string,
-    {
-      rpeSum: number;
-      rpeCount: number;
-      pain: boolean;
-      tooHard: boolean;
-      tooEasy: boolean;
-      failure: boolean;
-    }
-  > = {};
-  function bucket(name: string | null | undefined) {
-    const key = normalizeExerciseFeedbackKey(name);
-    if (!key) return null;
-    if (!acc[key])
-      acc[key] = {
-        rpeSum: 0,
-        rpeCount: 0,
-        pain: false,
-        tooHard: false,
-        tooEasy: false,
-        failure: false,
-      };
-    return acc[key];
-  }
-  (logs ?? []).forEach((l) => {
-    const b = bucket(l.exercise_name);
-    if (b && l.rpe != null) {
-      b.rpeSum += Number(l.rpe);
-      b.rpeCount += 1;
-    }
-    if (b && l.completed === false) b.failure = true;
+  return buildCoachExerciseFeedback({
+    logs: logs ?? [],
+    feedbacks: feedbacks ?? [],
+    pains: pains ?? [],
   });
-  (feedbacks ?? []).forEach((f) => {
-    const b = bucket(f.exercise_name);
-    if (!b) return;
-    if (f.felt_too_hard) b.tooHard = true;
-    if (f.felt_too_easy) b.tooEasy = true;
-    if (f.could_not_do) b.failure = true;
-    if (f.rpe != null) {
-      b.rpeSum += Number(f.rpe);
-      b.rpeCount += 1;
-    }
-  });
-  (pains ?? []).forEach((p) => {
-    const b = bucket(p.exercise_name);
-    if (b) b.pain = true;
-  });
-
-  const out: Record<
-    string,
-    { rpe: number | null; pain: boolean; tooHard: boolean; tooEasy: boolean; failure: boolean }
-  > = {};
-  for (const [name, v] of Object.entries(acc)) {
-    out[name] = {
-      rpe: v.rpeCount ? Math.round((v.rpeSum / v.rpeCount) * 10) / 10 : null,
-      pain: v.pain,
-      tooHard: v.tooHard,
-      tooEasy: v.tooEasy,
-      failure: v.failure,
-    };
-  }
-  return out;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -15,6 +15,7 @@ import { findExerciseFeedback } from "@/lib/exercise-feedback";
 import { listExercises } from "@/lib/exercises.functions";
 import { setExerciseQuickCoachNote, setExerciseQuickRpe } from "@/lib/adapter-week-rpe";
 import { parseRpeCell } from "@/lib/rpe-cell";
+import { getQuickRpePopoverPlacement } from "@/lib/coach-rpe-feedback";
 
 type LibExercise = {
   id: string;
@@ -54,6 +55,8 @@ type Feedback = {
 };
 
 const QUICK_RPE_VALUES = Array.from({ length: 21 }, (_, index) => index * 0.5);
+const QUICK_RPE_POPOVER_WIDTH = 264;
+const QUICK_RPE_POPOVER_HEIGHT = 340;
 
 function formatRpeValue(value: number) {
   return Number.isInteger(value) ? String(value) : String(value).replace(".", ",");
@@ -716,9 +719,13 @@ export default function AdapterSemaine() {
   const [confirmDeleteDay, setConfirmDeleteDay] = useState<number | null>(null);
   const [editTarget, setEditTarget] = useState<{ dayIdx: number; exoIdx: number } | null>(null);
   const [libraryTarget, setLibraryTarget] = useState<number | null>(null);
-  const [quickRpeTarget, setQuickRpeTarget] = useState<{ dayIdx: number; exoIdx: number } | null>(
-    null,
-  );
+  const [quickRpeTarget, setQuickRpeTarget] = useState<{
+    dayIdx: number;
+    exoIdx: number;
+    top: number;
+    left: number;
+    side: "top" | "bottom";
+  } | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const quickRpePopoverRef = useRef<HTMLDivElement | null>(null);
 
@@ -1370,10 +1377,30 @@ export default function AdapterSemaine() {
                                 type="button"
                                 onClick={(event) => {
                                   event.stopPropagation();
+                                  const rect = (event.currentTarget as HTMLButtonElement).getBoundingClientRect();
+                                  const side = getQuickRpePopoverPlacement({
+                                    anchorTop: rect.top,
+                                    anchorBottom: rect.bottom,
+                                    popoverHeight: QUICK_RPE_POPOVER_HEIGHT,
+                                    viewportHeight: window.innerHeight,
+                                  });
+                                  const left = Math.max(
+                                    12,
+                                    Math.min(
+                                      rect.right - QUICK_RPE_POPOVER_WIDTH,
+                                      window.innerWidth - QUICK_RPE_POPOVER_WIDTH - 12,
+                                    ),
+                                  );
                                   setQuickRpeTarget((current) =>
                                     current?.dayIdx === di && current?.exoIdx === ei
                                       ? null
-                                      : { dayIdx: di, exoIdx: ei },
+                                      : {
+                                          dayIdx: di,
+                                          exoIdx: ei,
+                                          top: side === "bottom" ? rect.bottom + 6 : rect.top - 6,
+                                          left,
+                                          side,
+                                        },
                                   );
                                 }}
                                 className="cst-mono"
@@ -1410,11 +1437,15 @@ export default function AdapterSemaine() {
                                   ref={quickRpePopoverRef}
                                   onClick={(event) => event.stopPropagation()}
                                   style={{
-                                    position: "absolute",
-                                    top: "calc(100% + 6px)",
-                                    right: 0,
-                                    zIndex: 30,
-                                    width: 264,
+                                    position: "fixed",
+                                    top: quickRpeTarget.top,
+                                    left: quickRpeTarget.left,
+                                    transform:
+                                      quickRpeTarget.side === "top"
+                                        ? "translateY(-100%)"
+                                        : "none",
+                                    zIndex: 300,
+                                    width: QUICK_RPE_POPOVER_WIDTH,
                                     padding: 8,
                                     borderRadius: 8,
                                     background: "#223528",
