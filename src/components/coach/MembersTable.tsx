@@ -237,7 +237,10 @@ export default function MembersTable() {
                         navigate({
                           to: "/coach/membre/$memberId/adapter",
                           params: { memberId: r.memberId },
-                          search: {},
+                          search:
+                            r.currentWeek != null
+                              ? { week: r.currentWeek + 1 }
+                              : {},
                         })
                       }
                     >

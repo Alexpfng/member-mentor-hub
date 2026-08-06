@@ -65,7 +65,13 @@ export default function MemberFollowupTab({ memberId }: { memberId: string }) {
       <div style={{ display: "flex", justifyContent: "flex-end" }}>
         <button
           className="cst-btn cst-btn-primary"
-          onClick={() => navigate({ to: "/coach/membre/$memberId/adapter", params: { memberId }, search: {} })}
+          onClick={() =>
+            navigate({
+              to: "/coach/membre/$memberId/adapter",
+              params: { memberId },
+              search: followup.currentWeek != null ? { week: followup.currentWeek + 1 } : {},
+            })
+          }
         >
           ADAPTER S+1 →
         </button>

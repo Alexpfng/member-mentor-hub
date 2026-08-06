@@ -977,6 +977,21 @@ export const getMemberFollowup = createServerFn({ method: "GET" })
     const avgRpe = rpes.length ? rpes.reduce((a, b) => a + b, 0) / rpes.length : null;
     const unseenCount = completed.filter((s) => !s.coach_seen).length;
 
+    let currentWeek: number | null = null;
+    if (assignR.data?.start_date) {
+      const assignTyped = assignR.data as {
+        start_date?: string | null;
+        programs?: { duration_weeks?: number | null } | Array<{ duration_weeks?: number | null }> | null;
+      };
+      const prog = Array.isArray(assignTyped.programs) ? assignTyped.programs[0] : assignTyped.programs;
+      const diff =
+        Math.floor((Date.now() - new Date(assignTyped.start_date).getTime()) / (7 * 86400000)) + 1;
+      currentWeek = Math.max(
+        1,
+        prog?.duration_weeks ? Math.min(diff, prog.duration_weeks) : diff,
+      );
+    }
+
     // Adhérence : SEULEMENT séances de programme (les libres ne comptent pas dans l'adhérence)
     let plannedPerWeek = 0;
     type ProgramShape = {
@@ -1035,6 +1050,7 @@ export const getMemberFollowup = createServerFn({ method: "GET" })
       .slice(0, 6);
 
     return {
+      currentWeek,
       kpis: {
         sessionsDone: done30,
         sessionsPlanned: planned30,
