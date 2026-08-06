@@ -12,7 +12,7 @@ const items = [
   { id: "carn", icon: "📖", label: "Carnet", path: "/membre/carnet" },
   { id: "progr", icon: "📈", label: "Progrès", path: "/membre/progression" },
   { id: "msgs", icon: "💬", label: "Messages", path: "/membre/messages" },
-  { id: "profile", icon: "👤", label: "Profil", path: "/membre/profil" },
+  { id: "profile", icon: "⚙️", label: "Réglages", path: "/membre/profil" },
 ];
 
 

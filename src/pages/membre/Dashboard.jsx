@@ -247,6 +247,31 @@ export default function MemberDashboard() {
               </div>
             </div>
 
+            <button
+              onClick={() => tsNavigate({ to: "/membre/profil" })}
+              className="cst-mono"
+              style={{
+                width: "100%",
+                marginTop: 18,
+                marginBottom: 18,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 12,
+                padding: "16px 18px",
+                borderRadius: 18,
+                border: "1px solid rgba(255,255,255,0.14)",
+                background: "rgba(255,255,255,0.05)",
+                color: "var(--cst-cream)",
+                cursor: "pointer",
+                letterSpacing: "0.14em",
+                fontSize: 10,
+              }}
+            >
+              <span>⚙️ RÉGLAGES</span>
+              <span style={{ opacity: 0.6 }}>PLANNING · NOTIFS · STRAVA</span>
+            </button>
+
             {/* Hero session card */}
             <div
               className="cst-card-dark cst-hatch"

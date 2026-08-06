@@ -124,6 +124,11 @@ export default function MemberProfil() {
     }
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate({ to: "/login", search: { redirect: "/" } });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-2xl mx-auto px-4 pt-4 pb-24">
@@ -131,14 +136,100 @@ export default function MemberProfil() {
           <button onClick={() => navigate({ to: "/membre" })} className="text-sm opacity-60">
             ← Retour
           </button>
-          <h1 className="font-mono text-xs tracking-widest">MON PROFIL</h1>
+          <h1 className="font-mono text-xs tracking-widest">RÉGLAGES</h1>
           <div className="w-10" />
         </div>
 
         <section className="mb-8">
-          <h2 className="font-mono text-xs tracking-widest opacity-60 mb-3">STRAVA</h2>
+          <div className="p-4 rounded-xl border border-border bg-card">
+            <div className="font-mono text-xs tracking-widest opacity-60 mb-2">HUB COACHÉ</div>
+            <h2 className="text-lg font-semibold mb-1">Tous tes réglages au même endroit</h2>
+            <p className="text-sm opacity-70">
+              Retrouve ici tout ce que tu peux modifier en tant que coaché.
+            </p>
+          </div>
+        </section>
+
+        <section className="mb-8">
+          <h2 className="font-mono text-xs tracking-widest opacity-60 mb-3">PLANNING</h2>
+          <div className="p-4 rounded-xl border border-border bg-card space-y-3 mb-8">
+            <div className="text-sm font-medium">Début de ma semaine</div>
+            <div className="text-xs opacity-70">
+              Choisis le jour qui doit lancer ton cycle hebdomadaire de 7 jours.
+            </div>
+            <select
+              className="w-full rounded-md border border-border bg-background px-3 py-3 text-sm"
+              disabled={planningBusy}
+              value={planningWeekStartDay}
+              onChange={(e) => handlePlanningWeekStartChange(Number(e.target.value))}
+            >
+              {WEEK_START_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+            <div className="text-xs opacity-60">
+              Semaine perso : {weekWindowLabel(planningWeekStartDay)}
+            </div>
+          </div>
+        </section>
+
+        <section className="mb-8">
+          <h2 className="font-mono text-xs tracking-widest opacity-60 mb-3">NOTIFICATIONS</h2>
+          {loading || !prefs ? (
+            <div className="opacity-60 text-sm">Chargement…</div>
+          ) : (
+            <div className="space-y-3">
+              {TOGGLES.map(([key, label]) => (
+                <div
+                  key={key}
+                  className="flex items-center justify-between p-4 rounded-xl border border-border bg-card"
+                >
+                  <Label htmlFor={key} className="cursor-pointer text-sm">
+                    {label}
+                  </Label>
+                  <Switch
+                    id={key}
+                    checked={Boolean(prefs[key])}
+                    onCheckedChange={(v) => handleChange({ [key]: v })}
+                  />
+                </div>
+              ))}
+
+              {prefs.weight_reminder && (
+                <div className="p-4 rounded-xl border border-border bg-card space-y-3">
+                  <div className="text-xs opacity-70">Quand recevoir le rappel poids ?</div>
+                  <div className="flex gap-2 flex-wrap">
+                    {DOW.map((d, i) => (
+                      <button
+                        key={i}
+                        onClick={() => handleChange({ weight_reminder_dow: i })}
+                        className={`px-3 py-1 rounded text-xs font-mono ${
+                          prefs.weight_reminder_dow === i
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {d}
+                      </button>
+                    ))}
+                  </div>
+                  <Input
+                    type="time"
+                    value={String(prefs.weight_reminder_time ?? "09:00").slice(0, 5)}
+                    onChange={(e) => handleChange({ weight_reminder_time: e.target.value })}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+
+        <section className="mb-8">
+          <h2 className="font-mono text-xs tracking-widest opacity-60 mb-3">CONNEXIONS</h2>
           <div className="space-y-3 mb-8">
-            <div className="p-3 rounded-lg border border-border bg-card space-y-2">
+            <div className="p-4 rounded-xl border border-border bg-card space-y-2">
               <div className="text-sm font-medium">
                 {strava?.connected ? "Compte Strava connecté" : "Aucun compte Strava connecté"}
               </div>
@@ -184,91 +275,16 @@ export default function MemberProfil() {
         </section>
 
         <section className="mb-8">
-          <h2 className="font-mono text-xs tracking-widest opacity-60 mb-3">PLANNING</h2>
-          <div className="p-3 rounded-lg border border-border bg-card space-y-3 mb-8">
-            <div className="text-sm font-medium">Début de ma semaine</div>
+          <h2 className="font-mono text-xs tracking-widest opacity-60 mb-3">COMPTE</h2>
+          <div className="p-4 rounded-xl border border-border bg-card space-y-3">
+            <div className="text-sm font-medium">Gestion du compte</div>
             <div className="text-xs opacity-70">
-              Choisis le jour qui doit lancer ton cycle hebdomadaire de 7 jours.
+              Retrouve ici les actions liées à ton espace personnel.
             </div>
-            <select
-              className="w-full rounded-md border border-border bg-background px-3 py-3 text-sm"
-              disabled={planningBusy}
-              value={planningWeekStartDay}
-              onChange={(e) => handlePlanningWeekStartChange(Number(e.target.value))}
-            >
-              {WEEK_START_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-            <div className="text-xs opacity-60">
-              Semaine perso : {weekWindowLabel(planningWeekStartDay)}
-            </div>
+            <button className="w-full py-3 rounded border border-border text-sm" onClick={handleLogout}>
+              Se déconnecter
+            </button>
           </div>
-        </section>
-
-        <section className="mb-8">
-          <h2 className="font-mono text-xs tracking-widest opacity-60 mb-3">NOTIFICATIONS</h2>
-          {loading || !prefs ? (
-            <div className="opacity-60 text-sm">Chargement…</div>
-          ) : (
-            <div className="space-y-3">
-              {TOGGLES.map(([key, label]) => (
-                <div
-                  key={key}
-                  className="flex items-center justify-between p-3 rounded-lg border border-border bg-card"
-                >
-                  <Label htmlFor={key} className="cursor-pointer text-sm">
-                    {label}
-                  </Label>
-                  <Switch
-                    id={key}
-                    checked={Boolean(prefs[key])}
-                    onCheckedChange={(v) => handleChange({ [key]: v })}
-                  />
-                </div>
-              ))}
-
-              {prefs.weight_reminder && (
-                <div className="p-3 rounded-lg border border-border bg-card space-y-3">
-                  <div className="text-xs opacity-70">Quand recevoir le rappel poids ?</div>
-                  <div className="flex gap-2 flex-wrap">
-                    {DOW.map((d, i) => (
-                      <button
-                        key={i}
-                        onClick={() => handleChange({ weight_reminder_dow: i })}
-                        className={`px-3 py-1 rounded text-xs font-mono ${
-                          prefs.weight_reminder_dow === i
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted text-muted-foreground"
-                        }`}
-                      >
-                        {d}
-                      </button>
-                    ))}
-                  </div>
-                  <Input
-                    type="time"
-                    value={String(prefs.weight_reminder_time ?? "09:00").slice(0, 5)}
-                    onChange={(e) => handleChange({ weight_reminder_time: e.target.value })}
-                  />
-                </div>
-              )}
-            </div>
-          )}
-        </section>
-
-        <section>
-          <button
-            className="w-full py-3 rounded border border-border text-sm"
-            onClick={async () => {
-              await supabase.auth.signOut();
-              navigate({ to: "/login", search: { redirect: "/" } });
-            }}
-          >
-            Se déconnecter
-          </button>
         </section>
       </div>
       <MemberNav />
