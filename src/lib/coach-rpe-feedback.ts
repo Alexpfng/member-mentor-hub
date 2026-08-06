@@ -1,14 +1,13 @@
 import { normalizeExerciseFeedbackKey } from "./exercise-feedback";
 
 type FeedbackBucket = {
-  rpeSum: number;
-  rpeCount: number;
   lastRpeAt: number;
   lastRpe: number | null;
   pain: boolean;
   tooHard: boolean;
   tooEasy: boolean;
   failure: boolean;
+  weights: number[];
 };
 
 type LogRow = {
@@ -16,6 +15,8 @@ type LogRow = {
   rpe: number | null;
   completed: boolean | null;
   logged_at: string | null;
+  weight_kg?: number | null;
+  reps?: number | null;
 };
 
 type FeedbackRow = {
@@ -45,27 +46,46 @@ function ensureBucket(
   if (!key) return null;
   if (!acc[key]) {
     acc[key] = {
-      rpeSum: 0,
-      rpeCount: 0,
       lastRpeAt: 0,
       lastRpe: null,
       pain: false,
       tooHard: false,
       tooEasy: false,
       failure: false,
+      weights: [],
     };
   }
   return { key, bucket: acc[key] };
 }
 
+function normalizeCoachRpeValue(value: number) {
+  const clamped = Math.max(0, Math.min(10, Number(value)));
+  return Math.round(clamped * 2) / 2;
+}
+
 function registerLatestRpe(bucket: FeedbackBucket, value: number | null, at: number) {
   if (value == null) return;
-  bucket.rpeSum += Number(value);
-  bucket.rpeCount += 1;
+  const normalized = normalizeCoachRpeValue(Number(value));
   if (at >= bucket.lastRpeAt) {
     bucket.lastRpeAt = at;
-    bucket.lastRpe = Number(value);
+    bucket.lastRpe = normalized;
   }
+}
+
+function registerWeight(bucket: FeedbackBucket, value: number | null | undefined) {
+  if (value == null || Number.isNaN(Number(value))) return;
+  const numeric = Number(value);
+  if (numeric <= 0) return;
+  bucket.weights.push(numeric);
+}
+
+function formatLoadLabel(weights: number[]) {
+  const unique = [...new Set(weights.map((value) => Math.round(value * 100) / 100))].sort(
+    (a, b) => a - b,
+  );
+  if (unique.length === 0) return null;
+  if (unique.length === 1) return `${unique[0]}kg`;
+  return `${unique[0]}–${unique[unique.length - 1]}kg`;
 }
 
 export function buildCoachExerciseFeedback({
@@ -83,6 +103,7 @@ export function buildCoachExerciseFeedback({
     const entry = ensureBucket(acc, row.exercise_name);
     if (!entry) return;
     registerLatestRpe(entry.bucket, row.rpe, ts(row.logged_at));
+    registerWeight(entry.bucket, row.weight_kg);
     if (entry.bucket && row.completed === false) entry.bucket.failure = true;
   });
 
@@ -110,6 +131,7 @@ export function buildCoachExerciseFeedback({
         tooHard: value.tooHard,
         tooEasy: value.tooEasy,
         failure: value.failure,
+        loadLabel: formatLoadLabel(value.weights),
       },
     ]),
   );

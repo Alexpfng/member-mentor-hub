@@ -4,6 +4,7 @@ export type ExerciseFeedback = {
   tooHard: boolean;
   tooEasy: boolean;
   failure: boolean;
+  loadLabel?: string | null;
 };
 
 export function normalizeExerciseFeedbackKey(name: string | null | undefined) {
@@ -44,6 +45,28 @@ const STOP_WORDS = new Set([
 const MATCH_THRESHOLD = 0.6;
 /** Deux candidats à moins de ça l'un de l'autre : trop ambigu pour trancher. */
 const AMBIGUITY_MARGIN = 0.05;
+const WEAK_SHARED_TOKENS = new Set([
+  "leg",
+  "arm",
+  "bras",
+  "tempo",
+  "assis",
+  "debout",
+  "couche",
+  "allonge",
+  "unilateral",
+  "bilateral",
+  "machine",
+  "smith",
+  "haltere",
+  "barre",
+  "poulie",
+  "cable",
+  "pied",
+  "avant",
+  "arriere",
+  "prise",
+]);
 
 /**
  * Découpe un nom en mots porteurs de sens. Le « s » final saute pour que
@@ -65,9 +88,13 @@ function meaningfulTokens(name: string | null | undefined): string[] {
 function similarity(a: string[], b: string[]): number {
   if (a.length === 0 || b.length === 0) return 0;
   const setB = new Set(b);
-  const shared = a.filter((token) => setB.has(token)).length;
+  const sharedTokens = a.filter((token) => setB.has(token));
+  const shared = sharedTokens.length;
   // Un seul mot commun ne prouve rien (« landmine press » vs « landmine row »).
   if (shared < 2) return 0;
+  // Deux mots communs très génériques (« leg » + « tempo ») ne suffisent pas :
+  // sinon "leg curl assis en tempo" peut récupérer le retour d'un "leg extension en tempo".
+  if (shared === 2 && sharedTokens.every((token) => WEAK_SHARED_TOKENS.has(token))) return 0;
   return shared / Math.min(a.length, b.length);
 }
 

@@ -90,6 +90,13 @@ describe("findExerciseFeedback — noms qui bougent d'une semaine à l'autre", (
     expect(match?.key).toBe("fentes bulgares pied avant sureleve avec halteres");
   });
 
+  test("ne confond pas leg curl et leg extension juste parce qu'ils partagent leg + tempo", () => {
+    const ambiguousLegs = {
+      "leg extension en tempo": fb(9),
+    };
+    expect(findExerciseFeedback(ambiguousLegs, "Leg curl assis en tempo")).toBeNull();
+  });
+
   test("ne rapproche pas deux exercices différents", () => {
     expect(findExerciseFeedback(week6, "Rowing buste penché")).toBeNull();
   });

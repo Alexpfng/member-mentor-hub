@@ -58,6 +58,52 @@ describe("buildCoachExerciseFeedback", () => {
 
     expect(feedback["hack squat"]?.rpe).toBe(8);
   });
+
+  it("arrondit les anciens rpe à des pas de 0,5 côté coach", () => {
+    const feedback = buildCoachExerciseFeedback({
+      logs: [],
+      feedbacks: [
+        {
+          exercise_name: "Leg curl assis en tempo",
+          rpe: 8.8,
+          felt_too_hard: false,
+          felt_too_easy: false,
+          could_not_do: false,
+          created_at: "2026-08-06T14:05:00.000Z",
+        },
+      ],
+      pains: [],
+    });
+
+    expect(feedback["leg curl assis en tempo"]?.rpe).toBe(9);
+  });
+
+  it("remonte la charge réellement utilisée par le coaché", () => {
+    const feedback = buildCoachExerciseFeedback({
+      logs: [
+        {
+          exercise_name: "Leg curl assis en tempo",
+          rpe: 8,
+          completed: true,
+          logged_at: "2026-08-06T14:10:00.000Z",
+          weight_kg: 40,
+          reps: 10,
+        },
+        {
+          exercise_name: "Leg curl assis en tempo",
+          rpe: 8.5,
+          completed: true,
+          logged_at: "2026-08-06T14:11:00.000Z",
+          weight_kg: 50,
+          reps: 8,
+        },
+      ],
+      feedbacks: [],
+      pains: [],
+    });
+
+    expect(feedback["leg curl assis en tempo"]?.loadLabel).toBe("40–50kg");
+  });
 });
 
 describe("getQuickRpePopoverPlacement", () => {
