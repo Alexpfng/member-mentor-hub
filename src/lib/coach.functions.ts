@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { mergeAssignmentWeeks } from "@/lib/program-weeks";
 import { localDateISO } from "@/lib/local-date";
 import { normalizeWeekStartsOn } from "@/lib/planning-weeks";
+import { normalizeProgramStructure } from "@/lib/week-structure-normalizer";
 
 async function assertCoach(userId: string) {
   const { data, error } = await supabaseAdmin
@@ -33,6 +34,9 @@ export const saveProgram = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => programSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertCoach(context.userId);
+    const normalizedStructure = normalizeProgramStructure(
+      (data.structure as { weeks?: unknown[] } | null | undefined) ?? { weeks: [] },
+    );
     const payload = {
       coach_id: context.userId,
       name: data.name,
@@ -41,7 +45,7 @@ export const saveProgram = createServerFn({ method: "POST" })
       frequency_per_week: data.frequency_per_week ?? null,
       objective: data.objective ?? null,
       level: data.level ?? null,
-      structure: data.structure ?? {},
+      structure: normalizedStructure,
     };
     if (data.id) {
       const { data: row, error } = await supabaseAdmin
@@ -60,7 +64,14 @@ export const saveProgram = createServerFn({ method: "POST" })
       .select()
       .single();
     if (error) throw new Error(error.message);
-    return { program: row };
+    return {
+      program: {
+        ...row,
+        structure: normalizeProgramStructure(
+          (row.structure as { weeks?: unknown[] } | null | undefined) ?? { weeks: [] },
+        ),
+      },
+    };
   });
 
 export const listPrograms = createServerFn({ method: "GET" })
@@ -497,7 +508,9 @@ export const duplicateProgram = createServerFn({ method: "POST" })
         duration_weeks: src.duration_weeks,
         frequency_per_week: src.frequency_per_week,
         level: src.level,
-        structure: src.structure as never,
+        structure: normalizeProgramStructure(
+          (src.structure as { weeks?: unknown[] } | null | undefined) ?? { weeks: [] },
+        ) as never,
       })
       .select()
       .single();

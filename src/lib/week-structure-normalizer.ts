@@ -76,3 +76,16 @@ export function normalizeWeekStructure<
   const normalizedDays = (week.days ?? []).flatMap((day) => splitAccidentalCardioTail(day));
   return { ...week, days: normalizedDays } as TWeek;
 }
+
+type ProgramStructureLike<TWeek extends WeekStructureLike = WeekStructureLike> = {
+  weeks?: TWeek[] | null;
+};
+
+export function normalizeProgramStructure<
+  TWeek extends WeekStructureLike,
+  TProgram extends ProgramStructureLike<TWeek>,
+>(structure: TProgram | null | undefined): TProgram {
+  const program = (structure ?? { weeks: [] }) as TProgram;
+  const normalizedWeeks = (program.weeks ?? []).map((week) => normalizeWeekStructure(week));
+  return { ...program, weeks: normalizedWeeks } as TProgram;
+}

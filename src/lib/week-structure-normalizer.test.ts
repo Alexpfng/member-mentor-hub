@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 
-import { normalizeWeekStructure } from "./week-structure-normalizer";
+import { normalizeProgramStructure, normalizeWeekStructure } from "./week-structure-normalizer";
 
 describe("normalizeWeekStructure", () => {
   it("détache une queue cardio/boxe greffée à une séance muscu", () => {
@@ -63,5 +63,30 @@ describe("normalizeWeekStructure", () => {
 
     expect(normalized.days).toHaveLength(1);
     expect(normalized.days?.[0]?.exercises).toHaveLength(2);
+  });
+
+  it("normalise aussi une structure programme complète", () => {
+    const normalized = normalizeProgramStructure({
+      weeks: [
+        {
+          days: [
+            {
+              label: "Upper 2 focus push",
+              exercises: [
+                { name: "Développé incliné smith", color: "red", rpe_target: 8 },
+                { name: "Cable chest flies", color: "yellow", rpe_target: 8 },
+                { name: "Corde à sauter", color: "gray", rpe_target: "20'' / 10''" },
+                { name: "Sac de frappe en échauffement", color: "gray", rpe_target: "1 à 2 rounds×5min" },
+                { name: "Sac de frappe corps de séance", color: "gray", rpe_target: "3 rounds×3min fractionné" },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(normalized.weeks).toHaveLength(1);
+    expect(normalized.weeks?.[0]?.days).toHaveLength(2);
+    expect(normalized.weeks?.[0]?.days?.[1]?.label).toBe("Séance boxe");
   });
 });

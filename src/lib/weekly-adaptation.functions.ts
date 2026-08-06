@@ -4,7 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { localDateISO } from "@/lib/local-date";
 import { buildCoachExerciseFeedback } from "@/lib/coach-rpe-feedback";
-import { normalizeWeekStructure } from "@/lib/week-structure-normalizer";
+import { normalizeProgramStructure, normalizeWeekStructure } from "@/lib/week-structure-normalizer";
 
 /**
  * Adaptation hebdomadaire des programmes (coach).
@@ -95,8 +95,9 @@ async function resolveSourceWeek(
     .select("program_id, programs(structure)")
     .eq("id", assignmentId)
     .maybeSingle();
-  const structure = (assignment as { programs?: { structure?: ProgramStructure } } | null)?.programs
+  const rawStructure = (assignment as { programs?: { structure?: ProgramStructure } } | null)?.programs
     ?.structure;
+  const structure = normalizeProgramStructure(rawStructure ?? { weeks: [] });
   const fallbackWeek = structure?.weeks?.[Math.max(0, weekNumber - 1)] ??
     structure?.weeks?.[0] ?? { days: [] };
   return { structure: fallbackWeek as WeekStructure, basedOn: null };

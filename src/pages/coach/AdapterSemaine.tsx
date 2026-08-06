@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
 import CoachSidebar from "@/components/CoachSidebar";
 import ReplaceExerciseModal from "@/components/coach/ReplaceExerciseModal";
 import MultiWeekDuplicateModal from "@/components/coach/MultiWeekDuplicateModal";
@@ -12,7 +13,7 @@ import {
 } from "@/lib/weekly-adaptation.functions";
 import { normalizeWeekId } from "@/lib/coach-navigation";
 import { findExerciseFeedback } from "@/lib/exercise-feedback";
-import { listExercises } from "@/lib/exercises.functions";
+import { createLibraryExerciseFromProgram, listExercises } from "@/lib/exercises.functions";
 import { setExerciseQuickCoachNote, setExerciseQuickRpe } from "@/lib/adapter-week-rpe";
 import { parseRpeCell } from "@/lib/rpe-cell";
 import { getQuickRpePopoverPlacement } from "@/lib/coach-rpe-feedback";
@@ -697,6 +698,7 @@ export default function AdapterSemaine() {
   const saveFn = useServerFn(saveDraftWeek);
   const publishFn = useServerFn(publishWeek);
   const previewFn = useServerFn(previewWeekChanges);
+  const createLibraryExerciseFn = useServerFn(createLibraryExerciseFromProgram);
 
   type Ctx = Awaited<ReturnType<typeof getMemberWeekContext>>;
   const [ctx, setCtx] = useState<Ctx | null>(null);
@@ -848,6 +850,28 @@ export default function AdapterSemaine() {
     const newIdx = structure.days?.[dayIdx]?.exercises?.length ?? 0;
     setLibraryTarget(null);
     setEditTarget({ dayIdx, exoIdx: newIdx });
+  }
+
+  async function addCurrentExoToLibrary(ex: ProgExercise) {
+    try {
+      const result = await createLibraryExerciseFn({
+        data: {
+          name: ex.name,
+          block_type: ex.block_type ?? null,
+          color: ex.color ?? null,
+          tempo: ex.tempo ?? null,
+          youtube_url: ex.youtube_url ?? null,
+          coach_notes: ex.coach_notes ?? null,
+        },
+      });
+      toast(
+        result.created
+          ? `Ajouté à la bibliothèque: ${result.exercise.name}`
+          : `Déjà présent dans la bibliothèque: ${result.exercise.name}`,
+      );
+    } catch (error) {
+      toast.error((error as Error).message);
+    }
   }
   function removeDay(dayIdx: number) {
     setStructure((s) => ({ ...s, days: (s.days ?? []).filter((_, i) => i !== dayIdx) }));
@@ -1373,6 +1397,27 @@ export default function AdapterSemaine() {
                               </span>
                             )}
                             <div style={{ position: "relative", flexShrink: 0 }}>
+                              <button
+                                type="button"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  void addCurrentExoToLibrary(ex);
+                                }}
+                                title="Ajouter cet exercice à la bibliothèque"
+                                style={{
+                                  marginRight: 6,
+                                  background: "rgba(255,255,255,0.04)",
+                                  border: "1px solid rgba(255,255,255,0.12)",
+                                  color: "var(--cst-text-soft)",
+                                  borderRadius: 6,
+                                  padding: "4px 6px",
+                                  fontSize: 9,
+                                  letterSpacing: "0.12em",
+                                  cursor: "pointer",
+                                }}
+                              >
+                                ↥ BIBLIO
+                              </button>
                               <button
                                 type="button"
                                 onClick={(event) => {

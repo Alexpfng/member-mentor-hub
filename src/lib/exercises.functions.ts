@@ -57,6 +57,15 @@ const exerciseInputSchema = z.object({
   movement_patterns: z.array(z.string().max(20)).max(8).optional().nullable(),
 });
 
+const importProgramExerciseSchema = z.object({
+  name: z.string().trim().min(1).max(200),
+  block_type: z.string().max(40).optional().nullable(),
+  color: z.string().max(40).optional().nullable(),
+  tempo: z.string().max(40).optional().nullable(),
+  youtube_url: z.string().trim().max(500).optional().nullable(),
+  coach_notes: z.string().max(2000).optional().nullable(),
+});
+
 export const listExercises = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -135,6 +144,61 @@ export const upsertExercise = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
     return { exercise: row };
+  });
+
+export const createLibraryExerciseFromProgram = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => importProgramExerciseSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertCoach(context.userId);
+
+    const exactName = data.name.trim();
+    const normalizedName = exactName.toLowerCase();
+    const { data: existing, error: existingError } = await (supabaseAdmin as any)
+      .from("exercises")
+      .select(
+        "id, name, intensity_code, category, color, muscle_group, equipement, default_tempo, youtube_url, youtube_id, image_url, coach_notes, is_archived, is_global, movement_patterns"
+      )
+      .ilike("name", exactName)
+      .limit(1)
+      .maybeSingle();
+    if (existingError) throw new Error(existingError.message);
+    if (existing && String(existing.name ?? "").trim().toLowerCase() === normalizedName) {
+      return { created: false, exercise: existing };
+    }
+
+    const blockType = String(data.block_type ?? "").trim().toLowerCase();
+    const patterns = new Set<string>();
+    if (blockType) patterns.add(sanitizePattern(blockType));
+    if (/boxe|boxing|corde|sac de frappe|shadow/i.test(exactName)) patterns.add("cardio");
+
+    const intensity = data.color?.trim() || null;
+    const payload = {
+      name: exactName,
+      intensity_code: intensity,
+      category: intensity,
+      muscle_group: null,
+      equipement: null,
+      default_tempo: data.tempo?.trim() || null,
+      youtube_url: data.youtube_url?.trim() || null,
+      youtube_id: extractYoutubeId(data.youtube_url),
+      image_url: null,
+      coach_notes: data.coach_notes?.trim() || null,
+      is_archived: false,
+      is_global: true,
+      created_by: context.userId,
+      movement_patterns: Array.from(patterns),
+    };
+
+    const { data: row, error } = await (supabaseAdmin as any)
+      .from("exercises")
+      .insert(payload)
+      .select(
+        "id, name, intensity_code, category, color, muscle_group, equipement, default_tempo, youtube_url, youtube_id, image_url, coach_notes, is_archived, is_global, movement_patterns"
+      )
+      .single();
+    if (error) throw new Error(error.message);
+    return { created: true, exercise: row };
   });
 
 export const setExerciseArchived = createServerFn({ method: "POST" })

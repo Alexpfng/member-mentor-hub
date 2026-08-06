@@ -8,6 +8,7 @@
 //
 // Ce helper centralise la fusion pour que la vue programme, le planning et le lanceur
 // de séance partagent EXACTEMENT la même structure.
+import { normalizeProgramStructure, normalizeWeekStructure } from "@/lib/week-structure-normalizer";
 
 export type WeekDay = {
   label?: string | null;
@@ -34,11 +35,14 @@ function normalizeDayLabel(label: string | null | undefined) {
  * La version adaptée remplace la semaine template correspondante.
  */
 export function mergeAssignmentWeeks(base: StructureLike, adapted: AdaptedWeek[] | null | undefined): WeekLike[] {
-  const weeks: WeekLike[] = Array.isArray(base?.weeks) ? [...(base!.weeks as WeekLike[])] : [];
+  const normalizedBase = normalizeProgramStructure(base as { weeks?: WeekLike[] } | null | undefined);
+  const weeks: WeekLike[] = Array.isArray(normalizedBase?.weeks)
+    ? [...(normalizedBase.weeks as WeekLike[])]
+    : [];
   for (const w of adapted ?? []) {
     const idx = Math.max(0, (w.week_number ?? 1) - 1);
     while (weeks.length <= idx) weeks.push({ days: [] });
-    weeks[idx] = (w.structure as WeekLike) ?? { days: [] };
+    weeks[idx] = normalizeWeekStructure((w.structure as WeekLike) ?? { days: [] });
   }
   return weeks;
 }
