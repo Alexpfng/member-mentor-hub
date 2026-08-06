@@ -394,6 +394,17 @@ export default function MemberPlanning() {
     return result;
   }, [data, weekDateSet]);
 
+  const programChoices = useMemo(() => {
+    const defs = (data?.dayDefs ?? []).filter((d: any) => d.type !== "Repos" && d.label) as any[];
+    const seen = new Set<string>();
+    return defs.filter((d: any) => {
+      const key = String(d.label);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [data]);
+
   // Un jour est « occupé » s'il porte déjà une carte : séance faite/en cours ou
   // séance planifiée. On le signale sans l'interdire — le membre reste maître
   // de son planning (deux séances le même jour, ça arrive).
@@ -776,6 +787,32 @@ export default function MemberPlanning() {
               {unplanned.map((def: any) => (
                 <SheetBtn
                   key={def.label}
+                  onClick={() => scheduleDayDef(def, modal.date)}
+                  disabled={busy}
+                >
+                  ● {def.label}
+                </SheetBtn>
+              ))}
+            </>
+          )}
+
+          {programChoices.length > 0 && (
+            <>
+              <div
+                className="font-mono"
+                style={{
+                  fontSize: 9,
+                  letterSpacing: "0.16em",
+                  padding: `${unplanned.length > 0 ? "12px" : "8px"} 20px 4px`,
+                  color: "rgba(255,255,255,0.45)",
+                  textTransform: "uppercase",
+                }}
+              >
+                Toutes mes séances programme
+              </div>
+              {programChoices.map((def: any) => (
+                <SheetBtn
+                  key={`all-${def.label}`}
                   onClick={() => scheduleDayDef(def, modal.date)}
                   disabled={busy}
                 >
