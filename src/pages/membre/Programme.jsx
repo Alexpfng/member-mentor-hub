@@ -9,6 +9,7 @@ import { enrichVideosFromLibrary } from '@/lib/enrich-videos';
 import { ProgramBlocks } from '../../components/cst/ProgramBlocks';
 import { supabase } from '@/integrations/supabase/client';
 import { SUPABASE_ENABLED } from '@/lib/app-mode';
+import { currentPlanningWeekNumber, normalizeWeekStartsOn, weekWindowLabel } from '@/lib/planning-weeks';
 
 function diffDays(a, b) {
   return Math.floor((a.getTime() - b.getTime()) / 86400000);
@@ -36,8 +37,10 @@ export default function MemberProgramme() {
         fetchLibrary()
           .then((lib) => setLibVideos(lib?.exercises ?? []))
           .catch(() => {});
-        const start = r.assignment?.start_date ? new Date(r.assignment.start_date) : null;
-        const w = start ? Math.max(0, Math.floor(diffDays(new Date(), start) / 7)) : 0;
+        const weekStartsOn = normalizeWeekStartsOn(r.planning_week_start_day);
+        const w = r.assignment?.start_date
+          ? Math.max(0, currentPlanningWeekNumber(r.assignment.start_date, undefined, { weekStartsOn }) - 1)
+          : 0;
         setOpenWeek(w);
         setCurrentWeek(w);
 
@@ -75,6 +78,7 @@ export default function MemberProgramme() {
   const program = data?.program;
   const weeks = program?.structure?.weeks || [];
   const startDate = data?.assignment?.start_date ? new Date(data.assignment.start_date) : null;
+  const planningWeekLabel = weekWindowLabel(data?.planning_week_start_day ?? 1);
 
   function toggleDay(weekIndex, dayIndex) {
     setOpenDaysByWeek((prev) => ({
@@ -132,6 +136,9 @@ export default function MemberProgramme() {
                 <CSTDuoTitle top={program.name.split(' ')[0]?.toUpperCase() || 'PROGRAMME'} bottom={program.name.split(' ').slice(1).join(' ').toLowerCase() || ''} size={32} />
                 <div className="cst-mono" style={{ fontSize: 9, marginTop: 8 }}>
                   {weeks.length} SEMAINES{startDate ? ` · DÉMARRÉ LE ${startDate.toLocaleDateString('fr-FR')}` : ''}
+                </div>
+                <div className="cst-mono" style={{ fontSize: 9, marginTop: 4, opacity: 0.6 }}>
+                  SEMAINE PERSO : {planningWeekLabel.toUpperCase()}
                 </div>
 
                 {/* Global progress */}

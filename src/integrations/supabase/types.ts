@@ -995,7 +995,9 @@ export type Database = {
           email: string | null
           first_name: string | null
           id: string
+          is_archived: boolean | null
           last_name: string | null
+          planning_week_start_day: number | null
           updated_at: string | null
         }
         Insert: {
@@ -1004,7 +1006,9 @@ export type Database = {
           email?: string | null
           first_name?: string | null
           id: string
+          is_archived?: boolean | null
           last_name?: string | null
+          planning_week_start_day?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -1013,7 +1017,9 @@ export type Database = {
           email?: string | null
           first_name?: string | null
           id?: string
+          is_archived?: boolean | null
           last_name?: string | null
+          planning_week_start_day?: number | null
           updated_at?: string | null
         }
         Relationships: []

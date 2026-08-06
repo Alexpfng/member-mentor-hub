@@ -641,6 +641,9 @@ export default function MemberPlanning() {
                 ({displayDateFR(data.weekStart)} → {displayDateFR(data.weekEnd)})
               </span>
             </div>
+            <div className="text-[10px] font-mono opacity-45 tracking-widest uppercase">
+              Semaine perso : {data.weekWindowLabel}
+            </div>
             <button
               onClick={() => setWeekOffset((w) => (w ?? data.weekNumber) + 1)}
               className="text-xs px-2 py-1 rounded border border-border"

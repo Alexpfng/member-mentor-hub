@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { mergeAssignmentWeeks } from "@/lib/program-weeks";
 import { localDateISO } from "@/lib/local-date";
+import { normalizeWeekStartsOn } from "@/lib/planning-weeks";
 
 async function assertCoach(userId: string) {
   const { data, error } = await supabaseAdmin
@@ -523,7 +524,9 @@ export const getMemberDetail = createServerFn({ method: "GET" })
     ] = await Promise.all([
       supabaseAdmin
         .from("profiles")
-        .select("id, email, first_name, last_name, avatar_url, created_at, is_archived")
+        .select(
+          "id, email, first_name, last_name, avatar_url, created_at, is_archived, planning_week_start_day",
+        )
         .eq("id", memberId)
         .maybeSingle(),
       supabaseAdmin
@@ -719,6 +722,7 @@ export const updateMemberProfile = createServerFn({ method: "POST" })
         level: z.string().trim().max(40).optional().nullable(),
         goal: z.string().trim().max(200).optional().nullable(),
         injuries: z.string().trim().max(2000).optional().nullable(),
+        planning_week_start_day: z.number().int().min(1).max(7).optional().nullable(),
         log_weight: z.boolean().optional(),
       })
       .parse(d),
@@ -727,10 +731,24 @@ export const updateMemberProfile = createServerFn({ method: "POST" })
     await assertCoach(context.userId);
 
     // 1. profiles (first/last name)
-    if (data.first_name !== undefined || data.last_name !== undefined) {
-      const patch: { first_name?: string | null; last_name?: string | null } = {};
+    if (
+      data.first_name !== undefined ||
+      data.last_name !== undefined ||
+      data.planning_week_start_day !== undefined
+    ) {
+      const patch: {
+        first_name?: string | null;
+        last_name?: string | null;
+        planning_week_start_day?: number | null;
+      } = {};
       if (data.first_name !== undefined) patch.first_name = data.first_name || null;
       if (data.last_name !== undefined) patch.last_name = data.last_name || null;
+      if (data.planning_week_start_day !== undefined) {
+        patch.planning_week_start_day =
+          data.planning_week_start_day == null
+            ? null
+            : normalizeWeekStartsOn(data.planning_week_start_day);
+      }
       const { error } = await supabaseAdmin.from("profiles").update(patch).eq("id", data.member_id);
       if (error) throw new Error(error.message);
     }
@@ -875,14 +893,21 @@ export const listRunningRoutes = createServerFn({ method: "GET" })
 export const getMyAssignedProgram = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: assignment } = await supabaseAdmin
-      .from("assignments")
-      .select("id, program_id, start_date, end_date, active")
-      .eq("member_id", context.userId)
-      .eq("active", true)
-      .order("start_date", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const [{ data: assignment }, { data: profile }] = await Promise.all([
+      supabaseAdmin
+        .from("assignments")
+        .select("id, program_id, start_date, end_date, active")
+        .eq("member_id", context.userId)
+        .eq("active", true)
+        .order("start_date", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabaseAdmin
+        .from("profiles")
+        .select("planning_week_start_day")
+        .eq("id", context.userId)
+        .maybeSingle(),
+    ]);
     if (!assignment) return { assignment: null, program: null };
     const { data: program } = await supabaseAdmin
       .from("programs")
@@ -906,7 +931,11 @@ export const getMyAssignedProgram = createServerFn({ method: "GET" })
       }
     }
 
-    return { assignment, program: program ?? null };
+    return {
+      assignment,
+      program: program ?? null,
+      planning_week_start_day: normalizeWeekStartsOn(profile?.planning_week_start_day),
+    };
   });
 
 export const deleteProgram = createServerFn({ method: "POST" })

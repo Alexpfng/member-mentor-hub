@@ -4,6 +4,7 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { mergeAssignmentWeeks } from "@/lib/program-weeks";
 import { localDateISO } from "@/lib/local-date";
+import { currentPlanningWeekNumber, normalizeWeekStartsOn } from "@/lib/planning-weeks";
 
 const searchSchema = z.object({
   day: z.string().min(1).max(120).optional(),
@@ -48,26 +49,35 @@ function SessionLauncher() {
         const uid = u.user.id;
 
         // Active assignment (for program_id + structure)
-        const { data: assignment } = await supabase
-          .from("assignments")
-          .select("id, program_id, start_date, programs(structure)")
-          .eq("member_id", uid)
-          .eq("active", true)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
+        const [{ data: assignment }, { data: profile }] = await Promise.all([
+          supabase
+            .from("assignments")
+            .select("id, program_id, start_date, programs(structure)")
+            .eq("member_id", uid)
+            .eq("active", true)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle(),
+          supabase
+            .from("profiles")
+            .select("planning_week_start_day")
+            .eq("id", uid)
+            .maybeSingle(),
+        ]);
 
         const programId = assignment?.program_id ?? null;
         const structure = (assignment as { programs?: { structure?: ProgramStructure } } | null)
           ?.programs?.structure;
 
         // Compute current week index from assignment start
-        let currentWeek = 0;
-        if (assignment?.start_date) {
-          const start = new Date(assignment.start_date);
-          const diff = Math.floor((Date.now() - start.getTime()) / 86400000);
-          currentWeek = Math.max(0, Math.floor(diff / 7));
-        }
+        const currentWeek = assignment?.start_date
+          ? Math.max(
+              0,
+              currentPlanningWeekNumber(assignment.start_date, undefined, {
+                weekStartsOn: normalizeWeekStartsOn(profile?.planning_week_start_day),
+              }) - 1,
+            )
+          : 0;
         // `?week=` est le numéro de semaine 1-based (convention DB unifiée).
         // Math.max tolère d'anciennes URLs 0-based en les rabattant sur la semaine 1.
         const weekIndex = Math.max(0, (search.week ?? currentWeek + 1) - 1);

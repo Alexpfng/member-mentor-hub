@@ -2,32 +2,42 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import {
+  currentPlanningWeekNumber,
+  normalizeWeekStartsOn,
+  planningWeekBounds,
+} from "@/lib/planning-weeks";
 
 type AnyRow = Record<string, any>;
 
 // Convention : `weekNumber` est 1-based (aligné sur assignment_weeks/sessions).
 async function buildLogbook(memberId: string, weekNumber: number) {
   // Active assignment for context
-  const { data: assignment } = await supabaseAdmin
-    .from("assignments")
-    .select("program_id, start_date, programs(name, structure)")
-    .eq("member_id", memberId)
-    .eq("active", true)
-    .order("start_date", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const [{ data: assignment }, { data: profile }] = await Promise.all([
+    supabaseAdmin
+      .from("assignments")
+      .select("program_id, start_date, programs(name, structure)")
+      .eq("member_id", memberId)
+      .eq("active", true)
+      .order("start_date", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabaseAdmin
+      .from("profiles")
+      .select("planning_week_start_day")
+      .eq("id", memberId)
+      .maybeSingle(),
+  ]);
 
-  const start = assignment?.start_date ? new Date(assignment.start_date) : new Date();
-  const weekIdx = Math.max(0, weekNumber - 1);
-  const periodStart = new Date(start);
-  periodStart.setDate(start.getDate() + weekIdx * 7);
-  const periodEnd = new Date(periodStart);
-  periodEnd.setDate(periodStart.getDate() + 6);
-  const psISO = periodStart.toISOString().slice(0, 10);
-  const peISO = periodEnd.toISOString().slice(0, 10);
+  const weekStartsOn = normalizeWeekStartsOn(profile?.planning_week_start_day);
+  const { weekStart: psISO, weekEnd: peISO } = planningWeekBounds(
+    assignment?.start_date,
+    weekNumber,
+    { weekStartsOn },
+  );
 
   const program = (assignment as AnyRow | null)?.programs;
-  const weekDef = program?.structure?.weeks?.[weekIdx];
+  const weekDef = program?.structure?.weeks?.[Math.max(0, weekNumber - 1)];
   const sessionsPlanned = weekDef?.days?.filter((d: AnyRow) => d.type !== "Repos").length ?? 0;
 
   const [{ data: sessions }, { data: weights }, { data: pains }, { data: prs }, { data: feedbacks }] = await Promise.all([
@@ -143,19 +153,28 @@ export const getLogbook = createServerFn({ method: "GET" })
   )
   .handler(async ({ data, context }) => {
     // Determine current week
-    const { data: assignment } = await supabaseAdmin
-      .from("assignments")
-      .select("start_date, program_id")
-      .eq("member_id", context.userId)
-      .eq("active", true)
-      .order("start_date", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const [{ data: assignment }, { data: profile }] = await Promise.all([
+      supabaseAdmin
+        .from("assignments")
+        .select("start_date, program_id")
+        .eq("member_id", context.userId)
+        .eq("active", true)
+        .order("start_date", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabaseAdmin
+        .from("profiles")
+        .select("planning_week_start_day")
+        .eq("id", context.userId)
+        .maybeSingle(),
+    ]);
 
     if (!assignment) return null;
-    const start = assignment.start_date ? new Date(assignment.start_date) : new Date();
-    const diff = Math.floor((Date.now() - start.getTime()) / 86400000);
-    const currentWeekNumber = Math.max(1, Math.floor(diff / 7) + 1);
+    const currentWeekNumber = currentPlanningWeekNumber(
+      assignment.start_date,
+      undefined,
+      { weekStartsOn: normalizeWeekStartsOn(profile?.planning_week_start_day) },
+    );
     // Par défaut : la semaine EN COURS, pour que le carnet reflète les séances
     // du moment (avant, on affichait la semaine précédente → « ma semaine ne se
     // met pas à jour »). On borne à la semaine courante pour la navigation.
@@ -219,9 +238,15 @@ export const generateLogbooksForAll = async () => {
   const results: AnyRow[] = [];
   for (const a of assigns ?? []) {
     if (!a.start_date) continue;
-    const start = new Date(a.start_date);
-    const diff = Math.floor((Date.now() - start.getTime()) / 86400000);
-    const finishedWeek = Math.max(0, Math.floor(diff / 7) - 1);
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("planning_week_start_day")
+      .eq("id", a.member_id)
+      .maybeSingle();
+    const currentWeekNumber = currentPlanningWeekNumber(a.start_date, undefined, {
+      weekStartsOn: normalizeWeekStartsOn(profile?.planning_week_start_day),
+    });
+    const finishedWeek = Math.max(0, currentWeekNumber - 1);
     try {
       const row = await upsertLogbook(a.member_id as string, finishedWeek);
       results.push({ member_id: a.member_id, week: finishedWeek, ok: true, id: row?.id });

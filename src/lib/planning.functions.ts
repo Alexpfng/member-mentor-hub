@@ -3,7 +3,12 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { mergeAssignmentWeeks } from "@/lib/program-weeks";
-import { currentPlanningWeekNumber, planningWeekBounds } from "@/lib/planning-weeks";
+import {
+  currentPlanningWeekNumber,
+  normalizeWeekStartsOn,
+  planningWeekBounds,
+  weekWindowLabel,
+} from "@/lib/planning-weeks";
 
 const dateStr = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
@@ -54,26 +59,39 @@ export const listWeekPlan = createServerFn({ method: "GET" })
   )
   .handler(async ({ data, context }) => {
     // Find active assignment + program
-    const { data: assignment } = await supabaseAdmin
-      .from("assignments")
-      .select("id, program_id, start_date, programs(name, structure)")
-      .eq("member_id", context.userId)
-      .eq("active", true)
-      .order("start_date", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const [{ data: assignment }, { data: profile }] = await Promise.all([
+      supabaseAdmin
+        .from("assignments")
+        .select("id, program_id, start_date, programs(name, structure)")
+        .eq("member_id", context.userId)
+        .eq("active", true)
+        .order("start_date", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabaseAdmin
+        .from("profiles")
+        .select("planning_week_start_day")
+        .eq("id", context.userId)
+        .maybeSingle(),
+    ]);
 
     if (!assignment) {
       return { weekNumber: 1, weekStart: null, weekEnd: null, days: [], assignment: null };
     }
 
-    const currentWeekNumber = currentPlanningWeekNumber(assignment.start_date);
+    const weekStartsOn = normalizeWeekStartsOn(profile?.planning_week_start_day);
+    const currentWeekNumber = currentPlanningWeekNumber(
+      assignment.start_date,
+      undefined,
+      { weekStartsOn },
+    );
     const weekNumber = data.weekNumber ?? currentWeekNumber;
     const weekIdx = weekNumber - 1;
 
     const { weekStart: startISO, weekEnd: endISO } = planningWeekBounds(
       assignment.start_date,
       weekNumber,
+      { weekStartsOn },
     );
 
     const program = (assignment as any).programs ?? null;
@@ -118,6 +136,8 @@ export const listWeekPlan = createServerFn({ method: "GET" })
       weekNumber,
       weekStart: startISO,
       weekEnd: endISO,
+      weekStartsOn,
+      weekWindowLabel: weekWindowLabel(weekStartsOn),
       assignment,
       dayDefs,
       planned: planned ?? [],

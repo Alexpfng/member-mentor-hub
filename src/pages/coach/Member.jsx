@@ -248,6 +248,12 @@ import MemberFollowupTab from "../../components/coach/MemberFollowupTab";
 import WeeksManagerPanel from "../../components/coach/WeeksManagerPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { sanitizeDurationMin } from "@/lib/format";
+import {
+  currentPlanningWeekNumber,
+  normalizeWeekStartsOn,
+  WEEK_START_OPTIONS,
+  weekWindowLabel,
+} from "@/lib/planning-weeks";
 
 function daysBetween(a, b) {
   return Math.floor((b.getTime() - a.getTime()) / 86400000);
@@ -340,6 +346,7 @@ export default function CoachMember() {
       setForm({
         first_name: d.profile?.first_name || "",
         last_name: d.profile?.last_name || "",
+        planning_week_start_day: d.profile?.planning_week_start_day ?? 1,
         weight_kg: d.member_profile?.weight_kg ?? "",
         height_cm: d.member_profile?.height_cm ?? "",
         level: d.member_profile?.level || "",
@@ -430,6 +437,7 @@ export default function CoachMember() {
         member_id: memberId,
         first_name: form.first_name?.trim() || null,
         last_name: form.last_name?.trim() || null,
+        planning_week_start_day: Number(form.planning_week_start_day || 1),
         weight_kg: form.weight_kg === "" ? null : Number(form.weight_kg),
         height_cm: form.height_cm === "" ? null : parseInt(form.height_cm, 10),
         level: form.level?.trim() || null,
@@ -524,9 +532,11 @@ export default function CoachMember() {
     // Falls back to date-based calculation only if no weeks exist yet
     if (data?.current_week_number != null) return data.current_week_number;
     if (!data?.assignment?.start_date || !data?.program?.duration_weeks) return null;
-    const elapsed = daysBetween(new Date(data.assignment.start_date), new Date());
-    if (elapsed < 0) return 1;
-    return Math.min(Math.floor(elapsed / 7) + 1, data.program.duration_weeks);
+    const weekStartsOn = normalizeWeekStartsOn(data?.profile?.planning_week_start_day);
+    return Math.min(
+      currentPlanningWeekNumber(data.assignment.start_date, undefined, { weekStartsOn }),
+      data.program.duration_weeks,
+    );
   }, [data]);
 
   const weekDays = useMemo(() => {
@@ -1351,6 +1361,28 @@ export default function CoachMember() {
                       <option value="avancé">Avancé</option>
                       <option value="élite">Élite</option>
                     </select>
+                  </div>
+                  <div>
+                    <label className="cst-mono" style={{ fontSize: 9, opacity: 0.6 }}>
+                      DÉBUT DE SEMAINE
+                    </label>
+                    <select
+                      className="cst-input"
+                      style={{ width: "100%", marginTop: 4 }}
+                      value={form.planning_week_start_day}
+                      onChange={(e) =>
+                        setForm({ ...form, planning_week_start_day: Number(e.target.value) })
+                      }
+                    >
+                      {WEEK_START_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="cst-mono" style={{ fontSize: 9, opacity: 0.45, marginTop: 6 }}>
+                      SEMAINE PERSO : {weekWindowLabel(form.planning_week_start_day || 1)}
+                    </div>
                   </div>
                   <div>
                     <label className="cst-mono" style={{ fontSize: 9, opacity: 0.6 }}>

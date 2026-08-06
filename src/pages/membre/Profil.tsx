@@ -7,6 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { getNotificationPrefs, updateNotificationPrefs } from "@/lib/notif-prefs.functions";
+import {
+  getMemberPlanningSettings,
+  updateMemberPlanningSettings,
+} from "@/lib/member-profile.functions";
+import { WEEK_START_OPTIONS, weekWindowLabel } from "@/lib/planning-weeks";
 import { supabase } from "@/integrations/supabase/client";
 import {
   disconnectStrava,
@@ -30,10 +35,14 @@ export default function MemberProfil() {
   const navigate = useNavigate();
   const getFn = useServerFn(getNotificationPrefs);
   const updateFn = useServerFn(updateNotificationPrefs);
+  const getPlanningSettings = useServerFn(getMemberPlanningSettings);
+  const updatePlanningSettings = useServerFn(updateMemberPlanningSettings);
   const getStravaStatus = useServerFn(getStravaConnectionStatus);
   const getConnectUrl = useServerFn(getStravaConnectUrl);
   const disconnectStravaFn = useServerFn(disconnectStrava);
   const [prefs, setPrefs] = useState<any>(null);
+  const [planningWeekStartDay, setPlanningWeekStartDay] = useState(1);
+  const [planningBusy, setPlanningBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [strava, setStrava] = useState<{
     connected: boolean;
@@ -48,6 +57,8 @@ export default function MemberProfil() {
       try {
         const r = await getFn();
         setPrefs(r);
+        const planning = await getPlanningSettings();
+        setPlanningWeekStartDay(planning.planning_week_start_day);
         const status = await getStravaStatus();
         setStrava({
           connected: status.connected,
@@ -81,6 +92,22 @@ export default function MemberProfil() {
     } catch (e: any) {
       toast.error(e?.message ?? "Connexion Strava impossible");
       setStravaBusy(false);
+    }
+  };
+
+  const handlePlanningWeekStartChange = async (value: number) => {
+    setPlanningWeekStartDay(value);
+    setPlanningBusy(true);
+    try {
+      const res = await updatePlanningSettings({
+        data: { planning_week_start_day: value },
+      });
+      setPlanningWeekStartDay(res.planning_week_start_day);
+      toast.success("Semaine perso mise à jour");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Mise à jour impossible");
+    } finally {
+      setPlanningBusy(false);
     }
   };
 
@@ -152,6 +179,31 @@ export default function MemberProfil() {
                   </button>
                 )}
               </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="mb-8">
+          <h2 className="font-mono text-xs tracking-widest opacity-60 mb-3">PLANNING</h2>
+          <div className="p-3 rounded-lg border border-border bg-card space-y-3 mb-8">
+            <div className="text-sm font-medium">Début de ma semaine</div>
+            <div className="text-xs opacity-70">
+              Choisis le jour qui doit lancer ton cycle hebdomadaire de 7 jours.
+            </div>
+            <select
+              className="w-full rounded-md border border-border bg-background px-3 py-3 text-sm"
+              disabled={planningBusy}
+              value={planningWeekStartDay}
+              onChange={(e) => handlePlanningWeekStartChange(Number(e.target.value))}
+            >
+              {WEEK_START_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+            <div className="text-xs opacity-60">
+              Semaine perso : {weekWindowLabel(planningWeekStartDay)}
             </div>
           </div>
         </section>
