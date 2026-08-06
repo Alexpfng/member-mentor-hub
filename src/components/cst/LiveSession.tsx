@@ -3731,6 +3731,14 @@ function EmomScreen({
           >
             {exercise.name.toUpperCase()}
           </h2>
+          {exercise.charge && !isBodyweight(exercise.charge) && (
+            <div
+              className="cst-mono"
+              style={{ fontSize: 13, marginTop: 6, color: "#D4A53B" }}
+            >
+              ⚖ CHARGE : {exercise.charge}
+            </div>
+          )}
           {alternating && (
             <div
               className="cst-mono"
