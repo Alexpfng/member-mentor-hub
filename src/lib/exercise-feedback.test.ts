@@ -31,6 +31,22 @@ describe("getExerciseFeedback", () => {
       feedback["tour du monde avec manche a balai"],
     );
   });
+
+  test("finds feedback when one label contains punctuation that the other omits", () => {
+    const feedback = {
+      "back squat barre libre emom3": {
+        rpe: 9,
+        pain: false,
+        tooHard: true,
+        tooEasy: false,
+        failure: false,
+      },
+    };
+
+    expect(getExerciseFeedback(feedback, "Back squat barre libre EMOM3'")).toEqual(
+      feedback["back squat barre libre emom3"],
+    );
+  });
 });
 
 // Cas réels relevés sur la semaine 6 de Teddy : le coach avait renommé ses

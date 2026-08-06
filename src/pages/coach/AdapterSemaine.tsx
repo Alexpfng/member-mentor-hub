@@ -1245,6 +1245,26 @@ export default function AdapterSemaine() {
                   const rpeIsFailure = parsedRpe.isFailure;
                   const rpeComment = parsedRpe.comment;
                   const rpeConsigne = parsedRpe.consigne;
+                  const memberRpeDisplay = fb?.rpe != null ? formatRpeValue(fb.rpe) : null;
+                  const badgeShowsMemberRpe = memberRpeDisplay != null;
+                  const badgeLabel = badgeShowsMemberRpe
+                    ? `RPE ${memberRpeDisplay}`
+                    : rpeIsNumeric
+                      ? `RPE ${rpeDisplay}`
+                      : rpeIsFailure
+                        ? "ÉCHEC"
+                        : "RPE —";
+                  const badgeColor = badgeShowsMemberRpe
+                    ? fb.rpe >= 9
+                      ? "#C0392B"
+                      : fb.rpe >= 7
+                        ? "#E07B39"
+                        : "#5BA85A"
+                    : rpeIsNumeric
+                      ? cardColor
+                      : rpeIsFailure
+                        ? "#ffb0a5"
+                        : "rgba(255,255,255,0.35)";
                   return (
                     <Fragment key={ei}>
                       {isBlockStart && (
@@ -1357,7 +1377,11 @@ export default function AdapterSemaine() {
                                   );
                                 }}
                                 className="cst-mono"
-                                title={rpeConsigne ?? "Modifier le RPE"}
+                                title={
+                                  badgeShowsMemberRpe
+                                    ? `RPE réel du coaché · S${ctx.sourceSummary.weekNumber ?? "?"}`
+                                    : rpeConsigne ?? "Modifier le RPE"
+                                }
                                 style={{
                                   fontSize: 10,
                                   fontWeight: 700,
@@ -1365,27 +1389,21 @@ export default function AdapterSemaine() {
                                   overflow: "hidden",
                                   textOverflow: "ellipsis",
                                   whiteSpace: "nowrap",
-                                  background: rpeIsNumeric
-                                    ? `${cardColor}33`
-                                    : rpeIsFailure
-                                      ? "rgba(201,72,58,0.22)"
-                                      : "rgba(255,255,255,0.06)",
-                                  border: `1px solid ${rpeIsNumeric ? cardColor + "66" : rpeIsFailure ? "rgba(255,138,122,0.32)" : "rgba(255,255,255,0.12)"}`,
+                                  background: badgeShowsMemberRpe
+                                    ? `${badgeColor}22`
+                                    : rpeIsNumeric
+                                      ? `${cardColor}33`
+                                      : rpeIsFailure
+                                        ? "rgba(201,72,58,0.22)"
+                                        : "rgba(255,255,255,0.06)",
+                                  border: `1px solid ${badgeShowsMemberRpe ? badgeColor + "66" : rpeIsNumeric ? cardColor + "66" : rpeIsFailure ? "rgba(255,138,122,0.32)" : "rgba(255,255,255,0.12)"}`,
                                   borderRadius: 5,
                                   padding: "2px 7px",
-                                  color: rpeIsNumeric
-                                    ? cardColor
-                                    : rpeIsFailure
-                                      ? "#ffb0a5"
-                                      : "rgba(255,255,255,0.35)",
+                                  color: badgeColor,
                                   cursor: "pointer",
                                 }}
                               >
-                                {rpeIsNumeric
-                                  ? `RPE ${rpeDisplay}`
-                                  : rpeIsFailure
-                                    ? "ÉCHEC"
-                                    : "RPE —"}
+                                {badgeLabel}
                               </button>
                               {quickRpeTarget?.dayIdx === di && quickRpeTarget?.exoIdx === ei && (
                                 <div
@@ -1407,6 +1425,16 @@ export default function AdapterSemaine() {
                                     gap: 8,
                                   }}
                                 >
+                                  <div
+                                    className="cst-mono"
+                                    style={{
+                                      fontSize: 9,
+                                      opacity: 0.68,
+                                      letterSpacing: "0.12em",
+                                    }}
+                                  >
+                                    RPE CIBLE COACH
+                                  </div>
                                   <div
                                     style={{
                                       display: "grid",
@@ -1579,6 +1607,18 @@ export default function AdapterSemaine() {
                               }}
                             >
                               {rpeConsigne}
+                            </div>
+                          )}
+                          {fb?.rpe != null && (rpeIsNumeric || rpeIsFailure) && (
+                            <div
+                              className="cst-mono"
+                              style={{
+                                fontSize: 10,
+                                opacity: 0.55,
+                                color: "var(--cst-text-soft)",
+                              }}
+                            >
+                              Cible coach · {rpeIsFailure ? "ÉCHEC" : `RPE ${rpeDisplay}`}
                             </div>
                           )}
                           {fb?.rpe != null && (

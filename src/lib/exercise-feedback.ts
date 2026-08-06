@@ -16,7 +16,6 @@ export function normalizeExerciseFeedbackKey(name: string | null | undefined) {
     .trim()
     .toLowerCase();
 }
-
 /** Mots qui ne portent pas l'identité de l'exercice. */
 const STOP_WORDS = new Set([
   "a",
