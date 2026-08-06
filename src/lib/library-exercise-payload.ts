@@ -5,3 +5,7 @@ export function sanitizeLibraryExerciseNotes(notes: string | null | undefined): 
   if (!trimmed) return null;
   return trimmed.slice(0, MAX_LIBRARY_EXERCISE_NOTES_LENGTH);
 }
+
+export function getProgramExerciseLibraryIntensity(_color: string | null | undefined): null {
+  return null;
+}

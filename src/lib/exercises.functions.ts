@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import seedExercises from "@/data/seed-exercises-v2.json";
-import { sanitizeLibraryExerciseNotes } from "./library-exercise-payload";
+import { getProgramExerciseLibraryIntensity, sanitizeLibraryExerciseNotes } from "./library-exercise-payload";
 
 type SeedRow = {
   id: string;
@@ -175,11 +175,13 @@ export const createLibraryExerciseFromProgram = createServerFn({ method: "POST" 
     if (blockType) patterns.add(sanitizePattern(blockType));
     if (/boxe|boxing|corde|sac de frappe|shadow/i.test(exactName)) patterns.add("cardio");
 
-    const intensity = data.color?.trim() || null;
+    const color = data.color?.trim() || null;
+    const intensity = getProgramExerciseLibraryIntensity(color);
     const payload = {
       name: exactName,
       intensity_code: intensity,
       category: intensity,
+      color,
       muscle_group: null,
       equipement: null,
       default_tempo: data.tempo?.trim() || null,
