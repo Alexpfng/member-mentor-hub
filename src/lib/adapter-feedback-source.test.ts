@@ -57,4 +57,31 @@ describe("mergeExerciseFeedbackMaps", () => {
       ]),
     ).toEqual({ "curl biceps incline sur banc": fb(9) });
   });
+
+  it("ne laisse pas une semaine sans rpe effacer un rpe deja retrouve", () => {
+    expect(
+      mergeExerciseFeedbackMaps([
+        { "back squat barre libre emom4": fb(8.5) },
+        {
+          "back squat barre libre emom4": {
+            rpe: null,
+            pain: false,
+            tooHard: false,
+            tooEasy: false,
+            failure: false,
+            loadLabel: "23.75kg",
+          },
+        },
+      ]),
+    ).toEqual({
+      "back squat barre libre emom4": {
+        rpe: 8.5,
+        pain: false,
+        tooHard: false,
+        tooEasy: false,
+        failure: false,
+        loadLabel: "23.75kg",
+      },
+    });
+  });
 });

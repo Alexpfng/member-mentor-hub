@@ -35,7 +35,20 @@ export function mergeExerciseFeedbackMaps(
 ) {
   return maps.reduce<Record<string, AdapterExerciseFeedback>>((merged, current) => {
     for (const [key, feedback] of Object.entries(current)) {
-      merged[key] = feedback;
+      const previous = merged[key];
+      if (!previous) {
+        merged[key] = feedback;
+        continue;
+      }
+
+      merged[key] = {
+        rpe: feedback.rpe ?? previous.rpe,
+        pain: previous.pain || feedback.pain,
+        tooHard: previous.tooHard || feedback.tooHard,
+        tooEasy: previous.tooEasy || feedback.tooEasy,
+        failure: previous.failure || feedback.failure,
+        loadLabel: feedback.loadLabel ?? previous.loadLabel,
+      };
     }
     return merged;
   }, {});
