@@ -12,7 +12,10 @@ export function getFeedbackWeekCandidates({
   };
 
   add(basedOnWeek);
-  add((targetWeekNumber ?? 0) - 1);
+  const startWeek = basedOnWeek ?? (targetWeekNumber ?? 0) - 1;
+  for (let week = startWeek; week >= 1; week -= 1) {
+    add(week);
+  }
   add(targetWeekNumber);
 
   return candidates;

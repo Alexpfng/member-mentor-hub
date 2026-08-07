@@ -8,11 +8,26 @@ function fb(rpe: number) {
 
 describe("getFeedbackWeekCandidates", () => {
   it("prioritizes the copied source week before fallbacks", () => {
-    expect(getFeedbackWeekCandidates({ targetWeekNumber: 7, basedOnWeek: 6 })).toEqual([6, 7]);
+    expect(getFeedbackWeekCandidates({ targetWeekNumber: 7, basedOnWeek: 6 })).toEqual([
+      6,
+      5,
+      4,
+      3,
+      2,
+      1,
+      7,
+    ]);
   });
 
-  it("falls back to previous week then current week when based_on_week is missing", () => {
-    expect(getFeedbackWeekCandidates({ targetWeekNumber: 6, basedOnWeek: null })).toEqual([5, 6]);
+  it("remonte tout l'historique precedent quand based_on_week est manquant", () => {
+    expect(getFeedbackWeekCandidates({ targetWeekNumber: 6, basedOnWeek: null })).toEqual([
+      5,
+      4,
+      3,
+      2,
+      1,
+      6,
+    ]);
   });
 
   it("keeps week 1 usable when there is no previous week", () => {
