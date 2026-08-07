@@ -17,3 +17,23 @@ export function getFeedbackWeekCandidates({
 
   return candidates;
 }
+
+export type AdapterExerciseFeedback = {
+  rpe: number | null;
+  pain: boolean;
+  tooHard: boolean;
+  tooEasy: boolean;
+  failure: boolean;
+  loadLabel?: string | null;
+};
+
+export function mergeExerciseFeedbackMaps(
+  maps: Array<Record<string, AdapterExerciseFeedback>>,
+) {
+  return maps.reduce<Record<string, AdapterExerciseFeedback>>((merged, current) => {
+    for (const [key, feedback] of Object.entries(current)) {
+      merged[key] = feedback;
+    }
+    return merged;
+  }, {});
+}

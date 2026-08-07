@@ -3,7 +3,11 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { localDateISO } from "@/lib/local-date";
-import { getFeedbackWeekCandidates } from "@/lib/adapter-feedback-source";
+import {
+  getFeedbackWeekCandidates,
+  mergeExerciseFeedbackMaps,
+  type AdapterExerciseFeedback,
+} from "@/lib/adapter-feedback-source";
 import { buildCoachExerciseFeedback } from "@/lib/coach-rpe-feedback";
 import { normalizeProgramStructure, normalizeWeekStructure } from "@/lib/week-structure-normalizer";
 
@@ -107,36 +111,23 @@ async function resolveSourceWeek(
 // ─────────────────────────────────────────────────────────────────────────────
 // Aggregate feedback from previous week to feed suggestions
 // ─────────────────────────────────────────────────────────────────────────────
+type FeedbackSession = { id: string; status: string | null; average_rpe: number | null };
+
+type AggregatedFeedbackContext = {
+  weekNumber: number | null;
+  sessions: FeedbackSession[];
+  feedback: Record<string, AdapterExerciseFeedback>;
+};
+
 async function aggregateFeedback(
   memberId: string,
   candidateWeeks: number[],
-): Promise<
-  | {
-      weekNumber: number | null;
-      sessions: Array<{ id: string; status: string | null; average_rpe: number | null }>;
-      feedback: Record<
-        string,
-        {
-          rpe: number | null;
-          pain: boolean;
-          tooHard: boolean;
-          tooEasy: boolean;
-          failure: boolean;
-          loadLabel?: string | null;
-        }
-      >;
-    }
-  | null
-> {
+): Promise<AggregatedFeedbackContext | null> {
   if (candidateWeeks.length === 0) return null;
 
-  let firstWeekWithSessions:
-    | {
-        weekNumber: number;
-        sessions: Array<{ id: string; status: string | null; average_rpe: number | null }>;
-        feedback: Record<string, never>;
-      }
-    | null = null;
+  let firstWeekWithSessions: AggregatedFeedbackContext | null = null;
+  let latestWeekWithFeedback: AggregatedFeedbackContext | null = null;
+  const feedbackMaps: Array<Record<string, AdapterExerciseFeedback>> = [];
 
   for (const weekNumber of candidateWeeks) {
     const { data: sessions } = await supabaseAdmin
@@ -167,11 +158,20 @@ async function aggregateFeedback(
       logs: logs ?? [],
       feedbacks: feedbacks ?? [],
       pains: pains ?? [],
-    });
+    }) as Record<string, AdapterExerciseFeedback>;
 
     if (Object.keys(feedback).length > 0) {
-      return { weekNumber, sessions: sourceSessions, feedback };
+      feedbackMaps.push(feedback);
+      latestWeekWithFeedback = { weekNumber, sessions: sourceSessions, feedback };
     }
+  }
+
+  if (latestWeekWithFeedback) {
+    return {
+      weekNumber: latestWeekWithFeedback.weekNumber,
+      sessions: latestWeekWithFeedback.sessions,
+      feedback: mergeExerciseFeedbackMaps(feedbackMaps),
+    };
   }
 
   return firstWeekWithSessions;
