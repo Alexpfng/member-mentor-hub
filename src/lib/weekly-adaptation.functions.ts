@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { localDateISO } from "@/lib/local-date";
+import { getFeedbackWeekCandidates } from "@/lib/adapter-feedback-source";
 import { buildCoachExerciseFeedback } from "@/lib/coach-rpe-feedback";
 import { normalizeProgramStructure, normalizeWeekStructure } from "@/lib/week-structure-normalizer";
 
@@ -108,40 +109,72 @@ async function resolveSourceWeek(
 // ─────────────────────────────────────────────────────────────────────────────
 async function aggregateFeedback(
   memberId: string,
-  basedOnWeek: number | null,
+  candidateWeeks: number[],
 ): Promise<
-  Record<
-    string,
-    { rpe: number | null; pain: boolean; tooHard: boolean; tooEasy: boolean; failure: boolean }
-  >
+  | {
+      weekNumber: number | null;
+      sessions: Array<{ id: string; status: string | null; average_rpe: number | null }>;
+      feedback: Record<
+        string,
+        {
+          rpe: number | null;
+          pain: boolean;
+          tooHard: boolean;
+          tooEasy: boolean;
+          failure: boolean;
+          loadLabel?: string | null;
+        }
+      >;
+    }
+  | null
 > {
-  if (basedOnWeek == null) return {};
+  if (candidateWeeks.length === 0) return null;
 
-  // Sessions of that week_number
-  const { data: sessions } = await supabaseAdmin
-    .from("sessions")
-    .select("id")
-    .eq("member_id", memberId)
-    .eq("week_number", basedOnWeek);
-  const sessionIds = (sessions ?? []).map((s) => s.id);
-  if (sessionIds.length === 0) return {};
+  let firstWeekWithSessions:
+    | {
+        weekNumber: number;
+        sessions: Array<{ id: string; status: string | null; average_rpe: number | null }>;
+        feedback: Record<string, never>;
+      }
+    | null = null;
 
-  const [{ data: logs }, { data: feedbacks }, { data: pains }] = await Promise.all([
-    supabaseAdmin
-      .from("set_logs")
-      .select("exercise_name, rpe, reps, weight_kg, completed, logged_at")
-      .in("session_id", sessionIds),
-    supabaseAdmin
-      .from("exercise_feedbacks")
-      .select("exercise_name, felt_too_hard, felt_too_easy, could_not_do, rpe, created_at")
-      .in("session_id", sessionIds),
-    supabaseAdmin.from("pain_reports").select("exercise_name").in("session_id", sessionIds),
-  ]);
-  return buildCoachExerciseFeedback({
-    logs: logs ?? [],
-    feedbacks: feedbacks ?? [],
-    pains: pains ?? [],
-  });
+  for (const weekNumber of candidateWeeks) {
+    const { data: sessions } = await supabaseAdmin
+      .from("sessions")
+      .select("id, status, average_rpe")
+      .eq("member_id", memberId)
+      .eq("week_number", weekNumber);
+    const sourceSessions = sessions ?? [];
+    const sessionIds = sourceSessions.map((s) => s.id);
+    if (sessionIds.length === 0) continue;
+
+    if (!firstWeekWithSessions) {
+      firstWeekWithSessions = { weekNumber, sessions: sourceSessions, feedback: {} };
+    }
+
+    const [{ data: logs }, { data: feedbacks }, { data: pains }] = await Promise.all([
+      supabaseAdmin
+        .from("set_logs")
+        .select("exercise_name, rpe, reps, weight_kg, completed, logged_at")
+        .in("session_id", sessionIds),
+      supabaseAdmin
+        .from("exercise_feedbacks")
+        .select("exercise_name, felt_too_hard, felt_too_easy, could_not_do, rpe, created_at")
+        .in("session_id", sessionIds),
+      supabaseAdmin.from("pain_reports").select("exercise_name").in("session_id", sessionIds),
+    ]);
+    const feedback = buildCoachExerciseFeedback({
+      logs: logs ?? [],
+      feedbacks: feedbacks ?? [],
+      pains: pains ?? [],
+    });
+
+    if (Object.keys(feedback).length > 0) {
+      return { weekNumber, sessions: sourceSessions, feedback };
+    }
+  }
+
+  return firstWeekWithSessions;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -288,19 +321,24 @@ export const getMemberWeekContext = createServerFn({ method: "POST" })
       .eq("id", data.memberId)
       .maybeSingle();
 
-    // Feedback for source week
-    const feedback = await aggregateFeedback(data.memberId, weekRow.based_on_week ?? null);
+    // Feedback for source week. On tente d'abord la semaine copiée, puis les
+    // semaines voisines : certaines séances complétées ont été créées avant que
+    // `based_on_week` soit correctement renseigné.
+    const feedbackContext = await aggregateFeedback(
+      data.memberId,
+      getFeedbackWeekCandidates({
+        targetWeekNumber: weekRow.week_number,
+        basedOnWeek: weekRow.based_on_week ?? null,
+      }),
+    );
+    const feedback = feedbackContext?.feedback ?? {};
 
     // Quick metrics for source week
     let adherence: { done: number; total: number } | null = null;
     let avgRpe: number | null = null;
     let painCount = 0;
-    if (weekRow.based_on_week != null) {
-      const { data: srcSessions } = await supabaseAdmin
-        .from("sessions")
-        .select("id, status, average_rpe")
-        .eq("member_id", data.memberId)
-        .eq("week_number", weekRow.based_on_week);
+    const srcSessions = feedbackContext?.sessions ?? [];
+    if (feedbackContext?.weekNumber != null) {
       const total = srcSessions?.length ?? 0;
       const done = (srcSessions ?? []).filter((s) => s.status === "completed").length;
       adherence = { done, total };
@@ -393,7 +431,7 @@ export const getMemberWeekContext = createServerFn({ method: "POST" })
           "Membre",
       },
       feedback,
-      sourceSummary: { adherence, avgRpe, painCount, weekNumber: weekRow.based_on_week },
+      sourceSummary: { adherence, avgRpe, painCount, weekNumber: feedbackContext?.weekNumber ?? null },
       maxWeekNumber,
     };
   });

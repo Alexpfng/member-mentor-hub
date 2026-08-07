@@ -1363,45 +1363,60 @@ export default function AdapterSemaine() {
                           <div
                             style={{
                               display: "grid",
-                              gridTemplateColumns: "auto minmax(0, 1fr) auto",
+                              gridTemplateColumns: "minmax(0, 1fr) auto",
                               alignItems: "start",
                               columnGap: 7,
                             }}
                           >
-                            <ColorDot c={ex.color} />
-                            {ex.code && (
-                              <span
-                                className="cst-mono"
-                                title={isSuperset ? `Superset ${blockLetter}` : undefined}
-                                style={{
-                                  fontSize: 10,
-                                  fontWeight: 700,
-                                  flexShrink: 0,
-                                  color: "var(--cst-mid-green)",
-                                  background: "rgba(45,90,53,0.14)",
-                                  border: "1px solid rgba(45,90,53,0.3)",
-                                  borderRadius: 4,
-                                  padding: "1px 5px",
-                                }}
-                              >
-                                {ex.code}
-                              </span>
-                            )}
-                            <span
+                            <div
                               style={{
-                                flex: 1,
+                                display: "flex",
+                                alignItems: "flex-start",
+                                gap: 6,
                                 minWidth: 0,
-                                fontSize: 13,
-                                fontWeight: 600,
-                                whiteSpace: "normal",
-                                overflowWrap: "break-word",
-                                wordBreak: "normal",
-                                hyphens: "auto",
-                                lineHeight: 1.3,
                               }}
                             >
-                              {ex.name}
-                            </span>
+                              <ColorDot c={ex.color} />
+                              {ex.code && (
+                                <span
+                                  className="cst-mono"
+                                  title={isSuperset ? `Superset ${blockLetter}` : undefined}
+                                  style={{
+                                    width: 34,
+                                    minWidth: 34,
+                                    maxWidth: 42,
+                                    textAlign: "center",
+                                    fontSize: 10,
+                                    fontWeight: 700,
+                                    flexShrink: 0,
+                                    color: "var(--cst-mid-green)",
+                                    background: "rgba(45,90,53,0.14)",
+                                    border: "1px solid rgba(45,90,53,0.3)",
+                                    borderRadius: 4,
+                                    padding: "1px 4px",
+                                    whiteSpace: "nowrap",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                  }}
+                                >
+                                  {ex.code}
+                                </span>
+                              )}
+                              <span
+                                style={{
+                                  minWidth: 0,
+                                  fontSize: 13,
+                                  fontWeight: 600,
+                                  whiteSpace: "normal",
+                                  overflowWrap: "anywhere",
+                                  wordBreak: "normal",
+                                  hyphens: "auto",
+                                  lineHeight: 1.3,
+                                }}
+                              >
+                                {ex.name}
+                              </span>
+                            </div>
                             {sugg && (
                               <span title="Suggestion d'après les retours" style={{ fontSize: 11 }}>
                                 {sugg.type === "pain" ? "🔴" : "⚠"}
