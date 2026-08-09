@@ -68,24 +68,14 @@ function splitAccidentalCardioTail<
   ];
 }
 
-export function normalizeWeekStructure<
-  TDay extends DayLike,
-  TWeek extends WeekStructureLike<TDay>,
->(structure: TWeek | null | undefined): TWeek {
-  const week = (structure ?? { days: [] }) as TWeek;
+export function normalizeWeekStructure<TWeek>(structure: TWeek | null | undefined): TWeek {
+  const week = (structure ?? { days: [] }) as { days?: DayLike[] | null };
   const normalizedDays = (week.days ?? []).flatMap((day) => splitAccidentalCardioTail(day));
   return { ...week, days: normalizedDays } as TWeek;
 }
 
-type ProgramStructureLike<TWeek extends WeekStructureLike = WeekStructureLike> = {
-  weeks?: TWeek[] | null;
-};
-
-export function normalizeProgramStructure<
-  TWeek extends WeekStructureLike,
-  TProgram extends ProgramStructureLike<TWeek>,
->(structure: TProgram | null | undefined): TProgram {
-  const program = (structure ?? { weeks: [] }) as TProgram;
+export function normalizeProgramStructure<TProgram>(structure: TProgram | null | undefined): TProgram {
+  const program = (structure ?? { weeks: [] }) as { weeks?: unknown[] | null };
   const normalizedWeeks = (program.weeks ?? []).map((week) => normalizeWeekStructure(week));
   return { ...program, weeks: normalizedWeeks } as TProgram;
 }
