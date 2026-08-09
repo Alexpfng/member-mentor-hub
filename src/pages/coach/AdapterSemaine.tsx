@@ -1278,8 +1278,9 @@ export default function AdapterSemaine() {
                   const rpeIsFailure = parsedRpe.isFailure;
                   const rpeComment = parsedRpe.comment;
                   const rpeConsigne = parsedRpe.consigne;
-                  const memberRpeDisplay = fb?.rpe != null ? formatRpeValue(fb.rpe) : null;
-                  const badgeShowsMemberRpe = memberRpeDisplay != null;
+                  const memberRpeValue = fb?.rpe ?? null;
+                  const memberRpeDisplay = memberRpeValue != null ? formatRpeValue(memberRpeValue) : null;
+                  const badgeShowsMemberRpe = memberRpeDisplay != null && memberRpeValue != null;
                   const badgeLabel = badgeShowsMemberRpe
                     ? `RPE ${memberRpeDisplay}`
                     : rpeIsNumeric
