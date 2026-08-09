@@ -6,6 +6,7 @@ import { mergeAssignmentWeeks } from "@/lib/program-weeks";
 import { localDateISO } from "@/lib/local-date";
 import { normalizeWeekStartsOn } from "@/lib/planning-weeks";
 import { normalizeProgramStructure } from "@/lib/week-structure-normalizer";
+import type { Json } from "@/integrations/supabase/types";
 
 async function assertCoach(userId: string) {
   const { data, error } = await supabaseAdmin
