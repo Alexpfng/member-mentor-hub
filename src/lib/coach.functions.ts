@@ -35,7 +35,7 @@ export const saveProgram = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertCoach(context.userId);
     const normalizedStructure = normalizeProgramStructure(
-      (data.structure as { weeks?: unknown[] } | null | undefined) ?? { weeks: [] },
+      (data.structure as Json | null | undefined) ?? ({ weeks: [] } as Json),
     );
     const payload = {
       coach_id: context.userId,
@@ -68,7 +68,7 @@ export const saveProgram = createServerFn({ method: "POST" })
       program: {
         ...row,
         structure: normalizeProgramStructure(
-          (row.structure as { weeks?: unknown[] } | null | undefined) ?? { weeks: [] },
+          (row.structure as Json | null | undefined) ?? ({ weeks: [] } as Json),
         ),
       },
     };
@@ -509,7 +509,7 @@ export const duplicateProgram = createServerFn({ method: "POST" })
         frequency_per_week: src.frequency_per_week,
         level: src.level,
         structure: normalizeProgramStructure(
-          (src.structure as { weeks?: unknown[] } | null | undefined) ?? { weeks: [] },
+          (src.structure as Json | null | undefined) ?? ({ weeks: [] } as Json),
         ) as never,
       })
       .select()
