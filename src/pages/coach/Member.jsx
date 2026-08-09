@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
+import { createPortal } from "react-dom";
 import AssignmentTimingFields from "@/components/coach/AssignmentTimingFields";
 import { deriveAssignmentStartDate } from "@/lib/assignment-start";
 import { localDateISO } from "@/lib/local-date";
@@ -247,6 +248,7 @@ import { VideoReviewPanel } from "../../components/coach/VideoReviewPanel";
 import MemberFollowupTab from "../../components/coach/MemberFollowupTab";
 import WeeksManagerPanel from "../../components/coach/WeeksManagerPanel";
 import { supabase } from "@/integrations/supabase/client";
+import { getMemberTabsDockPosition } from "@/lib/member-tabs-docking";
 import { sanitizeDurationMin } from "@/lib/format";
 import {
   currentPlanningWeekNumber,
@@ -292,6 +294,86 @@ const TAB_SLUGS = [
   "messages",
 ];
 
+function MemberTabsNavigation({ tabs, activeTab, onSelect, unreadCount, fixedPosition }) {
+  const isFixed = Boolean(fixedPosition);
+
+  return (
+    <div
+      style={{
+        position: isFixed ? "fixed" : "relative",
+        top: isFixed ? fixedPosition.top : undefined,
+        left: isFixed ? fixedPosition.left : undefined,
+        width: isFixed ? fixedPosition.width : undefined,
+        minHeight: isFixed ? fixedPosition.height : undefined,
+        zIndex: isFixed ? 1000 : 24,
+        background:
+          "linear-gradient(180deg, rgba(15,34,23,0.99) 0%, rgba(15,34,23,0.96) 100%)",
+        backdropFilter: "blur(10px)",
+        WebkitBackdropFilter: "blur(10px)",
+        borderBottom: "1px solid rgba(255,255,255,0.06)",
+        boxShadow: isFixed ? "0 8px 20px rgba(0,0,0,0.24)" : "none",
+      }}
+    >
+      <div
+        style={{
+          padding: "0 32px",
+          display: "flex",
+          overflowX: "auto",
+          scrollbarWidth: "none",
+        }}
+      >
+        {tabs.map((tab, index) => (
+          <button
+            key={tab}
+            type="button"
+            onClick={() => onSelect(index)}
+            style={{
+              appearance: "none",
+              flexShrink: 0,
+              padding: "17px 24px",
+              border: 0,
+              borderBottom:
+                activeTab === index ? "2px solid var(--green, #5da66f)" : "2px solid transparent",
+              background: "transparent",
+              color: activeTab === index ? "#fff" : "rgba(255,255,255,0.42)",
+              font: "inherit",
+              fontSize: 13,
+              fontWeight: 700,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              whiteSpace: "nowrap",
+              cursor: "pointer",
+            }}
+          >
+            <span style={{ opacity: 0.4, marginRight: 9 }}>0{index + 1}</span>
+            {tab}
+            {index === 6 && unreadCount > 0 && (
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  minWidth: 18,
+                  height: 18,
+                  marginLeft: 8,
+                  padding: "0 5px",
+                  borderRadius: 10,
+                  background: "#c84d3c",
+                  color: "#fff",
+                  fontSize: 10,
+                  letterSpacing: 0,
+                }}
+              >
+                {unreadCount}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function CoachMember() {
   const { memberId } = useParams({ from: "/_authenticated/coach/membre/$memberId" });
   const search = useSearch({ from: "/_authenticated/coach/membre/$memberId" });
@@ -312,6 +394,9 @@ export default function CoachMember() {
   const [err, setErr] = useState("");
   const [data, setData] = useState(null);
   const [activeTab, setActiveTab] = useState(() => Math.max(0, TAB_SLUGS.indexOf(search?.tab)));
+  const scrollContainerRef = useRef(null);
+  const tabsAnchorRef = useRef(null);
+  const [dockedTabs, setDockedTabs] = useState(null);
 
   // Deep link : si ?tab= change (ex. clic « Ouvrir » sur une autre vidéo à revoir),
   // on bascule sur l'onglet demandé.
@@ -371,6 +456,64 @@ export default function CoachMember() {
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [memberId]);
+
+  useEffect(() => {
+    const scroller = scrollContainerRef.current;
+    const anchor = tabsAnchorRef.current;
+    if (!scroller || !anchor || loading) return undefined;
+
+    let frame = 0;
+
+    const update = () => {
+      const scrollRect = scroller.getBoundingClientRect();
+      const anchorRect = anchor.getBoundingClientRect();
+      const next = getMemberTabsDockPosition({
+        anchorTop: anchorRect.top,
+        scrollTop: scrollRect.top,
+        scrollLeft: scrollRect.left,
+        scrollWidth: scrollRect.width,
+        height: anchorRect.height,
+      });
+
+      setDockedTabs((previous) => {
+        if (!previous && !next) return previous;
+        if (
+          previous &&
+          next &&
+          previous.top === next.top &&
+          previous.left === next.left &&
+          previous.width === next.width &&
+          previous.height === next.height
+        ) {
+          return previous;
+        }
+        return next;
+      });
+    };
+
+    const schedule = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(update);
+    };
+
+    const observer =
+      typeof ResizeObserver === "undefined" ? null : new ResizeObserver(schedule);
+
+    schedule();
+    observer?.observe(scroller);
+    observer?.observe(anchor);
+    scroller.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      observer?.disconnect();
+      scroller.removeEventListener("scroll", schedule);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+    };
+  }, [memberId, loading]);
 
   async function handleToggleRest(plannedSessionId) {
     setSkipBusy(plannedSessionId);
@@ -637,7 +780,7 @@ export default function CoachMember() {
           onConfirm={confirmAssign}
         />
       )}
-      <div className="cst-col cst-scroll" style={{ flex: 1, minWidth: 0 }}>
+      <div ref={scrollContainerRef} className="cst-col cst-scroll" style={{ flex: 1, minWidth: 0 }}>
         {/* Breadcrumb */}
         <div style={{ padding: "20px 32px 0", display: "flex", alignItems: "center", gap: 8 }}>
           <span
@@ -778,77 +921,32 @@ export default function CoachMember() {
 
         {/* Tabs */}
         <div
+          ref={tabsAnchorRef}
+          aria-hidden={dockedTabs ? "true" : undefined}
           style={{
-            position: "sticky",
-            top: 0,
-            zIndex: 24,
-            background:
-              "linear-gradient(180deg, rgba(15,34,23,0.98) 0%, rgba(15,34,23,0.94) 100%)",
-            backdropFilter: "blur(10px)",
-            borderBottom: "1px solid rgba(255,255,255,0.06)",
-            boxShadow: "0 8px 20px rgba(0,0,0,0.16)",
+            visibility: dockedTabs ? "hidden" : "visible",
+            pointerEvents: dockedTabs ? "none" : undefined,
           }}
         >
-          <div
-            style={{
-              padding: "0 32px",
-              display: "flex",
-              overflowX: "auto",
-              scrollbarWidth: "thin",
-              WebkitOverflowScrolling: "touch",
-            }}
-          >
-            {tabs.map((t, i) => (
-              <div
-                key={t}
-                onClick={() => setActiveTab(i)}
-                style={{
-                  padding: "16px 20px",
-                  fontSize: 12,
-                  letterSpacing: "0.14em",
-                  textTransform: "uppercase",
-                  fontWeight: activeTab === i ? 700 : 500,
-                  color: activeTab === i ? "#fff" : "rgba(255,255,255,0.5)",
-                  borderBottom:
-                    activeTab === i ? "2px solid var(--cst-mid-green)" : "2px solid transparent",
-                  fontFamily: "var(--cst-ui)",
-                  cursor: "pointer",
-                  whiteSpace: "nowrap",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  flexShrink: 0,
-                }}
-              >
-                <span
-                  className="cst-mono"
-                  style={{
-                    fontSize: 9,
-                    color: "var(--cst-mid-green)",
-                    opacity: activeTab === i ? 1 : 0.4,
-                  }}
-                >
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                {t}
-                {t === "Messages" && data.unread_messages_count > 0 && (
-                  <span
-                    style={{
-                      background: "var(--cst-mid-green)",
-                      color: "#fff",
-                      borderRadius: 10,
-                      padding: "1px 6px",
-                      fontSize: 9,
-                      fontFamily: "var(--cst-mono)",
-                    }}
-                  >
-                    {data.unread_messages_count}
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
+          <MemberTabsNavigation
+            tabs={tabs}
+            activeTab={activeTab}
+            onSelect={setActiveTab}
+            unreadCount={data.unread_messages_count}
+          />
         </div>
+        {dockedTabs &&
+          typeof document !== "undefined" &&
+          createPortal(
+            <MemberTabsNavigation
+              tabs={tabs}
+              activeTab={activeTab}
+              onSelect={setActiveTab}
+              unreadCount={data.unread_messages_count}
+              fixedPosition={dockedTabs}
+            />,
+            document.body,
+          )}
 
         {/* TAB CONTENT */}
         <div
