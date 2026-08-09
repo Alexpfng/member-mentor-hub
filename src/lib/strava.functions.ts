@@ -271,7 +271,7 @@ async function collectSessionCandidates(memberId: string, activityDate: string) 
       kind: "session",
       id: session.id,
       date: session.date,
-      status: session.status,
+      status: session.status ?? "",
       sessionType: session.session_type ?? "program",
       sessionLabel: session.session_label,
       hasRunStats: runStatIds.has(session.id),

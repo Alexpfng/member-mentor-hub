@@ -1278,8 +1278,9 @@ export default function AdapterSemaine() {
                   const rpeIsFailure = parsedRpe.isFailure;
                   const rpeComment = parsedRpe.comment;
                   const rpeConsigne = parsedRpe.consigne;
-                  const memberRpeDisplay = fb?.rpe != null ? formatRpeValue(fb.rpe) : null;
-                  const badgeShowsMemberRpe = memberRpeDisplay != null;
+                  const memberRpeValue = fb?.rpe ?? null;
+                  const memberRpeDisplay = memberRpeValue != null ? formatRpeValue(memberRpeValue) : null;
+                  const badgeShowsMemberRpe = memberRpeDisplay != null && memberRpeValue != null;
                   const badgeLabel = badgeShowsMemberRpe
                     ? `RPE ${memberRpeDisplay}`
                     : rpeIsNumeric
@@ -1288,9 +1289,9 @@ export default function AdapterSemaine() {
                         ? "ÉCHEC"
                         : "RPE —";
                   const badgeColor = badgeShowsMemberRpe
-                    ? fb.rpe >= 9
+                    ? (memberRpeValue ?? 0) >= 9
                       ? "#C0392B"
-                      : fb.rpe >= 7
+                      : (memberRpeValue ?? 0) >= 7
                         ? "#E07B39"
                         : "#5BA85A"
                     : rpeIsNumeric

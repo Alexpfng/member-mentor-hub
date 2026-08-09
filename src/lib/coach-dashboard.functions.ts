@@ -985,7 +985,7 @@ export const getMemberFollowup = createServerFn({ method: "GET" })
       };
       const prog = Array.isArray(assignTyped.programs) ? assignTyped.programs[0] : assignTyped.programs;
       const diff =
-        Math.floor((Date.now() - new Date(assignTyped.start_date).getTime()) / (7 * 86400000)) + 1;
+        Math.floor((Date.now() - new Date(assignTyped.start_date ?? "").getTime()) / (7 * 86400000)) + 1;
       currentWeek = Math.max(
         1,
         prog?.duration_weeks ? Math.min(diff, prog.duration_weeks) : diff,
