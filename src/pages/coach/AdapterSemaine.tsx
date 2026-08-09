@@ -1753,11 +1753,6 @@ export default function AdapterSemaine() {
                                   sur « {fbMatch.key} »
                                 </span>
                               )}
-                              {fb.loadLabel && (
-                                <span style={{ display: "block", fontWeight: 400, opacity: 0.8 }}>
-                                  charge faite · {fb.loadLabel}
-                                </span>
-                              )}
                             </div>
                           )}
                           {ex.coach_notes && (

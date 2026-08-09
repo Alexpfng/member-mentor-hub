@@ -779,64 +779,75 @@ export default function CoachMember() {
         {/* Tabs */}
         <div
           style={{
-            padding: "0 32px",
-            display: "flex",
-            borderBottom: "1px solid rgba(255,255,255,0.06)",
-            overflowX: "auto",
             position: "sticky",
             top: 0,
-            zIndex: 10,
-            background: "var(--cst-bg)",
+            zIndex: 24,
+            background:
+              "linear-gradient(180deg, rgba(15,34,23,0.98) 0%, rgba(15,34,23,0.94) 100%)",
+            backdropFilter: "blur(10px)",
+            borderBottom: "1px solid rgba(255,255,255,0.06)",
+            boxShadow: "0 8px 20px rgba(0,0,0,0.16)",
           }}
         >
-          {tabs.map((t, i) => (
-            <div
-              key={t}
-              onClick={() => setActiveTab(i)}
-              style={{
-                padding: "16px 20px",
-                fontSize: 12,
-                letterSpacing: "0.14em",
-                textTransform: "uppercase",
-                fontWeight: activeTab === i ? 700 : 500,
-                color: activeTab === i ? "#fff" : "rgba(255,255,255,0.5)",
-                borderBottom:
-                  activeTab === i ? "2px solid var(--cst-mid-green)" : "2px solid transparent",
-                fontFamily: "var(--cst-ui)",
-                cursor: "pointer",
-                whiteSpace: "nowrap",
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-              }}
-            >
-              <span
-                className="cst-mono"
+          <div
+            style={{
+              padding: "0 32px",
+              display: "flex",
+              overflowX: "auto",
+              scrollbarWidth: "thin",
+              WebkitOverflowScrolling: "touch",
+            }}
+          >
+            {tabs.map((t, i) => (
+              <div
+                key={t}
+                onClick={() => setActiveTab(i)}
                 style={{
-                  fontSize: 9,
-                  color: "var(--cst-mid-green)",
-                  opacity: activeTab === i ? 1 : 0.4,
+                  padding: "16px 20px",
+                  fontSize: 12,
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
+                  fontWeight: activeTab === i ? 700 : 500,
+                  color: activeTab === i ? "#fff" : "rgba(255,255,255,0.5)",
+                  borderBottom:
+                    activeTab === i ? "2px solid var(--cst-mid-green)" : "2px solid transparent",
+                  fontFamily: "var(--cst-ui)",
+                  cursor: "pointer",
+                  whiteSpace: "nowrap",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  flexShrink: 0,
                 }}
               >
-                {String(i + 1).padStart(2, "0")}
-              </span>
-              {t}
-              {t === "Messages" && data.unread_messages_count > 0 && (
                 <span
+                  className="cst-mono"
                   style={{
-                    background: "var(--cst-mid-green)",
-                    color: "#fff",
-                    borderRadius: 10,
-                    padding: "1px 6px",
                     fontSize: 9,
-                    fontFamily: "var(--cst-mono)",
+                    color: "var(--cst-mid-green)",
+                    opacity: activeTab === i ? 1 : 0.4,
                   }}
                 >
-                  {data.unread_messages_count}
+                  {String(i + 1).padStart(2, "0")}
                 </span>
-              )}
-            </div>
-          ))}
+                {t}
+                {t === "Messages" && data.unread_messages_count > 0 && (
+                  <span
+                    style={{
+                      background: "var(--cst-mid-green)",
+                      color: "#fff",
+                      borderRadius: 10,
+                      padding: "1px 6px",
+                      fontSize: 9,
+                      fontFamily: "var(--cst-mono)",
+                    }}
+                  >
+                    {data.unread_messages_count}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* TAB CONTENT */}
