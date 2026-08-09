@@ -76,6 +76,7 @@ export type Database = {
           id: string
           member_id: string
           program_id: string
+          session_mode: string | null
           start_date: string | null
         }
         Insert: {
@@ -85,6 +86,7 @@ export type Database = {
           id?: string
           member_id: string
           program_id: string
+          session_mode?: string | null
           start_date?: string | null
         }
         Update: {
@@ -94,6 +96,7 @@ export type Database = {
           id?: string
           member_id?: string
           program_id?: string
+          session_mode?: string | null
           start_date?: string | null
         }
         Relationships: [
@@ -112,6 +115,133 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      body_measurements: {
+        Row: {
+          arm_cm: number | null
+          chest_cm: number | null
+          created_at: string | null
+          date: string
+          hips_cm: number | null
+          id: string
+          member_id: string
+          note: string | null
+          thigh_cm: number | null
+          waist_cm: number | null
+        }
+        Insert: {
+          arm_cm?: number | null
+          chest_cm?: number | null
+          created_at?: string | null
+          date?: string
+          hips_cm?: number | null
+          id?: string
+          member_id: string
+          note?: string | null
+          thigh_cm?: number | null
+          waist_cm?: number | null
+        }
+        Update: {
+          arm_cm?: number | null
+          chest_cm?: number | null
+          created_at?: string | null
+          date?: string
+          hips_cm?: number | null
+          id?: string
+          member_id?: string
+          note?: string | null
+          thigh_cm?: number | null
+          waist_cm?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "body_measurements_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      challenge_participants: {
+        Row: {
+          challenge_id: string
+          joined_at: string
+          member_id: string
+        }
+        Insert: {
+          challenge_id: string
+          joined_at?: string
+          member_id: string
+        }
+        Update: {
+          challenge_id?: string
+          joined_at?: string
+          member_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_participants_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      challenges: {
+        Row: {
+          coach_id: string
+          created_at: string
+          ends_on: string
+          id: string
+          metric: string
+          starts_on: string
+          target: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          coach_id: string
+          created_at?: string
+          ends_on: string
+          id?: string
+          metric: string
+          starts_on: string
+          target: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          coach_id?: string
+          created_at?: string
+          ends_on?: string
+          id?: string
+          metric?: string
+          starts_on?: string
+          target?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cololikes: {
+        Row: {
+          created_at: string
+          event_key: string
+          liker_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_key: string
+          liker_id: string
+        }
+        Update: {
+          created_at?: string
+          event_key?: string
+          liker_id?: string
+        }
+        Relationships: []
       }
       email_send_log: {
         Row: {
@@ -291,6 +421,7 @@ export type Database = {
           description: string | null
           equipement: string | null
           id: string
+          image_url: string | null
           intensity_code: string | null
           is_archived: boolean | null
           is_global: boolean | null
@@ -313,6 +444,7 @@ export type Database = {
           description?: string | null
           equipement?: string | null
           id?: string
+          image_url?: string | null
           intensity_code?: string | null
           is_archived?: boolean | null
           is_global?: boolean | null
@@ -335,6 +467,7 @@ export type Database = {
           description?: string | null
           equipement?: string | null
           id?: string
+          image_url?: string | null
           intensity_code?: string | null
           is_archived?: boolean | null
           is_global?: boolean | null
@@ -418,68 +551,6 @@ export type Database = {
             foreignKeyName: "free_activities_session_id_fkey"
             columns: ["session_id"]
             isOneToOne: false
-            referencedRelation: "sessions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      run_stats: {
-        Row: {
-          avg_hr: number | null
-          confidence: number | null
-          created_at: string
-          distance_km: number | null
-          duration_sec: number | null
-          elevation_m: number | null
-          id: string
-          member_id: string
-          pace_sec_per_km: number | null
-          raw_extraction: Json | null
-          rpe: number | null
-          screenshot_media_id: string | null
-          session_id: string
-          source: string
-          updated_at: string
-        }
-        Insert: {
-          avg_hr?: number | null
-          confidence?: number | null
-          created_at?: string
-          distance_km?: number | null
-          duration_sec?: number | null
-          elevation_m?: number | null
-          id?: string
-          member_id: string
-          pace_sec_per_km?: number | null
-          raw_extraction?: Json | null
-          rpe?: number | null
-          screenshot_media_id?: string | null
-          session_id: string
-          source?: string
-          updated_at?: string
-        }
-        Update: {
-          avg_hr?: number | null
-          confidence?: number | null
-          created_at?: string
-          distance_km?: number | null
-          duration_sec?: number | null
-          elevation_m?: number | null
-          id?: string
-          member_id?: string
-          pace_sec_per_km?: number | null
-          raw_extraction?: Json | null
-          rpe?: number | null
-          screenshot_media_id?: string | null
-          session_id?: string
-          source?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "run_stats_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: true
             referencedRelation: "sessions"
             referencedColumns: ["id"]
           },
@@ -670,131 +741,6 @@ export type Database = {
           {
             foreignKeyName: "member_profiles_user_id_fkey"
             columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      member_strava_activities: {
-        Row: {
-          activity_type: string
-          average_heartrate: number | null
-          average_speed_mps: number | null
-          created_at: string
-          distance_m: number | null
-          elapsed_time_s: number | null
-          elevation_gain_m: number | null
-          id: string
-          member_id: string
-          moving_time_s: number | null
-          name: string | null
-          raw_payload: Json | null
-          session_id: string | null
-          started_at: string
-          strava_activity_id: number
-          sync_error: string | null
-          sync_status: string
-          updated_at: string
-        }
-        Insert: {
-          activity_type: string
-          average_heartrate?: number | null
-          average_speed_mps?: number | null
-          created_at?: string
-          distance_m?: number | null
-          elapsed_time_s?: number | null
-          elevation_gain_m?: number | null
-          id?: string
-          member_id: string
-          moving_time_s?: number | null
-          name?: string | null
-          raw_payload?: Json | null
-          session_id?: string | null
-          started_at: string
-          strava_activity_id: number
-          sync_error?: string | null
-          sync_status?: string
-          updated_at?: string
-        }
-        Update: {
-          activity_type?: string
-          average_heartrate?: number | null
-          average_speed_mps?: number | null
-          created_at?: string
-          distance_m?: number | null
-          elapsed_time_s?: number | null
-          elevation_gain_m?: number | null
-          id?: string
-          member_id?: string
-          moving_time_s?: number | null
-          name?: string | null
-          raw_payload?: Json | null
-          session_id?: string | null
-          started_at?: string
-          strava_activity_id?: number
-          sync_error?: string | null
-          sync_status?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "member_strava_activities_member_id_fkey"
-            columns: ["member_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "member_strava_activities_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "sessions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      member_strava_connections: {
-        Row: {
-          access_token: string
-          created_at: string
-          expires_at: string
-          last_sync_at: string | null
-          last_webhook_at: string | null
-          member_id: string
-          refresh_token: string
-          scope: string[]
-          strava_athlete_id: number
-          updated_at: string
-        }
-        Insert: {
-          access_token: string
-          created_at?: string
-          expires_at: string
-          last_sync_at?: string | null
-          last_webhook_at?: string | null
-          member_id: string
-          refresh_token: string
-          scope?: string[]
-          strava_athlete_id: number
-          updated_at?: string
-        }
-        Update: {
-          access_token?: string
-          created_at?: string
-          expires_at?: string
-          last_sync_at?: string | null
-          last_webhook_at?: string | null
-          member_id?: string
-          refresh_token?: string
-          scope?: string[]
-          strava_athlete_id?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "member_strava_connections_member_id_fkey"
-            columns: ["member_id"]
             isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -995,9 +941,10 @@ export type Database = {
           email: string | null
           first_name: string | null
           id: string
-          is_archived: boolean | null
+          is_archived: boolean
           last_name: string | null
           planning_week_start_day: number | null
+          share_milestones: boolean
           updated_at: string | null
         }
         Insert: {
@@ -1006,9 +953,10 @@ export type Database = {
           email?: string | null
           first_name?: string | null
           id: string
-          is_archived?: boolean | null
+          is_archived?: boolean
           last_name?: string | null
           planning_week_start_day?: number | null
+          share_milestones?: boolean
           updated_at?: string | null
         }
         Update: {
@@ -1017,9 +965,10 @@ export type Database = {
           email?: string | null
           first_name?: string | null
           id?: string
-          is_archived?: boolean | null
+          is_archived?: boolean
           last_name?: string | null
           planning_week_start_day?: number | null
+          share_milestones?: boolean
           updated_at?: string | null
         }
         Relationships: []
@@ -1070,6 +1019,117 @@ export type Database = {
             columns: ["coach_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      progress_photos: {
+        Row: {
+          created_at: string | null
+          date: string
+          id: string
+          member_id: string
+          note: string | null
+          storage_path: string
+        }
+        Insert: {
+          created_at?: string | null
+          date?: string
+          id?: string
+          member_id: string
+          note?: string | null
+          storage_path: string
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          id?: string
+          member_id?: string
+          note?: string | null
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "progress_photos_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      run_stats: {
+        Row: {
+          avg_hr: number | null
+          confidence: number | null
+          created_at: string
+          distance_km: number | null
+          duration_sec: number | null
+          elevation_m: number | null
+          id: string
+          member_id: string
+          pace_sec_per_km: number | null
+          raw_extraction: Json | null
+          rpe: number | null
+          screenshot_media_id: string | null
+          session_id: string
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          avg_hr?: number | null
+          confidence?: number | null
+          created_at?: string
+          distance_km?: number | null
+          duration_sec?: number | null
+          elevation_m?: number | null
+          id?: string
+          member_id: string
+          pace_sec_per_km?: number | null
+          raw_extraction?: Json | null
+          rpe?: number | null
+          screenshot_media_id?: string | null
+          session_id: string
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          avg_hr?: number | null
+          confidence?: number | null
+          created_at?: string
+          distance_km?: number | null
+          duration_sec?: number | null
+          elevation_m?: number | null
+          id?: string
+          member_id?: string
+          pace_sec_per_km?: number | null
+          raw_extraction?: Json | null
+          rpe?: number | null
+          screenshot_media_id?: string | null
+          session_id?: string
+          source?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "run_stats_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "run_stats_screenshot_media_id_fkey"
+            columns: ["screenshot_media_id"]
+            isOneToOne: false
+            referencedRelation: "session_media"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "run_stats_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: true
+            referencedRelation: "sessions"
             referencedColumns: ["id"]
           },
         ]
@@ -1177,7 +1237,6 @@ export type Database = {
           member_id: string
           member_note: string | null
           overall_feeling: number | null
-          planned_exercises: Json | null
           program_id: string | null
           session_label: string | null
           session_type: string
@@ -1202,7 +1261,6 @@ export type Database = {
           member_id: string
           member_note?: string | null
           overall_feeling?: number | null
-          planned_exercises?: Json | null
           program_id?: string | null
           session_label?: string | null
           session_type?: string
@@ -1227,7 +1285,6 @@ export type Database = {
           member_id?: string
           member_note?: string | null
           overall_feeling?: number | null
-          planned_exercises?: Json | null
           program_id?: string | null
           session_label?: string | null
           session_type?: string
@@ -1536,6 +1593,7 @@ export type Database = {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
       }
+      email_queue_dispatch: { Args: never; Returns: undefined }
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
         Returns: number
