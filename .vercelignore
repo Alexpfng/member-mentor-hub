@@ -1,0 +1,9 @@
+.env
+.env.*
+!.env.example
+
+.worktrees
+.lovable
+dist
+node_modules
+docs/superpowers

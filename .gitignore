@@ -11,6 +11,7 @@ node_modules
 dist
 dist-ssr
 .output
+.vercel
 .vinxi
 .tanstack/**
 .nitro
@@ -32,4 +33,4 @@ dist-ssr
 *.sw?
 
 # Env secrets
-
+.env*
