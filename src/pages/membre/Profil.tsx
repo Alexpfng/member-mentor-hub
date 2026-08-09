@@ -53,25 +53,43 @@ export default function MemberProfil() {
   const [stravaBusy, setStravaBusy] = useState(false);
 
   useEffect(() => {
+    let mounted = true;
     (async () => {
+      // Chaque réglage se charge INDÉPENDAMMENT : avant, les 3 appels étaient
+      // dans un même try — si le 1er (prefs notif) échouait, le « début de
+      // semaine » n'était jamais appliqué et l'écran retombait sur le défaut
+      // (Lundi), donnant l'impression que le choix du coaché « se réinitialise »
+      // à la reconnexion.
       try {
         const r = await getFn();
-        setPrefs(r);
-        const planning = await getPlanningSettings();
-        setPlanningWeekStartDay(planning.planning_week_start_day);
-        const status = await getStravaStatus();
-        setStrava({
-          connected: status.connected,
-          athleteId: status.athleteId,
-          expiresAt: status.expiresAt,
-          lastSyncAt: status.lastSyncAt,
-        });
+        if (mounted) setPrefs(r);
       } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
+        console.error("[Profil] getNotificationPrefs", e);
       }
+      try {
+        const planning = await getPlanningSettings();
+        if (mounted) setPlanningWeekStartDay(planning.planning_week_start_day);
+      } catch (e) {
+        console.error("[Profil] getPlanningSettings", e);
+      }
+      try {
+        const status = await getStravaStatus();
+        if (mounted) {
+          setStrava({
+            connected: status.connected,
+            athleteId: status.athleteId,
+            expiresAt: status.expiresAt,
+            lastSyncAt: status.lastSyncAt,
+          });
+        }
+      } catch (e) {
+        console.error("[Profil] getStravaConnectionStatus", e);
+      }
+      if (mounted) setLoading(false);
     })();
+    return () => {
+      mounted = false;
+    };
   }, [getFn]);
 
   const handleChange = async (patch: Record<string, any>) => {
