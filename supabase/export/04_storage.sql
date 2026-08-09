@@ -1,6 +1,7 @@
 -- 04_storage.sql — buckets, policies storage.objects, métadonnées des fichiers
 -- Les fichiers binaires se copient à part (voir README).
 begin;
+set search_path = public, storage;
 insert into storage.buckets (id,name,public,file_size_limit,allowed_mime_types) values ('progress-photos','progress-photos','f',null,null) on conflict (id) do update set public=excluded.public, file_size_limit=excluded.file_size_limit, allowed_mime_types=excluded.allowed_mime_types;
 insert into storage.buckets (id,name,public,file_size_limit,allowed_mime_types) values ('session-media','session-media','f',null,null) on conflict (id) do update set public=excluded.public, file_size_limit=excluded.file_size_limit, allowed_mime_types=excluded.allowed_mime_types;
 insert into storage.buckets (id,name,public,file_size_limit,allowed_mime_types) values ('technique-videos','technique-videos','f',null,null) on conflict (id) do update set public=excluded.public, file_size_limit=excluded.file_size_limit, allowed_mime_types=excluded.allowed_mime_types;
