@@ -22,7 +22,7 @@ describe("setExerciseQuickRpe", () => {
   it("clears the rpe when value is null", () => {
     const structure = {
       days: [
-        { label: "Séance 1", exercises: [{ name: "A", rpe_target: 6 }] },
+        { label: "Séance 1", exercises: [{ name: "A", rpe_target: 6 as string | number | null }] },
       ],
     };
 
