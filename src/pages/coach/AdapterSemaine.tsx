@@ -1289,9 +1289,9 @@ export default function AdapterSemaine() {
                         ? "ÉCHEC"
                         : "RPE —";
                   const badgeColor = badgeShowsMemberRpe
-                    ? memberRpeValue >= 9
+                    ? (memberRpeValue ?? 0) >= 9
                       ? "#C0392B"
-                      : memberRpeValue >= 7
+                      : (memberRpeValue ?? 0) >= 7
                         ? "#E07B39"
                         : "#5BA85A"
                     : rpeIsNumeric
