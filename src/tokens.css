@@ -31,6 +31,12 @@ html, body, #root {
 /* ---- DEFAULT = DARK (brand) ---- */
 :root,
 html.theme-dark {
+  /* Déclare le schéma au navigateur : sans ça, le « Force Dark » de Chrome
+     (Android + Auto Dark Mode) réinvente les couleurs et transforme le cockpit
+     vert foncé en page noire avec cartes inversées en blanc. Safari n'a pas ce
+     mode → « ça marche sur iPhone/Mac, pas sur Google ». En l'annonçant, on
+     désactive cette inversion. */
+  color-scheme:             dark;
   --cst-bg:                 #19291C;
   --cst-bg-elev:            #142118;
   --cst-text:               #FFFFFF;
@@ -61,6 +67,7 @@ html.theme-dark {
 
 /* ---- LIGHT ---- */
 html.theme-light {
+  color-scheme:             light;
   --cst-bg:                 #F5F2EA;
   --cst-bg-elev:            #EDE8D8;
   --cst-text:               #1A1A18;

@@ -80,6 +80,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      // Signal le plus précoce (avant le CSS) pour couper le « Force Dark » de
+      // Chrome/Android : l'app gère elle-même son thème clair/sombre.
+      { name: "color-scheme", content: "dark light" },
       { name: "theme-color", content: "#1B2E1F" },
       { title: SITE_NAME },
       { name: "description", content: SITE_DESCRIPTION },
