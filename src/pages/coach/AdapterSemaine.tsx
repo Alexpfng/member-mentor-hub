@@ -884,6 +884,7 @@ export default function AdapterSemaine() {
 
   function resetAllRpe() {
     if (!window.confirm("Effacer tous les RPE de cette semaine ?")) return;
+    let count = 0;
     setStructure((s) => ({
       ...s,
       days: (s.days ?? []).map((day) => ({
@@ -893,11 +894,19 @@ export default function AdapterSemaine() {
           // consigne cardio (héritée d'imports) qu'on doit préserver.
           const str = String(ex.rpe_target ?? "").trim();
           const isNumeric = str !== "" && !Number.isNaN(Number(str.replace(",", ".")));
-          return isNumeric ? { ...ex, rpe_target: null } : ex;
+          if (isNumeric) {
+            count++;
+            return { ...ex, rpe_target: null };
+          }
+          return ex;
         }),
       })),
     }));
     setQuickRpeTarget(null);
+    setTimeout(
+      () => toast.success(`${count > 0 ? count : "Aucun"} RPE réinitialisé${count > 1 ? "s" : ""}`),
+      50,
+    );
   }
 
   function applyQuickRpe(dayIdx: number, exoIdx: number, rpe: string | number | null) {
@@ -1281,7 +1290,13 @@ export default function AdapterSemaine() {
                   const memberRpeValue = fb?.rpe ?? null;
                   const memberRpeDisplay =
                     memberRpeValue != null ? formatRpeValue(memberRpeValue) : null;
-                  const badgeShowsMemberRpe = memberRpeDisplay != null && memberRpeValue != null;
+                  // Badge shows member feedback only when no coach cible is set.
+                  // This way, resetting rpe_target immediately reflects in the badge.
+                  const badgeShowsMemberRpe =
+                    memberRpeDisplay != null &&
+                    memberRpeValue != null &&
+                    !rpeIsNumeric &&
+                    !rpeIsFailure;
                   const badgeLabel = badgeShowsMemberRpe
                     ? `RPE ${memberRpeDisplay}`
                     : rpeIsNumeric
