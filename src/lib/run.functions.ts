@@ -341,3 +341,67 @@ export async function upsertRunStatsFromFreeSession(
   }
   await upsertRunStats({ sessionId, memberId, metrics, source: "manual" });
 }
+
+// ─── MEMBER RUNNING ROUTES ────────────────────────────────────────────────────
+// Mirror of the coach running route functions but without assertCoach.
+// Routes are stored in the same running_routes table with the member's userId
+// as coach_id (the column is a generic owner reference).
+
+export const saveMemberRunningRoute = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        name: z.string().min(1),
+        difficulty: z.string().min(1),
+        distance_km: z.number(),
+        dplus_m: z.number(),
+        dminus_m: z.number(),
+        points: z.array(z.object({ lat: z.number(), lng: z.number(), ele: z.number() })),
+        gpx_url: z.string().url().optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await (supabaseAdmin as any)
+      .from("running_routes")
+      .insert({
+        coach_id: context.userId,
+        name: data.name,
+        difficulty: data.difficulty,
+        distance_km: data.distance_km,
+        dplus_m: data.dplus_m,
+        dminus_m: data.dminus_m,
+        points: data.points,
+        gpx_url: data.gpx_url ?? null,
+      })
+      .select("id, short_id")
+      .single();
+    if (error) throw new Error(error.message);
+    return { id: row.id, short_id: row.short_id };
+  });
+
+export const deleteMemberRunningRoute = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await (supabaseAdmin as any)
+      .from("running_routes")
+      .delete()
+      .eq("id", data.id)
+      .eq("coach_id", context.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const listMemberRunningRoutes = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await (supabaseAdmin as any)
+      .from("running_routes")
+      .select("*")
+      .eq("coach_id", context.userId)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return { routes: data ?? [] };
+  });

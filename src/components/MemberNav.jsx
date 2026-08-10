@@ -4,17 +4,16 @@ import { useServerFn } from "@tanstack/react-start";
 import { getUnreadCount } from "@/lib/coach.functions";
 import { supabase } from "@/integrations/supabase/client";
 
-
 const items = [
   { id: "home", icon: "🏠", label: "Accueil", path: "/membre" },
   { id: "prog", icon: "📋", label: "Programme", path: "/membre/programme" },
   { id: "plan", icon: "📅", label: "Planning", path: "/membre/planning" },
   { id: "carn", icon: "📖", label: "Carnet", path: "/membre/carnet" },
   { id: "progr", icon: "📈", label: "Progrès", path: "/membre/progression" },
+  { id: "trail", icon: "🏃", label: "Trail & Run", path: "/membre/running" },
   { id: "msgs", icon: "💬", label: "Messages", path: "/membre/messages" },
   { id: "profile", icon: "⚙️", label: "Réglages", path: "/membre/profil" },
 ];
-
 
 export default function MemberNav({ unreadCount: unreadProp = undefined } = {}) {
   const navigate = useNavigate();
@@ -38,7 +37,8 @@ export default function MemberNav({ unreadCount: unreadProp = undefined } = {}) 
     supabase.auth.getUser().then(({ data }) => {
       const uid = data.user?.id;
       if (cancelled || !uid) return;
-      ch = supabase.channel(`user:${uid}:nav`)
+      ch = supabase
+        .channel(`user:${uid}:nav`)
         .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, refresh)
         .subscribe();
     });
@@ -59,7 +59,6 @@ export default function MemberNav({ unreadCount: unreadProp = undefined } = {}) 
   return (
     <>
       <nav className="bottom-nav" role="navigation" aria-label="Navigation principale">
-
         {items.map((it) => {
           const on = it.id === activeId;
           return (
@@ -77,7 +76,9 @@ export default function MemberNav({ unreadCount: unreadProp = undefined } = {}) 
               </span>
               <span className="nav-label">{it.label}</span>
               {it.id === "msgs" && effectiveUnread > 0 && (
-                <span className="bottom-nav-badge">{effectiveUnread > 9 ? "9+" : effectiveUnread}</span>
+                <span className="bottom-nav-badge">
+                  {effectiveUnread > 9 ? "9+" : effectiveUnread}
+                </span>
               )}
             </div>
           );

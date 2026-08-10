@@ -56,18 +56,36 @@ export default function MemberDashboard() {
   const upsertPlanned = useServerFn(upsertPlannedSession);
 
   useEffect(() => {
-    if (!SUPABASE_ENABLED) { setLoading(false); return; }
+    if (!SUPABASE_ENABLED) {
+      setLoading(false);
+      return;
+    }
     (async () => {
       try {
         const { data: u } = await supabase.auth.getUser();
-        if (!u?.user) { navigate("/login"); return; }
+        if (!u?.user) {
+          navigate("/login");
+          return;
+        }
         const uid = u.user.id;
         setUserId(uid);
 
         const [{ data: prof }, { data: assigns }, { data: sessions }] = await Promise.all([
           supabase.from("profiles").select("first_name,last_name").eq("id", uid).maybeSingle(),
-          supabase.from("assignments").select("program_id,programs(name,description)").eq("member_id", uid).eq("active", true).order("created_at", { ascending: false }).limit(1),
-          supabase.from("sessions").select("id,date,status,session_label,duration_minutes,session_type").eq("member_id", uid).gte("date", getWeekDates()[0]).lte("date", getWeekDates()[6]).order("date"),
+          supabase
+            .from("assignments")
+            .select("program_id,programs(name,description)")
+            .eq("member_id", uid)
+            .eq("active", true)
+            .order("created_at", { ascending: false })
+            .limit(1),
+          supabase
+            .from("sessions")
+            .select("id,date,status,session_label,duration_minutes,session_type")
+            .eq("member_id", uid)
+            .gte("date", getWeekDates()[0])
+            .lte("date", getWeekDates()[6])
+            .order("date"),
         ]);
 
         setProfile(prof);
@@ -139,12 +157,14 @@ export default function MemberDashboard() {
   // « À faire » : exclut le planifié, le terminé ET l'en-cours (sinon une séance
   // commencée réapparaît comme à faire alors qu'elle est reprise ailleurs).
   const usedLabels = new Set(
-    (plan?.planned ?? []).map((p) => p.day_label).concat(
-      (plan?.sessions ?? [])
-        .filter((s) => s.status === "completed" || s.status === "in_progress")
-        .map((s) => s.session_label)
-        .filter(Boolean),
-    ),
+    (plan?.planned ?? [])
+      .map((p) => p.day_label)
+      .concat(
+        (plan?.sessions ?? [])
+          .filter((s) => s.status === "completed" || s.status === "in_progress")
+          .map((s) => s.session_label)
+          .filter(Boolean),
+      ),
   );
   const availableDayDefs = dayDefs.filter((d) => !usedLabels.has(d.label));
 
@@ -176,7 +196,19 @@ export default function MemberDashboard() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--cst-dark-green)", color: "rgba(255,255,255,0.4)", fontFamily: "var(--cst-mono)", fontSize: 11, letterSpacing: "0.18em" }}>
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "var(--cst-dark-green)",
+          color: "rgba(255,255,255,0.4)",
+          fontFamily: "var(--cst-mono)",
+          fontSize: 11,
+          letterSpacing: "0.18em",
+        }}
+      >
         CHARGEMENT…
       </div>
     );
@@ -184,466 +216,939 @@ export default function MemberDashboard() {
 
   // Hero header label: prefer today's real session/planned label
   const headerSubLabel = (
-    inProgress?.session_label
-    ?? todaySession?.session_label
-    ?? todayPlanned?.day_label
-    ?? programName
+    inProgress?.session_label ??
+    todaySession?.session_label ??
+    todayPlanned?.day_label ??
+    programName
   ).toUpperCase();
 
+  const sidebarLinks = [
+    { icon: "🏠", label: "Accueil", path: "/membre" },
+    { icon: "📋", label: "Programme", path: "/membre/programme" },
+    { icon: "📅", label: "Planning", path: "/membre/planning" },
+    { icon: "📖", label: "Carnet", path: "/membre/carnet" },
+    { icon: "📈", label: "Progrès", path: "/membre/progression" },
+    { icon: "🏃", label: "Trail & Run", path: "/membre/running" },
+    { icon: "📚", label: "Bibliothèque", path: "/membre/bibliotheque" },
+    { icon: "💬", label: "Messages", path: "/membre/messages" },
+    { icon: "⚙️", label: "Réglages", path: "/membre/profil" },
+  ];
+
   return (
-    <div style={{ minHeight: "100vh", background: "var(--cst-dark-green)" }}>
-      <div style={{ maxWidth: 480, margin: "0 auto", display: "flex", flexDirection: "column", minHeight: "100vh" }}>
-        <div className="cst-screen cst-hatch" style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+    <div style={{ minHeight: "100vh", background: "var(--cst-dark-green)", display: "flex" }}>
+      <style>{`
+        @media (max-width: 900px) { .member-left-sidebar { display: none !important; } }
+      `}</style>
 
-          {/* Top nav */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "22px 22px 8px" }}>
-            <CSTLogo size={11} />
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <CSTAvatar initials={initials} size={28} />
-              <ThemeToggle variant="icon" />
-              <button
-                onClick={async () => {
-                  await supabase.auth.signOut();
-                  navigate("/login");
-                }}
-                className="cst-mono"
-                style={{
-                  background: "transparent",
-                  border: "1px solid rgba(255,255,255,0.18)",
-                  color: "rgba(255,255,255,0.75)",
-                  padding: "6px 10px",
-                  borderRadius: 6,
-                  fontSize: 9,
-                  letterSpacing: "0.14em",
-                  cursor: "pointer",
-                }}
-                aria-label="Se déconnecter"
-              >
-                DÉCONNEXION
-              </button>
-            </div>
+      {/* ── Sidebar desktop ── */}
+      <aside
+        className="member-left-sidebar"
+        style={{
+          width: 220,
+          minHeight: "100vh",
+          borderRight: "1px solid rgba(255,255,255,0.07)",
+          display: "flex",
+          flexDirection: "column",
+          padding: "24px 14px 24px",
+          gap: 4,
+          position: "sticky",
+          top: 0,
+          flexShrink: 0,
+          background: "var(--cst-dark-green)",
+        }}
+      >
+        {/* Brand */}
+        <div style={{ marginBottom: 20, paddingLeft: 10 }}>
+          <CSTLogo size={10} />
+          <div
+            className="cst-mono"
+            style={{
+              fontSize: 8,
+              color: "rgba(255,255,255,0.3)",
+              marginTop: 4,
+              letterSpacing: "0.18em",
+            }}
+          >
+            L'ESPACE · MEMBRE
           </div>
+        </div>
 
-          <div className="cst-scroll" style={{ flex: 1, padding: "0 22px 90px" }}>
-            {/* Header */}
-            <div style={{ paddingTop: 14 }}>
-              <CSTSectionNum
-                num={1}
-                label={today.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" }).toUpperCase()}
-                sub={headerSubLabel}
-              />
-              <div style={{ marginTop: 14 }}>
-                <h1 className="cst-display" style={{ fontSize: 38, margin: 0 }}>
-                  {today.getHours() < 12 ? "BON MATIN," : today.getHours() < 18 ? "BONNE APRÈS-MIDI," : "BONNE SOIRÉE,"}
-                </h1>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: -2 }}>
-                  <div className="cst-italic" style={{ fontSize: 30 }}>{firstName}.</div>
-                  {streak > 0 && (
-                    <span className="cst-mono" style={{ fontSize: 11, padding: "4px 10px", borderRadius: 999, background: "rgba(245,166,35,0.15)", color: "#F5A623", border: "1px solid rgba(245,166,35,0.35)" }}>
-                      🔥 {streak} SEM
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-
+        {/* Nav items */}
+        {sidebarLinks.map((item) => {
+          const isActive =
+            window.location.pathname === item.path ||
+            (item.path !== "/membre" && window.location.pathname.startsWith(item.path));
+          return (
             <button
-              onClick={() => tsNavigate({ to: "/membre/profil" })}
-              className="cst-mono"
+              key={item.path}
+              onClick={() => navigate(item.path)}
               style={{
-                width: "100%",
-                marginTop: 18,
-                marginBottom: 18,
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "space-between",
-                gap: 12,
-                padding: "16px 18px",
-                borderRadius: 18,
-                border: "1px solid rgba(255,255,255,0.14)",
-                background: "rgba(255,255,255,0.05)",
-                color: "var(--cst-cream)",
+                gap: 10,
+                padding: "10px 12px",
+                borderRadius: 10,
+                border: "none",
+                background: isActive ? "rgba(110,171,118,0.18)" : "transparent",
+                color: isActive ? "var(--cst-mid-green)" : "rgba(255,255,255,0.65)",
                 cursor: "pointer",
-                letterSpacing: "0.14em",
-                fontSize: 10,
+                textAlign: "left",
+                width: "100%",
+                transition: "background 0.15s, color 0.15s",
+              }}
+              onMouseEnter={(e) => {
+                if (!isActive) e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+              }}
+              onMouseLeave={(e) => {
+                if (!isActive) e.currentTarget.style.background = "transparent";
               }}
             >
-              <span>⚙️ RÉGLAGES</span>
-              <span style={{ opacity: 0.6 }}>PLANNING · NOTIFS · STRAVA</span>
+              <span style={{ fontSize: 16, flexShrink: 0 }}>{item.icon}</span>
+              <span className="cst-mono" style={{ fontSize: 11, letterSpacing: "0.1em" }}>
+                {item.label}
+              </span>
+              {isActive && (
+                <span
+                  style={{
+                    marginLeft: "auto",
+                    width: 4,
+                    height: 4,
+                    borderRadius: "50%",
+                    background: "var(--cst-mid-green)",
+                    flexShrink: 0,
+                  }}
+                />
+              )}
             </button>
+          );
+        })}
 
-            {/* Hero session card */}
+        {/* Bottom: avatar + déconnexion */}
+        <div
+          style={{
+            marginTop: "auto",
+            paddingTop: 16,
+            borderTop: "1px solid rgba(255,255,255,0.07)",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              padding: "8px 10px",
+              borderRadius: 10,
+            }}
+          >
+            <CSTAvatar initials={initials} size={30} />
+            <div style={{ minWidth: 0 }}>
+              <div
+                className="cst-mono"
+                style={{
+                  fontSize: 10,
+                  color: "rgba(255,255,255,0.8)",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {firstName} {lastName}
+              </div>
+              <div
+                className="cst-mono"
+                style={{ fontSize: 8, color: "rgba(255,255,255,0.35)", letterSpacing: "0.1em" }}
+              >
+                MEMBRE
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={async () => {
+              await supabase.auth.signOut();
+              navigate("/login");
+            }}
+            className="cst-mono"
+            style={{
+              width: "100%",
+              marginTop: 6,
+              padding: "8px 12px",
+              borderRadius: 8,
+              border: "1px solid rgba(255,255,255,0.1)",
+              background: "transparent",
+              color: "rgba(255,255,255,0.4)",
+              cursor: "pointer",
+              fontSize: 9,
+              letterSpacing: "0.14em",
+              textAlign: "center",
+            }}
+          >
+            DÉCONNEXION
+          </button>
+        </div>
+      </aside>
+
+      {/* ── Main content ── */}
+      <div style={{ flex: 1, display: "flex", justifyContent: "center", minWidth: 0 }}>
+        <div
+          style={{
+            maxWidth: 480,
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            minHeight: "100vh",
+          }}
+        >
+          <div
+            className="cst-screen cst-hatch"
+            style={{ flex: 1, display: "flex", flexDirection: "column" }}
+          >
+            {/* Top nav — masqué sur desktop (géré par la sidebar) */}
             <div
-              className="cst-card-dark cst-hatch"
-              style={{ marginTop: 18, padding: 20, borderColor: "var(--cst-mid-green)", borderWidth: 2 }}
+              className="member-topnav-mobile"
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "22px 22px 8px",
+              }}
             >
-              {inProgress ? (
-                <>
-                  <div className="cst-col" style={{ gap: 2 }}>
-                    <span className="cst-mono" style={{ fontSize: 9, color: "#F5A623" }}>⏱ SÉANCE EN COURS</span>
-                    <div className="cst-display" style={{ fontSize: 22, marginTop: 6 }}>{inProgress.session_label ?? "SÉANCE LIBRE"}</div>
-                  </div>
-                  <div style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "14px 0" }} />
-                  <button
-                    className="cst-btn cst-btn-primary"
-                    style={{ width: "100%" }}
-                    onClick={() => navigate(`/membre/seance/${inProgress.id}`)}
-                  >
-                    REPRENDRE →
-                  </button>
-                </>
-              ) : todaySession?.status === "completed" ? (
-                <>
-                  <span className="cst-mono" style={{ fontSize: 9, color: "var(--cst-mid-green)" }}>✓ SÉANCE DU JOUR TERMINÉE</span>
-                  <div className="cst-display" style={{ fontSize: 20, marginTop: 8 }}>{todaySession.session_label ?? "SÉANCE LIBRE"}</div>
-                  <div style={{ fontSize: 12, opacity: 0.55, marginTop: 4 }}>
-                    {sanitizeDurationMin(todaySession.duration_minutes) ? `${sanitizeDurationMin(todaySession.duration_minutes)} min` : "Durée non enregistrée"}
-                  </div>
-                </>
-              ) : todayPlanned ? (
-                <>
-                  <div className="cst-col" style={{ gap: 2 }}>
-                    <span className="cst-mono" style={{ fontSize: 9, color: "var(--cst-mid-green)" }}>★ AUJOURD'HUI · PLANIFIÉ</span>
-                    <div className="cst-display" style={{ fontSize: 22, marginTop: 6 }}>
-                      {todayPlanned.day_label?.toUpperCase()}
+              <CSTLogo size={11} />
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <CSTAvatar initials={initials} size={28} />
+                <ThemeToggle variant="icon" />
+                <button
+                  onClick={async () => {
+                    await supabase.auth.signOut();
+                    navigate("/login");
+                  }}
+                  className="cst-mono"
+                  style={{
+                    background: "transparent",
+                    border: "1px solid rgba(255,255,255,0.18)",
+                    color: "rgba(255,255,255,0.75)",
+                    padding: "6px 10px",
+                    borderRadius: 6,
+                    fontSize: 9,
+                    letterSpacing: "0.14em",
+                    cursor: "pointer",
+                  }}
+                  aria-label="Se déconnecter"
+                >
+                  DÉCONNEXION
+                </button>
+              </div>
+            </div>
+            <style>{`@media (min-width: 901px) { .member-topnav-mobile { display: none !important; } }`}</style>
+
+            <div className="cst-scroll" style={{ flex: 1, padding: "0 22px 90px" }}>
+              {/* Header */}
+              <div style={{ paddingTop: 14 }}>
+                <CSTSectionNum
+                  num={1}
+                  label={today
+                    .toLocaleDateString("fr-FR", {
+                      weekday: "short",
+                      day: "numeric",
+                      month: "short",
+                    })
+                    .toUpperCase()}
+                  sub={headerSubLabel}
+                />
+                <div style={{ marginTop: 14 }}>
+                  <h1 className="cst-display" style={{ fontSize: 38, margin: 0 }}>
+                    {today.getHours() < 12
+                      ? "BON MATIN,"
+                      : today.getHours() < 18
+                        ? "BONNE APRÈS-MIDI,"
+                        : "BONNE SOIRÉE,"}
+                  </h1>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: -2 }}>
+                    <div className="cst-italic" style={{ fontSize: 30 }}>
+                      {firstName}.
                     </div>
-                  </div>
-                  <div style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "14px 0" }} />
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <button
-                      className="cst-btn cst-btn-primary"
-                      style={{ flex: 1 }}
-                      onClick={() => startSession(todayPlanned.day_label)}
-                    >
-                      COMMENCER →
-                    </button>
-                    {availableDayDefs.length > 0 && (
-                      <button
-                        className="cst-btn cst-btn-ghost-dark"
-                        style={{ fontSize: 10 }}
-                        onClick={() => setChoosing((v) => !v)}
+                    {streak > 0 && (
+                      <span
+                        className="cst-mono"
+                        style={{
+                          fontSize: 11,
+                          padding: "4px 10px",
+                          borderRadius: 999,
+                          background: "rgba(245,166,35,0.15)",
+                          color: "#F5A623",
+                          border: "1px solid rgba(245,166,35,0.35)",
+                        }}
                       >
-                        CHANGER
-                      </button>
+                        🔥 {streak} SEM
+                      </span>
                     )}
                   </div>
-                  {choosing && availableDayDefs.length > 0 && (
-                    <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 6 }}>
-                      <span className="cst-mono" style={{ fontSize: 9, opacity: 0.6 }}>AUTRES SÉANCES DE LA SEMAINE</span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => tsNavigate({ to: "/membre/profil" })}
+                className="cst-mono"
+                style={{
+                  width: "100%",
+                  marginTop: 18,
+                  marginBottom: 18,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 12,
+                  padding: "16px 18px",
+                  borderRadius: 18,
+                  border: "1px solid rgba(255,255,255,0.14)",
+                  background: "rgba(255,255,255,0.05)",
+                  color: "var(--cst-cream)",
+                  cursor: "pointer",
+                  letterSpacing: "0.14em",
+                  fontSize: 10,
+                }}
+              >
+                <span>⚙️ RÉGLAGES</span>
+                <span style={{ opacity: 0.6 }}>PLANNING · NOTIFS · STRAVA</span>
+              </button>
+
+              {/* Hero session card */}
+              <div
+                className="cst-card-dark cst-hatch"
+                style={{
+                  marginTop: 18,
+                  padding: 20,
+                  borderColor: "var(--cst-mid-green)",
+                  borderWidth: 2,
+                }}
+              >
+                {inProgress ? (
+                  <>
+                    <div className="cst-col" style={{ gap: 2 }}>
+                      <span className="cst-mono" style={{ fontSize: 9, color: "#F5A623" }}>
+                        ⏱ SÉANCE EN COURS
+                      </span>
+                      <div className="cst-display" style={{ fontSize: 22, marginTop: 6 }}>
+                        {inProgress.session_label ?? "SÉANCE LIBRE"}
+                      </div>
+                    </div>
+                    <div
+                      style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "14px 0" }}
+                    />
+                    <button
+                      className="cst-btn cst-btn-primary"
+                      style={{ width: "100%" }}
+                      onClick={() => navigate(`/membre/seance/${inProgress.id}`)}
+                    >
+                      REPRENDRE →
+                    </button>
+                  </>
+                ) : todaySession?.status === "completed" ? (
+                  <>
+                    <span
+                      className="cst-mono"
+                      style={{ fontSize: 9, color: "var(--cst-mid-green)" }}
+                    >
+                      ✓ SÉANCE DU JOUR TERMINÉE
+                    </span>
+                    <div className="cst-display" style={{ fontSize: 20, marginTop: 8 }}>
+                      {todaySession.session_label ?? "SÉANCE LIBRE"}
+                    </div>
+                    <div style={{ fontSize: 12, opacity: 0.55, marginTop: 4 }}>
+                      {sanitizeDurationMin(todaySession.duration_minutes)
+                        ? `${sanitizeDurationMin(todaySession.duration_minutes)} min`
+                        : "Durée non enregistrée"}
+                    </div>
+                  </>
+                ) : todayPlanned ? (
+                  <>
+                    <div className="cst-col" style={{ gap: 2 }}>
+                      <span
+                        className="cst-mono"
+                        style={{ fontSize: 9, color: "var(--cst-mid-green)" }}
+                      >
+                        ★ AUJOURD'HUI · PLANIFIÉ
+                      </span>
+                      <div className="cst-display" style={{ fontSize: 22, marginTop: 6 }}>
+                        {todayPlanned.day_label?.toUpperCase()}
+                      </div>
+                    </div>
+                    <div
+                      style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "14px 0" }}
+                    />
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button
+                        className="cst-btn cst-btn-primary"
+                        style={{ flex: 1 }}
+                        onClick={() => startSession(todayPlanned.day_label)}
+                      >
+                        COMMENCER →
+                      </button>
+                      {availableDayDefs.length > 0 && (
+                        <button
+                          className="cst-btn cst-btn-ghost-dark"
+                          style={{ fontSize: 10 }}
+                          onClick={() => setChoosing((v) => !v)}
+                        >
+                          CHANGER
+                        </button>
+                      )}
+                    </div>
+                    {choosing && availableDayDefs.length > 0 && (
+                      <div
+                        style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 6 }}
+                      >
+                        <span className="cst-mono" style={{ fontSize: 9, opacity: 0.6 }}>
+                          AUTRES SÉANCES DE LA SEMAINE
+                        </span>
+                        {availableDayDefs.map((d) => (
+                          <button
+                            key={d.label}
+                            disabled={busy}
+                            onClick={() => chooseAndStart(d)}
+                            className="cst-btn cst-btn-ghost-dark"
+                            style={{
+                              fontSize: 11,
+                              justifyContent: "flex-start",
+                              textAlign: "left",
+                            }}
+                          >
+                            → {d.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                ) : availableDayDefs.length > 0 ? (
+                  <>
+                    <div className="cst-col" style={{ gap: 2 }}>
+                      <span
+                        className="cst-mono"
+                        style={{ fontSize: 9, color: "var(--cst-mid-green)" }}
+                      >
+                        ★ CHOISIR MA SÉANCE
+                      </span>
+                      <div className="cst-display" style={{ fontSize: 18, marginTop: 6 }}>
+                        QUE FAIS-TU AUJOURD'HUI ?
+                      </div>
+                      <div
+                        className="cst-italic"
+                        style={{ fontSize: 13, color: "rgba(255,255,255,0.6)" }}
+                      >
+                        {programName}
+                      </div>
+                    </div>
+                    <div
+                      style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "14px 0" }}
+                    />
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                       {availableDayDefs.map((d) => (
                         <button
                           key={d.label}
                           disabled={busy}
                           onClick={() => chooseAndStart(d)}
-                          className="cst-btn cst-btn-ghost-dark"
-                          style={{ fontSize: 11, justifyContent: "flex-start", textAlign: "left" }}
+                          className="cst-btn cst-btn-primary"
+                          style={{
+                            fontSize: 12,
+                            justifyContent: "space-between",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                            height: "auto",
+                            minHeight: 44,
+                            padding: "10px 16px",
+                          }}
                         >
-                          → {d.label}
+                          <span
+                            style={{
+                              flex: 1,
+                              textAlign: "left",
+                              whiteSpace: "normal",
+                              wordBreak: "break-word",
+                            }}
+                          >
+                            {d.label}
+                          </span>
+                          <span style={{ flexShrink: 0 }}>→</span>
                         </button>
                       ))}
                     </div>
-                  )}
-                </>
-              ) : availableDayDefs.length > 0 ? (
-                <>
-                  <div className="cst-col" style={{ gap: 2 }}>
-                    <span className="cst-mono" style={{ fontSize: 9, color: "var(--cst-mid-green)" }}>★ CHOISIR MA SÉANCE</span>
-                    <div className="cst-display" style={{ fontSize: 18, marginTop: 6 }}>
-                      QUE FAIS-TU AUJOURD'HUI ?
-                    </div>
-                    <div className="cst-italic" style={{ fontSize: 13, color: "rgba(255,255,255,0.6)" }}>
-                      {programName}
-                    </div>
-                  </div>
-                  <div style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "14px 0" }} />
-                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                    {availableDayDefs.map((d) => (
-                      <button
-                        key={d.label}
-                        disabled={busy}
-                        onClick={() => chooseAndStart(d)}
-                        className="cst-btn cst-btn-primary"
-                        style={{ fontSize: 12, justifyContent: "space-between", display: "flex", alignItems: "center", gap: 8, height: "auto", minHeight: 44, padding: "10px 16px" }}
-                      >
-                        <span style={{ flex: 1, textAlign: "left", whiteSpace: "normal", wordBreak: "break-word" }}>{d.label}</span>
-                        <span style={{ flexShrink: 0 }}>→</span>
-                      </button>
-                    ))}
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                    <div className="cst-col" style={{ gap: 2 }}>
-                      <span className="cst-mono" style={{ fontSize: 9, color: "var(--cst-mid-green)" }}>★ AUJOURD'HUI</span>
-                      <div className="cst-display" style={{ fontSize: 22, marginTop: 6 }}>
-                        {assignment ? programName.toUpperCase() : "SÉANCE LIBRE"}
-                      </div>
-                      {assignment?.programs?.description && (
-                        <div className="cst-italic" style={{ fontSize: 14, color: "rgba(255,255,255,0.6)" }}>
-                          {assignment.programs.description}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "14px 0" }} />
-                  <button
-                    className="cst-btn cst-btn-primary"
-                    style={{ width: "100%" }}
-                    onClick={() => navigate(assignment ? "/membre/commencer" : "/membre/composer")}
-                  >
-                    {assignment ? "COMMENCER →" : "CRÉER MA SÉANCE →"}
-                  </button>
-                </>
-              )}
-            </div>
-
-            {/* Retours du coach */}
-            {coachFeedback?.sessions?.length > 0 && (
-              <button
-                onClick={() => navigate("/membre/retours")}
-                style={{ all: "unset", cursor: "pointer", marginTop: 12, padding: 14, display: "flex", alignItems: "center", gap: 12, borderRadius: 10, border: "1px solid rgba(110,171,118,0.45)", background: "rgba(110,171,118,0.1)", width: "100%", boxSizing: "border-box" }}
-              >
-                <span style={{ fontSize: 20 }}>💬</span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <span className="cst-mono" style={{ fontSize: 9, color: "var(--cst-mid-green)", letterSpacing: "0.14em" }}>VOIR LES RETOURS DE LÉO</span>
-                  <div style={{ marginTop: 3, fontSize: 12, color: "rgba(255,255,255,0.75)" }}>
-                    {coachFeedback.sessions.length} séance{coachFeedback.sessions.length > 1 ? "s" : ""} commentée{coachFeedback.sessions.length > 1 ? "s" : ""}
-                  </div>
-                </div>
-                {coachFeedback.unseenCount > 0 && (
-                  <span className="cst-mono" style={{ fontSize: 9, padding: "3px 8px", borderRadius: 999, background: "var(--cst-mid-green)", color: "#fff", letterSpacing: "0.1em", flexShrink: 0 }}>
-                    {coachFeedback.unseenCount} NOUVEAU{coachFeedback.unseenCount > 1 ? "X" : ""}
-                  </span>
-                )}
-                <span style={{ opacity: 0.5, flexShrink: 0 }}>→</span>
-              </button>
-            )}
-
-            <button
-              className="cst-btn cst-btn-ghost-dark"
-              onClick={() => navigate("/membre/commencer")}
-              style={{ width: "100%", marginTop: 10, fontSize: 11 }}
-            >
-              CHOISIR UNE AUTRE SÉANCE →
-            </button>
-
-            <button
-              className="cst-btn cst-btn-ghost-dark"
-              onClick={() => navigate("/membre/composer")}
-              style={{ width: "100%", marginTop: 8, fontSize: 11 }}
-            >
-              ✏️ CRÉER MA SÉANCE →
-            </button>
-
-            <button
-              className="cst-btn cst-btn-ghost-dark"
-              onClick={() => navigate("/membre/bibliotheque")}
-              style={{ width: "100%", marginTop: 8, fontSize: 11 }}
-            >
-              📚 BIBLIOTHÈQUE D'EXERCICES →
-            </button>
-
-
-
-            {/* Week strip */}
-            <div style={{ marginTop: 22 }}>
-              <CSTSectionNum num={2} label="MA SEMAINE" sub={`${doneSessions} / ${plannedPerWeek} SÉANCES`} />
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: 6, marginTop: 12 }}>
-                {weekDates.map((date, i) => {
-                  const daySessions = weekSessions.filter((s) => s.date === date);
-                  // Séance « principale » pour l'icône : en cours > terminée > 1re.
-                  // (Avant : .find() masquait les séances multiples d'un même jour,
-                  // ex. renfo + course → une seule visible.)
-                  const sess = daySessions.find((s) => s.status === "in_progress")
-                    ?? daySessions.find((s) => s.status === "completed")
-                    ?? daySessions[0]
-                    ?? null;
-                  const extraCount = daySessions.length > 1 ? daySessions.length - 1 : 0;
-                  const planned = plannedByDate.get(date);
-                  const isToday = date === todayISO;
-                  const isDone = sess?.status === "completed";
-                  const isInProgress = sess?.status === "in_progress";
-                  const label = sess?.session_label ?? planned?.day_label ?? null;
-                  const clickable = !!(sess || planned);
-                  return (
+                  </>
+                ) : (
+                  <>
                     <div
-                      key={date}
                       style={{
-                        padding: "10px 4px",
-                        minWidth: 0,
-                        overflow: "hidden",
-                        textAlign: "center",
-                        borderRadius: 8,
-                        background: isToday ? "var(--cst-mid-green)" : "rgba(255,255,255,0.03)",
-                        border: isToday ? "none" : "1px solid rgba(255,255,255,0.06)",
-                        cursor: clickable ? "pointer" : "default",
-                      }}
-                      onClick={() => {
-                        if (isInProgress) navigate(`/membre/seance/${sess.id}`);
-                        else if (isDone) navigate("/membre/historique");
-                        else if (planned && isToday) startSession(planned.day_label);
-                        else if (planned || sess) navigate("/membre/planning");
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "flex-start",
                       }}
                     >
-                      <div className="cst-mono" style={{ fontSize: 8, color: isToday ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.45)" }}>
-                        {dayLabels[i]}
-                      </div>
-                      <div style={{ marginTop: 6, fontSize: 14, color: isToday ? "#fff" : isDone ? "var(--cst-mid-green)" : isInProgress ? "#F5A623" : planned ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.5)" }}>
-                        {isDone ? "✓" : isInProgress ? "⏱" : planned ? "●" : isToday ? "●" : "○"}
-                      </div>
-                      {extraCount > 0 && (
-                        <div className="cst-mono" style={{ fontSize: 7, marginTop: 1, color: isToday ? "rgba(255,255,255,0.9)" : "var(--cst-mid-green)" }} title={`${daySessions.length} séances ce jour`}>
-                          +{extraCount}
+                      <div className="cst-col" style={{ gap: 2 }}>
+                        <span
+                          className="cst-mono"
+                          style={{ fontSize: 9, color: "var(--cst-mid-green)" }}
+                        >
+                          ★ AUJOURD'HUI
+                        </span>
+                        <div className="cst-display" style={{ fontSize: 22, marginTop: 6 }}>
+                          {assignment ? programName.toUpperCase() : "SÉANCE LIBRE"}
                         </div>
-                      )}
-                      {label && (
+                        {assignment?.programs?.description && (
+                          <div
+                            className="cst-italic"
+                            style={{ fontSize: 14, color: "rgba(255,255,255,0.6)" }}
+                          >
+                            {assignment.programs.description}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div
+                      style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "14px 0" }}
+                    />
+                    <button
+                      className="cst-btn cst-btn-primary"
+                      style={{ width: "100%" }}
+                      onClick={() =>
+                        navigate(assignment ? "/membre/commencer" : "/membre/composer")
+                      }
+                    >
+                      {assignment ? "COMMENCER →" : "CRÉER MA SÉANCE →"}
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {/* Retours du coach */}
+              {coachFeedback?.sessions?.length > 0 && (
+                <button
+                  onClick={() => navigate("/membre/retours")}
+                  style={{
+                    all: "unset",
+                    cursor: "pointer",
+                    marginTop: 12,
+                    padding: 14,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    borderRadius: 10,
+                    border: "1px solid rgba(110,171,118,0.45)",
+                    background: "rgba(110,171,118,0.1)",
+                    width: "100%",
+                    boxSizing: "border-box",
+                  }}
+                >
+                  <span style={{ fontSize: 20 }}>💬</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <span
+                      className="cst-mono"
+                      style={{
+                        fontSize: 9,
+                        color: "var(--cst-mid-green)",
+                        letterSpacing: "0.14em",
+                      }}
+                    >
+                      VOIR LES RETOURS DE LÉO
+                    </span>
+                    <div style={{ marginTop: 3, fontSize: 12, color: "rgba(255,255,255,0.75)" }}>
+                      {coachFeedback.sessions.length} séance
+                      {coachFeedback.sessions.length > 1 ? "s" : ""} commentée
+                      {coachFeedback.sessions.length > 1 ? "s" : ""}
+                    </div>
+                  </div>
+                  {coachFeedback.unseenCount > 0 && (
+                    <span
+                      className="cst-mono"
+                      style={{
+                        fontSize: 9,
+                        padding: "3px 8px",
+                        borderRadius: 999,
+                        background: "var(--cst-mid-green)",
+                        color: "#fff",
+                        letterSpacing: "0.1em",
+                        flexShrink: 0,
+                      }}
+                    >
+                      {coachFeedback.unseenCount} NOUVEAU{coachFeedback.unseenCount > 1 ? "X" : ""}
+                    </span>
+                  )}
+                  <span style={{ opacity: 0.5, flexShrink: 0 }}>→</span>
+                </button>
+              )}
+
+              <button
+                className="cst-btn cst-btn-ghost-dark"
+                onClick={() => navigate("/membre/commencer")}
+                style={{ width: "100%", marginTop: 10, fontSize: 11 }}
+              >
+                CHOISIR UNE AUTRE SÉANCE →
+              </button>
+
+              <button
+                className="cst-btn cst-btn-ghost-dark"
+                onClick={() => navigate("/membre/composer")}
+                style={{ width: "100%", marginTop: 8, fontSize: 11 }}
+              >
+                ✏️ CRÉER MA SÉANCE →
+              </button>
+
+              <button
+                className="cst-btn cst-btn-ghost-dark"
+                onClick={() => navigate("/membre/bibliotheque")}
+                style={{ width: "100%", marginTop: 8, fontSize: 11 }}
+              >
+                📚 BIBLIOTHÈQUE D'EXERCICES →
+              </button>
+
+              {/* Week strip */}
+              <div style={{ marginTop: 22 }}>
+                <CSTSectionNum
+                  num={2}
+                  label="MA SEMAINE"
+                  sub={`${doneSessions} / ${plannedPerWeek} SÉANCES`}
+                />
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
+                    gap: 6,
+                    marginTop: 12,
+                  }}
+                >
+                  {weekDates.map((date, i) => {
+                    const daySessions = weekSessions.filter((s) => s.date === date);
+                    // Séance « principale » pour l'icône : en cours > terminée > 1re.
+                    // (Avant : .find() masquait les séances multiples d'un même jour,
+                    // ex. renfo + course → une seule visible.)
+                    const sess =
+                      daySessions.find((s) => s.status === "in_progress") ??
+                      daySessions.find((s) => s.status === "completed") ??
+                      daySessions[0] ??
+                      null;
+                    const extraCount = daySessions.length > 1 ? daySessions.length - 1 : 0;
+                    const planned = plannedByDate.get(date);
+                    const isToday = date === todayISO;
+                    const isDone = sess?.status === "completed";
+                    const isInProgress = sess?.status === "in_progress";
+                    const label = sess?.session_label ?? planned?.day_label ?? null;
+                    const clickable = !!(sess || planned);
+                    return (
+                      <div
+                        key={date}
+                        style={{
+                          padding: "10px 4px",
+                          minWidth: 0,
+                          overflow: "hidden",
+                          textAlign: "center",
+                          borderRadius: 8,
+                          background: isToday ? "var(--cst-mid-green)" : "rgba(255,255,255,0.03)",
+                          border: isToday ? "none" : "1px solid rgba(255,255,255,0.06)",
+                          cursor: clickable ? "pointer" : "default",
+                        }}
+                        onClick={() => {
+                          if (isInProgress) navigate(`/membre/seance/${sess.id}`);
+                          else if (isDone) navigate("/membre/historique");
+                          else if (planned && isToday) startSession(planned.day_label);
+                          else if (planned || sess) navigate("/membre/planning");
+                        }}
+                      >
                         <div
                           className="cst-mono"
                           style={{
-                            marginTop: 4,
-                            fontSize: 7,
-                            lineHeight: 1.1,
-                            color: isToday ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.55)",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
+                            fontSize: 8,
+                            color: isToday ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.45)",
                           }}
-                          title={label}
                         >
-                          {label}
+                          {dayLabels[i]}
                         </div>
+                        <div
+                          style={{
+                            marginTop: 6,
+                            fontSize: 14,
+                            color: isToday
+                              ? "#fff"
+                              : isDone
+                                ? "var(--cst-mid-green)"
+                                : isInProgress
+                                  ? "#F5A623"
+                                  : planned
+                                    ? "rgba(255,255,255,0.85)"
+                                    : "rgba(255,255,255,0.5)",
+                          }}
+                        >
+                          {isDone ? "✓" : isInProgress ? "⏱" : planned ? "●" : isToday ? "●" : "○"}
+                        </div>
+                        {extraCount > 0 && (
+                          <div
+                            className="cst-mono"
+                            style={{
+                              fontSize: 7,
+                              marginTop: 1,
+                              color: isToday ? "rgba(255,255,255,0.9)" : "var(--cst-mid-green)",
+                            }}
+                            title={`${daySessions.length} séances ce jour`}
+                          >
+                            +{extraCount}
+                          </div>
+                        )}
+                        {label && (
+                          <div
+                            className="cst-mono"
+                            style={{
+                              marginTop: 4,
+                              fontSize: 7,
+                              lineHeight: 1.1,
+                              color: isToday ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.55)",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                            title={label}
+                          >
+                            {label}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Stats */}
+              <div
+                style={{
+                  marginTop: 18,
+                  display: "grid",
+                  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                  gap: 8,
+                }}
+              >
+                <div className="cst-card-dark" style={{ padding: 14 }}>
+                  <span className="cst-mono" style={{ fontSize: 9 }}>
+                    ADHÉRENCE · SEMAINE
+                  </span>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginTop: 6 }}>
+                    <span className="cst-display" style={{ fontSize: 28 }}>
+                      {doneSessions}
+                      <span style={{ opacity: 0.4 }}>/{plannedPerWeek}</span>
+                    </span>
+                    <span
+                      className="cst-mono"
+                      style={{ fontSize: 10, color: "var(--cst-mid-green)" }}
+                    >
+                      {adherencePct}%
+                    </span>
+                  </div>
+                </div>
+                <div className="cst-card-dark" style={{ padding: 14 }}>
+                  <span className="cst-mono" style={{ fontSize: 9 }}>
+                    DERNIER PR
+                  </span>
+                  {lastPR ? (
+                    <>
+                      <div
+                        className="cst-display"
+                        style={{ fontSize: 16, marginTop: 6, lineHeight: 1.2 }}
+                      >
+                        {lastPR.exercise_name?.toUpperCase() ?? "—"}
+                      </div>
+                      <div
+                        className="cst-mono"
+                        style={{ fontSize: 10, color: "var(--cst-mid-green)", marginTop: 2 }}
+                      >
+                        {lastPR.weight_kg != null
+                          ? `${lastPR.weight_kg}KG`
+                          : lastPR.reps != null
+                            ? `${lastPR.reps} REPS`
+                            : "—"}
+                      </div>
+                      {lastPR.date && (
+                        <span className="cst-mono" style={{ fontSize: 9, opacity: 0.55 }}>
+                          {new Date(lastPR.date).toLocaleDateString("fr-FR")}
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    <div style={{ fontSize: 12, opacity: 0.45, marginTop: 8 }}>Aucun PR encore</div>
+                  )}
+                </div>
+              </div>
+
+              {/* Weight card */}
+              <div
+                className="cst-card-dark"
+                style={{
+                  marginTop: 14,
+                  padding: 14,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: 12,
+                }}
+              >
+                <div className="cst-col" style={{ gap: 2 }}>
+                  <span className="cst-mono" style={{ fontSize: 9 }}>
+                    POIDS DU CORPS
+                  </span>
+                  {currentWeight != null ? (
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                      <span className="cst-display" style={{ fontSize: 24 }}>
+                        {currentWeight} <span style={{ fontSize: 12, opacity: 0.5 }}>KG</span>
+                      </span>
+                      {weightDelta != null && weightDelta !== 0 && (
+                        <span
+                          className="cst-mono"
+                          style={{
+                            fontSize: 10,
+                            color: weightDelta < 0 ? "var(--cst-mid-green)" : "#F5A623",
+                          }}
+                        >
+                          {weightDelta > 0 ? "▲" : "▼"} {Math.abs(weightDelta).toFixed(1)} KG
+                        </span>
                       )}
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Stats */}
-            <div style={{ marginTop: 18, display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8 }}>
-              <div className="cst-card-dark" style={{ padding: 14 }}>
-                <span className="cst-mono" style={{ fontSize: 9 }}>ADHÉRENCE · SEMAINE</span>
-                <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginTop: 6 }}>
-                  <span className="cst-display" style={{ fontSize: 28 }}>
-                    {doneSessions}<span style={{ opacity: 0.4 }}>/{plannedPerWeek}</span>
-                  </span>
-                  <span className="cst-mono" style={{ fontSize: 10, color: "var(--cst-mid-green)" }}>
-                    {adherencePct}%
-                  </span>
+                  ) : (
+                    <div style={{ fontSize: 12, opacity: 0.5 }}>Pas encore noté</div>
+                  )}
                 </div>
+                <button
+                  className="cst-btn cst-btn-ghost-dark"
+                  style={{ fontSize: 10 }}
+                  onClick={() => setWeightOpen(true)}
+                >
+                  + NOTER
+                </button>
               </div>
-              <div className="cst-card-dark" style={{ padding: 14 }}>
-                <span className="cst-mono" style={{ fontSize: 9 }}>DERNIER PR</span>
-                {lastPR ? (
-                  <>
-                    <div className="cst-display" style={{ fontSize: 16, marginTop: 6, lineHeight: 1.2 }}>
-                      {lastPR.exercise_name?.toUpperCase() ?? "—"}
-                    </div>
-                    <div className="cst-mono" style={{ fontSize: 10, color: "var(--cst-mid-green)", marginTop: 2 }}>
-                      {lastPR.weight_kg != null ? `${lastPR.weight_kg}KG` : lastPR.reps != null ? `${lastPR.reps} REPS` : "—"}
-                    </div>
-                    {lastPR.date && (
-                      <span className="cst-mono" style={{ fontSize: 9, opacity: 0.55 }}>
-                        {new Date(lastPR.date).toLocaleDateString("fr-FR")}
-                      </span>
-                    )}
-                  </>
-                ) : (
-                  <div style={{ fontSize: 12, opacity: 0.45, marginTop: 8 }}>Aucun PR encore</div>
-                )}
-              </div>
-            </div>
 
-            {/* Weight card */}
-            <div className="cst-card-dark" style={{ marginTop: 14, padding: 14, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-              <div className="cst-col" style={{ gap: 2 }}>
-                <span className="cst-mono" style={{ fontSize: 9 }}>POIDS DU CORPS</span>
-                {currentWeight != null ? (
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                    <span className="cst-display" style={{ fontSize: 24 }}>{currentWeight} <span style={{ fontSize: 12, opacity: 0.5 }}>KG</span></span>
-                    {weightDelta != null && weightDelta !== 0 && (
-                      <span className="cst-mono" style={{ fontSize: 10, color: weightDelta < 0 ? "var(--cst-mid-green)" : "#F5A623" }}>
-                        {weightDelta > 0 ? "▲" : "▼"} {Math.abs(weightDelta).toFixed(1)} KG
-                      </span>
-                    )}
+              {/* Coach message */}
+              {coachMessage?.content && (
+                <button
+                  onClick={() => navigate("/membre/messages")}
+                  style={{
+                    all: "unset",
+                    cursor: "pointer",
+                    marginTop: 14,
+                    padding: 14,
+                    display: "block",
+                    borderRadius: 10,
+                    border: "1px solid rgba(110,171,118,0.35)",
+                    background: "rgba(110,171,118,0.08)",
+                    width: "100%",
+                    boxSizing: "border-box",
+                  }}
+                >
+                  <span className="cst-mono" style={{ fontSize: 9, color: "var(--cst-mid-green)" }}>
+                    💬 MESSAGE COACH
+                  </span>
+                  <div
+                    style={{
+                      marginTop: 6,
+                      fontSize: 13,
+                      lineHeight: 1.4,
+                      color: "rgba(255,255,255,0.85)",
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                    }}
+                  >
+                    {coachMessage.content}
                   </div>
-                ) : (
-                  <div style={{ fontSize: 12, opacity: 0.5 }}>Pas encore noté</div>
-                )}
-              </div>
-              <button className="cst-btn cst-btn-ghost-dark" style={{ fontSize: 10 }} onClick={() => setWeightOpen(true)}>
-                + NOTER
-              </button>
-            </div>
+                </button>
+              )}
 
-            {/* Coach message */}
-            {coachMessage?.content && (
+              {/* Communauté : simple porte d'entrée, le fil vit sur sa propre page */}
               <button
-                onClick={() => navigate("/membre/messages")}
-                style={{ all: "unset", cursor: "pointer", marginTop: 14, padding: 14, display: "block", borderRadius: 10, border: "1px solid rgba(110,171,118,0.35)", background: "rgba(110,171,118,0.08)", width: "100%", boxSizing: "border-box" }}
+                onClick={() => navigate("/membre/communaute")}
+                style={{
+                  all: "unset",
+                  cursor: "pointer",
+                  marginTop: 14,
+                  padding: 16,
+                  display: "block",
+                  borderRadius: 10,
+                  border: "1px solid rgba(255,255,255,0.10)",
+                  background: "rgba(255,255,255,0.03)",
+                  width: "100%",
+                  boxSizing: "border-box",
+                }}
               >
-                <span className="cst-mono" style={{ fontSize: 9, color: "var(--cst-mid-green)" }}>💬 MESSAGE COACH</span>
-                <div style={{ marginTop: 6, fontSize: 13, lineHeight: 1.4, color: "rgba(255,255,255,0.85)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                  {coachMessage.content}
+                <span
+                  className="cst-mono"
+                  style={{ fontSize: 9, letterSpacing: "0.18em", opacity: 0.55 }}
+                >
+                  COMMUNAUTÉ
+                </span>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 12,
+                    marginTop: 6,
+                  }}
+                >
+                  <span style={{ fontSize: 14, lineHeight: 1.4 }}>
+                    Vois ce que font les autres coachés, et envoie-leur un cololike
+                  </span>
+                  <span
+                    className="cst-display"
+                    style={{ fontSize: 16, color: "var(--cst-mid-green)" }}
+                  >
+                    →
+                  </span>
                 </div>
               </button>
-            )}
 
-            {/* Communauté : simple porte d'entrée, le fil vit sur sa propre page */}
-            <button
-              onClick={() => navigate("/membre/communaute")}
-              style={{ all: "unset", cursor: "pointer", marginTop: 14, padding: 16, display: "block", borderRadius: 10, border: "1px solid rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.03)", width: "100%", boxSizing: "border-box" }}
-            >
-              <span className="cst-mono" style={{ fontSize: 9, letterSpacing: "0.18em", opacity: 0.55 }}>COMMUNAUTÉ</span>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginTop: 6 }}>
-                <span style={{ fontSize: 14, lineHeight: 1.4 }}>
-                  Vois ce que font les autres coachés, et envoie-leur un cololike
-                </span>
-                <span className="cst-display" style={{ fontSize: 16, color: "var(--cst-mid-green)" }}>→</span>
+              {/* Quick links */}
+              <div
+                style={{
+                  marginTop: 14,
+                  display: "grid",
+                  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                  gap: 8,
+                }}
+              >
+                <button
+                  className="cst-btn cst-btn-ghost-dark"
+                  onClick={() => navigate("/membre/programme")}
+                  style={{ fontSize: 11 }}
+                >
+                  MON PROGRAMME →
+                </button>
+                <button
+                  className="cst-btn cst-btn-ghost-dark"
+                  onClick={() => navigate("/membre/carnet")}
+                  style={{ fontSize: 11 }}
+                >
+                  MON CARNET →
+                </button>
+                <button
+                  className="cst-btn cst-btn-ghost-dark"
+                  onClick={() => navigate("/membre/planning")}
+                  style={{ fontSize: 11 }}
+                >
+                  PLANNING →
+                </button>
+                <button
+                  className="cst-btn cst-btn-ghost-dark"
+                  onClick={() => navigate("/membre/historique")}
+                  style={{ fontSize: 11 }}
+                >
+                  HISTORIQUE →
+                </button>
               </div>
-            </button>
-
-            {/* Quick links */}
-            <div style={{ marginTop: 14, display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8 }}>
-              <button
-                className="cst-btn cst-btn-ghost-dark"
-                onClick={() => navigate("/membre/programme")}
-                style={{ fontSize: 11 }}
-              >
-                MON PROGRAMME →
-              </button>
-              <button
-                className="cst-btn cst-btn-ghost-dark"
-                onClick={() => navigate("/membre/carnet")}
-                style={{ fontSize: 11 }}
-              >
-                MON CARNET →
-              </button>
-              <button
-                className="cst-btn cst-btn-ghost-dark"
-                onClick={() => navigate("/membre/planning")}
-                style={{ fontSize: 11 }}
-              >
-                PLANNING →
-              </button>
-              <button
-                className="cst-btn cst-btn-ghost-dark"
-                onClick={() => navigate("/membre/historique")}
-                style={{ fontSize: 11 }}
-              >
-                HISTORIQUE →
-              </button>
             </div>
-          </div>
 
-          <MemberNav />
+            <MemberNav />
+          </div>
         </div>
       </div>
 
       <WeightLogDialog
         open={weightOpen}
-        onOpenChange={(o) => { setWeightOpen(o); if (!o) setWeightRefresh((n) => n + 1); }}
+        onOpenChange={(o) => {
+          setWeightOpen(o);
+          if (!o) setWeightRefresh((n) => n + 1);
+        }}
       />
     </div>
   );
