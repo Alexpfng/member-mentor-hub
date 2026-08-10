@@ -19,6 +19,7 @@ import { Route as AuthenticatedMembreIndexRouteImport } from './routes/_authenti
 import { Route as AuthenticatedCoachIndexRouteImport } from './routes/_authenticated.coach.index'
 import { Route as ApiStravaWebhookRouteImport } from './routes/api/strava/webhook'
 import { Route as ApiStravaCallbackRouteImport } from './routes/api/strava/callback'
+import { Route as AuthenticatedMembreRunningRouteImport } from './routes/_authenticated.membre.running'
 import { Route as AuthenticatedMembreRetoursRouteImport } from './routes/_authenticated.membre.retours'
 import { Route as AuthenticatedMembreProgressionRouteImport } from './routes/_authenticated.membre.progression'
 import { Route as AuthenticatedMembreProgrammeRouteImport } from './routes/_authenticated.membre.programme'
@@ -110,6 +111,12 @@ const ApiStravaCallbackRoute = ApiStravaCallbackRouteImport.update({
   path: '/api/strava/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedMembreRunningRoute =
+  AuthenticatedMembreRunningRouteImport.update({
+    id: '/membre/running',
+    path: '/membre/running',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedMembreRetoursRoute =
   AuthenticatedMembreRetoursRouteImport.update({
     id: '/membre/retours',
@@ -380,6 +387,7 @@ export interface FileRoutesByFullPath {
   '/membre/programme': typeof AuthenticatedMembreProgrammeRoute
   '/membre/progression': typeof AuthenticatedMembreProgressionRoute
   '/membre/retours': typeof AuthenticatedMembreRetoursRoute
+  '/membre/running': typeof AuthenticatedMembreRunningRoute
   '/api/strava/callback': typeof ApiStravaCallbackRoute
   '/api/strava/webhook': typeof ApiStravaWebhookRoute
   '/coach/': typeof AuthenticatedCoachIndexRoute
@@ -429,6 +437,7 @@ export interface FileRoutesByTo {
   '/membre/programme': typeof AuthenticatedMembreProgrammeRoute
   '/membre/progression': typeof AuthenticatedMembreProgressionRoute
   '/membre/retours': typeof AuthenticatedMembreRetoursRoute
+  '/membre/running': typeof AuthenticatedMembreRunningRoute
   '/api/strava/callback': typeof ApiStravaCallbackRoute
   '/api/strava/webhook': typeof ApiStravaWebhookRoute
   '/coach': typeof AuthenticatedCoachIndexRoute
@@ -481,6 +490,7 @@ export interface FileRoutesById {
   '/_authenticated/membre/programme': typeof AuthenticatedMembreProgrammeRoute
   '/_authenticated/membre/progression': typeof AuthenticatedMembreProgressionRoute
   '/_authenticated/membre/retours': typeof AuthenticatedMembreRetoursRoute
+  '/_authenticated/membre/running': typeof AuthenticatedMembreRunningRoute
   '/api/strava/callback': typeof ApiStravaCallbackRoute
   '/api/strava/webhook': typeof ApiStravaWebhookRoute
   '/_authenticated/coach/': typeof AuthenticatedCoachIndexRoute
@@ -534,6 +544,7 @@ export interface FileRouteTypes {
     | '/membre/programme'
     | '/membre/progression'
     | '/membre/retours'
+    | '/membre/running'
     | '/api/strava/callback'
     | '/api/strava/webhook'
     | '/coach/'
@@ -583,6 +594,7 @@ export interface FileRouteTypes {
     | '/membre/programme'
     | '/membre/progression'
     | '/membre/retours'
+    | '/membre/running'
     | '/api/strava/callback'
     | '/api/strava/webhook'
     | '/coach'
@@ -634,6 +646,7 @@ export interface FileRouteTypes {
     | '/_authenticated/membre/programme'
     | '/_authenticated/membre/progression'
     | '/_authenticated/membre/retours'
+    | '/_authenticated/membre/running'
     | '/api/strava/callback'
     | '/api/strava/webhook'
     | '/_authenticated/coach/'
@@ -741,6 +754,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/strava/callback'
       preLoaderRoute: typeof ApiStravaCallbackRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/membre/running': {
+      id: '/_authenticated/membre/running'
+      path: '/membre/running'
+      fullPath: '/membre/running'
+      preLoaderRoute: typeof AuthenticatedMembreRunningRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/membre/retours': {
       id: '/_authenticated/membre/retours'
@@ -1116,6 +1136,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedMembreProgrammeRoute: typeof AuthenticatedMembreProgrammeRoute
   AuthenticatedMembreProgressionRoute: typeof AuthenticatedMembreProgressionRoute
   AuthenticatedMembreRetoursRoute: typeof AuthenticatedMembreRetoursRoute
+  AuthenticatedMembreRunningRoute: typeof AuthenticatedMembreRunningRoute
   AuthenticatedCoachIndexRoute: typeof AuthenticatedCoachIndexRoute
   AuthenticatedMembreIndexRoute: typeof AuthenticatedMembreIndexRoute
   AuthenticatedCoachMembreMemberIdRoute: typeof AuthenticatedCoachMembreMemberIdRouteWithChildren
@@ -1151,6 +1172,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedMembreProgrammeRoute: AuthenticatedMembreProgrammeRoute,
   AuthenticatedMembreProgressionRoute: AuthenticatedMembreProgressionRoute,
   AuthenticatedMembreRetoursRoute: AuthenticatedMembreRetoursRoute,
+  AuthenticatedMembreRunningRoute: AuthenticatedMembreRunningRoute,
   AuthenticatedCoachIndexRoute: AuthenticatedCoachIndexRoute,
   AuthenticatedMembreIndexRoute: AuthenticatedMembreIndexRoute,
   AuthenticatedCoachMembreMemberIdRoute:
@@ -1184,3 +1206,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
