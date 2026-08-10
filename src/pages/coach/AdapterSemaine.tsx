@@ -492,6 +492,39 @@ function ExoEditModal({
           </div>
         )}
 
+        <div style={{ marginBottom: 12 }}>
+          {field(
+            "CODE (superset)",
+            <input
+              value={ex.code ?? ""}
+              onChange={(e) => {
+                // Le superset se pilote par la lettre du code : deux exercices d'une même
+                // séance qui partagent la lettre (B1, B2…) sont enchaînés. On garde donc ce
+                // champ éditable pour que le coach puisse créer / corriger un enchaînement
+                // sans passer par un import. Majuscule + sans espace pour rester canonique.
+                const raw = e.target.value.toUpperCase().replace(/\s+/g, "");
+                onChange((x) => ({ ...x, code: raw || null }));
+              }}
+              placeholder="ex. B1"
+              className="cst-input"
+              style={{ maxWidth: 120 }}
+            />,
+          )}
+          <div
+            className="cst-mono"
+            style={{
+              fontSize: 9,
+              opacity: 0.5,
+              marginTop: 5,
+              letterSpacing: "0.06em",
+              lineHeight: 1.4,
+            }}
+          >
+            Même lettre = superset : donne « B1 » et « B2 » à deux exercices pour les enchaîner.
+            Laisse vide pour un exercice seul.
+          </div>
+        </div>
+
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
           {ex.block_type === "emom"
             ? field(
