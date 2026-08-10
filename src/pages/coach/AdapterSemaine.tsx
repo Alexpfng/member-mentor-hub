@@ -533,7 +533,7 @@ function ExoEditModal({
             />,
           )}
           {field(
-            "RPE / CONSIGNE",
+            "RPE CIBLE",
             <input
               inputMode="text"
               placeholder="ex. 8,5 ou échec"
@@ -1279,15 +1279,16 @@ export default function AdapterSemaine() {
                   const rpeComment = parsedRpe.comment;
                   const rpeConsigne = parsedRpe.consigne;
                   const memberRpeValue = fb?.rpe ?? null;
-                  const memberRpeDisplay = memberRpeValue != null ? formatRpeValue(memberRpeValue) : null;
+                  const memberRpeDisplay =
+                    memberRpeValue != null ? formatRpeValue(memberRpeValue) : null;
                   const badgeShowsMemberRpe = memberRpeDisplay != null && memberRpeValue != null;
                   const badgeLabel = badgeShowsMemberRpe
                     ? `RPE ${memberRpeDisplay}`
                     : rpeIsNumeric
-                      ? `RPE ${rpeDisplay}`
+                      ? `CIBLE ${rpeDisplay}`
                       : rpeIsFailure
                         ? "ÉCHEC"
-                        : "RPE —";
+                        : "RPE CIBLE";
                   const badgeColor = badgeShowsMemberRpe
                     ? (memberRpeValue ?? 0) >= 9
                       ? "#C0392B"
@@ -1460,7 +1461,9 @@ export default function AdapterSemaine() {
                                 type="button"
                                 onClick={(event) => {
                                   event.stopPropagation();
-                                  const rect = (event.currentTarget as HTMLButtonElement).getBoundingClientRect();
+                                  const rect = (
+                                    event.currentTarget as HTMLButtonElement
+                                  ).getBoundingClientRect();
                                   const side = getQuickRpePopoverPlacement({
                                     anchorTop: rect.top,
                                     anchorBottom: rect.bottom,
@@ -1490,7 +1493,7 @@ export default function AdapterSemaine() {
                                 title={
                                   badgeShowsMemberRpe
                                     ? `RPE réel du coaché · S${ctx.sourceSummary.weekNumber ?? "?"}`
-                                    : rpeConsigne ?? "Modifier le RPE"
+                                    : (rpeConsigne ?? "Modifier le RPE")
                                 }
                                 style={{
                                   fontSize: 10,
@@ -1524,9 +1527,7 @@ export default function AdapterSemaine() {
                                     top: quickRpeTarget.top,
                                     left: quickRpeTarget.left,
                                     transform:
-                                      quickRpeTarget.side === "top"
-                                        ? "translateY(-100%)"
-                                        : "none",
+                                      quickRpeTarget.side === "top" ? "translateY(-100%)" : "none",
                                     zIndex: 300,
                                     width: QUICK_RPE_POPOVER_WIDTH,
                                     padding: 8,

@@ -28,7 +28,7 @@ export default function MembersTable() {
     setBusy(memberId);
     setMenuOpen(null);
     try {
-      await toggleFn({ data: { memberId, archive: !isArchived } });
+      await toggleFn({ data: { member_id: memberId } });
       toast.success(isArchived ? "Compte réactivé" : "Compte archivé");
       qc.invalidateQueries({ queryKey: ["coach", "members-overview"] });
     } catch {
@@ -48,7 +48,7 @@ export default function MembersTable() {
       return;
     setBusy(memberId);
     try {
-      await deleteFn({ data: { memberId } });
+      await deleteFn({ data: { member_id: memberId } });
       toast.success("Compte supprimé");
       qc.invalidateQueries({ queryKey: ["coach", "members-overview"] });
     } catch {
@@ -178,7 +178,7 @@ export default function MembersTable() {
                       width: 10,
                       height: 10,
                       borderRadius: "50%",
-                      background: isArchived ? "rgba(255,255,255,0.2)" : dot,
+                      background: isArchived ? "rgba(128,128,128,0.4)" : dot,
                     }}
                   />
                 </td>
@@ -214,7 +214,7 @@ export default function MembersTable() {
                   style={{
                     padding: "12px 12px",
                     fontSize: 12,
-                    color: isArchived ? "rgba(255,255,255,0.3)" : dot,
+                    color: isArchived ? "rgba(128,128,128,0.6)" : dot,
                   }}
                 >
                   {isArchived ? "Archivé" : r.statusLabel}
@@ -237,10 +237,7 @@ export default function MembersTable() {
                         navigate({
                           to: "/coach/membre/$memberId/adapter",
                           params: { memberId: r.memberId },
-                          search:
-                            r.currentWeek != null
-                              ? { week: r.currentWeek + 1 }
-                              : {},
+                          search: r.currentWeek != null ? { week: r.currentWeek + 1 } : {},
                         })
                       }
                     >
