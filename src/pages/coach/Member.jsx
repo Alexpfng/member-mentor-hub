@@ -244,6 +244,7 @@ import {
   toggleMemberArchived,
   deleteMemberAccount,
 } from "@/lib/coach.functions";
+import { getMemberActivity, setMemberActivityGoals } from "@/lib/activity.functions";
 import { VideoReviewPanel } from "../../components/coach/VideoReviewPanel";
 import MemberFollowupTab from "../../components/coach/MemberFollowupTab";
 import WeeksManagerPanel from "../../components/coach/WeeksManagerPanel";
@@ -385,6 +386,8 @@ export default function CoachMember() {
   const assignFn = useServerFn(assignProgram);
   const removeFn = useServerFn(removeMemberProgram);
   const setModeFn = useServerFn(setAssignmentSessionMode);
+  const getActivityFn = useServerFn(getMemberActivity);
+  const setActivityGoalsFn = useServerFn(setMemberActivityGoals);
   const getUpcomingFn = useServerFn(getUpcomingPlannedSessions);
   const toggleRestFn = useServerFn(togglePlannedSessionRest);
   const toggleArchivedFn = useServerFn(toggleMemberArchived);
@@ -415,6 +418,11 @@ export default function CoachMember() {
   const [formSaved, setFormSaved] = useState(false);
   const [logWeight, setLogWeight] = useState(false);
   const [sessionModeBusy, setSessionModeBusy] = useState(false);
+  const [activity, setActivity] = useState(null);
+  const [goalSteps, setGoalSteps] = useState("");
+  const [goalCalories, setGoalCalories] = useState("");
+  const [goalsBusy, setGoalsBusy] = useState(false);
+  const [goalsSaved, setGoalsSaved] = useState(false);
   const [upcomingSessions, setUpcomingSessions] = useState([]);
   const [skipBusy, setSkipBusy] = useState(null);
   const [archiveBusy, setArchiveBusy] = useState(false);
@@ -446,6 +454,34 @@ export default function CoachMember() {
     }
   }
 
+  async function saveGoals() {
+    if (goalsBusy) return;
+    const parse = (raw, max) => {
+      const t = String(raw).trim();
+      if (t === "") return null;
+      const n = Number(t.replace(/\s/g, ""));
+      if (!Number.isFinite(n) || n < 0 || n > max || !Number.isInteger(n)) return "error";
+      return n;
+    };
+    const s = parse(goalSteps, 200000);
+    const c = parse(goalCalories, 30000);
+    if (s === "error" || c === "error") {
+      setErr("Objectif invalide");
+      return;
+    }
+    setGoalsBusy(true);
+    try {
+      const g = await setActivityGoalsFn({ data: { memberId, stepsGoal: s, caloriesGoal: c } });
+      setActivity((a) => (a ? { ...a, goals: g } : a));
+      setGoalsSaved(true);
+      setTimeout(() => setGoalsSaved(false), 1500);
+    } catch (ex) {
+      setErr(ex?.message || "Erreur");
+    } finally {
+      setGoalsBusy(false);
+    }
+  }
+
   useEffect(() => {
     reload();
     listProgramsFn()
@@ -453,6 +489,13 @@ export default function CoachMember() {
       .catch(() => {});
     getUpcomingFn({ data: { member_id: memberId } })
       .then((rows) => setUpcomingSessions(rows))
+      .catch(() => {});
+    getActivityFn({ data: { memberId } })
+      .then((a) => {
+        setActivity(a);
+        setGoalSteps(a?.goals?.steps != null ? String(a.goals.steps) : "");
+        setGoalCalories(a?.goals?.calories != null ? String(a.goals.calories) : "");
+      })
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [memberId]);
@@ -1404,6 +1447,93 @@ export default function CoachMember() {
                     </div>
                   </div>
                 )}
+
+                {activity &&
+                  (activity.list.length > 0 ||
+                    activity.goals.steps != null ||
+                    activity.goals.calories != null) && (
+                    <div style={{ marginTop: 24 }}>
+                      <CSTSectionNum
+                        num={3}
+                        label="ACTIVITÉ (PAS / CALORIES)"
+                        sub={activity.list.length > 0 ? `${activity.list.length} JOURS` : "OBJECTIF FIXÉ"}
+                      />
+                      <div className="cst-card-dark" style={{ padding: 16, marginTop: 14 }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: 24,
+                            flexWrap: "wrap",
+                            marginBottom: activity.list.length ? 14 : 0,
+                          }}
+                        >
+                          {[
+                            ["OBJECTIF PAS", activity.goals.steps],
+                            ["OBJECTIF CAL.", activity.goals.calories],
+                            ["MOY. PAS", activity.averages.steps],
+                            ["MOY. CAL.", activity.averages.calories],
+                          ].map(([label, val]) => (
+                            <div key={label} className="cst-col" style={{ gap: 2 }}>
+                              <span className="cst-mono" style={{ fontSize: 8, opacity: 0.5 }}>
+                                {label}
+                              </span>
+                              <span className="cst-display" style={{ fontSize: 16 }}>
+                                {val != null ? val.toLocaleString("fr-FR") : "—"}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                        {activity.list.length > 0 && (
+                          <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 8 }}>
+                            {[...activity.list]
+                              .reverse()
+                              .slice(0, 10)
+                              .map((a) => {
+                                const hitSteps =
+                                  activity.goals.steps != null &&
+                                  a.steps != null &&
+                                  a.steps >= activity.goals.steps;
+                                const hitCal =
+                                  activity.goals.calories != null &&
+                                  a.calories != null &&
+                                  a.calories >= activity.goals.calories;
+                                return (
+                                  <div
+                                    key={a.date}
+                                    style={{
+                                      display: "flex",
+                                      justifyContent: "space-between",
+                                      padding: "6px 0",
+                                      borderBottom: "1px solid rgba(255,255,255,0.04)",
+                                      fontSize: 12,
+                                      gap: 10,
+                                    }}
+                                  >
+                                    <span className="cst-mono">{shortDateFR(a.date)}</span>
+                                    <span style={{ display: "flex", gap: 14 }}>
+                                      <span
+                                        className="cst-display"
+                                        style={{ color: hitSteps ? "var(--cst-mid-green)" : undefined }}
+                                      >
+                                        {a.steps != null ? a.steps.toLocaleString("fr-FR") : "—"}{" "}
+                                        <span style={{ fontSize: 9, opacity: 0.4 }}>PAS</span>
+                                      </span>
+                                      <span
+                                        className="cst-display"
+                                        style={{ color: hitCal ? "var(--cst-mid-green)" : undefined }}
+                                      >
+                                        {a.calories != null ? a.calories.toLocaleString("fr-FR") : "—"}{" "}
+                                        <span style={{ fontSize: 9, opacity: 0.4 }}>CAL</span>
+                                      </span>
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
               </>
             )}
 
@@ -1721,6 +1851,62 @@ export default function CoachMember() {
                 {notesSaved && (
                   <span style={{ color: "var(--cst-success)", fontSize: 11 }}>✓ Enregistré</span>
                 )}
+              </div>
+            </div>
+
+            <div className="cst-card-dark" style={{ padding: 18 }}>
+              <CSTSectionNum num={10} label="OBJECTIF ACTIVITÉ" sub="PAS / CALORIES PAR JOUR" />
+              <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 10 }}>
+                <div>
+                  <label className="cst-mono" style={{ fontSize: 9, opacity: 0.6 }}>
+                    OBJECTIF PAS / JOUR
+                  </label>
+                  <input
+                    className="cst-input"
+                    type="number"
+                    min="0"
+                    step="1"
+                    inputMode="numeric"
+                    style={{ width: "100%", marginTop: 4 }}
+                    value={goalSteps}
+                    onChange={(e) => setGoalSteps(e.target.value)}
+                    placeholder="ex. 8000"
+                  />
+                </div>
+                <div>
+                  <label className="cst-mono" style={{ fontSize: 9, opacity: 0.6 }}>
+                    OBJECTIF CALORIES / JOUR
+                  </label>
+                  <input
+                    className="cst-input"
+                    type="number"
+                    min="0"
+                    step="1"
+                    inputMode="numeric"
+                    style={{ width: "100%", marginTop: 4 }}
+                    value={goalCalories}
+                    onChange={(e) => setGoalCalories(e.target.value)}
+                    placeholder="ex. 2200"
+                  />
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <button
+                    className="cst-btn cst-btn-primary cst-btn-sm"
+                    disabled={goalsBusy}
+                    onClick={saveGoals}
+                  >
+                    {goalsBusy ? "..." : "ENREGISTRER"}
+                  </button>
+                  {goalsSaved && (
+                    <span style={{ color: "var(--cst-success)", fontSize: 11 }}>✓ Enregistré</span>
+                  )}
+                </div>
+                <span
+                  className="cst-mono"
+                  style={{ fontSize: 8, opacity: 0.4, lineHeight: 1.4 }}
+                >
+                  Laisse vide pour ne pas fixer d'objectif. Le membre le voit lors de sa saisie.
+                </span>
               </div>
             </div>
           </div>

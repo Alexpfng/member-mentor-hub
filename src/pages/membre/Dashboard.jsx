@@ -8,8 +8,10 @@ import MemberNav from "../../components/MemberNav";
 import { CSTLogo, CSTSectionNum, CSTAvatar } from "../../components/Atoms";
 import ThemeToggle from "../../components/ThemeToggle";
 import { WeightLogDialog } from "../../components/cst/WeightLogDialog";
+import { ActivityLogDialog } from "../../components/cst/ActivityLogDialog";
 import { usePRConfetti } from "@/hooks/usePRConfetti";
 import { getMemberDashboard } from "@/lib/member-stats.functions";
+import { getMyActivity } from "@/lib/activity.functions";
 import { getMemberCoachFeedback } from "@/lib/member-feedback.functions";
 import { listWeekPlan, upsertPlannedSession } from "@/lib/planning.functions";
 import { sanitizeDurationMin } from "@/lib/format";
@@ -42,6 +44,8 @@ export default function MemberDashboard() {
   const [weightDelta, setWeightDelta] = useState(null);
   const [weightOpen, setWeightOpen] = useState(false);
   const [weightRefresh, setWeightRefresh] = useState(0);
+  const [activityOpen, setActivityOpen] = useState(false);
+  const [activity, setActivity] = useState(null);
   const [streak, setStreak] = useState(0);
   const [coachMessage, setCoachMessage] = useState(null);
   const [coachFeedback, setCoachFeedback] = useState(null);
@@ -51,6 +55,7 @@ export default function MemberDashboard() {
   usePRConfetti(userId);
 
   const fetchDashboard = useServerFn(getMemberDashboard);
+  const fetchActivity = useServerFn(getMyActivity);
   const fetchFeedback = useServerFn(getMemberCoachFeedback);
   const fetchPlan = useServerFn(listWeekPlan);
   const upsertPlanned = useServerFn(upsertPlannedSession);
@@ -115,6 +120,13 @@ export default function MemberDashboard() {
           setCoachFeedback(fb ?? null);
         } catch (err) {
           console.error("getMemberCoachFeedback failed", err);
+        }
+
+        try {
+          const act = await fetchActivity({ data: {} });
+          setActivity(act);
+        } catch (err) {
+          console.error("getMyActivity failed", err);
         }
       } catch (e) {
         console.error(e);
@@ -1018,6 +1030,68 @@ export default function MemberDashboard() {
                 </button>
               </div>
 
+              {/* Activité du jour (pas / calories) */}
+              <div
+                className="cst-card-dark"
+                style={{
+                  marginTop: 14,
+                  padding: 14,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: 12,
+                }}
+              >
+                <div className="cst-col" style={{ gap: 6 }}>
+                  <span className="cst-mono" style={{ fontSize: 9 }}>
+                    ACTIVITÉ DU JOUR
+                  </span>
+                  <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
+                    <div className="cst-col" style={{ gap: 2 }}>
+                      <span className="cst-mono" style={{ fontSize: 8, opacity: 0.5 }}>
+                        PAS
+                      </span>
+                      <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                        <span className="cst-display" style={{ fontSize: 20 }}>
+                          {activity?.today?.steps != null
+                            ? activity.today.steps.toLocaleString("fr-FR")
+                            : "—"}
+                        </span>
+                        {activity?.goals?.steps != null && (
+                          <span className="cst-mono" style={{ fontSize: 9, opacity: 0.5 }}>
+                            / {activity.goals.steps.toLocaleString("fr-FR")}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="cst-col" style={{ gap: 2 }}>
+                      <span className="cst-mono" style={{ fontSize: 8, opacity: 0.5 }}>
+                        CALORIES
+                      </span>
+                      <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                        <span className="cst-display" style={{ fontSize: 20 }}>
+                          {activity?.today?.calories != null
+                            ? activity.today.calories.toLocaleString("fr-FR")
+                            : "—"}
+                        </span>
+                        {activity?.goals?.calories != null && (
+                          <span className="cst-mono" style={{ fontSize: 9, opacity: 0.5 }}>
+                            / {activity.goals.calories.toLocaleString("fr-FR")}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  className="cst-btn cst-btn-ghost-dark"
+                  style={{ fontSize: 10 }}
+                  onClick={() => setActivityOpen(true)}
+                >
+                  + NOTER
+                </button>
+              </div>
+
               {/* Coach message */}
               {coachMessage?.content && (
                 <button
@@ -1149,6 +1223,18 @@ export default function MemberDashboard() {
           setWeightOpen(o);
           if (!o) setWeightRefresh((n) => n + 1);
         }}
+      />
+
+      <ActivityLogDialog
+        open={activityOpen}
+        onOpenChange={(o) => {
+          setActivityOpen(o);
+          if (!o) setWeightRefresh((n) => n + 1);
+        }}
+        defaultSteps={activity?.today?.steps ?? null}
+        defaultCalories={activity?.today?.calories ?? null}
+        goalSteps={activity?.goals?.steps ?? null}
+        goalCalories={activity?.goals?.calories ?? null}
       />
     </div>
   );

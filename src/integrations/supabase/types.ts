@@ -938,6 +938,8 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string | null
+          daily_calories_goal: number | null
+          daily_steps_goal: number | null
           email: string | null
           first_name: string | null
           id: string
@@ -950,6 +952,8 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string | null
+          daily_calories_goal?: number | null
+          daily_steps_goal?: number | null
           email?: string | null
           first_name?: string | null
           id: string
@@ -962,6 +966,8 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           created_at?: string | null
+          daily_calories_goal?: number | null
+          daily_steps_goal?: number | null
           email?: string | null
           first_name?: string | null
           id?: string
@@ -1541,6 +1547,39 @@ export type Database = {
           week_number?: number
           weight_end?: number | null
           weight_start?: number | null
+        }
+        Relationships: []
+      }
+      activity_logs: {
+        Row: {
+          calories: number | null
+          created_at: string | null
+          date: string
+          id: string
+          member_id: string
+          note: string | null
+          steps: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          calories?: number | null
+          created_at?: string | null
+          date: string
+          id?: string
+          member_id: string
+          note?: string | null
+          steps?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          calories?: number | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          member_id?: string
+          note?: string | null
+          steps?: number | null
+          updated_at?: string | null
         }
         Relationships: []
       }
