@@ -2,15 +2,20 @@ import * as XLSX from "xlsx";
 
 /**
  * Export d'un programme (structure JSONB weeks[].days[].exercises[]) vers un
- * classeur Excel au MÊME format que celui lu par l'import (`excel-import/parser`),
- * pour que Léo ait un backup Sheets et que ça puisse se ré-importer :
- * - une feuille par semaine, nommée S1, S2, S3…
- * - une ligne d'en-tête « Exercice | Série | Reps | Charge | Tempo | Récup | RPE |
- *   Notes(col 8) | Vidéo(col 12) »
- * - une ligne titre par séance, un exercice par ligne (« A1. Squat »).
+ * classeur Excel qui reprend la MISE EN FORME des feuilles de Léo (celles qu'il
+ * envoie à ses clients) et reste lisible par l'import (`excel-import/parser`) :
  *
- * Limite connue : les COULEURS de cellules ne sont pas réécrites (le paquet xlsx
- * communautaire n'écrit pas les remplissages) — le reste des données round-trip.
+ *   colonne A : marge · colonne B(+C) : « Exercice » (code + nom)
+ *   D : Série(s) · E : Reps · F : Charge (kg) · G : Tempo (s) · H : Récup
+ *   I : RPE · J(→M) : Consignes / Explications · N : lien vidéo
+ *
+ * Un bloc « métadonnées » en haut (NOM / OBJECTIF / SPLIT / REPOS / CARDIO),
+ * une ligne-titre par séance, un exercice par ligne (« A1. Squat »).
+ *
+ * ⚠️ Limite : les COULEURS de fond des exercices (code d'intensité) ne sont PAS
+ * réécrites — le paquet `xlsx` communautaire n'écrit pas les remplissages de
+ * cellules. La structure et toutes les données round-trip ; il manque juste la
+ * couleur. (La couleur nécessiterait la lib `exceljs`.)
  */
 
 type ExportExercise = {
@@ -26,75 +31,109 @@ type ExportExercise = {
   youtube_url?: string | null;
 };
 type ExportDay = { number?: number; label?: string | null; exercises?: ExportExercise[] };
-type ExportWeek = { number?: number; days?: ExportDay[] };
+type ExportWeek = { number?: number; label?: string | null; days?: ExportDay[] };
 export type ExportProgram = {
   name?: string | null;
   objective?: string | null;
+  level?: string | null;
   structure?: { weeks?: ExportWeek[] } | null;
 };
 
-// En-tête : « Notes » en colonne 8 et « Vidéo » en colonne 12 — positions
-// attendues en dur par l'import (notesCol = nameCol+8, youtubeCol = nameCol+12).
-const HEADER = [
-  "Exercice",
-  "Série",
-  "Reps",
-  "Charge",
-  "Tempo",
-  "Récup",
-  "RPE",
-  "",
-  "Notes",
-  "",
-  "",
-  "",
-  "Vidéo",
-];
-
-// Mots-clés que l'import reconnaît comme un titre de séance. Si le label du jour
-// n'en contient pas, on le préfixe par « Séance N — » pour qu'il soit bien
-// détecté comme une nouvelle séance à la ré-import (et pas fondu dans la précédente).
-const SESSION_KEYWORDS =
-  /(s[ée]ance|full[\s-]?body|lower|upper|push|pull|legs?|jambe|course|cardio|c[ôo]tes|fractionn|endurance|renfo|mobilit[ée]|sortie|hiit|circuit|bloc)/i;
+// Colonnes (0-based) — calquées sur les feuilles de Léo.
+const C = {
+  name: 1, // B (fusionnée B:C)
+  series: 3, // D
+  reps: 4, // E
+  charge: 5, // F
+  tempo: 6, // G
+  recup: 7, // H
+  rpe: 8, // I
+  notes: 9, // J (fusionnée J:M)
+  youtube: 13, // N
+} as const;
+const LAST_COL = 13; // N
 
 function val(v: unknown): string {
   if (v === null || v === undefined) return "";
   return String(v);
 }
 
-function dayHeader(day: ExportDay, index: number): string {
-  const label = val(day.label).trim();
-  const n = day.number ?? index + 1;
-  if (!label) return `Séance ${n}`;
-  return SESSION_KEYWORDS.test(label) ? label : `Séance ${n} — ${label}`;
-}
+type Merge = XLSX.Range;
 
 function weekSheet(week: ExportWeek, program: ExportProgram): XLSX.WorkSheet {
   const rows: string[][] = [];
-  rows.push(["PROGRAMME", val(program.name)]);
-  if (program.objective) rows.push(["OBJECTIF", val(program.objective)]);
-  rows.push([]);
-  rows.push([...HEADER]);
+  const merges: Merge[] = [];
+  const push = (cells: Record<number, string>) => {
+    const row: string[] = new Array(LAST_COL + 1).fill("");
+    for (const [c, v] of Object.entries(cells)) row[Number(c)] = v;
+    rows.push(row);
+    return rows.length - 1; // index de la ligne ajoutée
+  };
 
-  (week.days ?? []).forEach((day, di) => {
-    rows.push([dayHeader(day, di)]);
+  // ── Bloc métadonnées (labels en colonne C, valeurs en D) ──
+  push({ 2: "NOM", 3: "" });
+  push({ 2: "OBJECTIF DU PROGRAMME", 3: val(program.objective) });
+  push({ 2: "SPLIT D'ENTRAINEMENT", 3: val(program.level) });
+  push({ 2: "NB JOURS DE REPOS", 3: "-" });
+  push({ 2: "CARDIO", 3: "-" });
+  push({}); // ligne vide
+
+  for (const day of week.days ?? []) {
+    // Ligne-titre de séance (fusionnée B:M)
+    const titleRow = push({ [C.name]: val(day.label) || `Séance ${day.number ?? ""}`.trim() });
+    merges.push({ s: { r: titleRow, c: C.name }, e: { r: titleRow, c: LAST_COL - 1 } });
+
+    // Ligne d'en-tête
+    const headRow = push({
+      [C.name]: "Exercice",
+      [C.series]: "Série(s)",
+      [C.reps]: "Reps",
+      [C.charge]: "Charge (kg)",
+      [C.tempo]: "Tempo (s)",
+      [C.recup]: "Récup",
+      [C.rpe]: "RPE",
+      [C.notes]: "Consignes / Explications",
+    });
+    merges.push({ s: { r: headRow, c: C.name }, e: { r: headRow, c: C.name + 1 } }); // Exercice B:C
+    merges.push({ s: { r: headRow, c: C.notes }, e: { r: headRow, c: LAST_COL - 1 } }); // Consignes J:M
+
     for (const ex of day.exercises ?? []) {
-      const row = new Array(13).fill("");
-      row[0] = ex.code ? `${ex.code}. ${val(ex.name)}` : val(ex.name);
-      row[1] = val(ex.series);
-      row[2] = val(ex.reps);
-      row[3] = val(ex.charge);
-      row[4] = val(ex.tempo);
-      row[5] = val(ex.recup);
-      row[6] = val(ex.rpe_target);
-      row[8] = val(ex.coach_notes);
-      row[12] = val(ex.youtube_url);
-      rows.push(row);
+      const exRow = push({
+        [C.name]: ex.code ? `${ex.code}. ${val(ex.name)}` : val(ex.name),
+        [C.series]: val(ex.series),
+        [C.reps]: val(ex.reps),
+        [C.charge]: val(ex.charge),
+        [C.tempo]: val(ex.tempo),
+        [C.recup]: val(ex.recup),
+        [C.rpe]: val(ex.rpe_target),
+        [C.notes]: val(ex.coach_notes),
+        [C.youtube]: val(ex.youtube_url),
+      });
+      merges.push({ s: { r: exRow, c: C.name }, e: { r: exRow, c: C.name + 1 } }); // nom B:C
+      merges.push({ s: { r: exRow, c: C.notes }, e: { r: exRow, c: LAST_COL - 1 } }); // notes J:M
     }
-    rows.push([]); // séparateur entre séances
-  });
+    push({}); // séparateur entre séances
+  }
 
-  return XLSX.utils.aoa_to_sheet(rows);
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws["!merges"] = merges;
+  ws["!cols"] = [
+    { wch: 3 }, // A marge
+    { wch: 26 }, // B nom
+    { wch: 8 }, // C
+    { wch: 9 }, // D série
+    { wch: 10 }, // E reps
+    { wch: 12 }, // F charge
+    { wch: 11 }, // G tempo
+    { wch: 8 }, // H récup
+    { wch: 6 }, // I rpe
+    { wch: 42 }, // J consignes
+    { wch: 8 },
+    { wch: 8 },
+    { wch: 8 },
+    { wch: 34 }, // N vidéo
+  ];
+  return ws;
 }
 
 export function buildProgramWorkbook(program: ExportProgram): XLSX.WorkBook {
@@ -110,7 +149,7 @@ export function buildProgramWorkbook(program: ExportProgram): XLSX.WorkBook {
   };
 
   if (weeks.length === 0) {
-    append(XLSX.utils.aoa_to_sheet([[...HEADER]]), "S1");
+    append(XLSX.utils.aoa_to_sheet([[]]), "S1");
     return wb;
   }
   weeks.forEach((week, i) => append(weekSheet(week, program), `S${week.number ?? i + 1}`));
