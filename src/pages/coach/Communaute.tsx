@@ -9,9 +9,9 @@ import CommunityFeed from "@/components/cst/CommunityFeed";
  */
 export default function CoachCommunaute() {
   return (
-    <div className="cst-page">
+    <div className="cst-screen" style={{ flexDirection: "row" }}>
       <CoachSidebar />
-      <div className="cst-main">
+      <div className="cst-col cst-scroll-visible" style={{ flex: 1, minWidth: 0 }}>
         <div style={{ padding: "24px 32px 48px", maxWidth: 720, margin: "0 auto" }}>
           <CSTSectionNum num={1} label="COMMUNAUTÉ" sub="LE FIL DE TES COACHÉS" />
 
