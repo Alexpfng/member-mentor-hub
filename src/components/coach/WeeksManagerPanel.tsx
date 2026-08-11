@@ -41,7 +41,11 @@ const STATUS_LABEL: Record<string, { text: string; color: string }> = {
 
 function fmtDate(iso: string | null) {
   if (!iso) return "—";
-  return new Date(iso).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "2-digit" });
+  return new Date(iso).toLocaleDateString("fr-FR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "2-digit",
+  });
 }
 
 // ─── Generate from history modal ────────────────────────────────────────────
@@ -89,7 +93,10 @@ function GenerateModal({
     setError(null);
     try {
       const r = await genFn({ data: { memberId, sessionIds: Array.from(selected) } });
-      onGenerated((r as { weekNumber: number; weekId?: string }).weekNumber, (r as { weekNumber: number; weekId?: string }).weekId);
+      onGenerated(
+        (r as { weekNumber: number; weekId?: string }).weekNumber,
+        (r as { weekNumber: number; weekId?: string }).weekId,
+      );
     } catch (e) {
       setError((e as Error).message);
       setBusy(false);
@@ -99,9 +106,13 @@ function GenerateModal({
   return (
     <div
       style={{
-        position: "fixed", inset: 0, zIndex: 50,
-        background: "rgba(0,0,0,0.7)", display: "flex",
-        alignItems: "flex-end", justifyContent: "center",
+        position: "fixed",
+        inset: 0,
+        zIndex: 50,
+        background: "rgba(0,0,0,0.7)",
+        display: "flex",
+        alignItems: "flex-end",
+        justifyContent: "center",
       }}
     >
       <div
@@ -109,18 +120,32 @@ function GenerateModal({
           background: "var(--cst-card-bg, #1a1f1e)",
           border: "1px solid var(--cst-card-border, rgba(255,255,255,0.08))",
           borderRadius: "20px 20px 0 0",
-          width: "100%", maxWidth: 540,
+          width: "100%",
+          maxWidth: 540,
           padding: "24px 20px 32px",
-          maxHeight: "85vh", overflowY: "auto",
+          maxHeight: "85vh",
+          overflowY: "auto",
         }}
       >
         {/* Header */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            marginBottom: 16,
+          }}
+        >
           <div>
-            <div className="cst-mono" style={{ fontSize: 9, letterSpacing: "0.18em", opacity: 0.5, marginBottom: 4 }}>
+            <div
+              className="cst-mono"
+              style={{ fontSize: 9, letterSpacing: "0.18em", opacity: 0.5, marginBottom: 4 }}
+            >
               NOUVELLE SEMAINE S{String(nextWeek).padStart(2, "0")}
             </div>
-            <div className="cst-display" style={{ fontSize: 18 }}>Générer depuis séances</div>
+            <div className="cst-display" style={{ fontSize: 18 }}>
+              Générer depuis séances
+            </div>
             <div style={{ fontSize: 12, opacity: 0.55, marginTop: 4, lineHeight: 1.4 }}>
               Sélectionne jusqu'à 7 séances · chaque séance devient une séance adaptée
             </div>
@@ -151,8 +176,12 @@ function GenerateModal({
                   key={s.id}
                   onClick={() => !disabled && toggle(s.id)}
                   style={{
-                    display: "flex", alignItems: "center", gap: 12,
-                    padding: "10px 12px", borderRadius: 8, cursor: disabled ? "not-allowed" : "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    padding: "10px 12px",
+                    borderRadius: 8,
+                    cursor: disabled ? "not-allowed" : "pointer",
                     background: isSelected
                       ? "rgba(var(--cst-mid-green-rgb, 90, 168, 90), 0.12)"
                       : "rgba(255,255,255,0.03)",
@@ -164,22 +193,38 @@ function GenerateModal({
                   {/* Checkbox */}
                   <div
                     style={{
-                      width: 18, height: 18, borderRadius: 4, flexShrink: 0,
+                      width: 18,
+                      height: 18,
+                      borderRadius: 4,
+                      flexShrink: 0,
                       border: `2px solid ${isSelected ? "var(--cst-mid-green, #5BA85A)" : "rgba(255,255,255,0.2)"}`,
                       background: isSelected ? "var(--cst-mid-green, #5BA85A)" : "transparent",
-                      display: "flex", alignItems: "center", justifyContent: "center",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
                     }}
                   >
-                    {isSelected && <span style={{ color: "#fff", fontSize: 11, lineHeight: 1 }}>✓</span>}
+                    {isSelected && (
+                      <span style={{ color: "#fff", fontSize: 11, lineHeight: 1 }}>✓</span>
+                    )}
                   </div>
                   {/* Info */}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    <div
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 500,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
                       {s.label}
                     </div>
                     <div className="cst-mono" style={{ fontSize: 10, opacity: 0.55, marginTop: 2 }}>
                       {fmtDate(s.endedAt)}
-                      {s.exerciseCount > 0 && ` · ${s.exerciseCount} exercice${s.exerciseCount > 1 ? "s" : ""}`}
+                      {s.exerciseCount > 0 &&
+                        ` · ${s.exerciseCount} exercice${s.exerciseCount > 1 ? "s" : ""}`}
                       {s.averageRpe != null && ` · RPE ${s.averageRpe}`}
                     </div>
                   </div>
@@ -187,9 +232,13 @@ function GenerateModal({
                   <div
                     className="cst-mono"
                     style={{
-                      fontSize: 9, letterSpacing: "0.12em", flexShrink: 0,
-                      padding: "2px 6px", borderRadius: 4,
-                      background: s.sessionType === "free" ? "rgba(74,139,196,0.15)" : "rgba(90,168,90,0.12)",
+                      fontSize: 9,
+                      letterSpacing: "0.12em",
+                      flexShrink: 0,
+                      padding: "2px 6px",
+                      borderRadius: 4,
+                      background:
+                        s.sessionType === "free" ? "rgba(74,139,196,0.15)" : "rgba(90,168,90,0.12)",
                       color: s.sessionType === "free" ? "#4A8BC4" : "#5BA85A",
                     }}
                   >
@@ -203,7 +252,16 @@ function GenerateModal({
 
         {/* Error */}
         {error && (
-          <div style={{ color: "#C44A3A", fontSize: 12, marginBottom: 12, padding: "8px 10px", background: "rgba(196,74,58,0.08)", borderRadius: 6 }}>
+          <div
+            style={{
+              color: "#C44A3A",
+              fontSize: 12,
+              marginBottom: 12,
+              padding: "8px 10px",
+              background: "rgba(196,74,58,0.08)",
+              borderRadius: 6,
+            }}
+          >
             {error}
           </div>
         )}
@@ -249,12 +307,16 @@ export default function WeeksManagerPanel({ memberId }: { memberId: string }) {
     try {
       const r = await listFn({ data: { memberId } });
       setWeeks((r.weeks ?? []) as WeekRow[]);
-      setProgramDurationWeeks((r as { programDurationWeeks?: number | null }).programDurationWeeks ?? null);
+      setProgramDurationWeeks(
+        (r as { programDurationWeeks?: number | null }).programDurationWeeks ?? null,
+      );
     } finally {
       setLoading(false);
     }
   }
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [memberId]);
+  useEffect(() => {
+    load(); /* eslint-disable-next-line */
+  }, [memberId]);
 
   // Client-side navigation (no full reload — avoids the auth beforeLoad race)
   function openAdapter(week?: number, weekId?: string) {
@@ -299,7 +361,9 @@ export default function WeeksManagerPanel({ memberId }: { memberId: string }) {
   async function duplicateTo(sourceWeekId: string, targetWeek: number) {
     setBusy(sourceWeekId + targetWeek);
     try {
-      const r = await dupFn({ data: { weekId: sourceWeekId, targetWeeks: [targetWeek], progression: "identical" } });
+      const r = await dupFn({
+        data: { weekId: sourceWeekId, targetWeeks: [targetWeek], progression: "identical" },
+      });
       const created = r.created?.[0];
       await load();
       openAdapter(created?.weekNumber ?? targetWeek, created?.id);
@@ -314,12 +378,26 @@ export default function WeeksManagerPanel({ memberId }: { memberId: string }) {
     <>
       <div className="cst-card-dark" style={{ padding: 16, marginBottom: 20 }}>
         {/* Header */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, gap: 10, flexWrap: "wrap" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 12,
+            gap: 10,
+            flexWrap: "wrap",
+          }}
+        >
           <div>
-            <div className="cst-mono" style={{ fontSize: 10, letterSpacing: "0.18em", opacity: 0.6 }}>
+            <div
+              className="cst-mono"
+              style={{ fontSize: 10, letterSpacing: "0.18em", opacity: 0.6 }}
+            >
               SEMAINES LIVRÉES · {weeks.length}
             </div>
-            <div className="cst-display" style={{ fontSize: 16, marginTop: 4 }}>Gestion des semaines</div>
+            <div className="cst-display" style={{ fontSize: 16, marginTop: 4 }}>
+              Gestion des semaines
+            </div>
           </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {programDurationWeeks != null && weeks.length < programDurationWeeks && (
@@ -327,10 +405,16 @@ export default function WeeksManagerPanel({ memberId }: { memberId: string }) {
                 onClick={doInitWeeks}
                 disabled={busy === "init"}
                 className="cst-btn cst-btn-ghost-dark cst-btn-sm"
-                style={{ whiteSpace: "nowrap", borderColor: "rgba(90,168,90,0.5)", color: "var(--cst-mid-green)" }}
+                style={{
+                  whiteSpace: "nowrap",
+                  borderColor: "rgba(90,168,90,0.5)",
+                  color: "var(--cst-mid-green)",
+                }}
                 title={`Créer les ${programDurationWeeks - weeks.length} semaines manquantes du programme`}
               >
-                {busy === "init" ? "…" : `📋 Déployer S01→S${String(programDurationWeeks).padStart(2, "0")}`}
+                {busy === "init"
+                  ? "…"
+                  : `📋 Déployer S01→S${String(programDurationWeeks).padStart(2, "0")}`}
               </button>
             )}
             <button
@@ -378,11 +462,15 @@ export default function WeeksManagerPanel({ memberId }: { memberId: string }) {
                     S{String(w.week_number).padStart(2, "0")}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div className="cst-mono" style={{ fontSize: 10, color: s.color, letterSpacing: "0.15em" }}>
+                    <div
+                      className="cst-mono"
+                      style={{ fontSize: 10, color: s.color, letterSpacing: "0.15em" }}
+                    >
                       {s.text}
                     </div>
                     <div style={{ fontSize: 11, opacity: 0.6, marginTop: 2 }}>
-                      {w.based_on_week != null && `copiée de S${String(w.based_on_week).padStart(2, "0")} · `}
+                      {w.based_on_week != null &&
+                        `copiée de S${String(w.based_on_week).padStart(2, "0")} · `}
                       {w.published_at
                         ? `publiée le ${new Date(w.published_at).toLocaleDateString("fr-FR")}`
                         : w.start_date
@@ -394,10 +482,18 @@ export default function WeeksManagerPanel({ memberId }: { memberId: string }) {
                   <button
                     onClick={() => openAdapter(w.week_number, w.id)}
                     className={`cst-btn cst-btn-sm ${w.status === "done" ? "cst-btn-ghost-dark" : "cst-btn-primary"}`}
-                    title={w.status === "published" || w.status === "in_progress" ? "Modifier la semaine publiée" : "Ouvrir l'éditeur"}
+                    title={
+                      w.status === "published" || w.status === "in_progress"
+                        ? "Modifier la semaine publiée"
+                        : "Ouvrir l'éditeur"
+                    }
                     style={w.status === "done" ? { opacity: 0.5 } : undefined}
                   >
-                    {w.status === "published" || w.status === "in_progress" ? "✏ Modifier" : w.status === "done" ? "Consulter" : "Adapter"}
+                    {w.status === "published" || w.status === "in_progress"
+                      ? "✏ Modifier"
+                      : w.status === "done"
+                        ? "Consulter"
+                        : "Adapter"}
                   </button>
                   {/* Duplicate button */}
                   <button
@@ -409,34 +505,58 @@ export default function WeeksManagerPanel({ memberId }: { memberId: string }) {
                   >
                     {busy === w.id + nextWeek ? "…" : `⎘ S${String(nextWeek).padStart(2, "0")}`}
                   </button>
-                  {/* Delete button — draft only */}
-                  {w.status === "draft" && (
-                    confirmDelete === w.id ? (
-                      <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-                        <span style={{ fontSize: 10, opacity: 0.7, whiteSpace: "nowrap" }}>Supprimer ?</span>
-                        <button
-                          onClick={() => doDeleteWeek(w.id)}
-                          disabled={busy === "del-" + w.id}
-                          style={{ background: "#C44A3A", border: "none", color: "#fff", borderRadius: 6, padding: "4px 8px", fontSize: 11, cursor: "pointer" }}
-                        >
-                          {busy === "del-" + w.id ? "…" : "Oui"}
-                        </button>
-                        <button
-                          onClick={() => setConfirmDelete(null)}
-                          style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)", color: "var(--cst-text-soft)", borderRadius: 6, padding: "4px 8px", fontSize: 11, cursor: "pointer" }}
-                        >
-                          Non
-                        </button>
-                      </div>
-                    ) : (
+                  {/* Corbeille — supprimer la semaine (brouillon OU publiée) */}
+                  {confirmDelete === w.id ? (
+                    <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                      <span style={{ fontSize: 10, opacity: 0.7, whiteSpace: "nowrap" }}>
+                        Supprimer ?
+                      </span>
                       <button
-                        onClick={() => setConfirmDelete(w.id)}
-                        style={{ background: "transparent", border: "1px solid rgba(196,74,58,0.4)", color: "#C44A3A", borderRadius: 6, padding: "4px 8px", fontSize: 12, cursor: "pointer" }}
-                        title="Supprimer cette semaine brouillon"
+                        onClick={() => doDeleteWeek(w.id)}
+                        disabled={busy === "del-" + w.id}
+                        style={{
+                          background: "#C44A3A",
+                          border: "none",
+                          color: "#fff",
+                          borderRadius: 6,
+                          padding: "4px 8px",
+                          fontSize: 11,
+                          cursor: "pointer",
+                        }}
                       >
-                        🗑
+                        {busy === "del-" + w.id ? "…" : "Oui"}
                       </button>
-                    )
+                      <button
+                        onClick={() => setConfirmDelete(null)}
+                        style={{
+                          background: "transparent",
+                          border: "1px solid rgba(255,255,255,0.2)",
+                          color: "var(--cst-text-soft)",
+                          borderRadius: 6,
+                          padding: "4px 8px",
+                          fontSize: 11,
+                          cursor: "pointer",
+                        }}
+                      >
+                        Non
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmDelete(w.id)}
+                      style={{
+                        background: "transparent",
+                        border: "1px solid rgba(196,74,58,0.4)",
+                        color: "#C44A3A",
+                        borderRadius: 6,
+                        padding: "4px 8px",
+                        fontSize: 12,
+                        cursor: "pointer",
+                      }}
+                      title="Supprimer cette semaine"
+                    >
+                      🗑
+                    </button>
                   )}
                 </div>
               );

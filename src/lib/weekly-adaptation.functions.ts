@@ -995,8 +995,10 @@ export const deleteWeek = createServerFn({ method: "POST" })
       .eq("id", data.weekId)
       .maybeSingle();
     if (!week) throw new Error("Semaine introuvable.");
-    if (week.status !== "draft")
-      throw new Error("Seules les semaines BROUILLON peuvent être supprimées.");
+    // On autorise la suppression quel que soit le statut (brouillon OU publiée) :
+    // le coach doit pouvoir retirer une semaine créée par erreur / en double
+    // (ex. un cadrage S1/S2/S3 décalé). Cela retire le PLAN de la semaine ; les
+    // séances déjà loggées par le membre (tables sessions/set_logs) sont conservées.
     const { error } = await supabaseAdmin.from("assignment_weeks").delete().eq("id", data.weekId);
     if (error) throw new Error(error.message);
     return { ok: true };

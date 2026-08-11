@@ -10,7 +10,9 @@ import {
   deleteProgram,
   listMembers,
   assignProgram,
+  getProgram,
 } from "@/lib/coach.functions";
+import { downloadProgramXlsx, type ExportProgram } from "@/lib/excel-export";
 import { seedColosmartData } from "@/lib/seed.functions";
 import AssignmentTimingFields from "@/components/coach/AssignmentTimingFields";
 import { deriveAssignmentStartDate } from "@/lib/assignment-start";
@@ -139,6 +141,8 @@ export default function ProgrammesPage() {
   const listFn = useServerFn(listPrograms);
   const dupFn = useServerFn(duplicateProgram);
   const delFn = useServerFn(deleteProgram);
+  const getProgramFn = useServerFn(getProgram);
+  const [exportBusy, setExportBusy] = useState<string | null>(null);
   const seedFn = useServerFn(seedColosmartData);
   const listMembersFn = useServerFn(listMembers);
   const [programs, setPrograms] = useState<Program[]>([]);
@@ -191,6 +195,21 @@ export default function ProgrammesPage() {
       reload();
     } catch (ex: any) {
       alert(ex?.message || "Erreur");
+    }
+  }
+
+  async function handleExport(p: Program) {
+    setExportBusy(p.id);
+    try {
+      // La liste ne contient qu'un résumé : on récupère la structure complète
+      // avant de générer le classeur Excel (une feuille par semaine).
+      const r = await getProgramFn({ data: { id: p.id } });
+      downloadProgramXlsx((r as { program: ExportProgram }).program);
+      notify("Export Excel généré.");
+    } catch (ex: any) {
+      alert(ex?.message || "Export impossible");
+    } finally {
+      setExportBusy(null);
     }
   }
 
@@ -317,6 +336,14 @@ export default function ProgrammesPage() {
                     onClick={() => handleDuplicate(p)}
                   >
                     DUPLIQUER
+                  </button>
+                  <button
+                    className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+                    onClick={() => handleExport(p)}
+                    disabled={exportBusy === p.id}
+                    title="Exporter en Excel (backup Sheets, ré-importable)"
+                  >
+                    {exportBusy === p.id ? "…" : "⬇ EXCEL"}
                   </button>
                   <button
                     className="cst-btn cst-btn-ghost-dark cst-btn-sm"
