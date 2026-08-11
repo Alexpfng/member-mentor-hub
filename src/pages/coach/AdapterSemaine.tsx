@@ -2082,17 +2082,24 @@ export default function AdapterSemaine() {
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
+  // `cst-screen` + `flex-direction: row` : indispensable pour le responsive.
+  // Une règle mobile (tokens.css, ≤767px) bascule ce conteneur en COLONNE et
+  // masque la sidebar desktop au profit de la topbar hamburger. Avec un simple
+  // <div display:flex>, cette règle ne s'appliquait pas → sur téléphone la
+  // sidebar mangeait la largeur et le contenu était écrasé sur la droite.
   return (
     <div
+      className="cst-screen"
       style={{
-        display: "flex",
-        minHeight: "100vh",
+        flexDirection: "row",
         background: "var(--cst-dark-green)",
         color: "var(--cst-text)",
       }}
     >
       <CoachSidebar />
-      <div style={{ flex: 1, overflow: "auto" }}>{children}</div>
+      <div className="cst-scroll" style={{ flex: 1, minWidth: 0 }}>
+        {children}
+      </div>
     </div>
   );
 }
