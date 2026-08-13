@@ -10,6 +10,7 @@ import { ProgramBlocks } from '../../components/cst/ProgramBlocks';
 import { supabase } from '@/integrations/supabase/client';
 import { SUPABASE_ENABLED } from '@/lib/app-mode';
 import { currentPlanningWeekNumber, normalizeWeekStartsOn, weekWindowLabel } from '@/lib/planning-weeks';
+import { useI18n } from '@/lib/i18n';
 
 function diffDays(a, b) {
   return Math.floor((a.getTime() - b.getTime()) / 86400000);
@@ -17,6 +18,7 @@ function diffDays(a, b) {
 
 export default function MemberProgramme() {
   const navigate = useNavigate();
+  const { locale, t } = useI18n();
   const fn = useServerFn(getMyAssignedProgram);
   const fetchLibrary = useServerFn(listLibraryForMember);
   const [libVideos, setLibVideos] = useState([]);
@@ -98,7 +100,7 @@ export default function MemberProgramme() {
                 if (typeof window !== 'undefined' && window.history.length > 1) window.history.back();
                 else navigate({ to: '/membre' });
               }}
-              aria-label="Retour"
+              aria-label={t('Retour')}
               style={{
                 background: 'transparent',
                 border: '1px solid rgba(255,255,255,0.18)',
@@ -112,33 +114,33 @@ export default function MemberProgramme() {
             >
               ←
             </button>
-            <span className="cst-mono" style={{ color: '#fff' }}>MON PROGRAMME</span>
+            <span className="cst-mono" style={{ color: '#fff' }}>{t('MON PROGRAMME')}</span>
             <span style={{ fontSize: 18, opacity: 0.7 }}>◯</span>
           </div>
 
           <div className="cst-scroll" style={{ flex: 1, padding: '0 22px 90px' }}>
             {loading && (
-              <div style={{ padding: 24, opacity: 0.6, fontSize: 13 }}>Chargement…</div>
+              <div style={{ padding: 24, opacity: 0.6, fontSize: 13 }}>{t('Chargement…')}</div>
             )}
 
             {!loading && !program && (
               <div className="cst-card-dark cst-hatch" style={{ padding: 22, marginTop: 24, textAlign: 'center' }}>
-                <div className="cst-display" style={{ fontSize: 20, marginBottom: 6 }}>AUCUN PROGRAMME</div>
+                <div className="cst-display" style={{ fontSize: 20, marginBottom: 6 }}>{t('AUCUN PROGRAMME')}</div>
                 <p style={{ margin: 0, fontSize: 13, opacity: 0.7 }}>
-                  Ton coach ne t'a pas encore assigné de programme. Reviens plus tard.
+                  {t("Ton coach ne t'a pas encore assigné de programme. Reviens plus tard.")}
                 </p>
               </div>
             )}
 
             {!loading && program && (
               <>
-                <CSTSectionNum num={1} label="PROGRAMME" sub={(program.objective || 'TRAINING').toUpperCase()} />
+                <CSTSectionNum num={1} label={t('PROGRAMME')} sub={(program.objective || 'TRAINING').toUpperCase()} />
                 <CSTDuoTitle top={program.name.split(' ')[0]?.toUpperCase() || 'PROGRAMME'} bottom={program.name.split(' ').slice(1).join(' ').toLowerCase() || ''} size={32} />
                 <div className="cst-mono" style={{ fontSize: 9, marginTop: 8 }}>
-                  {weeks.length} SEMAINES{startDate ? ` · DÉMARRÉ LE ${startDate.toLocaleDateString('fr-FR')}` : ''}
+                  {weeks.length} {t('SEMAINES')}{startDate ? ` · ${t('DÉMARRÉ LE')} ${startDate.toLocaleDateString(locale === 'en' ? 'en-GB' : 'fr-FR')}` : ''}
                 </div>
                 <div className="cst-mono" style={{ fontSize: 9, marginTop: 4, opacity: 0.6 }}>
-                  SEMAINE PERSO : {planningWeekLabel.toUpperCase()}
+                  {t('SEMAINE PERSO :')} {planningWeekLabel.toUpperCase()}
                 </div>
 
                 {/* Global progress */}
@@ -149,7 +151,7 @@ export default function MemberProgramme() {
                   return (
                     <div style={{ marginTop: 14, padding: 12, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                        <span className="cst-mono" style={{ fontSize: 9 }}>PROGRESSION GLOBALE</span>
+                        <span className="cst-mono" style={{ fontSize: 9 }}>{t('PROGRESSION GLOBALE')}</span>
                         <span className="cst-mono" style={{ fontSize: 9, color: 'var(--cst-mid-green)' }}>{doneDays}/{totalDays} · {pct}%</span>
                       </div>
                       <div style={{ height: 6, background: 'rgba(255,255,255,0.05)', borderRadius: 3, overflow: 'hidden' }}>
@@ -164,7 +166,7 @@ export default function MemberProgramme() {
                   className="cst-btn cst-btn-ghost-dark"
                   style={{ marginTop: 10, width: '100%', fontSize: 11 }}
                 >
-                  📅 PLANIFIER MA SEMAINE →
+                  {t('📅 PLANIFIER MA SEMAINE →')}
                 </button>
 
                 <div className="cst-col" style={{ gap: 8, marginTop: 18 }}>
@@ -184,10 +186,10 @@ export default function MemberProgramme() {
                           <span style={{ opacity: 0.5 }}>{isOpen ? '▼' : '▶'}</span>
                           <div className="cst-col" style={{ flex: 1, gap: 2 }}>
                             <span className="cst-mono" style={{ fontSize: 9 }}>
-                              SEMAINE {String(weekNum).padStart(2, '0')}
-                              {i === currentWeek && <span style={{ color: 'var(--cst-mid-green)', marginLeft: 6 }}>· EN COURS</span>}
+                              {t('SEMAINE')} {String(weekNum).padStart(2, '0')}
+                              {i === currentWeek && <span style={{ color: 'var(--cst-mid-green)', marginLeft: 6 }}>{t('· EN COURS')}</span>}
                             </span>
-                            <span className="cst-display" style={{ fontSize: 15 }}>{(w.days || []).length} SÉANCE{(w.days || []).length > 1 ? 'S' : ''}</span>
+                            <span className="cst-display" style={{ fontSize: 15 }}>{(w.days || []).length} {(w.days || []).length > 1 ? t('SÉANCES') : t('SÉANCE')}</span>
                           </div>
                         </button>
                         {isOpen && (
@@ -214,11 +216,11 @@ export default function MemberProgramme() {
                                       <span style={{ fontSize: 14, color: iconColor }}>{icon}</span>
                                       <div className="cst-col" style={{ gap: 2, minWidth: 0 }}>
                                         <span className="cst-display" style={{ fontSize: 13 }}>
-                                          J{dayNum} · {(d.label || 'Séance').toUpperCase()}
+                                          J{dayNum} · {(d.label || t('Séance')).toUpperCase()}
                                         </span>
                                         {plannedDate && (
                                           <span className="cst-mono" style={{ fontSize: 9, opacity: 0.6 }}>
-                                            📅 {new Date(plannedDate).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}
+                                            📅 {new Date(plannedDate).toLocaleDateString(locale === 'en' ? 'en-GB' : 'fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}
                                           </span>
                                         )}
                                       </div>
@@ -232,13 +234,13 @@ export default function MemberProgramme() {
                                         }}
                                         style={{ fontSize: 9, padding: '4px 8px' }}
                                       >
-                                        {isInProgress ? 'REPRENDRE →' : 'DÉMARRER →'}
+                                        {isInProgress ? t('REPRENDRE →') : t('DÉMARRER →')}
                                       </button>
                                     )}
                                   </div>
                                   {isDayOpen && (
                                     d.type === 'Repos' ? (
-                                      <div className="cst-mono" style={{ fontSize: 10, opacity: 0.5, padding: '8px 0' }}>RÉCUPÉRATION</div>
+                                      <div className="cst-mono" style={{ fontSize: 10, opacity: 0.5, padding: '8px 0' }}>{t('RÉCUPÉRATION')}</div>
                                     ) : (
                                       <ProgramBlocks exercises={enrichVideosFromLibrary(d.exercises || [], libVideos)} />
                                     )
@@ -247,7 +249,7 @@ export default function MemberProgramme() {
                               );
                             })}
                             {(w.days || []).length === 0 && (
-                              <div style={{ opacity: 0.5, fontSize: 12 }}>Aucune séance.</div>
+                              <div style={{ opacity: 0.5, fontSize: 12 }}>{t('Aucune séance.')}</div>
                             )}
                           </div>
                         )}
@@ -255,7 +257,7 @@ export default function MemberProgramme() {
                     );
                   })}
                   {weeks.length === 0 && (
-                    <div style={{ opacity: 0.5, fontSize: 13 }}>Le programme est encore vide.</div>
+                    <div style={{ opacity: 0.5, fontSize: 13 }}>{t('Le programme est encore vide.')}</div>
                   )}
                 </div>
               </>

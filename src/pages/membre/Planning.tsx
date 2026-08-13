@@ -22,6 +22,7 @@ import {
   abandonSession,
 } from "@/lib/planning.functions";
 import { createFreeSession } from "@/lib/free-session.functions";
+import { useI18n } from "@/lib/i18n";
 
 // Libellé du jour déduit de la DATE réelle (et non de la position dans la grille).
 // Le programme peut démarrer un autre jour que lundi ; la case doit afficher le vrai
@@ -250,6 +251,7 @@ function DayChoiceList({
   isUnavailable?: (date: string) => boolean;
   onPick: (date: string) => void;
 }) {
+  const { t } = useI18n();
   return (
     <>
       {dates.map((date) => {
@@ -257,13 +259,13 @@ function DayChoiceList({
         const unavailable = isUnavailable?.(date) ?? false;
         const occupied = !isCurrent && isOccupied(date);
         const suffix = isCurrent
-          ? " · actuel"
+          ? t(" · actuel")
           : unavailable
-            ? " · indisponible"
+            ? t(" · indisponible")
           : occupied
-            ? " · occupé"
+            ? t(" · occupé")
             : date === todayISO
-              ? " · aujourd'hui"
+              ? t(" · aujourd'hui")
               : "";
         return (
           <SheetBtn
@@ -272,7 +274,7 @@ function DayChoiceList({
             disabled={busy || isCurrent || unavailable}
             muted={occupied || isCurrent || unavailable}
           >
-            {weekdayLongISO(date)} {new Date(`${date}T00:00:00Z`).getUTCDate()}
+            {t(weekdayLongISO(date))} {new Date(`${date}T00:00:00Z`).getUTCDate()}
             {suffix}
           </SheetBtn>
         );
@@ -285,6 +287,7 @@ function DayChoiceList({
 
 export default function MemberPlanning() {
   const navigate = useNavigate();
+  const { locale, t } = useI18n();
   const listFn = useServerFn(listWeekPlan);
   const upsertFn = useServerFn(upsertPlannedSession);
   const deleteFn = useServerFn(deletePlannedSession);
@@ -310,7 +313,7 @@ export default function MemberPlanning() {
       setData(r);
       if (weekOffset === undefined) setWeekOffset(r.weekNumber);
     } catch (e: any) {
-      toast.error(e?.message ?? "Erreur");
+      toast.error(e?.message ?? t("Erreur"));
     } finally {
       setLoading(false);
     }
@@ -452,7 +455,7 @@ export default function MemberPlanning() {
       }
       await reload();
     } catch (err: any) {
-      toast.error(err?.message ?? "Erreur");
+      toast.error(err?.message ?? t("Erreur"));
     }
   };
 
@@ -477,7 +480,7 @@ export default function MemberPlanning() {
       setModal(null);
       await reload();
     } catch (e: any) {
-      toast.error(e?.message ?? "Erreur");
+      toast.error(e?.message ?? t("Erreur"));
     } finally {
       setBusy(false);
     }
@@ -491,7 +494,7 @@ export default function MemberPlanning() {
       setModal(null);
       await reload();
     } catch (e: any) {
-      toast.error(e?.message ?? "Erreur");
+      toast.error(e?.message ?? t("Erreur"));
     } finally {
       setBusy(false);
     }
@@ -520,7 +523,7 @@ export default function MemberPlanning() {
       navigate({ to: "/membre/seance-libre/$sessionId", params: { sessionId: r.sessionId } });
     } catch (e: any) {
       setBusy(false);
-      toast.error(e?.message ?? "Erreur");
+      toast.error(e?.message ?? t("Erreur"));
     }
   }
 
@@ -532,7 +535,7 @@ export default function MemberPlanning() {
       setModal(null);
       await reload();
     } catch (e: any) {
-      toast.error(e?.message ?? "Erreur");
+      toast.error(e?.message ?? t("Erreur"));
     } finally {
       setBusy(false);
     }
@@ -547,7 +550,7 @@ export default function MemberPlanning() {
       setModal(null);
       await reload();
     } catch (e: any) {
-      toast.error(e?.message ?? "Erreur");
+      toast.error(e?.message ?? t("Erreur"));
     } finally {
       setBusy(false);
     }
@@ -569,7 +572,7 @@ export default function MemberPlanning() {
       setModal(null);
       await reload();
     } catch (e: any) {
-      toast.error(e?.message ?? "Erreur");
+      toast.error(e?.message ?? t("Erreur"));
     } finally {
       setBusy(false);
     }
@@ -582,9 +585,9 @@ export default function MemberPlanning() {
       await abandonFn({ data: { id: sess.id } });
       setModal(null);
       await reload();
-      toast.success("Séance annulée — tu peux la replanifier");
+      toast.success(t("Séance annulée — tu peux la replanifier"));
     } catch (e: any) {
-      toast.error(e?.message ?? "Erreur");
+      toast.error(e?.message ?? t("Erreur"));
     } finally {
       setBusy(false);
     }
@@ -619,8 +622,11 @@ export default function MemberPlanning() {
 
   const frDate = (date: string) => {
     const d = new Date(`${date}T00:00:00Z`);
-    const month = d.toLocaleDateString("fr-FR", { month: "long", timeZone: "UTC" });
-    return `${weekdayLongISO(date)} ${d.getUTCDate()} ${month}`;
+    const month = d.toLocaleDateString(locale === "en" ? "en-GB" : "fr-FR", {
+      month: "long",
+      timeZone: "UTC",
+    });
+    return `${t(weekdayLongISO(date))} ${d.getUTCDate()} ${month}`;
   };
 
   return (
@@ -630,11 +636,11 @@ export default function MemberPlanning() {
           <button
             onClick={() => navigate({ to: "/membre" })}
             className="text-sm opacity-60 hover:opacity-100"
-            aria-label="Retour"
+            aria-label={t("Retour")}
           >
-            ← Retour
+            {t("← Retour")}
           </button>
-          <h1 className="font-mono text-xs tracking-widest">MON PLANNING</h1>
+          <h1 className="font-mono text-xs tracking-widest">{t("MON PLANNING")}</h1>
           <div className="w-10" />
         </div>
 
@@ -644,34 +650,34 @@ export default function MemberPlanning() {
               onClick={() => setWeekOffset((w) => Math.max(1, (w ?? data.weekNumber) - 1))}
               className="text-xs px-2 py-1 rounded border border-border"
             >
-              ← Sem. préc.
+              {t("← Sem. préc.")}
             </button>
             <div className="text-sm font-semibold">
-              Semaine {data.weekNumber}{" "}
+              {t("Semaine")} {data.weekNumber}{" "}
               <span className="opacity-60 text-xs">
                 ({displayDateFR(data.weekStart)} → {displayDateFR(data.weekEnd)})
               </span>
             </div>
             <div className="text-[10px] font-mono opacity-45 tracking-widest uppercase">
-              Semaine perso : {data.weekWindowLabel}
+              {t("Semaine perso :")} {data.weekWindowLabel}
             </div>
             <button
               onClick={() => setWeekOffset((w) => (w ?? data.weekNumber) + 1)}
               className="text-xs px-2 py-1 rounded border border-border"
             >
-              Suivante →
+              {t("Suivante →")}
             </button>
           </div>
         )}
 
-        {loading && <div className="opacity-60 text-sm py-8 text-center">Chargement…</div>}
+        {loading && <div className="opacity-60 text-sm py-8 text-center">{t("Chargement…")}</div>}
 
         {data && !loading && (
           <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
             {unplanned.length > 0 && (
               <div className="mb-4 p-3 rounded-lg border border-dashed border-border bg-muted/30">
                 <div className="text-[10px] font-mono opacity-60 tracking-widest mb-2">
-                  À PLANIFIER · Tape une séance pour la placer (ou glisse-la sur un jour)
+                  {t("À PLANIFIER · Tape une séance pour la placer (ou glisse-la sur un jour)")}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {unplanned.map((d: any) => (
@@ -710,12 +716,12 @@ export default function MemberPlanning() {
                   <DroppableDay
                     key={date}
                     date={date}
-                    label={weekdayShortISO(date)}
+                    label={t(weekdayShortISO(date))}
                     isToday={date === todayISO}
                   >
                     {isDone && (
                       <div className="rounded-md px-2 py-1 text-xs bg-emerald-600 text-white break-words">
-                        ✓ {sess.session_label ?? "Séance"}
+                        ✓ {sess.session_label ?? t("Séance")}
                       </div>
                     )}
                     {isRunning && (
@@ -723,7 +729,8 @@ export default function MemberPlanning() {
                         onClick={() => setModal({ kind: "running", date, sess })}
                         className="text-left rounded-md px-2 py-1 text-xs break-words bg-amber-500/20 text-amber-500 border border-amber-500/50"
                       >
-                        ▶ {sess.session_label ?? "Séance"} · en cours
+                        ▶ {sess.session_label ?? t("Séance")}
+                        {t(" · en cours")}
                       </button>
                     )}
                     {showPlanned && (
@@ -744,7 +751,7 @@ export default function MemberPlanning() {
                     )}
                     {!dayTaken && !planned && isBeforeAssignmentStart(date) && (
                       <div className="rounded-md px-2 py-1 text-xs opacity-35 border border-dashed border-border">
-                        Indispo
+                        {t("Indispo")}
                       </div>
                     )}
                   </DroppableDay>
@@ -756,7 +763,7 @@ export default function MemberPlanning() {
               (data.planned ?? []).length === 0 &&
               (data.sessions ?? []).length === 0 && (
                 <div className="mt-6 text-center text-sm opacity-60">
-                  Aucune séance prévue cette semaine.
+                  {t("Aucune séance prévue cette semaine.")}
                 </div>
               )}
           </DndContext>
@@ -782,7 +789,7 @@ export default function MemberPlanning() {
                   textTransform: "uppercase",
                 }}
               >
-                Depuis mon programme
+                {t("Depuis mon programme")}
               </div>
               {unplanned.map((def: any) => (
                 <SheetBtn
@@ -808,7 +815,7 @@ export default function MemberPlanning() {
                   textTransform: "uppercase",
                 }}
               >
-                Toutes mes séances programme
+                {t("Toutes mes séances programme")}
               </div>
               {programChoices.map((def: any) => (
                 <SheetBtn
@@ -832,23 +839,23 @@ export default function MemberPlanning() {
               textTransform: "uppercase",
             }}
           >
-            Autre
+            {t("Autre")}
           </div>
           <SheetBtn onClick={() => startFreeSession(modal.date)} disabled={busy}>
-            ✦ Séance libre hors programme
+            {t("✦ Séance libre hors programme")}
           </SheetBtn>
           <SheetBtn onClick={() => scheduleRest(modal.date)} disabled={busy} muted>
-            — Marquer comme repos
+            {t("— Marquer comme repos")}
           </SheetBtn>
           <SheetBtn onClick={() => setModal(null)} muted>
-            Annuler
+            {t("Annuler")}
           </SheetBtn>
         </BottomSheet>
       )}
 
       {modal?.kind === "place" && (
         <BottomSheet>
-          <ModalTitle text={`Placer : ${modal.def.label}`} />
+          <ModalTitle text={`${t("Placer :")} ${modal.def.label}`} />
           <div
             className="font-mono"
             style={{
@@ -859,7 +866,7 @@ export default function MemberPlanning() {
               textTransform: "uppercase",
             }}
           >
-            Choisis un jour
+            {t("Choisis un jour")}
           </div>
           <DayChoiceList
             dates={weekDates}
@@ -870,14 +877,14 @@ export default function MemberPlanning() {
             onPick={(date) => scheduleDayDef(modal.def, date)}
           />
           <SheetBtn onClick={() => setModal(null)} muted>
-            Annuler
+            {t("Annuler")}
           </SheetBtn>
         </BottomSheet>
       )}
 
       {modal?.kind === "move" && (
         <BottomSheet>
-          <ModalTitle text={`Déplacer : ${modal.planned.day_label}`} />
+          <ModalTitle text={`${t("Déplacer :")} ${modal.planned.day_label}`} />
           <div
             className="font-mono"
             style={{
@@ -888,7 +895,7 @@ export default function MemberPlanning() {
               textTransform: "uppercase",
             }}
           >
-            Choisis un nouveau jour
+            {t("Choisis un nouveau jour")}
           </div>
           <DayChoiceList
             dates={weekDates}
@@ -900,14 +907,16 @@ export default function MemberPlanning() {
             onPick={(date) => movePlanned(modal.planned, date)}
           />
           <SheetBtn onClick={() => setModal(null)} muted>
-            Annuler
+            {t("Annuler")}
           </SheetBtn>
         </BottomSheet>
       )}
 
       {modal?.kind === "running" && (
         <BottomSheet>
-          <ModalTitle text={`${modal.sess.session_label ?? "Séance"} · ${frDate(modal.date)}`} />
+          <ModalTitle
+            text={`${modal.sess.session_label ?? t("Séance")} · ${frDate(modal.date)}`}
+          />
           <div
             className="font-mono"
             style={{
@@ -918,16 +927,16 @@ export default function MemberPlanning() {
               textTransform: "uppercase",
             }}
           >
-            Séance commencée, pas terminée
+            {t("Séance commencée, pas terminée")}
           </div>
           <SheetBtn onClick={() => resumeRunning(modal.sess)} disabled={busy}>
-            ▶ Reprendre là où j'en étais
+            {t("▶ Reprendre là où j'en étais")}
           </SheetBtn>
           <SheetBtn onClick={() => abandonRunning(modal.sess)} disabled={busy} danger>
-            ↩︎ Annuler cette séance et la replanifier
+            {t("↩︎ Annuler cette séance et la replanifier")}
           </SheetBtn>
           <SheetBtn onClick={() => setModal(null)} muted>
-            Fermer
+            {t("Fermer")}
           </SheetBtn>
         </BottomSheet>
       )}
@@ -939,22 +948,22 @@ export default function MemberPlanning() {
           {/* Démarrable même si planifiée plus tard : le membre a le droit d'avancer
               sa séance (c'était le seul écran sans porte d'entrée pour la lancer). */}
           <SheetBtn onClick={() => startPlannedNow(modal.planned)} disabled={busy}>
-            {modal.date <= todayISO ? "▶ Démarrer maintenant" : "▶ Démarrer en avance"}
+            {modal.date <= todayISO ? t("▶ Démarrer maintenant") : t("▶ Démarrer en avance")}
           </SheetBtn>
           <SheetBtn
             onClick={() => setModal({ kind: "move", planned: modal.planned })}
             disabled={busy}
           >
-            📅 Déplacer à un autre jour
+            {t("📅 Déplacer à un autre jour")}
           </SheetBtn>
           <SheetBtn onClick={() => deletePlanned(modal.planned.id)} disabled={busy} danger>
-            Supprimer du planning
+            {t("Supprimer du planning")}
           </SheetBtn>
           <SheetBtn onClick={() => replaceWithRest(modal.planned)} disabled={busy} muted>
-            — Remplacer par repos
+            {t("— Remplacer par repos")}
           </SheetBtn>
           <SheetBtn onClick={() => setModal(null)} muted>
-            Annuler
+            {t("Annuler")}
           </SheetBtn>
         </BottomSheet>
       )}
