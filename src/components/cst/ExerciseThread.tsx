@@ -7,6 +7,7 @@ import {
   postExerciseComment,
   getSignedVideoUrl,
 } from "@/lib/videos.functions";
+import { useTechniqueUploadQueue, MAX_VIDEO_BYTES, tooLargeMessage } from "./TechniqueUploadQueue";
 
 type Video = {
   id: string;
@@ -56,6 +57,11 @@ export function ExerciseThread({
   const [signed, setSigned] = useState<Record<string, string>>({});
   const [openVideoId, setOpenVideoId] = useState<string | null>(null);
 
+  // Présent uniquement pendant une séance live : on diffère alors l'envoi des vidéos
+  // en fin de séance (voir TechniqueUploadQueue). Ailleurs (revue post-séance), null.
+  const queue = useTechniqueUploadQueue();
+  const pending = queue?.forExercise(exerciseName) ?? [];
+
   async function load() {
     try {
       const res = await fetchThread({ data: { sessionId, exerciseName } });
@@ -99,7 +105,23 @@ export function ExerciseThread({
     }
   }
 
-  async function uploadFile(file: File) {
+  // Vidéo choisie : garde-fou taille (plan gratuit = 50 Mo), puis soit on la met en
+  // file d'attente (séance live → envoi groupé en fin de séance), soit upload immédiat.
+  function handlePicked(file: File) {
+    setUploadErr(null);
+    if (file.size > MAX_VIDEO_BYTES) {
+      setUploadErr(tooLargeMessage(file.size));
+      return;
+    }
+    if (queue) {
+      const res = queue.add(exerciseName, file);
+      if (!res.ok) setUploadErr(res.error || "Vidéo refusée");
+      return;
+    }
+    void uploadFileImmediate(file);
+  }
+
+  async function uploadFileImmediate(file: File) {
     setUploading(true);
     setUploadErr(null);
     try {
@@ -119,8 +141,8 @@ export function ExerciseThread({
       });
       if (insErr) throw insErr;
       await load();
-    } catch (e: any) {
-      setUploadErr(e.message || "Erreur upload");
+    } catch (e) {
+      setUploadErr((e as Error).message || "Erreur upload");
     } finally {
       setUploading(false);
     }
@@ -158,8 +180,35 @@ export function ExerciseThread({
 
       {/* Upload row (member only) */}
       {!isCoachView && (
-        <div style={{ display: "flex", gap: 8 }}>
-          <UploadBtn icon="🎬" label={uploading ? "ENVOI…" : "FILMER / CHOISIR UNE VIDÉO"} onFile={uploadFile} disabled={uploading} />
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <UploadBtn icon="🎬" label={uploading ? "ENVOI…" : "FILMER / CHOISIR UNE VIDÉO"} onFile={handlePicked} disabled={uploading} />
+          {/* Séance live : vidéos choisies, en attente d'un envoi groupé en fin de séance */}
+          {pending.map((p) => (
+            <div key={p.id} style={{
+              display: "flex", alignItems: "center", gap: 8,
+              padding: "6px 10px", borderRadius: 6,
+              background: "rgba(45,90,53,0.14)", border: "1px solid rgba(45,90,53,0.35)",
+              fontSize: 11, color: "rgba(255,255,255,0.85)",
+            }}>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                🎬 En attente d'envoi · {p.sizeMB} Mo
+                {p.error && <span style={{ color: "#C56A60" }}> — {p.error}</span>}
+              </span>
+              <button
+                type="button"
+                onClick={() => queue?.remove(p.id)}
+                aria-label="Retirer la vidéo"
+                style={{ background: "none", border: "none", color: "rgba(255,255,255,0.6)", cursor: "pointer", fontSize: 14, lineHeight: 1 }}
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+          {queue && pending.length > 0 && (
+            <div style={{ fontSize: 10, opacity: 0.6 }}>
+              Envoi groupé à Léo en fin de séance (bouton en bas de l'écran).
+            </div>
+          )}
         </div>
       )}
       {uploadErr && <div style={{ color: "#C56A60", fontSize: 11 }}>{uploadErr}</div>}

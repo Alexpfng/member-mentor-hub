@@ -7,6 +7,7 @@ import MemberNav from "../components/MemberNav";
 import { CSTLogo } from "../components/Atoms";
 import { type ProgExercise } from "../components/cst/ProgramBlocks";
 import { LiveSession } from "../components/cst/LiveSession";
+import { TechniqueUploadQueueProvider } from "../components/cst/TechniqueUploadQueue";
 import { RunningSession, isRunningSession } from "../components/cst/RunningSession";
 import { computeSessionDurationMin } from "@/lib/format";
 import { resolveMemberSessionExercises } from "@/lib/program-weeks";
@@ -440,17 +441,19 @@ function SeancePage() {
                 finishing={finishing}
               />
             ) : (
-              <LiveSession
-                sessionId={sessionId}
-                userId={userId}
-                sessionLabel={session?.session_label ?? null}
-                exercises={exercises}
-                onFinish={finishSession}
-                onReset={resetSession}
-                finishing={finishing}
-                initialMode={sessionMode}
-                quitRef={quitRef}
-              />
+              <TechniqueUploadQueueProvider sessionId={sessionId} userId={userId ?? ""}>
+                <LiveSession
+                  sessionId={sessionId}
+                  userId={userId}
+                  sessionLabel={session?.session_label ?? null}
+                  exercises={exercises}
+                  onFinish={finishSession}
+                  onReset={resetSession}
+                  finishing={finishing}
+                  initialMode={sessionMode}
+                  quitRef={quitRef}
+                />
+              </TechniqueUploadQueueProvider>
             )}
           </div>
 
