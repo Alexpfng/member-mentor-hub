@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import MemberNav from "../../components/MemberNav";
 import { listLibraryForMember } from "@/lib/member-stats.functions";
 import { createComposedSession } from "@/lib/composed-session.functions";
+import { useI18n } from "@/lib/i18n";
 
 type Ex = {
   id: string;
@@ -42,6 +43,7 @@ let uidSeq = 0;
 const nextUid = () => `p${Date.now()}_${uidSeq++}`;
 
 export default function Composer() {
+  const { t } = useI18n();
   const fetchLib = useServerFn(listLibraryForMember);
   const createSession = useServerFn(createComposedSession);
   const navigate = useNavigate();
@@ -147,7 +149,7 @@ export default function Composer() {
       navigate({ to: "/membre/seance/$sessionId", params: { sessionId: r.sessionId } });
     } catch (err) {
       console.error("[composer]", err);
-      toast.error("Impossible de créer la séance. Réessaie.");
+      toast.error(t("Impossible de créer la séance. Réessaie."));
       setBusy(false);
     }
   };
@@ -163,18 +165,18 @@ export default function Composer() {
               className="cst-mono"
               style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.6)", borderRadius: 6, padding: "4px 10px", fontSize: 10, cursor: "pointer", letterSpacing: "0.12em" }}
             >
-              ← RETOUR
+              {t("← RETOUR")}
             </button>
             <h1 className="cst-display" style={{ fontSize: 26, margin: "12px 0 0", color: "#fff" }}>
-              CRÉER MA <span style={{ color: "var(--cst-mid-green)" }}>SÉANCE</span>
+              {t("CRÉER MA")} <span style={{ color: "var(--cst-mid-green)" }}>{t("SÉANCE")}</span>
             </h1>
             <p style={{ margin: "6px 0 0", fontSize: 12, opacity: 0.7 }}>
-              Pioche tes exercices dans la bibliothèque et fixe tes cibles, puis lance ta séance.
+              {t("Pioche tes exercices dans la bibliothèque et fixe tes cibles, puis lance ta séance.")}
             </p>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Nom de ma séance (optionnel)"
+              placeholder={t("Nom de ma séance (optionnel)")}
               className="cst-input"
               style={{ width: "100%", marginTop: 12, padding: "10px 12px", fontSize: 14 }}
             />
@@ -184,12 +186,12 @@ export default function Composer() {
             {/* Sélection */}
             <div style={{ marginBottom: 8 }}>
               <span className="cst-mono" style={{ fontSize: 9, letterSpacing: "0.2em", opacity: 0.6 }}>
-                MA SÉANCE · {picked.length} EXERCICE{picked.length > 1 ? "S" : ""}
+                {t("MA SÉANCE")} · {picked.length} {t("EXERCICE")}{picked.length > 1 ? "S" : ""}
               </span>
             </div>
             {picked.length === 0 ? (
               <div className="cst-card-dark" style={{ padding: 18, textAlign: "center", fontSize: 13, opacity: 0.6, marginBottom: 18 }}>
-                Aucun exercice pour l'instant. Ajoute-en depuis la bibliothèque ci-dessous.
+                {t("Aucun exercice pour l'instant. Ajoute-en depuis la bibliothèque ci-dessous.")}
               </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 18 }}>
@@ -198,15 +200,15 @@ export default function Composer() {
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <span style={{ width: 10, height: 10, borderRadius: "50%", background: accentOf(p.color), flex: "0 0 10px" }} />
                       <span style={{ fontWeight: 600, fontSize: 14, flex: 1, minWidth: 0 }}>{p.name}</span>
-                      <button onClick={() => move(p.uid, -1)} disabled={idx === 0} title="Monter" style={iconBtn(idx === 0)}>↑</button>
-                      <button onClick={() => move(p.uid, 1)} disabled={idx === picked.length - 1} title="Descendre" style={iconBtn(idx === picked.length - 1)}>↓</button>
-                      <button onClick={() => removePicked(p.uid)} title="Retirer" style={{ ...iconBtn(false), color: "rgba(255,120,120,0.8)" }}>✕</button>
+                      <button onClick={() => move(p.uid, -1)} disabled={idx === 0} title={t("Monter")} style={iconBtn(idx === 0)}>↑</button>
+                      <button onClick={() => move(p.uid, 1)} disabled={idx === picked.length - 1} title={t("Descendre")} style={iconBtn(idx === picked.length - 1)}>↓</button>
+                      <button onClick={() => removePicked(p.uid)} title={t("Retirer")} style={{ ...iconBtn(false), color: "rgba(255,120,120,0.8)" }}>✕</button>
                     </div>
                     <div style={{ marginTop: 10 }}>
                       <div style={{ display: "grid", gridTemplateColumns: "24px 1fr 1fr 24px", gap: 4, marginBottom: 4 }}>
                         <span />
                         <span className="cst-mono" style={{ fontSize: 9, opacity: 0.45, letterSpacing: "0.12em" }}>REPS</span>
-                        <span className="cst-mono" style={{ fontSize: 9, opacity: 0.45, letterSpacing: "0.12em" }}>KG / PDC</span>
+                        <span className="cst-mono" style={{ fontSize: 9, opacity: 0.45, letterSpacing: "0.12em" }}>{t("KG / PDC")}</span>
                         <span />
                       </div>
                       {p.sets.map((s, si) => (
@@ -223,7 +225,7 @@ export default function Composer() {
                             className="cst-input"
                             value={s.charge}
                             onChange={(e) => updateSet(p.uid, si, { charge: e.target.value })}
-                            placeholder="PDC / kg"
+                            placeholder={t("PDC / kg")}
                             style={{ padding: "6px 8px", fontSize: 13 }}
                           />
                           {p.sets.length > 1 ? (
@@ -236,10 +238,10 @@ export default function Composer() {
                         className="cst-mono"
                         style={{ marginTop: 4, background: "transparent", border: "1px dashed rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.45)", borderRadius: 6, padding: "4px 10px", fontSize: 10, cursor: "pointer", width: "100%", letterSpacing: "0.1em" }}
                       >
-                        + SÉRIE
+                        {t("+ SÉRIE")}
                       </button>
                       <div style={{ marginTop: 8 }}>
-                        <Field label="RPE CIBLE" value={p.rpe_target} onChange={(v) => updatePicked(p.uid, { rpe_target: v })} />
+                        <Field label={t("RPE CIBLE")} value={p.rpe_target} onChange={(v) => updatePicked(p.uid, { rpe_target: v })} />
                       </div>
                     </div>
                   </div>
@@ -250,12 +252,12 @@ export default function Composer() {
             {/* Bibliothèque */}
             <div style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "4px 0 14px" }} />
             <span className="cst-mono" style={{ fontSize: 9, letterSpacing: "0.2em", opacity: 0.6 }}>
-              AJOUTER DEPUIS LA BIBLIOTHÈQUE
+              {t("AJOUTER DEPUIS LA BIBLIOTHÈQUE")}
             </span>
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="🔍 Rechercher un exercice…"
+              placeholder={t("🔍 Rechercher un exercice…")}
               className="cst-input"
               style={{ width: "100%", margin: "10px 0", padding: "10px 12px", fontSize: 14 }}
             />
@@ -280,16 +282,16 @@ export default function Composer() {
                       whiteSpace: "nowrap",
                     }}
                   >
-                    {g.toUpperCase()}
+                    {(g === "Tout" ? t("Tout") : g === "Autres" ? t("Autres") : g).toUpperCase()}
                   </button>
                 );
               })}
             </div>
 
             {loading ? (
-              <div style={{ padding: 24, opacity: 0.6 }}>Chargement…</div>
+              <div style={{ padding: 24, opacity: 0.6 }}>{t("Chargement…")}</div>
             ) : filtered.length === 0 ? (
-              <div style={{ padding: 24, opacity: 0.6, fontSize: 13 }}>Aucun exercice trouvé.</div>
+              <div style={{ padding: 24, opacity: 0.6, fontSize: 13 }}>{t("Aucun exercice trouvé.")}</div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 12 }}>
                 {filtered.map((ex) => (
@@ -328,7 +330,7 @@ export default function Composer() {
               disabled={picked.length === 0 || busy}
               onClick={start}
             >
-              {busy ? "CRÉATION…" : `COMMENCER MA SÉANCE (${picked.length}) →`}
+              {busy ? t("CRÉATION…") : `${t("COMMENCER MA SÉANCE")} (${picked.length}) →`}
             </button>
           </div>
 

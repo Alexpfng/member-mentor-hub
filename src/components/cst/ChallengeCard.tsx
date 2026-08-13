@@ -1,4 +1,5 @@
 import { daysLeft, METRIC_LABEL, type ChallengeMetric } from "@/lib/community";
+import { useI18n } from "@/lib/i18n";
 
 type Challenge = {
   id: string;
@@ -31,6 +32,7 @@ export default function ChallengeCard({
   busy: boolean;
   onToggleJoin: () => void;
 }) {
+  const { t } = useI18n();
   return (
     <div
       className="cst-card-dark"
@@ -41,10 +43,10 @@ export default function ChallengeCard({
           className="cst-mono"
           style={{ fontSize: 9, letterSpacing: "0.18em", color: "var(--cst-mid-green)" }}
         >
-          DÉFI EN COURS
+          {t("DÉFI EN COURS")}
         </span>
         <span className="cst-mono" style={{ fontSize: 9, opacity: 0.5 }}>
-          {daysLeft(challenge.ends_on, new Date().toISOString())} J RESTANTS
+          {daysLeft(challenge.ends_on, new Date().toISOString())} {t("J RESTANTS")}
         </span>
       </div>
 
@@ -85,20 +87,21 @@ export default function ChallengeCard({
         </span>
         <span aria-hidden>·</span>
         <span>
-          {progress.participants} participant{progress.participants > 1 ? "s" : ""}
+          {progress.participants} {t("participant")}
+          {progress.participants > 1 ? "s" : ""}
         </span>
         {progress.mine != null && (
           <>
             <span aria-hidden>·</span>
             <span style={{ color: "var(--cst-mid-green)" }}>
-              toi : {progress.mine.toLocaleString("fr-FR")}
+              {t("toi :")} {progress.mine.toLocaleString("fr-FR")}
             </span>
           </>
         )}
       </div>
 
       {progress.done && (
-        <div style={{ fontSize: 12, color: "#D4A53B" }}>Objectif atteint. Bravo à tous.</div>
+        <div style={{ fontSize: 12, color: "#D4A53B" }}>{t("Objectif atteint. Bravo à tous.")}</div>
       )}
 
       <button
@@ -107,7 +110,7 @@ export default function ChallengeCard({
         className={joined ? "cst-btn cst-btn-ghost-dark" : "cst-btn cst-btn-primary"}
         style={{ fontSize: 12, padding: "10px 0" }}
       >
-        {joined ? "Quitter le défi" : "Je participe"}
+        {joined ? t("Quitter le défi") : t("Je participe")}
       </button>
     </div>
   );

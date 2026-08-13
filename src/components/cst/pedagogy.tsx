@@ -3,6 +3,7 @@
    All components live here to keep things contained. */
 
 import { useEffect, useState } from "react";
+import { useI18n } from "@/lib/i18n";
 
 /* ───────── Color codes ───────── */
 
@@ -65,12 +66,13 @@ export function ColorDot({
   size?: number;
   onClick?: () => void;
 }) {
+  const { t } = useI18n();
   if (!color) return null;
   return (
     <button
       type="button"
       onClick={onClick}
-      title="Voir le code couleur"
+      title={t("Voir le code couleur")}
       style={{
         width: size,
         height: size,
@@ -82,7 +84,7 @@ export function ColorDot({
         boxShadow: "0 0 0 2px rgba(255,255,255,0.06)",
         flexShrink: 0,
       }}
-      aria-label={`Code couleur ${color}`}
+      aria-label={`${t("Code couleur")} ${color}`}
     />
   );
 }
@@ -100,6 +102,7 @@ export function CSTModal({
   children: React.ReactNode;
   maxWidth?: number;
 }) {
+  const { t } = useI18n();
   if (!open) return null;
   return (
     <div
@@ -137,7 +140,7 @@ export function CSTModal({
           className="cst-btn cst-btn-ghost-dark cst-btn-sm"
           style={{ marginTop: 18, width: "100%" }}
         >
-          Compris ✓
+          {t("Compris ✓")}
         </button>
       </div>
     </div>
@@ -155,6 +158,7 @@ export function ColorTooltip({
   open: boolean;
   onClose: () => void;
 }) {
+  const { t } = useI18n();
   if (!color) return null;
   const m = COLOR_META[color];
   return (
@@ -162,18 +166,18 @@ export function ColorTooltip({
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
         <ColorDot color={color} size={18} />
         <h3 className="cst-display" style={{ margin: 0, fontSize: 22 }}>
-          {m.title}
+          {t(m.title)}
         </h3>
       </div>
       <p className="cst-italic" style={{ margin: "0 0 14px", opacity: 0.8, fontSize: 14 }}>
-        {m.subtitle}
+        {t(m.subtitle)}
       </p>
-      <p style={{ margin: "0 0 14px", fontSize: 14, lineHeight: 1.55 }}>{m.rule}</p>
+      <p style={{ margin: "0 0 14px", fontSize: 14, lineHeight: 1.55 }}>{t(m.rule)}</p>
       <div
         className="cst-mono"
         style={{ fontSize: 10, padding: 12, background: "rgba(0,0,0,0.25)", borderRadius: 8 }}
       >
-        {m.rpeTarget}
+        {t(m.rpeTarget)}
       </div>
     </CSTModal>
   );
@@ -190,6 +194,7 @@ const RPE_GUIDANCE: Record<NonNullable<ExerciseColor>, string> = {
 };
 
 export function RPEGuidance({ color }: { color: ExerciseColor }) {
+  const { t } = useI18n();
   if (!color) return null;
   return (
     <div
@@ -205,7 +210,7 @@ export function RPEGuidance({ color }: { color: ExerciseColor }) {
         letterSpacing: "0.08em",
       }}
     >
-      {RPE_GUIDANCE[color]}
+      {t(RPE_GUIDANCE[color])}
     </div>
   );
 }
@@ -245,10 +250,11 @@ const RPE_SCALE = [
 ];
 
 export function RPEReferenceSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { t } = useI18n();
   return (
     <CSTModal open={open} onClose={onClose} maxWidth={500}>
       <h3 className="cst-display" style={{ margin: 0, fontSize: 22 }}>
-        Échelle RPE
+        {t("Échelle RPE")}
       </h3>
       <p className="cst-mono" style={{ marginTop: 4, marginBottom: 16, fontSize: 10 }}>
         — RATING OF PERCEIVED EXERTION
@@ -278,7 +284,7 @@ export function RPEReferenceSheet({ open, onClose }: { open: boolean; onClose: (
             >
               {r.v}
             </span>
-            <span style={{ opacity: 0.85 }}>{r.t}</span>
+            <span style={{ opacity: 0.85 }}>{t(r.t)}</span>
           </div>
         ))}
       </div>
@@ -293,8 +299,8 @@ export function RPEReferenceSheet({ open, onClose }: { open: boolean; onClose: (
           lineHeight: 1.5,
         }}
       >
-        💡 Note le RPE <strong>immédiatement</strong> après chaque exercice.<br />
-        💡 Si ton RPE remonte vs la semaine dernière pour la même charge → n'augmente pas. Le corps est plus fatigué.
+        {t("💡 Note le RPE ")}<strong>{t("immédiatement")}</strong>{t(" après chaque exercice.")}<br />
+        {t("💡 Si ton RPE remonte vs la semaine dernière pour la même charge → n'augmente pas. Le corps est plus fatigué.")}
       </div>
     </CSTModal>
   );
@@ -334,6 +340,7 @@ export function TempoBadge({
   tempo?: string | null;
   onClick?: () => void;
 }) {
+  const { t } = useI18n();
   const display = formatTempoRaw(tempo);
   if (!display) return null;
   return (
@@ -351,7 +358,7 @@ export function TempoBadge({
         letterSpacing: "0.18em",
         cursor: onClick ? "pointer" : "default",
       }}
-      title="Voir le tempo"
+      title={t("Voir le tempo")}
     >
       {display}
     </button>
@@ -371,14 +378,15 @@ export function TempoExplainer({
   startsAtTop?: boolean;
   name?: string;
 }) {
+  const { t } = useI18n();
   const p = parseTempo(tempo);
   const [playKey, setPlayKey] = useState(0);
   if (!p) return null;
 
-  const phase1Label = startsAtTop ? "DESCENTE (excentrique)" : "MONTÉE (concentrique)";
-  const phase3Label = startsAtTop ? "POUSSÉE (concentrique)" : "DESCENTE (excentrique)";
-  const phase2Label = startsAtTop ? "PAUSE EN BAS" : "PAUSE EN HAUT";
-  const phase4Label = startsAtTop ? "ENTRE LES REPS" : "ENTRE LES REPS";
+  const phase1Label = startsAtTop ? t("DESCENTE (excentrique)") : t("MONTÉE (concentrique)");
+  const phase3Label = startsAtTop ? t("POUSSÉE (concentrique)") : t("DESCENTE (excentrique)");
+  const phase2Label = startsAtTop ? t("PAUSE EN BAS") : t("PAUSE EN HAUT");
+  const phase4Label = startsAtTop ? t("ENTRE LES REPS") : t("ENTRE LES REPS");
 
   const seconds = (v: number | "X") => (v === "X" ? "EXPLO" : `${v}s`);
   const total =
@@ -393,7 +401,7 @@ export function TempoExplainer({
         — TEMPO {p.eccentric}·{p.bottomPause}·{p.concentric}·{p.topPause}
       </p>
       <h3 className="cst-display" style={{ margin: "6px 0 18px", fontSize: 22 }}>
-        {name ?? "Cadence d'exécution"}
+        {name ?? t("Cadence d'exécution")}
       </h3>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -433,7 +441,7 @@ export function TempoExplainer({
           className="cst-btn cst-btn-ghost-dark cst-btn-sm"
           style={{ marginTop: 10 }}
         >
-          ▶ Rejouer
+          {t("▶ Rejouer")}
         </button>
       </div>
 
@@ -447,7 +455,7 @@ export function TempoExplainer({
           borderRadius: 8,
         }}
       >
-        💡 <strong>X</strong> = EXPLOSIF : phase aussi rapide que possible.
+        💡 <strong>X</strong>{t(" = EXPLOSIF : phase aussi rapide que possible.")}
       </div>
 
       <style>{`@keyframes cstTempoFill { from { transform: scaleX(0); } to { transform: scaleX(1); } }`}</style>
@@ -533,23 +541,23 @@ export function GroupingHeader({
 /* ───────── Explainer modals ───────── */
 
 export function SupersetTooltipOnce({ trigger }: { trigger: boolean }) {
+  const { t } = useI18n();
   const [open, close] = useSeenOnce("superset", trigger);
   return (
     <CSTModal open={open} onClose={close} maxWidth={420}>
       <p className="cst-mono" style={{ margin: 0, fontSize: 10 }}>— SUPERSET</p>
       <h3 className="cst-display" style={{ margin: "6px 0 14px", fontSize: 20 }}>
-        Enchaîne les 2 exercices
+        {t("Enchaîne les 2 exercices")}
       </h3>
       <p style={{ margin: 0, fontSize: 14, lineHeight: 1.55 }}>
-        Tu enchaînes B1 et B2 <strong>SANS récupération</strong> entre eux.
-        La récup ne s'effectue <strong>QU'APRÈS</strong> le 2e exercice.
-        Puis tu répètes le cycle pour chaque série.
+        {t("Tu enchaînes B1 et B2 ")}<strong>{t("SANS récupération")}</strong>{t(" entre eux. La récup ne s'effectue ")}<strong>{t("QU'APRÈS")}</strong>{t(" le 2e exercice. Puis tu répètes le cycle pour chaque série.")}
       </p>
     </CSTModal>
   );
 }
 
 export function CARsExplainer({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { t } = useI18n();
   return (
     <CSTModal open={open} onClose={onClose}>
       <p className="cst-mono" style={{ margin: 0, fontSize: 10 }}>— CARs</p>
@@ -557,13 +565,12 @@ export function CARsExplainer({ open, onClose }: { open: boolean; onClose: () =>
         Controlled Articular Rotations
       </h3>
       <p style={{ margin: 0, fontSize: 14, lineHeight: 1.55 }}>
-        Mouvement circulaire LENT qui emmène l'articulation dans toute son
-        amplitude avec une <strong>forte contraction musculaire</strong> autour d'elle.
+        {t("Mouvement circulaire LENT qui emmène l'articulation dans toute son amplitude avec une ")}<strong>{t("forte contraction musculaire")}</strong>{t(" autour d'elle.")}
       </p>
       <ul style={{ paddingLeft: 18, fontSize: 13, lineHeight: 1.6, marginTop: 12 }}>
-        <li>Santé articulaire</li>
-        <li>Mobilité + force</li>
-        <li>Prévention des blessures</li>
+        <li>{t("Santé articulaire")}</li>
+        <li>{t("Mobilité + force")}</li>
+        <li>{t("Prévention des blessures")}</li>
       </ul>
       <div
         style={{
@@ -576,39 +583,38 @@ export function CARsExplainer({ open, onClose }: { open: boolean; onClose: () =>
           lineHeight: 1.5,
         }}
       >
-        ⚠️ <strong>L'intention est la clé.</strong> Pousse activement dans
-        CHAQUE direction. La résistance vient de toi-même.
+        ⚠️ <strong>{t("L'intention est la clé.")}</strong>{t(" Pousse activement dans CHAQUE direction. La résistance vient de toi-même.")}
       </div>
     </CSTModal>
   );
 }
 
 export function RepRangeExplainerOnce({ trigger }: { trigger: boolean }) {
+  const { t } = useI18n();
   const [open, close] = useSeenOnce("rep_range", trigger);
   return (
     <CSTModal open={open} onClose={close}>
-      <p className="cst-mono" style={{ margin: 0, fontSize: 10 }}>— FOURCHETTE DE REPS</p>
+      <p className="cst-mono" style={{ margin: 0, fontSize: 10 }}>{t("— FOURCHETTE DE REPS")}</p>
       <h3 className="cst-display" style={{ margin: "6px 0 14px", fontSize: 20 }}>
-        Vise toujours le haut
+        {t("Vise toujours le haut")}
       </h3>
       <p style={{ margin: 0, fontSize: 14, lineHeight: 1.55 }}>
-        Pour <strong>10 – 8 reps</strong> : vise <strong>10</strong> dès la
-        première série. Si ton énergie baisse → descends à 9, puis 8.
+        {t("Pour ")}<strong>10 – 8 reps</strong>{t(" : vise ")}<strong>10</strong>{t(" dès la première série. Si ton énergie baisse → descends à 9, puis 8.")}
       </p>
       <p style={{ margin: "10px 0 0", fontSize: 13, lineHeight: 1.55, opacity: 0.85 }}>
-        Pour une fourchette de <strong>charge</strong> (ex: 80-70kg) : commence
-        par la charge haute. Si trop dur → descends. Si elle passe → reste dessus.
+        {t("Pour une fourchette de ")}<strong>{t("charge")}</strong>{t(" (ex: 80-70kg) : commence par la charge haute. Si trop dur → descends. Si elle passe → reste dessus.")}
       </p>
     </CSTModal>
   );
 }
 
 export function PelvisGuide({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { t } = useI18n();
   return (
     <CSTModal open={open} onClose={onClose} maxWidth={480}>
-      <p className="cst-mono" style={{ margin: 0, fontSize: 10 }}>— PLACEMENT DU BASSIN</p>
+      <p className="cst-mono" style={{ margin: 0, fontSize: 10 }}>{t("— PLACEMENT DU BASSIN")}</p>
       <h3 className="cst-display" style={{ margin: "6px 0 16px", fontSize: 20 }}>
-        Antéversion vs Rétroversion
+        {t("Antéversion vs Rétroversion")}
       </h3>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -621,11 +627,11 @@ export function PelvisGuide({ open, onClose }: { open: boolean; onClose: () => v
           }}
         >
           <div className="cst-display" style={{ fontSize: 14, color: "#E37968", marginBottom: 4 }}>
-            ❌ ANTÉVERSION — à éviter
+            {t("❌ ANTÉVERSION — à éviter")}
           </div>
           <p style={{ margin: 0, fontSize: 12.5, lineHeight: 1.5 }}>
-            Bas du dos cambré, fesses qui ressortent, ventre en avant.
-            <strong> Pression sur les lombaires.</strong>
+            {t("Bas du dos cambré, fesses qui ressortent, ventre en avant.")}
+            <strong> {t("Pression sur les lombaires.")}</strong>
           </p>
         </div>
 
@@ -638,25 +644,23 @@ export function PelvisGuide({ open, onClose }: { open: boolean; onClose: () => v
           }}
         >
           <div className="cst-display" style={{ fontSize: 14, color: "#6EAB76", marginBottom: 4 }}>
-            ✅ RÉTROVERSION — à rechercher
+            {t("✅ RÉTROVERSION — à rechercher")}
           </div>
           <p style={{ margin: 0, fontSize: 12.5, lineHeight: 1.5 }}>
-            Bassin <strong>basculé vers l'avant</strong>, fesses serrées, abdos engagés,
-            bas du dos plaqué. <strong>Colonne neutre, protégée.</strong>
+            {t("Bassin ")}<strong>{t("basculé vers l'avant")}</strong>{t(", fesses serrées, abdos engagés, bas du dos plaqué. ")}<strong>{t("Colonne neutre, protégée.")}</strong>
           </p>
         </div>
       </div>
 
       <p style={{ marginTop: 14, fontSize: 12, opacity: 0.7, lineHeight: 1.55 }}>
-        Cue mental : "serre les fesses + tire le nombril vers la colonne".
-        S'applique aux gainages, hollow hold, Nordic curls, hip thrust, RDL,
-        bird dog, dead bug.
+        {t("Cue mental : \"serre les fesses + tire le nombril vers la colonne\". S'applique aux gainages, hollow hold, Nordic curls, hip thrust, RDL, bird dog, dead bug.")}
       </p>
     </CSTModal>
   );
 }
 
 export function EmomExplainer({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { t } = useI18n();
   return (
     <CSTModal open={open} onClose={onClose}>
       <p className="cst-mono" style={{ margin: 0, fontSize: 10 }}>— EMOM</p>
@@ -664,8 +668,8 @@ export function EmomExplainer({ open, onClose }: { open: boolean; onClose: () =>
         Every Minute On the Minute
       </h3>
       <p style={{ margin: 0, fontSize: 14, lineHeight: 1.55 }}>
-        Au début de chaque minute, tu fais les reps. Le reste de la minute = ta récupération.
-        <strong> Plus tu es rapide, plus tu récupères.</strong>
+        {t("Au début de chaque minute, tu fais les reps. Le reste de la minute = ta récupération.")}
+        <strong> {t("Plus tu es rapide, plus tu récupères.")}</strong>
       </p>
       <div
         style={{
@@ -678,14 +682,12 @@ export function EmomExplainer({ open, onClose }: { open: boolean; onClose: () =>
           lineHeight: 1.6,
         }}
       >
-        Min 1 → 10 reps (0:22) · repos 0:38<br />
-        Min 2 → 10 reps (0:25) · repos 0:35<br />
+        {t("Min 1 → 10 reps (0:22) · repos 0:38")}<br />
+        {t("Min 2 → 10 reps (0:25) · repos 0:35")}<br />
         ...
       </div>
       <p style={{ marginTop: 12, fontSize: 12.5, lineHeight: 1.55, opacity: 0.85 }}>
-        💡 <strong>Ladder 3/4/5</strong> : Min 1→3 reps, Min 2→4, Min 3→5, puis on redescend — Min
-        4→4, Min 5→3, Min 6→4… La pyramide tourne jusqu'à la fin du bloc. Densifie la séance avec
-        une meilleure qualité.
+        💡 <strong>Ladder 3/4/5</strong>{t(" : Min 1→3 reps, Min 2→4, Min 3→5, puis on redescend — Min 4→4, Min 5→3, Min 6→4… La pyramide tourne jusqu'à la fin du bloc. Densifie la séance avec une meilleure qualité.")}
       </p>
     </CSTModal>
   );

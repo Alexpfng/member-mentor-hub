@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useI18n } from "@/lib/i18n";
 
 type Props = {
   open: boolean;
@@ -19,12 +20,16 @@ export function ConfirmDialog({
   open,
   title,
   message,
-  confirmLabel = "Confirmer",
-  cancelLabel = "Annuler",
+  confirmLabel,
+  cancelLabel,
   danger = false,
   onConfirm,
   onCancel,
 }: Props) {
+  const { t } = useI18n();
+  const confirmText = confirmLabel ?? t("Confirmer");
+  const cancelText = cancelLabel ?? t("Annuler");
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -74,14 +79,14 @@ export function ConfirmDialog({
         )}
         <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
           <button onClick={onCancel} className="cst-btn cst-btn-ghost-dark" style={{ flex: 1 }}>
-            {cancelLabel}
+            {cancelText}
           </button>
           <button
             onClick={onConfirm}
             className="cst-btn cst-btn-primary"
             style={{ flex: 1, ...(danger ? { background: "#8B2318", borderColor: "#8B2318" } : {}) }}
           >
-            {confirmLabel}
+            {confirmText}
           </button>
         </div>
       </div>

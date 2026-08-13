@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import MemberNav from "../../components/MemberNav";
 import { supabase } from "@/integrations/supabase/client";
 import { SUPABASE_ENABLED } from "@/lib/app-mode";
+import { useI18n } from "@/lib/i18n";
 import { getElevation } from "../../lib/coach.functions";
 import {
   saveMemberRunningRoute,
@@ -259,6 +260,8 @@ function printPDF(
   customName: string,
   points: PtEle[],
   stats: ReturnType<typeof calcStats>,
+  t: (s: string) => string,
+  locale: string,
 ) {
   const name = route ? route.name : customName;
   const profile = buildProfile(points);
@@ -295,24 +298,24 @@ function printPDF(
   .footer { margin-top:32px; font-family:'JetBrains Mono',monospace; font-size:9px; opacity:.3; letter-spacing:.1em; }
   @media print { body { -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
 </style></head><body>
-<div class="logo">★ COLOSMARTRAINING · PLAN DE COURSE</div>
+<div class="logo">★ COLOSMARTRAINING · ${t("PLAN DE COURSE")}</div>
 <h1>${name}</h1>
-<div class="sub">${route?.subtitle ?? "Trace personnalisée"}</div>
+<div class="sub">${route?.subtitle ?? t("Trace personnalisée")}</div>
 <div class="stats">
-  <div class="stat"><div class="stat-label">Distance</div><div class="stat-val">${stats.distance} <span style="font-size:18px">km</span></div></div>
-  <div class="stat"><div class="stat-label">Dénivelé +</div><div class="stat-val" style="color:#6EAB76">↑${stats.dplus} <span style="font-size:18px">m</span></div></div>
-  <div class="stat"><div class="stat-label">Dénivelé −</div><div class="stat-val" style="color:#C56A60">↓${stats.dminus} <span style="font-size:18px">m</span></div></div>
-  <div class="stat"><div class="stat-label">Difficulté</div><div class="stat-val" style="font-size:24px">${route?.difficulty?.toUpperCase() ?? "CUSTOM"}</div></div>
+  <div class="stat"><div class="stat-label">${t("Distance")}</div><div class="stat-val">${stats.distance} <span style="font-size:18px">km</span></div></div>
+  <div class="stat"><div class="stat-label">${t("Dénivelé +")}</div><div class="stat-val" style="color:#6EAB76">↑${stats.dplus} <span style="font-size:18px">m</span></div></div>
+  <div class="stat"><div class="stat-label">${t("Dénivelé −")}</div><div class="stat-val" style="color:#C56A60">↓${stats.dminus} <span style="font-size:18px">m</span></div></div>
+  <div class="stat"><div class="stat-label">${t("Difficulté")}</div><div class="stat-val" style="font-size:24px">${route ? t(route.difficulty.toUpperCase()) : "CUSTOM"}</div></div>
 </div>
 <div class="profile-wrap">
-  <div class="profile-title">Profil altimétrique</div>
+  <div class="profile-title">${t("Profil altimétrique")}</div>
   <svg viewBox="0 0 560 90" preserveAspectRatio="none">
     <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2D5A35" stop-opacity=".7"/><stop offset="100%" stop-color="#2D5A35" stop-opacity=".05"/></linearGradient></defs>
     <path d="${svgPts} L560,80 L0,80 Z" fill="url(#g)"/>
     <path d="${svgPts}" fill="none" stroke="#2D5A35" stroke-width="2"/>
   </svg>
 </div>
-<div class="footer">ColosmarTraining · Léo Colognesi · Vichy, France · Imprimé le ${new Date().toLocaleDateString("fr-FR")}</div>
+<div class="footer">ColosmarTraining · Léo Colognesi · Vichy, France · ${t("Imprimé le")} ${new Date().toLocaleDateString(locale === "en" ? "en-GB" : "fr-FR")}</div>
 </body></html>`);
   win.document.close();
   setTimeout(() => win.print(), 600);
@@ -337,6 +340,7 @@ function LeafletMap({
   onMapClick,
   onWaypointRemove,
 }: MapProps) {
+  const { t } = useI18n();
   const divRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const layersRef = useRef<any[]>([]);
@@ -408,7 +412,7 @@ function LeafletMap({
           weight: 2,
           fillOpacity: 1,
         })
-          .bindPopup("<b>DÉPART</b>")
+          .bindPopup(`<b>${t("DÉPART")}</b>`)
           .addTo(map);
         const mEnd = L.circleMarker(lls[lls.length - 1], {
           radius: 8,
@@ -417,7 +421,7 @@ function LeafletMap({
           weight: 2,
           fillOpacity: 1,
         })
-          .bindPopup("<b>ARRIVÉE</b>")
+          .bindPopup(`<b>${t("ARRIVÉE")}</b>`)
           .addTo(map);
         layersRef.current = [poly, mStart, mEnd];
         map.fitBounds(poly.getBounds(), { padding: [30, 30] });
@@ -455,7 +459,7 @@ function LeafletMap({
           });
           const m = L.marker([wp.lat, wp.lng], { icon })
             .bindPopup(
-              `<div style="font-family:monospace;font-size:11px">Point ${i + 1}<br><button onclick="window.__removeWP(${i})" style="margin-top:4px;padding:2px 8px;background:#8B2318;color:white;border:none;border-radius:4px;cursor:pointer">Supprimer</button></div>`,
+              `<div style="font-family:monospace;font-size:11px">${t("Point")} ${i + 1}<br><button onclick="window.__removeWP(${i})" style="margin-top:4px;padding:2px 8px;background:#8B2318;color:white;border:none;border-radius:4px;cursor:pointer">${t("Supprimer")}</button></div>`,
             )
             .addTo(map);
           layersRef.current.push(m);
@@ -505,6 +509,7 @@ function EleTooltip({ active, payload }: any) {
 // ─── MAIN PAGE ────────────────────────────────────────────────────────────────
 
 export default function MembreRunningWidget() {
+  const { t, locale } = useI18n();
   const [mode, setMode] = useState<"browse" | "create">("browse");
   const [selectedRoute, setSelectedRoute] = useState<RunRoute>(DEMO_ROUTES[0]);
 
@@ -533,7 +538,7 @@ export default function MembreRunningWidget() {
           routes.map((r: any) => ({
             id: r.id,
             name: r.name,
-            subtitle: r.description ?? "Trace enregistrée",
+            subtitle: r.description ?? t("Trace enregistrée"),
             distance: Number(r.distance_km ?? 0),
             dplus: r.dplus_m ?? 0,
             dminus: r.dminus_m ?? 0,
@@ -660,7 +665,7 @@ export default function MembreRunningWidget() {
       const newRoute: RunRoute = {
         id,
         name: routeName.trim(),
-        subtitle: "Trace enregistrée",
+        subtitle: t("Trace enregistrée"),
         distance: activeStats.distance,
         dplus: activeStats.dplus,
         dminus: activeStats.dminus,
@@ -685,7 +690,7 @@ export default function MembreRunningWidget() {
 
   async function handleDeleteRoute() {
     if (mode !== "browse" || !isSavedDbRoute || deleting) return;
-    const ok = window.confirm(`Supprimer la trace "${selectedRoute.name}" ?`);
+    const ok = window.confirm(`${t("Supprimer la trace")} "${selectedRoute.name}" ?`);
     if (!ok) return;
 
     setDeleting(true);
@@ -701,7 +706,7 @@ export default function MembreRunningWidget() {
       });
     } catch (e) {
       console.error(e);
-      window.alert("Impossible de supprimer cette trace.");
+      window.alert(t("Impossible de supprimer cette trace."));
     } finally {
       setDeleting(false);
     }
@@ -719,7 +724,7 @@ export default function MembreRunningWidget() {
 
   async function handleShare() {
     setSharing(true);
-    const name = mode === "browse" ? selectedRoute.name : routeName || "Ma trace";
+    const name = mode === "browse" ? selectedRoute.name : routeName || t("Ma trace");
     const pts = activePoints;
     const stats = activeStats;
 
@@ -730,10 +735,10 @@ export default function MembreRunningWidget() {
     }
 
     const gpxLine = url
-      ? `\n📥 *Télécharger le GPX* (Garmin · Suunto · Strava) :\n${url}`
-      : `\n📥 GPX disponible — demande le lien à Léo sur l'app.`;
+      ? `\n📥 *${t("Télécharger le GPX")}* (Garmin · Suunto · Strava) :\n${url}`
+      : `\n📥 ${t("GPX disponible — demande le lien à Léo sur l'app.")}`;
 
-    const msg = `🏃 *${name}*\n📍 ${mode === "browse" ? selectedRoute.subtitle : "Trace personnalisée · Vichy"}\n\n📏 Distance : *${stats.distance} km*\n⬆️ D+ : *${stats.dplus} m*\n⬇️ D− : *${stats.dminus} m*\n🎯 Difficulté : *${(mode === "browse" ? selectedRoute.difficulty : difficulty).toUpperCase()}*${gpxLine}\n\n_Profil ColosmarTraining · Léo Colognesi_`;
+    const msg = `🏃 *${name}*\n📍 ${mode === "browse" ? selectedRoute.subtitle : t("Trace personnalisée · Vichy")}\n\n📏 ${t("Distance :")} *${stats.distance} km*\n⬆️ D+ : *${stats.dplus} m*\n⬇️ D− : *${stats.dminus} m*\n🎯 ${t("Difficulté :")} *${t((mode === "browse" ? selectedRoute.difficulty : difficulty).toUpperCase())}*${gpxLine}\n\n_${t("Profil ColosmarTraining · Léo Colognesi")}_`;
 
     setSharing(false);
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
@@ -761,10 +766,10 @@ export default function MembreRunningWidget() {
               className="cst-mono"
               style={{ fontSize: 9, color: "var(--cst-mid-green)", letterSpacing: "0.2em" }}
             >
-              — TRAIL & RUN · PLANIFICATION
+              {t("— TRAIL & RUN · PLANIFICATION")}
             </div>
             <h1 className="cst-display" style={{ fontSize: 36, margin: "6px 0 0", color: "#fff" }}>
-              PLANS DE COURSE.
+              {t("PLANS DE COURSE.")}
             </h1>
           </div>
           {/* Mode toggle */}
@@ -798,7 +803,7 @@ export default function MembreRunningWidget() {
                   color: mode === m ? "#fff" : "rgba(255,255,255,0.45)",
                 }}
               >
-                {m === "browse" ? "◎ PARCOURS" : "✎ CRÉER"}
+                {m === "browse" ? t("◎ PARCOURS") : t("✎ CRÉER")}
               </button>
             ))}
           </div>
@@ -823,7 +828,7 @@ export default function MembreRunningWidget() {
                   className="cst-mono"
                   style={{ fontSize: 9, color: "rgba(255,255,255,0.35)", letterSpacing: "0.14em" }}
                 >
-                  PARCOURS ENREGISTRÉS
+                  {t("PARCOURS ENREGISTRÉS")}
                 </div>
                 {[...dbRoutes, ...DEMO_ROUTES].map((r) => {
                   const on = r.id === selectedRoute.id;
@@ -925,7 +930,7 @@ export default function MembreRunningWidget() {
                             border: `1px solid ${DIFF_COLOR[r.difficulty]}44`,
                           }}
                         >
-                          {r.difficulty.toUpperCase()}
+                          {t(r.difficulty.toUpperCase())}
                         </span>
                       </div>
                     </div>
@@ -938,7 +943,7 @@ export default function MembreRunningWidget() {
                   className="cst-mono"
                   style={{ fontSize: 9, color: "rgba(255,255,255,0.35)", letterSpacing: "0.14em" }}
                 >
-                  CRÉER UNE TRACE
+                  {t("CRÉER UNE TRACE")}
                 </div>
 
                 <div
@@ -953,18 +958,19 @@ export default function MembreRunningWidget() {
                     className="cst-mono"
                     style={{ fontSize: 8, color: "var(--cst-mid-green)", marginBottom: 4 }}
                   >
-                    ↖ CLIQUE SUR LA CARTE
+                    {t("↖ CLIQUE SUR LA CARTE")}
                   </div>
                   <div style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", lineHeight: 1.5 }}>
-                    Ajoute des points de passage. Le tracé suit les chemins réels grâce au routage
-                    automatique.
+                    {t(
+                      "Ajoute des points de passage. Le tracé suit les chemins réels grâce au routage automatique.",
+                    )}
                   </div>
                   {routing && (
                     <div
                       className="cst-mono"
                       style={{ fontSize: 8, color: "#D4A53B", marginTop: 6 }}
                     >
-                      ⟳ ROUTAGE EN COURS…
+                      {t("⟳ ROUTAGE EN COURS…")}
                     </div>
                   )}
                 </div>
@@ -972,7 +978,7 @@ export default function MembreRunningWidget() {
                 <input
                   value={routeName}
                   onChange={(e) => setRouteName(e.target.value)}
-                  placeholder="Nom de la trace…"
+                  placeholder={t("Nom de la trace…")}
                   style={{
                     padding: "10px 12px",
                     borderRadius: 8,
@@ -1001,7 +1007,7 @@ export default function MembreRunningWidget() {
                 >
                   {(["facile", "intermédiaire", "difficile", "expert"] as const).map((d) => (
                     <option key={d} value={d}>
-                      {d.toUpperCase()}
+                      {t(d.toUpperCase())}
                     </option>
                   ))}
                 </select>
@@ -1086,7 +1092,7 @@ export default function MembreRunningWidget() {
                       opacity: fetchingEle ? 0.6 : 1,
                     }}
                   >
-                    {fetchingEle ? "⟳ CHARGEMENT…" : "↑↓ PROFIL ALTIMÉTRIQUE"}
+                    {fetchingEle ? t("⟳ CHARGEMENT…") : t("↑↓ PROFIL ALTIMÉTRIQUE")}
                   </button>
                 )}
 
@@ -1106,7 +1112,7 @@ export default function MembreRunningWidget() {
                       cursor: "pointer",
                     }}
                   >
-                    ✕ EFFACER LA TRACE
+                    {t("✕ EFFACER LA TRACE")}
                   </button>
                 )}
               </>
@@ -1137,10 +1143,10 @@ export default function MembreRunningWidget() {
             {/* Stats bar */}
             <div style={{ display: "flex", gap: 10 }}>
               {[
-                { label: "DISTANCE", val: `${activeStats.distance} km`, color: "#fff" },
+                { label: t("DISTANCE"), val: `${activeStats.distance} km`, color: "#fff" },
                 { label: "D+", val: `${activeStats.dplus} m`, color: "#6EAB76" },
                 { label: "D−", val: `${activeStats.dminus} m`, color: "#C56A60" },
-                { label: "POINTS", val: `${activePoints.length}`, color: "rgba(255,255,255,0.5)" },
+                { label: t("POINTS"), val: `${activePoints.length}`, color: "rgba(255,255,255,0.5)" },
               ].map((s) => (
                 <div
                   key={s.label}
@@ -1195,7 +1201,7 @@ export default function MembreRunningWidget() {
                     marginBottom: 10,
                   }}
                 >
-                  PROFIL ALTIMÉTRIQUE
+                  {t("PROFIL ALTIMÉTRIQUE")}
                 </div>
                 <ResponsiveContainer width="100%" height={90}>
                   <AreaChart data={profile} margin={{ top: 4, right: 8, left: -24, bottom: 0 }}>
@@ -1266,9 +1272,11 @@ export default function MembreRunningWidget() {
                 onClick={() =>
                   printPDF(
                     mode === "browse" ? selectedRoute : null,
-                    routeName || "Ma trace",
+                    routeName || t("Ma trace"),
                     activePoints,
                     activeStats,
+                    t,
+                    locale,
                   )
                 }
                 disabled={activePoints.length < 2}
@@ -1308,7 +1316,7 @@ export default function MembreRunningWidget() {
                     opacity: deleting ? 0.5 : 1,
                   }}
                 >
-                  {deleting ? "⟳ SUPPRESSION…" : "✕ SUPPRIMER"}
+                  {deleting ? t("⟳ SUPPRESSION…") : t("✕ SUPPRIMER")}
                 </button>
               )}
               {mode === "create" && (
@@ -1331,7 +1339,7 @@ export default function MembreRunningWidget() {
                     opacity: saving || customPoints.length < 2 || !routeName.trim() ? 0.5 : 1,
                   }}
                 >
-                  {saving ? "⟳ ENREG…" : savedOk ? "✓ ENREGISTRÉ !" : "✓ VALIDER LA TRACE"}
+                  {saving ? t("⟳ ENREG…") : savedOk ? t("✓ ENREGISTRÉ !") : t("✓ VALIDER LA TRACE")}
                 </button>
               )}
               <button
@@ -1353,7 +1361,7 @@ export default function MembreRunningWidget() {
                   opacity: sharing || activePoints.length < 2 ? 0.5 : 1,
                 }}
               >
-                {sharing ? "⟳ ENVOI…" : "↗ WHATSAPP"}
+                {sharing ? t("⟳ ENVOI…") : "↗ WHATSAPP"}
               </button>
             </div>
 
@@ -1370,7 +1378,7 @@ export default function MembreRunningWidget() {
                 }}
               >
                 <span className="cst-mono" style={{ fontSize: 9, color: "var(--cst-mid-green)" }}>
-                  ✓ LIEN GPX :
+                  {t("✓ LIEN GPX :")}
                 </span>
                 <span
                   style={{
@@ -1396,7 +1404,7 @@ export default function MembreRunningWidget() {
                     fontSize: 9,
                   }}
                 >
-                  COPIER
+                  {t("COPIER")}
                 </button>
               </div>
             )}

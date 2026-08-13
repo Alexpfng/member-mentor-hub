@@ -12,6 +12,7 @@ import {
   toggleCololike,
 } from "@/lib/community.functions";
 import { formatLikers, type ChallengeMetric } from "@/lib/community";
+import { useI18n } from "@/lib/i18n";
 
 type FeedEntry = {
   key: string;
@@ -65,14 +66,14 @@ function initials(name: string) {
     .join("");
 }
 
-function frDay(iso: string) {
+function frDay(iso: string, t: (fr: string) => string, locale: string) {
   const today = new Date();
   const todayISO = today.toISOString().slice(0, 10);
-  if (iso === todayISO) return "aujourd'hui";
+  if (iso === todayISO) return t("aujourd'hui");
   const yesterday = new Date(today);
   yesterday.setDate(today.getDate() - 1);
-  if (iso === yesterday.toISOString().slice(0, 10)) return "hier";
-  return new Date(`${iso}T00:00:00Z`).toLocaleDateString("fr-FR", {
+  if (iso === yesterday.toISOString().slice(0, 10)) return t("hier");
+  return new Date(`${iso}T00:00:00Z`).toLocaleDateString(locale === "en" ? "en-GB" : "fr-FR", {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -96,6 +97,7 @@ function groupByDay(entries: FeedEntry[]) {
  * maintenir en double.
  */
 export default function CommunityFeed({ canShare = true }: { canShare?: boolean }) {
+  const { locale, t } = useI18n();
   const feedFn = useServerFn(getCommunityFeed);
   const challengeFn = useServerFn(listActiveChallenges);
   const joinFn = useServerFn(joinChallenge);
@@ -116,7 +118,7 @@ export default function CommunityFeed({ canShare = true }: { canShare?: boolean 
       setLoadError(null);
     } else {
       console.error("[communauté] fil", f.reason);
-      setLoadError(f.reason instanceof Error ? f.reason.message : "Erreur inconnue");
+      setLoadError(f.reason instanceof Error ? f.reason.message : t("Erreur inconnue"));
     }
     if (c.status === "fulfilled") {
       setChallenges((c.value as { challenges: ChallengeState[] }).challenges ?? []);
@@ -152,7 +154,7 @@ export default function CommunityFeed({ canShare = true }: { canShare?: boolean 
     } catch (e: unknown) {
       // On ne laisse pas un compteur mentir.
       apply(entry.likedByMe, entry.likes);
-      toast.error(e instanceof Error ? e.message : "Le cololike n'est pas passé");
+      toast.error(e instanceof Error ? e.message : t("Le cololike n'est pas passé"));
     }
   }
 
@@ -163,10 +165,12 @@ export default function CommunityFeed({ canShare = true }: { canShare?: boolean 
       await shareFn({ data: { share: !feed.sharing } });
       await reload();
       toast.success(
-        feed.sharing ? "Tes séances redeviennent privées" : "Tes séances apparaissent dans le fil",
+        feed.sharing
+          ? t("Tes séances redeviennent privées")
+          : t("Tes séances apparaissent dans le fil"),
       );
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : "Erreur");
+      toast.error(e instanceof Error ? e.message : t("Erreur"));
     } finally {
       setBusy(false);
     }
@@ -181,7 +185,7 @@ export default function CommunityFeed({ canShare = true }: { canShare?: boolean 
       else await joinFn(payload);
       await reload();
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : "Erreur");
+      toast.error(e instanceof Error ? e.message : t("Erreur"));
     } finally {
       setBusy(false);
     }
@@ -209,7 +213,7 @@ export default function CommunityFeed({ canShare = true }: { canShare?: boolean 
 
       {loading && (
         <div style={{ opacity: 0.6, fontSize: 13, padding: "32px 0", textAlign: "center" }}>
-          Chargement…
+          {t("Chargement…")}
         </div>
       )}
 
@@ -218,17 +222,17 @@ export default function CommunityFeed({ canShare = true }: { canShare?: boolean 
           className="cst-card-dark"
           style={{ marginTop: 14, padding: 16, fontSize: 13, color: "#E07070" }}
         >
-          La communauté n'est pas disponible : {loadError}
+          {t("La communauté n'est pas disponible :")} {loadError}
         </div>
       )}
 
       {!loading && !loadError && entries.length === 0 && (
         <div className="cst-card-dark" style={{ marginTop: 14, padding: 22, textAlign: "center" }}>
           <div className="cst-display" style={{ fontSize: 18, marginBottom: 6 }}>
-            LE FIL EST ENCORE VIDE
+            {t("LE FIL EST ENCORE VIDE")}
           </div>
           <p style={{ margin: 0, fontSize: 13, opacity: 0.7, lineHeight: 1.5 }}>
-            Les séances et les records des membres qui partagent apparaîtront ici.
+            {t("Les séances et les records des membres qui partagent apparaîtront ici.")}
           </p>
         </div>
       )}
@@ -245,7 +249,7 @@ export default function CommunityFeed({ canShare = true }: { canShare?: boolean 
               marginBottom: 8,
             }}
           >
-            {frDay(day.date)}
+            {frDay(day.date, t, locale)}
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -280,13 +284,13 @@ export default function CommunityFeed({ canShare = true }: { canShare?: boolean 
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 13.5, fontWeight: 600 }}>
-                        {entry.isMine ? "Toi" : entry.memberName}
+                        {entry.isMine ? t("Toi") : entry.memberName}
                       </div>
                       <div
                         className="cst-mono"
                         style={{ fontSize: 9, letterSpacing: "0.14em", color: badge.color }}
                       >
-                        {badge.mark} {badge.label}
+                        {badge.mark} {t(badge.label)}
                       </div>
                     </div>
                   </header>
@@ -358,7 +362,7 @@ export default function CommunityFeed({ canShare = true }: { canShare?: boolean 
                         className="cst-mono"
                         style={{ fontSize: 9.5, letterSpacing: "0.14em", opacity: 0.55 }}
                       >
-                        VOIR LE MOUVEMENT
+                        {t("VOIR LE MOUVEMENT")}
                       </span>
                     </a>
                   )}
@@ -381,7 +385,9 @@ export default function CommunityFeed({ canShare = true }: { canShare?: boolean 
                     <button
                       onClick={() => like(entry)}
                       aria-pressed={entry.likedByMe}
-                      aria-label={entry.likedByMe ? "Retirer mon cololike" : "Envoyer un cololike"}
+                      aria-label={
+                        entry.likedByMe ? t("Retirer mon cololike") : t("Envoyer un cololike")
+                      }
                       style={{
                         display: "flex",
                         alignItems: "center",
@@ -435,11 +441,12 @@ export default function CommunityFeed({ canShare = true }: { canShare?: boolean 
               disabled={busy}
               style={{ width: 16, height: 16, accentColor: "var(--cst-mid-green)" }}
             />
-            Partager mes séances avec les autres membres
+            {t("Partager mes séances avec les autres membres")}
           </label>
           <p style={{ margin: "8px 0 0", fontSize: 11, opacity: 0.5, lineHeight: 1.5 }}>
-            Décoché, personne ne voit ton activité — tu continues de voir la tienne et celle des
-            membres qui partagent.
+            {t(
+              "Décoché, personne ne voit ton activité — tu continues de voir la tienne et celle des membres qui partagent.",
+            )}
           </p>
         </div>
       )}

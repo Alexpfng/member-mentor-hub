@@ -9,6 +9,7 @@ import { RunStatsCapture } from "./RunStatsCapture";
 import { RunComparisonCard } from "./RunComparisonCard";
 import { finishRunningSession } from "@/lib/run.functions";
 import { formValuesToMetrics, type RunExtraction, type RunMetrics } from "@/lib/run-stats";
+import { useI18n } from "@/lib/i18n";
 
 const RUNNING_RE = /course|run|endurance|côtes|cotes|fractionn|sortie|footing/i;
 
@@ -48,6 +49,7 @@ export function RunningSession({
   onFinish,
   finishing,
 }: Props) {
+  const { t } = useI18n();
   const finishRun = useServerFn(finishRunningSession);
   const [phase, setPhase] = useState<Phase>("view");
   const [report, setReport] = useState<Report>({
@@ -134,7 +136,7 @@ export function RunningSession({
       setComparison({ previous: res.previous, current: res.current });
       setPhase("result");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Envoi impossible, réessaie.");
+      setError(e instanceof Error ? e.message : t("Envoi impossible, réessaie."));
     } finally {
       setSubmitting(false);
     }
@@ -163,7 +165,7 @@ export function RunningSession({
             className="cst-mono"
             style={{ fontSize: 9, letterSpacing: "0.22em", opacity: 0.55 }}
           >
-            🏃 SÉANCE COURSE
+            {t("🏃 SÉANCE COURSE")}
           </span>
         </div>
         <div
@@ -178,10 +180,10 @@ export function RunningSession({
         >
           <div>
             <h1 className="cst-display" style={{ fontSize: 28, margin: 0, lineHeight: 1.1 }}>
-              {(sessionLabel || "Séance course").toUpperCase()}
+              {(sessionLabel || t("Séance course")).toUpperCase()}
             </h1>
             <p style={{ margin: "8px 0 0", fontSize: 13, opacity: 0.7, lineHeight: 1.5 }}>
-              Consulte ton programme, puis reviens ici après ta course pour enregistrer tes stats.
+              {t("Consulte ton programme, puis reviens ici après ta course pour enregistrer tes stats.")}
             </p>
           </div>
 
@@ -191,7 +193,7 @@ export function RunningSession({
                 className="cst-mono"
                 style={{ fontSize: 9, opacity: 0.5, letterSpacing: "0.18em", marginBottom: 10 }}
               >
-                PROGRAMME DE LA SÉANCE
+                {t("PROGRAMME DE LA SÉANCE")}
               </div>
               <ProgramBlocks exercises={exercises} />
             </div>
@@ -203,7 +205,7 @@ export function RunningSession({
             className="cst-btn cst-btn-primary"
             style={{ width: "100%", padding: "18px 0", fontSize: 14, marginBottom: 24 }}
           >
-            J'AI FAIT MA COURSE — RAPPORTER →
+            {t("J'AI FAIT MA COURSE — RAPPORTER →")}
           </button>
         </div>
       </div>
@@ -218,7 +220,7 @@ export function RunningSession({
             className="cst-mono"
             style={{ fontSize: 9, letterSpacing: "0.22em", opacity: 0.55 }}
           >
-            ✓ COURSE ENREGISTRÉE
+            {t("✓ COURSE ENREGISTRÉE")}
           </span>
         </div>
         <div
@@ -232,15 +234,14 @@ export function RunningSession({
           }}
         >
           <h1 className="cst-display" style={{ fontSize: 26, margin: 0, lineHeight: 1.1 }}>
-            BEAU BOULOT 👏
+            {t("BEAU BOULOT 👏")}
           </h1>
           <RunComparisonCard previous={comparison.previous} current={comparison.current} />
           <div
             className="cst-card-dark"
             style={{ padding: 14, fontSize: 13, opacity: 0.85, lineHeight: 1.5 }}
           >
-            💬 Léo va analyser ta course et te laisser un retour perso. Tu le retrouveras sur ta
-            séance.
+            {t("💬 Léo va analyser ta course et te laisser un retour perso. Tu le retrouveras sur ta séance.")}
           </div>
           <div style={{ flex: 1 }} />
           <button
@@ -248,7 +249,7 @@ export function RunningSession({
             className="cst-btn cst-btn-primary"
             style={{ width: "100%", padding: "18px 0", fontSize: 14 }}
           >
-            TERMINÉ →
+            {t("TERMINÉ →")}
           </button>
         </div>
       </div>
@@ -275,7 +276,7 @@ export function RunningSession({
           ←
         </button>
         <span className="cst-mono" style={{ fontSize: 9, letterSpacing: "0.22em", opacity: 0.55 }}>
-          RAPPORTE TA COURSE
+          {t("RAPPORTE TA COURSE")}
         </span>
       </div>
 
@@ -313,35 +314,35 @@ export function RunningSession({
           className="cst-mono"
           style={{ fontSize: 9, opacity: 0.5, letterSpacing: "0.18em", marginTop: 4 }}
         >
-          STATS DEPUIS TA MONTRE
+          {t("STATS DEPUIS TA MONTRE")}
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
           <RunInput
-            label="Distance (km)"
+            label={t("Distance (km)")}
             value={report.distanceKm}
             onChange={(v) => set("distanceKm", v)}
             placeholder="8,2"
           />
           <RunInput
-            label="Durée (min)"
+            label={t("Durée (min)")}
             value={report.durationMin}
             onChange={(v) => set("durationMin", v)}
             placeholder="48"
           />
           <RunInput
-            label="Dénivelé D+ (m)"
+            label={t("Dénivelé D+ (m)")}
             value={report.elevationM}
             onChange={(v) => set("elevationM", v)}
             placeholder="120"
           />
           <RunInput
-            label="FC moyenne (bpm)"
+            label={t("FC moyenne (bpm)")}
             value={report.avgHr}
             onChange={(v) => set("avgHr", v)}
             placeholder="142"
           />
           <RunInput
-            label="Allure (/km)"
+            label={t("Allure (/km)")}
             value={report.pace}
             onChange={(v) => set("pace", v)}
             placeholder="5:50"
@@ -350,7 +351,7 @@ export function RunningSession({
 
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <div className="cst-mono" style={{ fontSize: 10, opacity: 0.6, letterSpacing: "0.18em" }}>
-            RPE GLOBAL
+            {t("RPE GLOBAL")}
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 4 }}>
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((v) => {
@@ -381,7 +382,7 @@ export function RunningSession({
 
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <div className="cst-mono" style={{ fontSize: 10, opacity: 0.6, letterSpacing: "0.18em" }}>
-            RESSENTI
+            {t("RESSENTI")}
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             {[
@@ -413,12 +414,12 @@ export function RunningSession({
 
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <div className="cst-mono" style={{ fontSize: 10, opacity: 0.6, letterSpacing: "0.18em" }}>
-            NOTE POUR LE COACH
+            {t("NOTE POUR LE COACH")}
           </div>
           <textarea
             value={report.note}
             onChange={(e) => set("note", e.target.value)}
-            placeholder="Sensation, terrain, ressenti génou…"
+            placeholder={t("Sensation, terrain, ressenti génou…")}
             rows={3}
             className="cst-input"
             style={{ padding: "12px", fontSize: 13, resize: "none", lineHeight: 1.5 }}
@@ -440,10 +441,10 @@ export function RunningSession({
             className="cst-mono"
             style={{ fontSize: 10, opacity: 0.65, letterSpacing: "0.18em" }}
           >
-            📷 PHOTOS / 🎥 VIDÉOS
+            {t("📷 PHOTOS / 🎥 VIDÉOS")}
           </div>
           <div style={{ fontSize: 12, opacity: 0.65, lineHeight: 1.4 }}>
-            Photo du parcours, vidéo… Ouvre la galerie — pas de caméra en direct.
+            {t("Photo du parcours, vidéo… Ouvre la galerie — pas de caméra en direct.")}
           </div>
           {mediaNames.map((n, i) => (
             <div
@@ -462,7 +463,7 @@ export function RunningSession({
           ))}
           {mediaUploading && (
             <div className="cst-mono" style={{ fontSize: 10, opacity: 0.6 }}>
-              Envoi en cours…
+              {t("Envoi en cours…")}
             </div>
           )}
           <button
@@ -472,7 +473,7 @@ export function RunningSession({
             className="cst-btn cst-btn-ghost-dark"
             style={{ fontSize: 12, padding: "10px 0" }}
           >
-            + IMPORTER UN FICHIER
+            {t("+ IMPORTER UN FICHIER")}
           </button>
           <input
             ref={fileRef}
@@ -505,7 +506,7 @@ export function RunningSession({
           className="cst-btn cst-btn-primary"
           style={{ width: "100%", padding: "18px 0", fontSize: 14 }}
         >
-          {submitting || finishing ? "ENVOI…" : "ENVOYER À LÉO ET TERMINER →"}
+          {submitting || finishing ? t("ENVOI…") : t("ENVOYER À LÉO ET TERMINER →")}
         </button>
       </div>
     </div>

@@ -6,6 +6,7 @@ import MemberNav from "../../components/MemberNav";
 import { CSTSectionNum, CSTDuoTitle } from "../../components/Atoms";
 import { ExerciseThread } from "../../components/cst/ExerciseThread";
 import { getMemberCoachFeedback, type MemberFeedbackSession } from "@/lib/member-feedback.functions";
+import { useI18n } from "@/lib/i18n";
 
 const DAY_LABELS = ["DIM", "LUN", "MAR", "MER", "JEU", "VEN", "SAM"];
 
@@ -16,6 +17,7 @@ function formatDate(iso: string | null): { day: string; label: string } {
 }
 
 export default function MemberFeedback() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const fetchFeedback = useServerFn(getMemberCoachFeedback);
   const [loading, setLoading] = useState(true);
@@ -49,25 +51,25 @@ export default function MemberFeedback() {
             <button
               onClick={() => navigate({ to: "/membre" })}
               style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.7)", fontSize: 18, cursor: "pointer", padding: 0 }}
-              aria-label="Retour"
+              aria-label={t("Retour")}
             >
               ←
             </button>
-            <span className="cst-mono" style={{ color: "#fff" }}>RETOURS DU COACH</span>
+            <span className="cst-mono" style={{ color: "#fff" }}>{t("RETOURS DU COACH")}</span>
             <span style={{ width: 18 }} />
           </div>
 
           <div className="cst-scroll" style={{ flex: 1, padding: "0 22px 90px" }}>
-            <CSTSectionNum num={1} label="RETOURS DE LÉO" sub={`${sessions.length} SÉANCE${sessions.length > 1 ? "S" : ""}`} />
-            <CSTDuoTitle top="LES RETOURS" bottom="de ton coach." size={34} color={undefined} />
+            <CSTSectionNum num={1} label={t("RETOURS DE LÉO")} sub={`${sessions.length} ${sessions.length > 1 ? t("SÉANCES") : t("SÉANCE")}`} />
+            <CSTDuoTitle top={t("LES RETOURS")} bottom={t("de ton coach.")} size={34} color={undefined} />
 
             {loading ? (
-              <div className="cst-mono" style={{ opacity: 0.5, fontSize: 11, padding: "24px 0" }}>CHARGEMENT…</div>
+              <div className="cst-mono" style={{ opacity: 0.5, fontSize: 11, padding: "24px 0" }}>{t("CHARGEMENT…")}</div>
             ) : sessions.length === 0 ? (
               <div className="cst-card-dark" style={{ padding: 24, textAlign: "center", marginTop: 20 }}>
-                <div className="cst-display" style={{ fontSize: 16, marginBottom: 8 }}>AUCUN RETOUR</div>
+                <div className="cst-display" style={{ fontSize: 16, marginBottom: 8 }}>{t("AUCUN RETOUR")}</div>
                 <p style={{ fontSize: 12, opacity: 0.6, margin: 0 }}>
-                  Ton coach n'a pas encore laissé de retour sur tes dernières séances. Envoie-lui une vidéo depuis une séance pour lancer l'échange.
+                  {t("Ton coach n'a pas encore laissé de retour sur tes dernières séances. Envoie-lui une vidéo depuis une séance pour lancer l'échange.")}
                 </p>
               </div>
             ) : (
@@ -75,7 +77,7 @@ export default function MemberFeedback() {
                 {sessions.map((s) => {
                   const { day, label: dow } = formatDate(s.date ?? s.endedAt);
                   const sem = s.weekNumber != null && s.dayNumber != null
-                    ? `SEM ${String(s.weekNumber).padStart(2, "0")} · J${s.dayNumber}`
+                    ? `${t("SEM")} ${String(s.weekNumber).padStart(2, "0")} · ${t("J")}${s.dayNumber}`
                     : null;
                   return (
                     <div key={s.id} className="cst-card-dark cst-hatch" style={{ padding: 16 }}>
@@ -83,14 +85,14 @@ export default function MemberFeedback() {
                       <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
                         <div className="cst-col" style={{ alignItems: "center", width: 38, flexShrink: 0 }}>
                           <span className="cst-display" style={{ fontSize: 18 }}>{day}</span>
-                          <span className="cst-mono" style={{ fontSize: 8 }}>{dow}</span>
+                          <span className="cst-mono" style={{ fontSize: 8 }}>{t(dow)}</span>
                         </div>
                         <div className="cst-col" style={{ gap: 2, flex: 1, minWidth: 0 }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                             <span className="cst-display" style={{ fontSize: 16 }}>{s.label.toUpperCase()}</span>
                             {s.unseen && (
                               <span className="cst-mono" style={{ fontSize: 8, padding: "2px 6px", borderRadius: 3, background: "var(--cst-mid-green)", color: "#fff", letterSpacing: "0.14em" }}>
-                                NOUVEAU
+                                {t("NOUVEAU")}
                               </span>
                             )}
                           </div>
@@ -101,7 +103,7 @@ export default function MemberFeedback() {
                       {/* Mot du coach sur la séance */}
                       {s.coachNote && (
                         <div style={{ marginTop: 12, padding: "10px 12px", background: "rgba(45,90,53,0.14)", border: "1px solid rgba(110,171,118,0.3)", borderRadius: 8 }}>
-                          <span className="cst-mono" style={{ fontSize: 8, color: "var(--cst-mid-green)", letterSpacing: "0.14em" }}>💬 MOT DE LÉO</span>
+                          <span className="cst-mono" style={{ fontSize: 8, color: "var(--cst-mid-green)", letterSpacing: "0.14em" }}>{t("💬 MOT DE LÉO")}</span>
                           <p style={{ margin: "6px 0 0", fontSize: 13, lineHeight: 1.45, color: "rgba(255,255,255,0.9)" }}>{s.coachNote}</p>
                         </div>
                       )}
@@ -124,7 +126,7 @@ export default function MemberFeedback() {
                         style={{ marginTop: 14, fontSize: 10 }}
                         onClick={() => navigate({ to: "/membre/historique" })}
                       >
-                        VOIR LA SÉANCE →
+                        {t("VOIR LA SÉANCE →")}
                       </button>
                     </div>
                   );

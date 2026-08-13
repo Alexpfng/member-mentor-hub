@@ -1,4 +1,5 @@
 import { FAMILY_LABEL, type Badge } from "@/lib/badges";
+import { useI18n } from "@/lib/i18n";
 
 /**
  * Étagère à trophées. Deux zones : ce qui est décroché, et le prochain palier
@@ -16,6 +17,7 @@ export default function BadgeShelf({
   earnedCount: number;
   totalCount: number;
 }) {
+  const { t } = useI18n();
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
@@ -23,7 +25,7 @@ export default function BadgeShelf({
           {earnedCount}
         </span>
         <span className="cst-mono" style={{ fontSize: 10, opacity: 0.55 }}>
-          / {totalCount} TROPHÉES
+          / {totalCount} {t("TROPHÉES")}
         </span>
       </div>
 
@@ -52,7 +54,7 @@ export default function BadgeShelf({
       {next.length > 0 && (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <span className="cst-mono" style={{ fontSize: 9, letterSpacing: "0.18em", opacity: 0.5 }}>
-            PROCHAINS PALIERS
+            {t("PROCHAINS PALIERS")}
           </span>
           {next.map((badge) => (
             <div key={badge.id} style={{ display: "flex", flexDirection: "column", gap: 4 }}>

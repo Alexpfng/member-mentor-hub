@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { logActivity } from "@/lib/activity.functions";
+import { useI18n } from "@/lib/i18n";
 
 type Props = {
   open: boolean;
@@ -32,6 +33,7 @@ export function ActivityLogDialog({
   goalCalories,
   onSaved,
 }: Props) {
+  const { t } = useI18n();
   const today = new Date().toISOString().slice(0, 10);
   const [steps, setSteps] = useState<string>(defaultSteps != null ? String(defaultSteps) : "");
   const [calories, setCalories] = useState<string>(
@@ -42,11 +44,11 @@ export function ActivityLogDialog({
   const save = useServerFn(logActivity);
 
   const parseField = (raw: string, max: number, label: string): number | null | "error" => {
-    const t = raw.trim();
-    if (t === "") return null; // champ laissé vide = on n'y touche pas
-    const n = Number(t.replace(/\s/g, ""));
+    const trimmed = raw.trim();
+    if (trimmed === "") return null; // champ laissé vide = on n'y touche pas
+    const n = Number(trimmed.replace(/\s/g, ""));
     if (!Number.isFinite(n) || n < 0 || n > max || !Number.isInteger(n)) {
-      toast.error(`${label} invalide`);
+      toast.error(t(`${label} invalide`));
       return "error";
     }
     return n;
@@ -58,7 +60,7 @@ export function ActivityLogDialog({
     const c = parseField(calories, 30000, "Calories");
     if (c === "error") return;
     if (s === null && c === null) {
-      toast.error("Indique au moins tes pas ou tes calories.");
+      toast.error(t("Indique au moins tes pas ou tes calories."));
       return;
     }
     setSaving(true);
@@ -72,11 +74,11 @@ export function ActivityLogDialog({
       if (steps.trim() !== "") payload.steps = s;
       if (calories.trim() !== "") payload.calories = c;
       await save({ data: payload });
-      toast.success("Activité enregistrée 👟");
+      toast.success(t("Activité enregistrée 👟"));
       onOpenChange(false);
       onSaved?.();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Erreur");
+      toast.error(e instanceof Error ? e.message : t("Erreur"));
     } finally {
       setSaving(false);
     }
@@ -86,12 +88,13 @@ export function ActivityLogDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Ton activité du jour</DialogTitle>
+          <DialogTitle>{t("Ton activité du jour")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div>
             <Label htmlFor="steps">
-              Pas{goalSteps != null ? ` (objectif ${goalSteps.toLocaleString("fr-FR")})` : ""}
+              {t("Pas")}
+              {goalSteps != null ? ` (${t("objectif")} ${goalSteps.toLocaleString("fr-FR")})` : ""}
             </Label>
             <Input
               id="steps"
@@ -107,8 +110,8 @@ export function ActivityLogDialog({
           </div>
           <div>
             <Label htmlFor="calories">
-              Calories
-              {goalCalories != null ? ` (objectif ${goalCalories.toLocaleString("fr-FR")})` : ""}
+              {t("Calories")}
+              {goalCalories != null ? ` (${t("objectif")} ${goalCalories.toLocaleString("fr-FR")})` : ""}
             </Label>
             <Input
               id="calories"
@@ -122,7 +125,7 @@ export function ActivityLogDialog({
             />
           </div>
           <div>
-            <Label htmlFor="activity-date">Date</Label>
+            <Label htmlFor="activity-date">{t("Date")}</Label>
             <Input
               id="activity-date"
               type="date"
@@ -133,10 +136,10 @@ export function ActivityLogDialog({
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={saving}>
-            Annuler
+            {t("Annuler")}
           </Button>
           <Button onClick={handleSave} disabled={saving}>
-            {saving ? "Enregistrement…" : "Enregistrer ✓"}
+            {saving ? t("Enregistrement…") : t("Enregistrer ✓")}
           </Button>
         </DialogFooter>
       </DialogContent>
