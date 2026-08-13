@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-router";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import { ThemeProvider } from "@/lib/theme";
+import { LocaleProvider } from "@/lib/i18n";
 import { Toaster } from "@/components/ui/sonner";
 
 import appCss from "../styles.css?url";
@@ -149,8 +150,10 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <Outlet />
-        <Toaster richColors position="top-center" />
+        <LocaleProvider>
+          <Outlet />
+          <Toaster richColors position="top-center" />
+        </LocaleProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

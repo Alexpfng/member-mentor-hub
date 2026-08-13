@@ -18,6 +18,7 @@ import {
   getStravaConnectUrl,
   getStravaConnectionStatus,
 } from "@/lib/strava.functions";
+import { useI18n } from "@/lib/i18n";
 
 const TOGGLES = [
   ["planned_session", "Rappel jour de séance planifié"],
@@ -33,6 +34,7 @@ const DOW = ["DIM", "LUN", "MAR", "MER", "JEU", "VEN", "SAM"];
 
 export default function MemberProfil() {
   const navigate = useNavigate();
+  const { locale, setLocale, t } = useI18n();
   const getFn = useServerFn(getNotificationPrefs);
   const updateFn = useServerFn(updateNotificationPrefs);
   const getPlanningSettings = useServerFn(getMemberPlanningSettings);
@@ -98,7 +100,7 @@ export default function MemberProfil() {
       const r = await updateFn({ data: patch });
       setPrefs(r);
     } catch (e: any) {
-      toast.error(e?.message ?? "Erreur");
+      toast.error(e?.message ?? t("Erreur"));
     }
   };
 
@@ -108,7 +110,7 @@ export default function MemberProfil() {
       const { url } = await getConnectUrl();
       window.location.href = url;
     } catch (e: any) {
-      toast.error(e?.message ?? "Connexion Strava impossible");
+      toast.error(e?.message ?? t("Connexion Strava impossible"));
       setStravaBusy(false);
     }
   };
@@ -121,9 +123,9 @@ export default function MemberProfil() {
         data: { planning_week_start_day: value },
       });
       setPlanningWeekStartDay(res.planning_week_start_day);
-      toast.success("Semaine perso mise à jour");
+      toast.success(t("Semaine perso mise à jour"));
     } catch (e: any) {
-      toast.error(e?.message ?? "Mise à jour impossible");
+      toast.error(e?.message ?? t("Mise à jour impossible"));
     } finally {
       setPlanningBusy(false);
     }
@@ -134,9 +136,9 @@ export default function MemberProfil() {
     try {
       await disconnectStravaFn();
       setStrava({ connected: false, athleteId: null, expiresAt: null, lastSyncAt: null });
-      toast.success("Strava déconnecté");
+      toast.success(t("Strava déconnecté"));
     } catch (e: any) {
-      toast.error(e?.message ?? "Déconnexion Strava impossible");
+      toast.error(e?.message ?? t("Déconnexion Strava impossible"));
     } finally {
       setStravaBusy(false);
     }
@@ -152,28 +154,50 @@ export default function MemberProfil() {
       <div className="max-w-2xl mx-auto px-4 pt-4 pb-24">
         <div className="flex items-center justify-between mb-6">
           <button onClick={() => navigate({ to: "/membre" })} className="text-sm opacity-60">
-            ← Retour
+            {t("← Retour")}
           </button>
-          <h1 className="font-mono text-xs tracking-widest">RÉGLAGES</h1>
+          <h1 className="font-mono text-xs tracking-widest">{t("RÉGLAGES")}</h1>
           <div className="w-10" />
         </div>
 
         <section className="mb-8">
+          <h2 className="font-mono text-xs tracking-widest opacity-60 mb-3">{t("Langue")}</h2>
+          <div className="p-4 rounded-xl border border-border bg-card space-y-3">
+            <div className="text-xs opacity-70">{t("Choisis la langue de l'application.")}</div>
+            <div className="flex gap-2">
+              {(["fr", "en"] as const).map((lng) => (
+                <button
+                  key={lng}
+                  onClick={() => setLocale(lng)}
+                  className={`flex-1 py-3 rounded border text-sm ${
+                    locale === lng
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "border-border"
+                  }`}
+                >
+                  {lng === "fr" ? "Français" : "English"}
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="mb-8">
           <div className="p-4 rounded-xl border border-border bg-card">
-            <div className="font-mono text-xs tracking-widest opacity-60 mb-2">HUB COACHÉ</div>
-            <h2 className="text-lg font-semibold mb-1">Tous tes réglages au même endroit</h2>
+            <div className="font-mono text-xs tracking-widest opacity-60 mb-2">{t("HUB COACHÉ")}</div>
+            <h2 className="text-lg font-semibold mb-1">{t("Tous tes réglages au même endroit")}</h2>
             <p className="text-sm opacity-70">
-              Retrouve ici tout ce que tu peux modifier en tant que coaché.
+              {t("Retrouve ici tout ce que tu peux modifier en tant que coaché.")}
             </p>
           </div>
         </section>
 
         <section className="mb-8">
-          <h2 className="font-mono text-xs tracking-widest opacity-60 mb-3">PLANNING</h2>
+          <h2 className="font-mono text-xs tracking-widest opacity-60 mb-3">{t("PLANNING")}</h2>
           <div className="p-4 rounded-xl border border-border bg-card space-y-3 mb-8">
-            <div className="text-sm font-medium">Début de ma semaine</div>
+            <div className="text-sm font-medium">{t("Début de ma semaine")}</div>
             <div className="text-xs opacity-70">
-              Choisis le jour qui doit lancer ton cycle hebdomadaire de 7 jours.
+              {t("Choisis le jour qui doit lancer ton cycle hebdomadaire de 7 jours.")}
             </div>
             <select
               className="w-full rounded-md border border-border bg-background px-3 py-3 text-sm"
@@ -188,7 +212,7 @@ export default function MemberProfil() {
               ))}
             </select>
             <div className="text-xs opacity-60">
-              Semaine perso : {weekWindowLabel(planningWeekStartDay)}
+              {t("Semaine perso :")} {weekWindowLabel(planningWeekStartDay)}
             </div>
           </div>
         </section>
@@ -196,7 +220,7 @@ export default function MemberProfil() {
         <section className="mb-8">
           <h2 className="font-mono text-xs tracking-widest opacity-60 mb-3">NOTIFICATIONS</h2>
           {loading || !prefs ? (
-            <div className="opacity-60 text-sm">Chargement…</div>
+            <div className="opacity-60 text-sm">{t("Chargement…")}</div>
           ) : (
             <div className="space-y-3">
               {TOGGLES.map(([key, label]) => (
@@ -205,7 +229,7 @@ export default function MemberProfil() {
                   className="flex items-center justify-between p-4 rounded-xl border border-border bg-card"
                 >
                   <Label htmlFor={key} className="cursor-pointer text-sm">
-                    {label}
+                    {t(label)}
                   </Label>
                   <Switch
                     id={key}
@@ -217,7 +241,7 @@ export default function MemberProfil() {
 
               {prefs.weight_reminder && (
                 <div className="p-4 rounded-xl border border-border bg-card space-y-3">
-                  <div className="text-xs opacity-70">Quand recevoir le rappel poids ?</div>
+                  <div className="text-xs opacity-70">{t("Quand recevoir le rappel poids ?")}</div>
                   <div className="flex gap-2 flex-wrap">
                     {DOW.map((d, i) => (
                       <button
@@ -229,7 +253,7 @@ export default function MemberProfil() {
                             : "bg-muted text-muted-foreground"
                         }`}
                       >
-                        {d}
+                        {t(d)}
                       </button>
                     ))}
                   </div>
@@ -245,26 +269,28 @@ export default function MemberProfil() {
         </section>
 
         <section className="mb-8">
-          <h2 className="font-mono text-xs tracking-widest opacity-60 mb-3">CONNEXIONS</h2>
+          <h2 className="font-mono text-xs tracking-widest opacity-60 mb-3">{t("CONNEXIONS")}</h2>
           <div className="space-y-3 mb-8">
             <div className="p-4 rounded-xl border border-border bg-card space-y-2">
               <div className="text-sm font-medium">
-                {strava?.connected ? "Compte Strava connecté" : "Aucun compte Strava connecté"}
+                {strava?.connected ? t("Compte Strava connecté") : t("Aucun compte Strava connecté")}
               </div>
               <div className="text-xs opacity-70">
                 {strava?.connected
-                  ? "Tes courses du jour pourront être rattachées automatiquement à ta séance course."
-                  : "Connecte Strava pour faire remonter automatiquement tes sorties course dans l'app."}
+                  ? t("Tes courses du jour pourront être rattachées automatiquement à ta séance course.")
+                  : t("Connecte Strava pour faire remonter automatiquement tes sorties course dans l'app.")}
               </div>
               {strava?.connected && (
                 <div className="text-xs opacity-60 space-y-1">
-                  <div>Athlète Strava : {strava.athleteId ?? "—"}</div>
                   <div>
-                    Dernière synchro :{" "}
+                    {t("Athlète Strava :")} {strava.athleteId ?? "—"}
+                  </div>
+                  <div>
+                    {t("Dernière synchro :")}{" "}
                     {strava.lastSyncAt ? new Date(strava.lastSyncAt).toLocaleString("fr-FR") : "—"}
                   </div>
                   <div>
-                    Expiration token :{" "}
+                    {t("Expiration token :")}{" "}
                     {strava.expiresAt ? new Date(strava.expiresAt).toLocaleString("fr-FR") : "—"}
                   </div>
                 </div>
@@ -276,7 +302,7 @@ export default function MemberProfil() {
                     disabled={stravaBusy}
                     onClick={handleConnectStrava}
                   >
-                    {stravaBusy ? "Connexion..." : "Connecter Strava"}
+                    {stravaBusy ? t("Connexion...") : t("Connecter Strava")}
                   </button>
                 ) : (
                   <button
@@ -284,7 +310,7 @@ export default function MemberProfil() {
                     disabled={stravaBusy}
                     onClick={handleDisconnectStrava}
                   >
-                    {stravaBusy ? "Déconnexion..." : "Déconnecter Strava"}
+                    {stravaBusy ? t("Déconnexion...") : t("Déconnecter Strava")}
                   </button>
                 )}
               </div>
@@ -293,14 +319,14 @@ export default function MemberProfil() {
         </section>
 
         <section className="mb-8">
-          <h2 className="font-mono text-xs tracking-widest opacity-60 mb-3">COMPTE</h2>
+          <h2 className="font-mono text-xs tracking-widest opacity-60 mb-3">{t("COMPTE")}</h2>
           <div className="p-4 rounded-xl border border-border bg-card space-y-3">
-            <div className="text-sm font-medium">Gestion du compte</div>
+            <div className="text-sm font-medium">{t("Gestion du compte")}</div>
             <div className="text-xs opacity-70">
-              Retrouve ici les actions liées à ton espace personnel.
+              {t("Retrouve ici les actions liées à ton espace personnel.")}
             </div>
             <button className="w-full py-3 rounded border border-border text-sm" onClick={handleLogout}>
-              Se déconnecter
+              {t("Se déconnecter")}
             </button>
           </div>
         </section>

@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { getUnreadCount } from "@/lib/coach.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { useI18n } from "@/lib/i18n";
 
 const items = [
   { id: "home", icon: "🏠", label: "Accueil", path: "/membre" },
@@ -17,6 +18,7 @@ const items = [
 
 export default function MemberNav({ unreadCount: unreadProp = undefined } = {}) {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const { pathname } = useLocation();
   const unreadFn = useServerFn(getUnreadCount);
   const [unread, setUnread] = useState(unreadProp ?? 0);
@@ -68,13 +70,13 @@ export default function MemberNav({ unreadCount: unreadProp = undefined } = {}) 
               onClick={() => navigate({ to: it.path })}
               role="button"
               tabIndex={0}
-              aria-label={it.label}
+              aria-label={t(it.label)}
               aria-current={on ? "page" : undefined}
             >
               <span className="nav-icon" style={{ fontSize: 20 }}>
                 {it.icon}
               </span>
-              <span className="nav-label">{it.label}</span>
+              <span className="nav-label">{t(it.label)}</span>
               {it.id === "msgs" && effectiveUnread > 0 && (
                 <span className="bottom-nav-badge">
                   {effectiveUnread > 9 ? "9+" : effectiveUnread}
