@@ -233,14 +233,12 @@ const EN: Record<string, string> = {
   "Voir le résumé de séance": "See workout summary",
   "Voir la démo sur YouTube": "Watch the demo on YouTube",
   "Aperçu vidéo": "Video preview",
-  "Choisis ton RPE perçu pour valider la série.":
-    "Pick your perceived RPE to confirm the set.",
+  "Choisis ton RPE perçu pour valider la série.": "Pick your perceived RPE to confirm the set.",
   "Indique au moins le nombre de reps pour valider cette série.":
     "Enter at least the number of reps to confirm this set.",
   "Impossible de terminer la séance. Vérifie ta connexion et réessaie.":
     "Couldn't finish the workout. Check your connection and try again.",
-  "Enregistrement en attente — vérifie ta connexion.":
-    "Save pending — check your connection.",
+  "Enregistrement en attente — vérifie ta connexion.": "Save pending — check your connection.",
   "Pré-remplissage historique indisponible": "History pre-fill unavailable",
   "Superset : enchaîne les deux exercices sans repos, puis prends la récup commune.":
     "Superset: do both exercises back to back with no rest, then take the shared recovery.",
@@ -277,6 +275,12 @@ const EN: Record<string, string> = {
   VALIDER: "CONFIRM",
   "→ EXO SUIVANT": "→ NEXT EXERCISE",
   "→ SUIVANT": "→ NEXT",
+  "Aucune étape.": "No step.",
+  "REPS ": "REPS ",
+  "CHARGE ": "LOAD ",
+  "RÉCUP ": "REST ",
+  "RPE CIBLE ": "TARGET RPE ",
+  PRÊT: "READY",
 };
 
 type I18nCtx = {

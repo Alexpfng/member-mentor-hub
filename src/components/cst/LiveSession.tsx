@@ -1266,7 +1266,7 @@ export function LiveSession({
   const queueWrite = (task: () => Promise<void>, label: string) => {
     writeQueueRef.current = writeQueueRef.current.then(task).catch((e) => {
       console.error(label, e);
-      toast.error("Enregistrement en attente — vérifie ta connexion.");
+      toast.error(t("Enregistrement en attente — vérifie ta connexion."));
     });
     return writeQueueRef.current;
   };
@@ -1408,7 +1408,7 @@ export function LiveSession({
       setValidationError(
         durationMode
           ? "Indique au moins la durée (en secondes) pour valider cette série."
-          : "Indique au moins le nombre de reps pour valider cette série.",
+          : t("Indique au moins le nombre de reps pour valider cette série."),
       );
       return;
     }
@@ -2415,7 +2415,7 @@ export function LiveSession({
   if (!current) {
     return (
       <div style={shellStyle}>
-        <div style={{ padding: 22, opacity: 0.6 }}>Aucune étape.</div>
+        <div style={{ padding: 22, opacity: 0.6 }}>{t("Aucune étape.")}</div>
       </div>
     );
   }
@@ -2669,18 +2669,18 @@ export function LiveSession({
                     {ex.series ?? "—"}
                   </span>
                   <span>
-                    <span style={{ opacity: 0.5 }}>REPS </span>
+                    <span style={{ opacity: 0.5 }}>{t("REPS ")}</span>
                     {ex.reps != null ? (formatRepsObjectif(ex.reps) ?? String(ex.reps)) : "—"}
                   </span>
                   {ex.charge && !bodyweight && (
                     <span>
-                      <span style={{ opacity: 0.5 }}>CHARGE </span>
+                      <span style={{ opacity: 0.5 }}>{t("CHARGE ")}</span>
                       {ex.charge}
                     </span>
                   )}
                   {ex.recup && (
                     <span>
-                      <span style={{ opacity: 0.5 }}>RÉCUP </span>
+                      <span style={{ opacity: 0.5 }}>{t("RÉCUP ")}</span>
                       {ex.recup}
                     </span>
                   )}
@@ -3005,8 +3005,8 @@ export function LiveSession({
   const timedRounds = isTimed ? parseTimedRounds(setStep.exercise.reps, setStep.exercise.name) : 1;
   const timedSideLabel =
     isPerSide(setStep.exercise.reps) || isUnilateralByName(setStep.exercise.name)
-      ? sideWord(setStep.exercise.reps, setStep.exercise.name)
-      : "TOUR";
+      ? t(sideWord(setStep.exercise.reps, setStep.exercise.name))
+      : t("TOUR");
 
   // Cible reps par série (placeholder)
   const repTargets = parseRepsPerSet(setStep.exercise.reps, setStep.totalSets);
@@ -4127,6 +4127,7 @@ function CircuitScreen({
   onFinish: (rpe: number | null) => void;
   onPain: () => void;
 }) {
+  const { t } = useI18n();
   const [totalMin, setTotalMin] = React.useState(defaultTotalMin);
   const [elapsed, setElapsed] = React.useState(0);
   const [running, setRunning] = React.useState(false);
@@ -4322,12 +4323,12 @@ function CircuitScreen({
           >
             {!running && elapsed === 0 ? (
               <span className="cst-mono" style={{ fontSize: 13, opacity: 0.6 }}>
-                PRÊT
+                {t("PRÊT")}
               </span>
             ) : (
               <>
                 <span className="cst-mono" style={{ fontSize: 9, opacity: 0.5 }}>
-                  {isWorking ? "TRAVAIL" : "TRANSITION"} · TOUR {round + 1}
+                  {isWorking ? t("TRAVAIL") : t("TRANSITION")} · {t("TOUR")} {round + 1}
                 </span>
                 <span
                   className="cst-display"
@@ -4989,6 +4990,7 @@ function SessionMediaUploader({ sessionId, userId }: { sessionId: string; userId
 /* ───────── Video modal (YouTube embed) ───────── */
 
 function VideoModal({ exercise, onClose }: { exercise: ProgExercise | null; onClose: () => void }) {
+  const { t } = useI18n();
   if (!exercise) return null;
   const id =
     exercise.youtube_id ||
@@ -5033,7 +5035,7 @@ function VideoModal({ exercise, onClose }: { exercise: ProgExercise | null; onCl
               fontSize: 22,
               cursor: "pointer",
             }}
-            aria-label="Fermer"
+            aria-label={t("Fermer")}
           >
             ×
           </button>
@@ -5096,6 +5098,7 @@ function CuesModal({
   onOpenColor: (c: ExerciseColor) => void;
   onOpenRpeRef: () => void;
 }) {
+  const { t } = useI18n();
   if (!exercise) return null;
   const color = (() => {
     const v = (exercise.color || "").toLowerCase();
@@ -5147,7 +5150,7 @@ function CuesModal({
               fontSize: 18,
               cursor: "pointer",
             }}
-            aria-label="Fermer"
+            aria-label={t("Fermer")}
           >
             ×
           </button>
@@ -5209,7 +5212,7 @@ function CuesModal({
           >
             {exercise.rpe_target && (
               <div className="cst-mono" style={{ fontSize: 11, color: "#fff" }}>
-                <span style={{ opacity: 0.55 }}>RPE CIBLE </span>
+                <span style={{ opacity: 0.55 }}>{t("RPE CIBLE ")}</span>
                 {parseRpeCell(exercise.rpe_target).rpe?.replace(".", ",") ?? exercise.rpe_target}
                 {parseRpeCell(exercise.rpe_target).comment && (
                   <span style={{ opacity: 0.8, fontStyle: "italic", fontWeight: 400 }}>
