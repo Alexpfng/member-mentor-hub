@@ -16,6 +16,7 @@ import { getMemberCoachFeedback } from "@/lib/member-feedback.functions";
 import { listWeekPlan, upsertPlannedSession } from "@/lib/planning.functions";
 import { sanitizeDurationMin } from "@/lib/format";
 import { localDateISO, addDaysISO } from "@/lib/local-date";
+import { useI18n } from "@/lib/i18n";
 
 const todayISO = localDateISO();
 const today = new Date(); // affichage uniquement (salutation, date du jour)
@@ -33,6 +34,7 @@ function getWeekDates() {
 export default function MemberDashboard() {
   const navigate = useNavigate();
   const tsNavigate = useTsNavigate();
+  const { locale, t } = useI18n();
   const [profile, setProfile] = useState(null);
   const [weekSessions, setWeekSessions] = useState([]);
   const [plan, setPlan] = useState(null); // { planned, sessions, dayDefs, weekNumber, assignment }
@@ -139,7 +141,7 @@ export default function MemberDashboard() {
   const firstName = profile?.first_name ?? "Athlete";
   const lastName = profile?.last_name ?? "";
   const initials = getInitials(firstName, lastName);
-  const programName = assignment?.programs?.name ?? "Aucun programme";
+  const programName = assignment?.programs?.name ?? t("Aucun programme");
 
   const weekDates = getWeekDates();
   const dayLabels = ["LUN", "MAR", "MER", "JEU", "VEN", "SAM", "DIM"];
@@ -221,7 +223,7 @@ export default function MemberDashboard() {
           letterSpacing: "0.18em",
         }}
       >
-        CHARGEMENT…
+        {t("CHARGEMENT…")}
       </div>
     );
   }
@@ -281,7 +283,7 @@ export default function MemberDashboard() {
               letterSpacing: "0.18em",
             }}
           >
-            L'ESPACE · MEMBRE
+            {t("L'ESPACE · MEMBRE")}
           </div>
         </div>
 
@@ -317,7 +319,7 @@ export default function MemberDashboard() {
             >
               <span style={{ fontSize: 16, flexShrink: 0 }}>{item.icon}</span>
               <span className="cst-mono" style={{ fontSize: 11, letterSpacing: "0.1em" }}>
-                {item.label}
+                {t(item.label)}
               </span>
               {isActive && (
                 <span
@@ -370,7 +372,7 @@ export default function MemberDashboard() {
                 className="cst-mono"
                 style={{ fontSize: 8, color: "rgba(255,255,255,0.35)", letterSpacing: "0.1em" }}
               >
-                MEMBRE
+                {t("MEMBRE")}
               </div>
             </div>
           </div>
@@ -394,7 +396,7 @@ export default function MemberDashboard() {
               textAlign: "center",
             }}
           >
-            DÉCONNEXION
+            {t("DÉCONNEXION")}
           </button>
         </div>
       </aside>
@@ -444,9 +446,9 @@ export default function MemberDashboard() {
                     letterSpacing: "0.14em",
                     cursor: "pointer",
                   }}
-                  aria-label="Se déconnecter"
+                  aria-label={t("Se déconnecter")}
                 >
-                  DÉCONNEXION
+                  {t("DÉCONNEXION")}
                 </button>
               </div>
             </div>
@@ -458,7 +460,7 @@ export default function MemberDashboard() {
                 <CSTSectionNum
                   num={1}
                   label={today
-                    .toLocaleDateString("fr-FR", {
+                    .toLocaleDateString(locale === "en" ? "en-GB" : "fr-FR", {
                       weekday: "short",
                       day: "numeric",
                       month: "short",
@@ -469,10 +471,10 @@ export default function MemberDashboard() {
                 <div style={{ marginTop: 14 }}>
                   <h1 className="cst-display" style={{ fontSize: 38, margin: 0 }}>
                     {today.getHours() < 12
-                      ? "BON MATIN,"
+                      ? t("BON MATIN,")
                       : today.getHours() < 18
-                        ? "BONNE APRÈS-MIDI,"
-                        : "BONNE SOIRÉE,"}
+                        ? t("BONNE APRÈS-MIDI,")
+                        : t("BONNE SOIRÉE,")}
                   </h1>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: -2 }}>
                     <div className="cst-italic" style={{ fontSize: 30 }}>
@@ -490,7 +492,7 @@ export default function MemberDashboard() {
                           border: "1px solid rgba(245,166,35,0.35)",
                         }}
                       >
-                        🔥 {streak} SEM
+                        🔥 {streak} {t("SEM")}
                       </span>
                     )}
                   </div>
@@ -518,8 +520,8 @@ export default function MemberDashboard() {
                   fontSize: 10,
                 }}
               >
-                <span>⚙️ RÉGLAGES</span>
-                <span style={{ opacity: 0.6 }}>PLANNING · NOTIFS · STRAVA</span>
+                <span>⚙️ {t("RÉGLAGES")}</span>
+                <span style={{ opacity: 0.6 }}>{t("PLANNING · NOTIFS · STRAVA")}</span>
               </button>
 
               {/* Hero session card */}
@@ -536,10 +538,10 @@ export default function MemberDashboard() {
                   <>
                     <div className="cst-col" style={{ gap: 2 }}>
                       <span className="cst-mono" style={{ fontSize: 9, color: "#F5A623" }}>
-                        ⏱ SÉANCE EN COURS
+                        {t("⏱ SÉANCE EN COURS")}
                       </span>
                       <div className="cst-display" style={{ fontSize: 22, marginTop: 6 }}>
-                        {inProgress.session_label ?? "SÉANCE LIBRE"}
+                        {inProgress.session_label ?? t("SÉANCE LIBRE")}
                       </div>
                     </div>
                     <div
@@ -550,7 +552,7 @@ export default function MemberDashboard() {
                       style={{ width: "100%" }}
                       onClick={() => navigate(`/membre/seance/${inProgress.id}`)}
                     >
-                      REPRENDRE →
+                      {t("REPRENDRE →")}
                     </button>
                   </>
                 ) : todaySession?.status === "completed" ? (
@@ -559,15 +561,15 @@ export default function MemberDashboard() {
                       className="cst-mono"
                       style={{ fontSize: 9, color: "var(--cst-mid-green)" }}
                     >
-                      ✓ SÉANCE DU JOUR TERMINÉE
+                      {t("✓ SÉANCE DU JOUR TERMINÉE")}
                     </span>
                     <div className="cst-display" style={{ fontSize: 20, marginTop: 8 }}>
-                      {todaySession.session_label ?? "SÉANCE LIBRE"}
+                      {todaySession.session_label ?? t("SÉANCE LIBRE")}
                     </div>
                     <div style={{ fontSize: 12, opacity: 0.55, marginTop: 4 }}>
                       {sanitizeDurationMin(todaySession.duration_minutes)
                         ? `${sanitizeDurationMin(todaySession.duration_minutes)} min`
-                        : "Durée non enregistrée"}
+                        : t("Durée non enregistrée")}
                     </div>
                   </>
                 ) : todayPlanned ? (
@@ -577,7 +579,7 @@ export default function MemberDashboard() {
                         className="cst-mono"
                         style={{ fontSize: 9, color: "var(--cst-mid-green)" }}
                       >
-                        ★ AUJOURD'HUI · PLANIFIÉ
+                        {t("★ AUJOURD'HUI · PLANIFIÉ")}
                       </span>
                       <div className="cst-display" style={{ fontSize: 22, marginTop: 6 }}>
                         {todayPlanned.day_label?.toUpperCase()}
@@ -592,7 +594,7 @@ export default function MemberDashboard() {
                         style={{ flex: 1 }}
                         onClick={() => startSession(todayPlanned.day_label)}
                       >
-                        COMMENCER →
+                        {t("COMMENCER →")}
                       </button>
                       {availableDayDefs.length > 0 && (
                         <button
@@ -600,7 +602,7 @@ export default function MemberDashboard() {
                           style={{ fontSize: 10 }}
                           onClick={() => setChoosing((v) => !v)}
                         >
-                          CHANGER
+                          {t("CHANGER")}
                         </button>
                       )}
                     </div>
@@ -609,7 +611,7 @@ export default function MemberDashboard() {
                         style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 6 }}
                       >
                         <span className="cst-mono" style={{ fontSize: 9, opacity: 0.6 }}>
-                          AUTRES SÉANCES DE LA SEMAINE
+                          {t("AUTRES SÉANCES DE LA SEMAINE")}
                         </span>
                         {availableDayDefs.map((d) => (
                           <button
@@ -636,10 +638,10 @@ export default function MemberDashboard() {
                         className="cst-mono"
                         style={{ fontSize: 9, color: "var(--cst-mid-green)" }}
                       >
-                        ★ CHOISIR MA SÉANCE
+                        {t("★ CHOISIR MA SÉANCE")}
                       </span>
                       <div className="cst-display" style={{ fontSize: 18, marginTop: 6 }}>
-                        QUE FAIS-TU AUJOURD'HUI ?
+                        {t("QUE FAIS-TU AUJOURD'HUI ?")}
                       </div>
                       <div
                         className="cst-italic"
@@ -698,7 +700,7 @@ export default function MemberDashboard() {
                           className="cst-mono"
                           style={{ fontSize: 9, color: "var(--cst-mid-green)" }}
                         >
-                          ★ AUJOURD'HUI
+                          {t("★ AUJOURD'HUI")}
                         </span>
                         <div className="cst-display" style={{ fontSize: 22, marginTop: 6 }}>
                           {assignment ? programName.toUpperCase() : "SÉANCE LIBRE"}
@@ -723,7 +725,7 @@ export default function MemberDashboard() {
                         navigate(assignment ? "/membre/commencer" : "/membre/composer")
                       }
                     >
-                      {assignment ? "COMMENCER →" : "CRÉER MA SÉANCE →"}
+                      {assignment ? t("COMMENCER →") : t("CRÉER MA SÉANCE →")}
                     </button>
                   </>
                 )}
@@ -758,12 +760,13 @@ export default function MemberDashboard() {
                         letterSpacing: "0.14em",
                       }}
                     >
-                      VOIR LES RETOURS DE LÉO
+                      {t("VOIR LES RETOURS DE LÉO")}
                     </span>
                     <div style={{ marginTop: 3, fontSize: 12, color: "rgba(255,255,255,0.75)" }}>
-                      {coachFeedback.sessions.length} séance
-                      {coachFeedback.sessions.length > 1 ? "s" : ""} commentée
-                      {coachFeedback.sessions.length > 1 ? "s" : ""}
+                      {coachFeedback.sessions.length}{" "}
+                      {coachFeedback.sessions.length > 1
+                        ? t("séances commentées")
+                        : t("séance commentée")}
                     </div>
                   </div>
                   {coachFeedback.unseenCount > 0 && (
@@ -779,7 +782,8 @@ export default function MemberDashboard() {
                         flexShrink: 0,
                       }}
                     >
-                      {coachFeedback.unseenCount} NOUVEAU{coachFeedback.unseenCount > 1 ? "X" : ""}
+                      {coachFeedback.unseenCount}{" "}
+                      {coachFeedback.unseenCount > 1 ? t("NOUVEAUX") : t("NOUVEAU")}
                     </span>
                   )}
                   <span style={{ opacity: 0.5, flexShrink: 0 }}>→</span>
@@ -791,7 +795,7 @@ export default function MemberDashboard() {
                 onClick={() => navigate("/membre/commencer")}
                 style={{ width: "100%", marginTop: 10, fontSize: 11 }}
               >
-                CHOISIR UNE AUTRE SÉANCE →
+                {t("CHOISIR UNE AUTRE SÉANCE →")}
               </button>
 
               <button
@@ -799,7 +803,7 @@ export default function MemberDashboard() {
                 onClick={() => navigate("/membre/composer")}
                 style={{ width: "100%", marginTop: 8, fontSize: 11 }}
               >
-                ✏️ CRÉER MA SÉANCE →
+                {t("✏️ CRÉER MA SÉANCE →")}
               </button>
 
               <button
@@ -807,15 +811,15 @@ export default function MemberDashboard() {
                 onClick={() => navigate("/membre/bibliotheque")}
                 style={{ width: "100%", marginTop: 8, fontSize: 11 }}
               >
-                📚 BIBLIOTHÈQUE D'EXERCICES →
+                {t("📚 BIBLIOTHÈQUE D'EXERCICES →")}
               </button>
 
               {/* Week strip */}
               <div style={{ marginTop: 22 }}>
                 <CSTSectionNum
                   num={2}
-                  label="MA SEMAINE"
-                  sub={`${doneSessions} / ${plannedPerWeek} SÉANCES`}
+                  label={t("MA SEMAINE")}
+                  sub={`${doneSessions} / ${plannedPerWeek} ${t("SÉANCES")}`}
                 />
                 <div
                   style={{
@@ -869,7 +873,7 @@ export default function MemberDashboard() {
                             color: isToday ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.45)",
                           }}
                         >
-                          {dayLabels[i]}
+                          {t(dayLabels[i])}
                         </div>
                         <div
                           style={{
@@ -896,7 +900,7 @@ export default function MemberDashboard() {
                               marginTop: 1,
                               color: isToday ? "rgba(255,255,255,0.9)" : "var(--cst-mid-green)",
                             }}
-                            title={`${daySessions.length} séances ce jour`}
+                            title={`${daySessions.length} ${t("séances ce jour")}`}
                           >
                             +{extraCount}
                           </div>
@@ -935,7 +939,7 @@ export default function MemberDashboard() {
               >
                 <div className="cst-card-dark" style={{ padding: 14 }}>
                   <span className="cst-mono" style={{ fontSize: 9 }}>
-                    ADHÉRENCE · SEMAINE
+                    {t("ADHÉRENCE · SEMAINE")}
                   </span>
                   <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginTop: 6 }}>
                     <span className="cst-display" style={{ fontSize: 28 }}>
@@ -952,7 +956,7 @@ export default function MemberDashboard() {
                 </div>
                 <div className="cst-card-dark" style={{ padding: 14 }}>
                   <span className="cst-mono" style={{ fontSize: 9 }}>
-                    DERNIER PR
+                    {t("DERNIER PR")}
                   </span>
                   {lastPR ? (
                     <>
@@ -979,7 +983,9 @@ export default function MemberDashboard() {
                       )}
                     </>
                   ) : (
-                    <div style={{ fontSize: 12, opacity: 0.45, marginTop: 8 }}>Aucun PR encore</div>
+                    <div style={{ fontSize: 12, opacity: 0.45, marginTop: 8 }}>
+                      {t("Aucun PR encore")}
+                    </div>
                   )}
                 </div>
               </div>
@@ -998,7 +1004,7 @@ export default function MemberDashboard() {
               >
                 <div className="cst-col" style={{ gap: 2 }}>
                   <span className="cst-mono" style={{ fontSize: 9 }}>
-                    POIDS DU CORPS
+                    {t("POIDS DU CORPS")}
                   </span>
                   {currentWeight != null ? (
                     <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
@@ -1018,7 +1024,7 @@ export default function MemberDashboard() {
                       )}
                     </div>
                   ) : (
-                    <div style={{ fontSize: 12, opacity: 0.5 }}>Pas encore noté</div>
+                    <div style={{ fontSize: 12, opacity: 0.5 }}>{t("Pas encore noté")}</div>
                   )}
                 </div>
                 <button
@@ -1026,7 +1032,7 @@ export default function MemberDashboard() {
                   style={{ fontSize: 10 }}
                   onClick={() => setWeightOpen(true)}
                 >
-                  + NOTER
+                  {t("+ NOTER")}
                 </button>
               </div>
 
@@ -1044,12 +1050,12 @@ export default function MemberDashboard() {
               >
                 <div className="cst-col" style={{ gap: 6 }}>
                   <span className="cst-mono" style={{ fontSize: 9 }}>
-                    ACTIVITÉ DU JOUR
+                    {t("ACTIVITÉ DU JOUR")}
                   </span>
                   <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
                     <div className="cst-col" style={{ gap: 2 }}>
                       <span className="cst-mono" style={{ fontSize: 8, opacity: 0.5 }}>
-                        PAS
+                        {t("PAS")}
                       </span>
                       <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
                         <span className="cst-display" style={{ fontSize: 20 }}>
@@ -1088,7 +1094,7 @@ export default function MemberDashboard() {
                   style={{ fontSize: 10 }}
                   onClick={() => setActivityOpen(true)}
                 >
-                  + NOTER
+                  {t("+ NOTER")}
                 </button>
               </div>
 
@@ -1110,7 +1116,7 @@ export default function MemberDashboard() {
                   }}
                 >
                   <span className="cst-mono" style={{ fontSize: 9, color: "var(--cst-mid-green)" }}>
-                    💬 MESSAGE COACH
+                    {t("💬 MESSAGE COACH")}
                   </span>
                   <div
                     style={{
@@ -1149,7 +1155,7 @@ export default function MemberDashboard() {
                   className="cst-mono"
                   style={{ fontSize: 9, letterSpacing: "0.18em", opacity: 0.55 }}
                 >
-                  COMMUNAUTÉ
+                  {t("COMMUNAUTÉ")}
                 </span>
                 <div
                   style={{
@@ -1161,7 +1167,7 @@ export default function MemberDashboard() {
                   }}
                 >
                   <span style={{ fontSize: 14, lineHeight: 1.4 }}>
-                    Vois ce que font les autres coachés, et envoie-leur un cololike
+                    {t("Vois ce que font les autres coachés, et envoie-leur un cololike")}
                   </span>
                   <span
                     className="cst-display"
@@ -1186,28 +1192,28 @@ export default function MemberDashboard() {
                   onClick={() => navigate("/membre/programme")}
                   style={{ fontSize: 11 }}
                 >
-                  MON PROGRAMME →
+                  {t("MON PROGRAMME →")}
                 </button>
                 <button
                   className="cst-btn cst-btn-ghost-dark"
                   onClick={() => navigate("/membre/carnet")}
                   style={{ fontSize: 11 }}
                 >
-                  MON CARNET →
+                  {t("MON CARNET →")}
                 </button>
                 <button
                   className="cst-btn cst-btn-ghost-dark"
                   onClick={() => navigate("/membre/planning")}
                   style={{ fontSize: 11 }}
                 >
-                  PLANNING →
+                  {t("PLANNING →")}
                 </button>
                 <button
                   className="cst-btn cst-btn-ghost-dark"
                   onClick={() => navigate("/membre/historique")}
                   style={{ fontSize: 11 }}
                 >
-                  HISTORIQUE →
+                  {t("HISTORIQUE →")}
                 </button>
               </div>
             </div>
