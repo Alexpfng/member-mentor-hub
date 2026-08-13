@@ -178,3 +178,50 @@ export const setMemberActivityGoals = createServerFn({ method: "POST" })
       calories: row.daily_calories_goal ?? null,
     };
   });
+
+/**
+ * Vue « tracking » d'un coaché pour le coach : historique COMPLET du poids
+ * (nécessaire pour la courbe de fluctuation et le « % depuis le départ », que les
+ * 30 dernières pesées de getMemberDetail ne couvrent pas) + l'activité (pas /
+ * calories) sur ~1 an, pour calculer les moyennes hebdo / mensuelles côté client.
+ */
+export const getMemberTracking = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ memberId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertCoach(context.userId);
+    const since = new Date(Date.now() - 366 * 86400000).toISOString().slice(0, 10);
+    const [{ data: weights }, { data: acts }, { data: profile }] = await Promise.all([
+      supabaseAdmin
+        .from("weight_logs")
+        .select("date, weight_kg")
+        .eq("member_id", data.memberId)
+        .order("date", { ascending: true }),
+      supabaseAdmin
+        .from("activity_logs")
+        .select("date, steps, calories")
+        .eq("member_id", data.memberId)
+        .gte("date", since)
+        .order("date", { ascending: true }),
+      supabaseAdmin
+        .from("profiles")
+        .select("daily_steps_goal, daily_calories_goal")
+        .eq("id", data.memberId)
+        .maybeSingle(),
+    ]);
+    return {
+      weights: (weights ?? []).map((w) => ({
+        date: w.date as string,
+        weight_kg: Number(w.weight_kg),
+      })),
+      activity: (acts ?? []).map((a) => ({
+        date: a.date as string,
+        steps: a.steps as number | null,
+        calories: a.calories as number | null,
+      })),
+      goals: {
+        steps: profile?.daily_steps_goal ?? null,
+        calories: profile?.daily_calories_goal ?? null,
+      },
+    };
+  });

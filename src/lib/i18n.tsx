@@ -702,6 +702,25 @@ const EN: Record<string, string> = {
   "VOIR MA SEMAINE →": "SEE MY WEEK →",
   "VOIR MON PROGRAMME →": "VIEW MY PROGRAM →",
   "volume total": "total volume",
+
+  "MES INFOS": "MY INFO",
+  "Ces infos aident ton coach à ajuster ton suivi. Complète-les et mets-les à jour toi-même quand ça change.":
+    "This info helps your coach fine-tune your plan. Fill it in and keep it up to date yourself.",
+  PRÉNOM: "FIRST NAME",
+  NOM: "LAST NAME",
+  EMAIL: "EMAIL",
+  "— Non renseigné —": "— Not set —",
+  Débutant: "Beginner",
+  Intermédiaire: "Intermediate",
+  Avancé: "Advanced",
+  Élite: "Elite",
+  "TAILLE (CM)": "HEIGHT (CM)",
+  "POIDS (KG)": "WEIGHT (KG)",
+  "Ex. Préparation combat / Perte de gras / Hypertrophie…":
+    "e.g. Fight prep / Fat loss / Hypertrophy…",
+  "ENREGISTRER MES INFOS": "SAVE MY INFO",
+  "✓ Infos mises à jour": "✓ Info updated",
+  "Infos mises à jour": "Info updated",
 };
 
 type I18nCtx = {
