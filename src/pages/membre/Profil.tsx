@@ -10,6 +10,8 @@ import { getNotificationPrefs, updateNotificationPrefs } from "@/lib/notif-prefs
 import {
   getMemberPlanningSettings,
   updateMemberPlanningSettings,
+  getMyProfileInfo,
+  updateMyProfileInfo,
 } from "@/lib/member-profile.functions";
 import { WEEK_START_OPTIONS, weekWindowLabel } from "@/lib/planning-weeks";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,6 +41,8 @@ export default function MemberProfil() {
   const updateFn = useServerFn(updateNotificationPrefs);
   const getPlanningSettings = useServerFn(getMemberPlanningSettings);
   const updatePlanningSettings = useServerFn(updateMemberPlanningSettings);
+  const getMyInfo = useServerFn(getMyProfileInfo);
+  const updateMyInfo = useServerFn(updateMyProfileInfo);
   const getStravaStatus = useServerFn(getStravaConnectionStatus);
   const getConnectUrl = useServerFn(getStravaConnectUrl);
   const disconnectStravaFn = useServerFn(disconnectStrava);
@@ -53,6 +57,17 @@ export default function MemberProfil() {
     lastSyncAt: string | null;
   } | null>(null);
   const [stravaBusy, setStravaBusy] = useState(false);
+  const [info, setInfo] = useState({
+    first_name: "",
+    last_name: "",
+    email: "",
+    level: "",
+    height_cm: "",
+    weight_kg: "",
+    goal: "",
+  });
+  const [infoBusy, setInfoBusy] = useState(false);
+  const [infoSaved, setInfoSaved] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -86,6 +101,22 @@ export default function MemberProfil() {
         }
       } catch (e) {
         console.error("[Profil] getStravaConnectionStatus", e);
+      }
+      try {
+        const mine = await getMyInfo();
+        if (mounted) {
+          setInfo({
+            first_name: mine.first_name ?? "",
+            last_name: mine.last_name ?? "",
+            email: mine.email ?? "",
+            level: mine.level ?? "",
+            height_cm: mine.height_cm != null ? String(mine.height_cm) : "",
+            weight_kg: mine.weight_kg != null ? String(mine.weight_kg) : "",
+            goal: mine.goal ?? "",
+          });
+        }
+      } catch (e) {
+        console.error("[Profil] getMyProfileInfo", e);
       }
       if (mounted) setLoading(false);
     })();
@@ -144,6 +175,38 @@ export default function MemberProfil() {
     }
   };
 
+  const num = (s: string): number | null => {
+    const v = s.trim().replace(",", ".");
+    if (v === "") return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  };
+
+  const handleSaveInfo = async () => {
+    setInfoBusy(true);
+    setInfoSaved(false);
+    try {
+      const h = num(info.height_cm);
+      await updateMyInfo({
+        data: {
+          first_name: info.first_name.trim() || null,
+          last_name: info.last_name.trim() || null,
+          level: info.level || null,
+          height_cm: h != null ? Math.round(h) : null,
+          weight_kg: num(info.weight_kg),
+          goal: info.goal.trim() || null,
+        },
+      });
+      setInfoSaved(true);
+      toast.success(t("Infos mises à jour"));
+      setTimeout(() => setInfoSaved(false), 2500);
+    } catch (e: any) {
+      toast.error(e?.message ?? t("Mise à jour impossible"));
+    } finally {
+      setInfoBusy(false);
+    }
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate({ to: "/login", search: { redirect: "/" } });
@@ -184,12 +247,121 @@ export default function MemberProfil() {
 
         <section className="mb-8">
           <div className="p-4 rounded-xl border border-border bg-card">
-            <div className="font-mono text-xs tracking-widest opacity-60 mb-2">{t("HUB COACHÉ")}</div>
+            <div className="font-mono text-xs tracking-widest opacity-60 mb-2">
+              {t("HUB COACHÉ")}
+            </div>
             <h2 className="text-lg font-semibold mb-1">{t("Tous tes réglages au même endroit")}</h2>
             <p className="text-sm opacity-70">
               {t("Retrouve ici tout ce que tu peux modifier en tant que coaché.")}
             </p>
           </div>
+        </section>
+
+        <section className="mb-8">
+          <h2 className="font-mono text-xs tracking-widest opacity-60 mb-3">{t("MES INFOS")}</h2>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              void handleSaveInfo();
+            }}
+            className="p-4 rounded-xl border border-border bg-card space-y-3"
+          >
+            <div className="text-xs opacity-70">
+              {t(
+                "Ces infos aident ton coach à ajuster ton suivi. Complète-les et mets-les à jour toi-même quand ça change.",
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <span className="font-mono text-[10px] opacity-60">{t("PRÉNOM")}</span>
+                <input
+                  className="w-full mt-1 rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  value={info.first_name}
+                  onChange={(e) => setInfo({ ...info, first_name: e.target.value })}
+                />
+              </div>
+              <div>
+                <span className="font-mono text-[10px] opacity-60">{t("NOM")}</span>
+                <input
+                  className="w-full mt-1 rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  value={info.last_name}
+                  onChange={(e) => setInfo({ ...info, last_name: e.target.value })}
+                />
+              </div>
+            </div>
+            <div>
+              <span className="font-mono text-[10px] opacity-60">{t("EMAIL")}</span>
+              <input
+                className="w-full mt-1 rounded-md border border-border bg-muted px-3 py-2 text-sm opacity-60"
+                value={info.email}
+                disabled
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <span className="font-mono text-[10px] opacity-60">{t("NIVEAU")}</span>
+                <select
+                  className="w-full mt-1 rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  value={info.level}
+                  onChange={(e) => setInfo({ ...info, level: e.target.value })}
+                >
+                  <option value="">{t("— Non renseigné —")}</option>
+                  <option value="débutant">{t("Débutant")}</option>
+                  <option value="intermédiaire">{t("Intermédiaire")}</option>
+                  <option value="avancé">{t("Avancé")}</option>
+                  <option value="élite">{t("Élite")}</option>
+                </select>
+              </div>
+              <div>
+                <span className="font-mono text-[10px] opacity-60">{t("TAILLE (CM)")}</span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={80}
+                  max={260}
+                  className="w-full mt-1 rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  value={info.height_cm}
+                  onChange={(e) => setInfo({ ...info, height_cm: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <span className="font-mono text-[10px] opacity-60">{t("POIDS (KG)")}</span>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  step="0.1"
+                  min={20}
+                  max={400}
+                  className="w-full mt-1 rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  value={info.weight_kg}
+                  onChange={(e) => setInfo({ ...info, weight_kg: e.target.value })}
+                />
+              </div>
+            </div>
+            <div>
+              <span className="font-mono text-[10px] opacity-60">{t("OBJECTIF")}</span>
+              <input
+                className="w-full mt-1 rounded-md border border-border bg-background px-3 py-2 text-sm"
+                placeholder={t("Ex. Préparation combat / Perte de gras / Hypertrophie…")}
+                value={info.goal}
+                onChange={(e) => setInfo({ ...info, goal: e.target.value })}
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={infoBusy}
+              className="w-full py-3 rounded bg-primary text-primary-foreground text-sm disabled:opacity-60"
+            >
+              {infoBusy ? t("ENREGISTREMENT…") : t("ENREGISTRER MES INFOS")}
+            </button>
+            {infoSaved && (
+              <div className="text-xs text-center" style={{ color: "var(--cst-mid-green)" }}>
+                {t("✓ Infos mises à jour")}
+              </div>
+            )}
+          </form>
         </section>
 
         <section className="mb-8">
@@ -273,12 +445,18 @@ export default function MemberProfil() {
           <div className="space-y-3 mb-8">
             <div className="p-4 rounded-xl border border-border bg-card space-y-2">
               <div className="text-sm font-medium">
-                {strava?.connected ? t("Compte Strava connecté") : t("Aucun compte Strava connecté")}
+                {strava?.connected
+                  ? t("Compte Strava connecté")
+                  : t("Aucun compte Strava connecté")}
               </div>
               <div className="text-xs opacity-70">
                 {strava?.connected
-                  ? t("Tes courses du jour pourront être rattachées automatiquement à ta séance course.")
-                  : t("Connecte Strava pour faire remonter automatiquement tes sorties course dans l'app.")}
+                  ? t(
+                      "Tes courses du jour pourront être rattachées automatiquement à ta séance course.",
+                    )
+                  : t(
+                      "Connecte Strava pour faire remonter automatiquement tes sorties course dans l'app.",
+                    )}
               </div>
               {strava?.connected && (
                 <div className="text-xs opacity-60 space-y-1">
@@ -325,7 +503,10 @@ export default function MemberProfil() {
             <div className="text-xs opacity-70">
               {t("Retrouve ici les actions liées à ton espace personnel.")}
             </div>
-            <button className="w-full py-3 rounded border border-border text-sm" onClick={handleLogout}>
+            <button
+              className="w-full py-3 rounded border border-border text-sm"
+              onClick={handleLogout}
+            >
               {t("Se déconnecter")}
             </button>
           </div>
