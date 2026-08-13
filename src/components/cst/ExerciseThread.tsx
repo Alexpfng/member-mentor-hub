@@ -8,6 +8,7 @@ import {
   getSignedVideoUrl,
 } from "@/lib/videos.functions";
 import { useTechniqueUploadQueue, MAX_VIDEO_BYTES, tooLargeMessage } from "./TechniqueUploadQueue";
+import { VideoRecorder } from "./VideoRecorder";
 
 type Video = {
   id: string;
@@ -56,6 +57,7 @@ export function ExerciseThread({
   const [posting, setPosting] = useState(false);
   const [signed, setSigned] = useState<Record<string, string>>({});
   const [openVideoId, setOpenVideoId] = useState<string | null>(null);
+  const [recorderOpen, setRecorderOpen] = useState(false);
 
   // Présent uniquement pendant une séance live : on diffère alors l'envoi des vidéos
   // en fin de séance (voir TechniqueUploadQueue). Ailleurs (revue post-séance), null.
@@ -181,7 +183,23 @@ export function ExerciseThread({
       {/* Upload row (member only) */}
       {!isCoachView && (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <UploadBtn icon="🎬" label={uploading ? "ENVOI…" : "FILMER / CHOISIR UNE VIDÉO"} onFile={handlePicked} disabled={uploading} />
+          {/* Filmer dans l'app = qualité bridée → reste sous 50 Mo (voir VideoRecorder). */}
+          <button
+            type="button"
+            onClick={() => setRecorderOpen(true)}
+            disabled={uploading}
+            className="cst-mono"
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+              padding: "10px 12px", borderRadius: 6, cursor: uploading ? "not-allowed" : "pointer",
+              background: "rgba(255,255,255,0.04)", border: "1px dashed rgba(255,255,255,0.18)",
+              color: "rgba(255,255,255,0.75)", fontSize: 11, letterSpacing: "0.14em",
+              opacity: uploading ? 0.5 : 1,
+            }}
+          >
+            🎥 FILMER (optimisé, sous 50 Mo)
+          </button>
+          <UploadBtn icon="📁" label={uploading ? "ENVOI…" : "ou importer un fichier"} onFile={handlePicked} disabled={uploading} />
           {/* Séance live : vidéos choisies, en attente d'un envoi groupé en fin de séance */}
           {pending.map((p) => (
             <div key={p.id} style={{
@@ -212,6 +230,17 @@ export function ExerciseThread({
         </div>
       )}
       {uploadErr && <div style={{ color: "#C56A60", fontSize: 11 }}>{uploadErr}</div>}
+
+      {!isCoachView && (
+        <VideoRecorder
+          open={recorderOpen}
+          onClose={() => setRecorderOpen(false)}
+          onRecorded={(f) => {
+            setRecorderOpen(false);
+            handlePicked(f);
+          }}
+        />
+      )}
 
       {/* Videos gallery */}
       {videos.length > 0 && (
