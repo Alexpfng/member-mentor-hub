@@ -9,7 +9,7 @@ function normalize(s) {
     .toString()
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
+    .replace(/[̀-ͯ]/g, "");
 }
 
 function todayISO() {
@@ -244,8 +244,13 @@ import {
   toggleMemberArchived,
   deleteMemberAccount,
 } from "@/lib/coach.functions";
-import { getMemberActivity, setMemberActivityGoals } from "@/lib/activity.functions";
+import {
+  getMemberActivity,
+  setMemberActivityGoals,
+  getMemberTracking,
+} from "@/lib/activity.functions";
 import { VideoReviewPanel } from "../../components/coach/VideoReviewPanel";
+import MemberTrackingPanel from "../../components/coach/MemberTrackingPanel";
 import MemberFollowupTab from "../../components/coach/MemberFollowupTab";
 import WeeksManagerPanel from "../../components/coach/WeeksManagerPanel";
 import { supabase } from "@/integrations/supabase/client";
@@ -307,8 +312,7 @@ function MemberTabsNavigation({ tabs, activeTab, onSelect, unreadCount, fixedPos
         width: isFixed ? fixedPosition.width : undefined,
         minHeight: isFixed ? fixedPosition.height : undefined,
         zIndex: isFixed ? 1000 : 24,
-        background:
-          "linear-gradient(180deg, rgba(15,34,23,0.99) 0%, rgba(15,34,23,0.96) 100%)",
+        background: "linear-gradient(180deg, rgba(15,34,23,0.99) 0%, rgba(15,34,23,0.96) 100%)",
         backdropFilter: "blur(10px)",
         WebkitBackdropFilter: "blur(10px)",
         borderBottom: "1px solid rgba(255,255,255,0.06)",
@@ -388,6 +392,7 @@ export default function CoachMember() {
   const setModeFn = useServerFn(setAssignmentSessionMode);
   const getActivityFn = useServerFn(getMemberActivity);
   const setActivityGoalsFn = useServerFn(setMemberActivityGoals);
+  const getTrackingFn = useServerFn(getMemberTracking);
   const getUpcomingFn = useServerFn(getUpcomingPlannedSessions);
   const toggleRestFn = useServerFn(togglePlannedSessionRest);
   const toggleArchivedFn = useServerFn(toggleMemberArchived);
@@ -419,6 +424,7 @@ export default function CoachMember() {
   const [logWeight, setLogWeight] = useState(false);
   const [sessionModeBusy, setSessionModeBusy] = useState(false);
   const [activity, setActivity] = useState(null);
+  const [tracking, setTracking] = useState(null);
   const [goalSteps, setGoalSteps] = useState("");
   const [goalCalories, setGoalCalories] = useState("");
   const [goalsBusy, setGoalsBusy] = useState(false);
@@ -473,6 +479,7 @@ export default function CoachMember() {
     try {
       const g = await setActivityGoalsFn({ data: { memberId, stepsGoal: s, caloriesGoal: c } });
       setActivity((a) => (a ? { ...a, goals: g } : a));
+      setTracking((tr) => (tr ? { ...tr, goals: g } : tr));
       setGoalsSaved(true);
       setTimeout(() => setGoalsSaved(false), 1500);
     } catch (ex) {
@@ -496,6 +503,9 @@ export default function CoachMember() {
         setGoalSteps(a?.goals?.steps != null ? String(a.goals.steps) : "");
         setGoalCalories(a?.goals?.calories != null ? String(a.goals.calories) : "");
       })
+      .catch(() => {});
+    getTrackingFn({ data: { memberId } })
+      .then(setTracking)
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [memberId]);
@@ -539,8 +549,7 @@ export default function CoachMember() {
       frame = requestAnimationFrame(update);
     };
 
-    const observer =
-      typeof ResizeObserver === "undefined" ? null : new ResizeObserver(schedule);
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(schedule);
 
     schedule();
     observer?.observe(scroller);
@@ -1421,119 +1430,11 @@ export default function CoachMember() {
                     </div>
                   ))}
                 </div>
-                {data.weight_logs.length > 0 && (
-                  <div style={{ marginTop: 24 }}>
-                    <CSTSectionNum
-                      num={2}
-                      label="POIDS CORPOREL"
-                      sub={`${data.weight_logs.length} MESURES`}
-                    />
-                    <div className="cst-card-dark" style={{ padding: 16, marginTop: 14 }}>
-                      {data.weight_logs.slice(0, 6).map((w) => (
-                        <div
-                          key={w.date}
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            padding: "6px 0",
-                            borderBottom: "1px solid rgba(255,255,255,0.04)",
-                            fontSize: 12,
-                          }}
-                        >
-                          <span className="cst-mono">{shortDateFR(w.date)}</span>
-                          <span className="cst-display">{w.weight_kg} KG</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {activity &&
-                  (activity.list.length > 0 ||
-                    activity.goals.steps != null ||
-                    activity.goals.calories != null) && (
-                    <div style={{ marginTop: 24 }}>
-                      <CSTSectionNum
-                        num={3}
-                        label="ACTIVITÉ (PAS / CALORIES)"
-                        sub={activity.list.length > 0 ? `${activity.list.length} JOURS` : "OBJECTIF FIXÉ"}
-                      />
-                      <div className="cst-card-dark" style={{ padding: 16, marginTop: 14 }}>
-                        <div
-                          style={{
-                            display: "flex",
-                            gap: 24,
-                            flexWrap: "wrap",
-                            marginBottom: activity.list.length ? 14 : 0,
-                          }}
-                        >
-                          {[
-                            ["OBJECTIF PAS", activity.goals.steps],
-                            ["OBJECTIF CAL.", activity.goals.calories],
-                            ["MOY. PAS", activity.averages.steps],
-                            ["MOY. CAL.", activity.averages.calories],
-                          ].map(([label, val]) => (
-                            <div key={label} className="cst-col" style={{ gap: 2 }}>
-                              <span className="cst-mono" style={{ fontSize: 8, opacity: 0.5 }}>
-                                {label}
-                              </span>
-                              <span className="cst-display" style={{ fontSize: 16 }}>
-                                {val != null ? val.toLocaleString("fr-FR") : "—"}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                        {activity.list.length > 0 && (
-                          <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 8 }}>
-                            {[...activity.list]
-                              .reverse()
-                              .slice(0, 10)
-                              .map((a) => {
-                                const hitSteps =
-                                  activity.goals.steps != null &&
-                                  a.steps != null &&
-                                  a.steps >= activity.goals.steps;
-                                const hitCal =
-                                  activity.goals.calories != null &&
-                                  a.calories != null &&
-                                  a.calories >= activity.goals.calories;
-                                return (
-                                  <div
-                                    key={a.date}
-                                    style={{
-                                      display: "flex",
-                                      justifyContent: "space-between",
-                                      padding: "6px 0",
-                                      borderBottom: "1px solid rgba(255,255,255,0.04)",
-                                      fontSize: 12,
-                                      gap: 10,
-                                    }}
-                                  >
-                                    <span className="cst-mono">{shortDateFR(a.date)}</span>
-                                    <span style={{ display: "flex", gap: 14 }}>
-                                      <span
-                                        className="cst-display"
-                                        style={{ color: hitSteps ? "var(--cst-mid-green)" : undefined }}
-                                      >
-                                        {a.steps != null ? a.steps.toLocaleString("fr-FR") : "—"}{" "}
-                                        <span style={{ fontSize: 9, opacity: 0.4 }}>PAS</span>
-                                      </span>
-                                      <span
-                                        className="cst-display"
-                                        style={{ color: hitCal ? "var(--cst-mid-green)" : undefined }}
-                                      >
-                                        {a.calories != null ? a.calories.toLocaleString("fr-FR") : "—"}{" "}
-                                        <span style={{ fontSize: 9, opacity: 0.4 }}>CAL</span>
-                                      </span>
-                                    </span>
-                                  </div>
-                                );
-                              })}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
+                <MemberTrackingPanel
+                  weights={tracking?.weights ?? []}
+                  activity={tracking?.activity ?? []}
+                  goals={tracking?.goals ?? { steps: null, calories: null }}
+                />
               </>
             )}
 
@@ -1901,10 +1802,7 @@ export default function CoachMember() {
                     <span style={{ color: "var(--cst-success)", fontSize: 11 }}>✓ Enregistré</span>
                   )}
                 </div>
-                <span
-                  className="cst-mono"
-                  style={{ fontSize: 8, opacity: 0.4, lineHeight: 1.4 }}
-                >
+                <span className="cst-mono" style={{ fontSize: 8, opacity: 0.4, lineHeight: 1.4 }}>
                   Laisse vide pour ne pas fixer d'objectif. Le membre le voit lors de sa saisie.
                 </span>
               </div>
