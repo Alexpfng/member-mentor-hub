@@ -9,6 +9,7 @@ import {
 } from "@/lib/videos.functions";
 import { useTechniqueUploadQueue, MAX_VIDEO_BYTES, tooLargeMessage } from "./TechniqueUploadQueue";
 import { VideoRecorder } from "./VideoRecorder";
+import { useI18n } from "@/lib/i18n";
 
 type Video = {
   id: string;
@@ -45,6 +46,7 @@ export function ExerciseThread({
   // Utilisé dans le détail de séance côté coach.
   expandVideos?: boolean;
 }) {
+  const { t } = useI18n();
   const fetchThread = useServerFn(getExerciseThread);
   const postComment = useServerFn(postExerciseComment);
   const sign = useServerFn(getSignedVideoUrl);
@@ -168,7 +170,7 @@ export function ExerciseThread({
   }
 
   const isCoachView = viewerRole === "coach";
-  const memberLabel = isCoachView ? "Coaché" : "Toi";
+  const memberLabel = isCoachView ? "Coaché" : t("Toi");
 
   return (
     <div style={{
@@ -177,7 +179,7 @@ export function ExerciseThread({
       display: "flex", flexDirection: "column", gap: 12,
     }}>
       <div className="cst-mono" style={{ fontSize: 9, opacity: 0.55, letterSpacing: "0.16em" }}>
-        TECHNIQUE & ÉCHANGES COACH
+        {t("TECHNIQUE & ÉCHANGES COACH")}
       </div>
 
       {/* Upload row (member only) */}
@@ -268,7 +270,7 @@ export function ExerciseThread({
                     <span className="cst-mono" style={{ fontSize: 8, padding: "2px 6px", borderRadius: 3, background: "rgba(212,165,59,0.2)", color: "#D4A53B" }}>À REVOIR</span>
                   )}
                   {v.unread_for_member && !isCoachView && (
-                    <span className="cst-mono" style={{ fontSize: 8, padding: "2px 6px", borderRadius: 3, background: "rgba(45,90,53,0.3)", color: "#6EAB76" }}>NOUVEAU</span>
+                    <span className="cst-mono" style={{ fontSize: 8, padding: "2px 6px", borderRadius: 3, background: "rgba(45,90,53,0.3)", color: "#6EAB76" }}>{t("NOUVEAU")}</span>
                   )}
                   {!expandVideos && <span style={{ opacity: 0.5, fontSize: 11 }}>{open ? "▾" : "▸"}</span>}
                 </span>
@@ -316,7 +318,7 @@ export function ExerciseThread({
         <textarea
           value={content}
           onChange={e => setContent(e.target.value)}
-          placeholder={isCoachView ? "Conseil pour le coaché…" : "Écris à Léo…"}
+          placeholder={isCoachView ? "Conseil pour le coaché…" : t("Écris à Léo…")}
           rows={2}
           style={{
             flex: 1, resize: "none",
@@ -340,7 +342,7 @@ export function ExerciseThread({
             cursor: posting || !content.trim() ? "not-allowed" : "pointer",
             opacity: posting || !content.trim() ? 0.5 : 1,
           }}
-        >ENVOYER</button>
+        >{t("ENVOYER")}</button>
       </div>
     </div>
   );

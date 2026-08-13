@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ProgramBlocks, groupBlocks, type ProgExercise } from "./ProgramBlocks";
 import { ExerciseThread } from "./ExerciseThread";
 import PainReportDialog from "./PainReportDialog";
+import { useI18n } from "@/lib/i18n";
 import {
   buildExerciseOverview,
   groupExpertRecapByExercise,
@@ -1109,6 +1110,7 @@ export function LiveSession({
   initialMode,
   quitRef,
 }: Props) {
+  const { t } = useI18n();
   const steps = useMemo(() => buildSteps(exercises), [exercises]);
   const totalWorkSets = useMemo(
     () => steps.filter((s) => s.kind === "set" || s.kind === "emom" || s.kind === "circuit").length,
@@ -1398,7 +1400,7 @@ export function LiveSession({
 
     // Validation contextuelle
     if (l.rpe == null) {
-      setValidationError("Choisis ton RPE perçu pour valider la série.");
+      setValidationError(t("Choisis ton RPE perçu pour valider la série."));
       return;
     }
     const hasReps = l.reps && l.reps.trim() !== "";
@@ -1697,9 +1699,9 @@ export function LiveSession({
             <button
               onClick={() => setShowOverview(true)}
               aria-label={
-                sessionMode === "expert" ? "Voir le résumé de séance" : "Voir toute la séance"
+                sessionMode === "expert" ? t("Voir le résumé de séance") : t("Voir toute la séance")
               }
-              title={sessionMode === "expert" ? "Voir le résumé de séance" : "Voir toute la séance"}
+              title={sessionMode === "expert" ? t("Voir le résumé de séance") : t("Voir toute la séance")}
               className="cst-mono"
               style={{
                 background: "transparent",
@@ -1811,7 +1813,7 @@ export function LiveSession({
                 }}
               >
                 <h3 className="cst-display" style={{ margin: 0, fontSize: 20 }}>
-                  {sessionMode === "expert" ? "RÉSUMÉ DE SÉANCE" : "PROGRAMME COMPLET"}
+                  {sessionMode === "expert" ? t("RÉSUMÉ DE SÉANCE") : t("PROGRAMME COMPLET")}
                 </h3>
                 <button
                   onClick={() => setShowOverview(false)}
@@ -1845,10 +1847,10 @@ export function LiveSession({
                           : "rgba(255,255,255,0.45)";
                     const label =
                       row.state === "done"
-                        ? "FAIT"
+                        ? t("FAIT")
                         : row.state === "current"
-                          ? "EN COURS"
-                          : "À FAIRE";
+                          ? t("EN COURS")
+                          : t("À FAIRE");
                     const statusIcon =
                       row.state === "done" ? "✓" : row.state === "current" ? "…" : "□";
                     const isClickable = sessionMode === "expert";
@@ -2090,7 +2092,7 @@ export function LiveSession({
                     color: "#2DBE9A",
                   }}
                 >
-                  ✓ SÉANCE TERMINÉE
+                  {t("✓ SÉANCE TERMINÉE")}
                 </button>
                 {/* Option 3 — Erreur / consulter */}
                 <button
@@ -2112,7 +2114,7 @@ export function LiveSession({
                     opacity: resetting ? 0.5 : 1,
                   }}
                 >
-                  {resetting ? "RÉINITIALISATION…" : "ERREUR / JE CONSULTE LE PROGRAMME"}
+                  {resetting ? t("RÉINITIALISATION…") : t("ERREUR / JE CONSULTE LE PROGRAMME")}
                 </button>
               </div>
               <p style={{ margin: 0, fontSize: 11, opacity: 0.5, lineHeight: 1.4 }}>
@@ -2255,19 +2257,19 @@ export function LiveSession({
               className="cst-mono"
               style={{ fontSize: 10, opacity: 0.5, letterSpacing: "0.2em" }}
             >
-              ★ TERMINÉ
+              {t("★ TERMINÉ")}
             </span>
             <h1 className="cst-display" style={{ fontSize: 32, margin: "6px 0 0" }}>
-              BIEN JOUÉ.
+              {t("BIEN JOUÉ.")}
             </h1>
             <div className="cst-italic" style={{ opacity: 0.65, marginTop: 6 }}>
-              Tes données sont envoyées au coach.
+              {t("Tes données sont envoyées au coach.")}
             </div>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8 }}>
-            <Stat label="VOLUME" value={`${Math.round(totalVol)}kg`} />
-            <Stat label="RPE MOY" value={avgRpe != null ? String(avgRpe) : "—"} />
-            <Stat label="DURÉE" value={`${dur}'`} />
+            <Stat label={t("VOLUME")} value={`${Math.round(totalVol)}kg`} />
+            <Stat label={t("RPE MOY")} value={avgRpe != null ? String(avgRpe) : "—"} />
+            <Stat label={t("DURÉE")} value={`${dur}'`} />
           </div>
           <div
             className="cst-scroll"
@@ -2285,7 +2287,7 @@ export function LiveSession({
                   className="cst-mono"
                   style={{ fontSize: 10, opacity: 0.6, letterSpacing: "0.18em" }}
                 >
-                  EXERCICES RÉELLEMENT FAITS · RENSEIGNE LE RPE FINAL
+                  {t("EXERCICES RÉELLEMENT FAITS · RENSEIGNE LE RPE FINAL")}
                 </div>
                 {expertRecapGroups.length === 0 && (
                   <div className="cst-mono" style={{ fontSize: 11, opacity: 0.7 }}>
@@ -2381,7 +2383,7 @@ export function LiveSession({
               opacity: finishing || expertFinishing ? 0.6 : 1,
             }}
           >
-            {finishing || expertFinishing ? "ENREGISTREMENT…" : "TERMINER LA SÉANCE ✓"}
+            {finishing || expertFinishing ? t("ENREGISTREMENT…") : t("TERMINER LA SÉANCE ✓")}
           </button>
         </div>
         {renderOverlays()}
@@ -2663,7 +2665,7 @@ export function LiveSession({
                   }}
                 >
                   <span>
-                    <span style={{ opacity: 0.5 }}>SÉRIES </span>
+                    <span style={{ opacity: 0.5 }}>{t("SÉRIES ")}</span>
                     {ex.series ?? "—"}
                   </span>
                   <span>
@@ -2841,7 +2843,7 @@ export function LiveSession({
               className="cst-mono"
               style={{ fontSize: 10, opacity: 0.65, letterSpacing: "0.22em" }}
             >
-              SÉRIE
+              {t("SÉRIE")}
             </div>
             <div className="cst-display" style={{ fontSize: 56, lineHeight: 1, marginTop: 4 }}>
               {exStep.setNumber}
@@ -2939,12 +2941,12 @@ export function LiveSession({
             className="cst-btn cst-btn-primary"
             style={{ width: "100%", padding: "18px 0", fontSize: 14 }}
           >
-            VALIDER{" "}
+            {t("VALIDER")}{" "}
             {exStep.restAfter
-              ? "→ REPOS"
+              ? t("→ REPOS")
               : exStep.isLastSetOfExercise
-                ? "→ EXO SUIVANT"
-                : "→ SUIVANT"}
+                ? t("→ EXO SUIVANT")
+                : t("→ SUIVANT")}
           </button>
 
           {canGoNextBlock && (
@@ -3103,7 +3105,7 @@ export function LiveSession({
             className="cst-mono"
             style={{ fontSize: 10, opacity: 0.65, letterSpacing: "0.22em" }}
           >
-            SÉRIE
+            {t("SÉRIE")}
           </div>
           <div className="cst-display" style={{ fontSize: 56, lineHeight: 1, marginTop: 4 }}>
             {setStep.setNumber}
@@ -3166,7 +3168,7 @@ export function LiveSession({
             className="cst-btn cst-btn-primary"
             style={{ width: "100%", padding: "18px 0", fontSize: 14, marginTop: 4 }}
           >
-            {isTimed ? "✓ CHRONO TERMINÉ — LOGGER LE RPE" : "✓ SÉRIE TERMINÉE — LOGGER"}
+            {isTimed ? t("✓ CHRONO TERMINÉ — LOGGER LE RPE") : t("✓ SÉRIE TERMINÉE — LOGGER")}
           </button>
         )}
 
@@ -3210,7 +3212,7 @@ export function LiveSession({
               )}
               <LabeledInput
                 key={`r-${stepIdx}`}
-                label={durationMode ? "DURÉE (s)" : "REPS RÉALISÉES"}
+                label={durationMode ? t("DURÉE (s)") : t("REPS RÉALISÉES")}
                 initialValue={logging.reps}
                 placeholder={repPlaceholder || (durationMode ? "sec" : "reps")}
                 onCommit={commitReps}
@@ -3314,12 +3316,12 @@ export function LiveSession({
               className="cst-btn cst-btn-primary"
               style={{ width: "100%", padding: "16px 0", fontSize: 14 }}
             >
-              VALIDER{" "}
+              {t("VALIDER")}{" "}
               {setStep.restAfter
-                ? "→ REPOS"
+                ? t("→ REPOS")
                 : setStep.isLastSetOfExercise
-                  ? "→ EXO SUIVANT"
-                  : "→ SUIVANT"}
+                  ? t("→ EXO SUIVANT")
+                  : t("→ SUIVANT")}
             </button>
           </div>
         )}
@@ -3388,6 +3390,7 @@ function RestScreen({
   onVideo?: () => void;
   onCues?: () => void;
 }) {
+  const { t } = useI18n();
   const [remaining, setRemaining] = useState(seconds);
   const [running, setRunning] = useState(true);
   const totalRef = useRef(seconds);
@@ -3473,7 +3476,7 @@ function RestScreen({
       }}
     >
       <span className="cst-mono" style={{ fontSize: 10, opacity: 0.55, letterSpacing: "0.22em" }}>
-        — REPOS
+        {t("— REPOS")}
       </span>
 
       <div style={{ position: "relative", width: 220, height: 220 }}>
@@ -3561,7 +3564,7 @@ function RestScreen({
               className="cst-btn cst-btn-ghost-dark cst-btn-sm"
               style={{ flex: 1 }}
             >
-              📋 CONSIGNES
+              {t("📋 CONSIGNES")}
             </button>
           )}
         </div>
@@ -3578,13 +3581,13 @@ function RestScreen({
           }}
         >
           <div className="cst-mono" style={{ fontSize: 9, opacity: 0.55, letterSpacing: "0.2em" }}>
-            APRÈS LE REPOS
+            {t("APRÈS LE REPOS")}
           </div>
           <div className="cst-display" style={{ fontSize: 16, marginTop: 4, color: "#fff" }}>
             {nextPreview.name.toUpperCase()}
           </div>
           <div className="cst-mono" style={{ fontSize: 11, opacity: 0.7, marginTop: 2 }}>
-            SÉRIE {nextPreview.setNumber} / {nextPreview.totalSets}
+            {t("SÉRIE")} {nextPreview.setNumber} / {nextPreview.totalSets}
           </div>
         </div>
       )}
@@ -3596,7 +3599,7 @@ function RestScreen({
         className="cst-btn cst-btn-primary"
         style={{ width: "100%", padding: "16px 0", fontSize: 14 }}
       >
-        {remaining <= 0 ? "ON Y RETOURNE →" : "SKIP LE REPOS →"}
+        {remaining <= 0 ? t("ON Y RETOURNE →") : t("SKIP LE REPOS →")}
       </button>
     </div>
   );
