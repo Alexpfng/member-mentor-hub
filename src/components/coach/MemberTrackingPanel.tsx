@@ -48,6 +48,13 @@ function deltaColor(n: number) {
   return "rgba(255,255,255,0.6)";
 }
 
+// Pas : atteint l'objectif = vert, en dessous = ambre, pas de saisie = grisé.
+function stepColor(steps: number | null, goal: number | null) {
+  if (steps == null) return "rgba(255,255,255,0.25)";
+  if (goal == null) return "#fff";
+  return steps >= goal ? "var(--cst-mid-green, #6EAB76)" : "#E0A23B";
+}
+
 const CHART_TOOLTIP = {
   background: "#1a261d",
   border: "1px solid rgba(255,255,255,0.08)",
@@ -123,19 +130,47 @@ export default function MemberTrackingPanel({
       .sort((a, b) => a.monday.localeCompare(b.monday));
   }, [dailySteps]);
 
-  const months = useMemo(() => {
-    const buckets = new Map<string, number[]>();
-    for (const a of dailySteps) {
-      const k = a.date.slice(0, 7);
-      (buckets.get(k) ?? buckets.set(k, []).get(k)!).push(a.steps);
-    }
-    return [...buckets.entries()]
-      .map(([ym, arr]) => ({
-        ym,
-        avg: Math.round(arr.reduce((s, v) => s + v, 0) / arr.length),
-      }))
-      .sort((a, b) => b.ym.localeCompare(a.ym));
+  // Tableau jour par jour, un bloc par mois (façon feuille de suivi de Léo) :
+  // chaque jour du mois en colonne (date · jour · nb de pas), + moyenne du mois et
+  // moyennes hebdo « S1..Sn » (tranches de 7 jours depuis le 1er du mois).
+  const stepsByDate = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const a of dailySteps) m.set(a.date, a.steps);
+    return m;
   }, [dailySteps]);
+
+  const monthGrid = useMemo(() => {
+    if (dailySteps.length === 0) return [];
+    const monthKeys = [...new Set(dailySteps.map((a) => a.date.slice(0, 7)))].sort((a, b) =>
+      b.localeCompare(a),
+    );
+    return monthKeys.map((ym) => {
+      const [y, mo] = ym.split("-").map(Number);
+      const lastDayOfMonth = new Date(Date.UTC(y, mo, 0)).getUTCDate();
+      // On s'arrête au dernier jour loggé du mois (pas de colonnes vides dans le futur).
+      let lastLogged = 1;
+      for (const a of dailySteps) {
+        if (a.date.slice(0, 7) === ym) {
+          const d = Number(a.date.slice(8, 10));
+          if (d > lastLogged) lastLogged = d;
+        }
+      }
+      const lastDay = Math.min(lastDayOfMonth, lastLogged);
+      const days = Array.from({ length: lastDay }, (_, i) => {
+        const iso = `${ym}-${String(i + 1).padStart(2, "0")}`;
+        return { iso, dayNum: i + 1, steps: stepsByDate.get(iso) ?? null };
+      });
+      const avgOf = (arr: { steps: number | null }[]) => {
+        const vals = arr.map((d) => d.steps).filter((v): v is number => v != null);
+        return vals.length ? Math.round(vals.reduce((s, v) => s + v, 0) / vals.length) : null;
+      };
+      const weekAvgs: { label: string; avg: number | null }[] = [];
+      for (let i = 0; i < days.length; i += 7) {
+        weekAvgs.push({ label: `S${Math.floor(i / 7) + 1}`, avg: avgOf(days.slice(i, i + 7)) });
+      }
+      return { ym, days, monthAvg: avgOf(days), weekAvgs };
+    });
+  }, [dailySteps, stepsByDate]);
 
   const stepsGoal = goals.steps ?? null;
   const weeksChart = useMemo(
@@ -339,90 +374,90 @@ export default function MemberTrackingPanel({
               </div>
             )}
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 6 }}>
-              {/* Par semaine */}
-              <div>
-                <div className="cst-mono" style={{ fontSize: 8, opacity: 0.5, marginBottom: 4 }}>
-                  PAR SEMAINE (MOY.)
-                </div>
-                <div style={{ maxHeight: 200, overflowY: "auto" }}>
-                  {[...weeks]
-                    .reverse()
-                    .slice(0, 12)
-                    .map((w) => {
-                      const okGoal = stepsGoal != null && w.avg >= stepsGoal;
-                      return (
+            {/* Détail jour par jour, un bloc par mois (scroll horizontal) */}
+            <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 16 }}>
+              {monthGrid.map((m) => (
+                <div key={m.ym}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "baseline",
+                      marginBottom: 6,
+                    }}
+                  >
+                    <span className="cst-display" style={{ fontSize: 13 }}>
+                      {fmtDate(`${m.ym}-01`, { month: "long", year: "numeric" }).toUpperCase()}
+                    </span>
+                    <span className="cst-mono" style={{ fontSize: 9, opacity: 0.7 }}>
+                      MOY. MOIS ·{" "}
+                      <span
+                        className="cst-display"
+                        style={{ fontSize: 12, color: stepColor(m.monthAvg, stepsGoal) }}
+                      >
+                        {m.monthAvg != null ? m.monthAvg.toLocaleString("fr-FR") : "—"}
+                      </span>
+                    </span>
+                  </div>
+                  <div style={{ overflowX: "auto", paddingBottom: 4 }}>
+                    <div style={{ display: "flex", gap: 3, minWidth: "min-content" }}>
+                      {m.days.map((d) => (
                         <div
-                          key={w.monday}
+                          key={d.iso}
                           style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            fontSize: 11,
-                            padding: "5px 0",
-                            borderBottom: "1px solid rgba(255,255,255,0.04)",
+                            flex: "0 0 auto",
+                            width: 42,
+                            textAlign: "center",
+                            padding: "4px 0",
+                            borderRadius: 4,
+                            background: "rgba(255,255,255,0.02)",
+                            border: "1px solid rgba(255,255,255,0.05)",
                           }}
                         >
-                          <span className="cst-mono" style={{ opacity: 0.7 }}>
-                            sem. {fmtDate(w.monday, { day: "2-digit", month: "2-digit" })}
-                          </span>
-                          <span
+                          <div className="cst-mono" style={{ fontSize: 9, opacity: 0.7 }}>
+                            {String(d.dayNum).padStart(2, "0")}
+                          </div>
+                          <div
+                            className="cst-mono"
+                            style={{ fontSize: 7, opacity: 0.4, textTransform: "uppercase" }}
+                          >
+                            {fmtDate(d.iso, { weekday: "short" }).replace(".", "")}
+                          </div>
+                          <div
                             className="cst-display"
                             style={{
-                              color:
-                                stepsGoal != null
-                                  ? okGoal
-                                    ? "var(--cst-mid-green, #6EAB76)"
-                                    : "#E0A23B"
-                                  : "#fff",
+                              fontSize: 10,
+                              marginTop: 2,
+                              color: stepColor(d.steps, stepsGoal),
                             }}
                           >
-                            {w.avg.toLocaleString("fr-FR")}
-                          </span>
+                            {d.steps != null ? d.steps.toLocaleString("fr-FR") : "—"}
+                          </div>
                         </div>
-                      );
-                    })}
-                </div>
-              </div>
-              {/* Par mois */}
-              <div>
-                <div className="cst-mono" style={{ fontSize: 8, opacity: 0.5, marginBottom: 4 }}>
-                  PAR MOIS (MOY.)
-                </div>
-                <div style={{ maxHeight: 200, overflowY: "auto" }}>
-                  {months.map((m) => {
-                    const okGoal = stepsGoal != null && m.avg >= stepsGoal;
-                    return (
-                      <div
-                        key={m.ym}
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          fontSize: 11,
-                          padding: "5px 0",
-                          borderBottom: "1px solid rgba(255,255,255,0.04)",
-                        }}
-                      >
-                        <span className="cst-mono" style={{ opacity: 0.7 }}>
-                          {fmtDate(`${m.ym}-01`, { month: "short", year: "2-digit" })}
-                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  {m.weekAvgs.length > 1 && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 6 }}>
+                      {m.weekAvgs.map((w) => (
                         <span
-                          className="cst-display"
-                          style={{
-                            color:
-                              stepsGoal != null
-                                ? okGoal
-                                  ? "var(--cst-mid-green, #6EAB76)"
-                                  : "#E0A23B"
-                                : "#fff",
-                          }}
+                          key={w.label}
+                          className="cst-mono"
+                          style={{ fontSize: 9, opacity: 0.75 }}
                         >
-                          {m.avg.toLocaleString("fr-FR")}
+                          {w.label} ·{" "}
+                          <span
+                            className="cst-display"
+                            style={{ color: stepColor(w.avg, stepsGoal) }}
+                          >
+                            {w.avg != null ? w.avg.toLocaleString("fr-FR") : "—"}
+                          </span>
                         </span>
-                      </div>
-                    );
-                  })}
+                      ))}
+                    </div>
+                  )}
                 </div>
-              </div>
+              ))}
             </div>
           </div>
         )}
