@@ -793,6 +793,23 @@ function hasCues(ex?: ProgExercise | null): boolean {
   return !!(ex.coach_notes || ex.tempo || ex.rpe_target || ex.color);
 }
 
+/** Détecte un EMOM d'après le NOM de l'exercice. Beaucoup de coachs écrivent le
+ *  format directement dans le nom (« TRACTIONS … EMOM6' ») sans cocher le type de
+ *  bloc → l'exo tombait alors en séries classiques au lieu du timer EMOM. */
+function isEmomByName(name?: string | null): boolean {
+  return /\bemom/.test(normKey(name));
+}
+
+/** Reps « en tout » sur tout l'EMOM (« 30 en tout », « 30 au total », « 30 total »)
+ *  → le nombre total, pour en déduire les reps/min (total ÷ durée). */
+function parseTotalReps(reps?: string | number | null): number | null {
+  if (reps == null) return null;
+  const r = normKey(String(reps));
+  if (!/tout|total/.test(r)) return null;
+  const m = r.match(/(\d+)/);
+  return m ? parseInt(m[1], 10) : null;
+}
+
 /** Parses EMOM params from series or reps fields.
  * Duration formats (coach sets in program):
  *   "EMOM15'"   → 15 min  (apostrophe droit ou typographique)
@@ -806,9 +823,13 @@ function hasCues(ex?: ProgExercise | null): boolean {
 function parseEmom(
   series: string | null,
   reps: string | null,
+  name: string | null = null,
 ): { durationMin: number; repsPerMin: number | null } {
-  // Normalise: apostrophe typographique → droit, minuscule
-  const src = `${series ?? ""} ${reps ?? ""}`.toLowerCase().replace(/[‘’ʼ]/g, "'");
+  // Normalise: apostrophe typographique → droit, minuscule.
+  // Le nom est inclus pour les regex « emom… » (le coach écrit souvent la durée
+  // dans le nom, ex. « … EMOM6' ») mais PAS pour les fallbacks durFromSeries /
+  // repsFromSeries plus bas, qui restent liés au vrai champ Séries.
+  const src = `${name ?? ""} ${series ?? ""} ${reps ?? ""}`.toLowerCase().replace(/[‘’ʼ]/g, "'");
 
   // Combined "EMOMreps×dur'" or "EMOMreps/dur'" → e.g. "EMOM3×15'" "EMOM3/10min"
   const combinedMatch = src.match(/emom\s*(\d+)\s*[x×\/]\s*(\d+)\s*(?:'|min\b|m\b)/);
@@ -901,7 +922,16 @@ function buildSteps(exercises: ProgExercise[]): Step[] {
   const steps: Step[] = [];
 
   blocks.forEach((b, blockIdx) => {
-    const blockType = b.exercises[0]?.block_type ?? null;
+    // Le block_type explicite (sélecteur builder / import Excel) fait foi ; sinon
+    // on infère l'EMOM depuis le nom (« … EMOM6' » laissé sur type « standard »),
+    // sinon l'exo était loggé comme des séries au lieu du timer EMOM.
+    const explicitType = b.exercises[0]?.block_type ?? null;
+    const blockType =
+      explicitType && explicitType !== "standard"
+        ? explicitType
+        : isEmomByName(b.exercises[0]?.name)
+          ? "emom"
+          : explicitType;
     const isSuperset = b.isSuperset;
     const colorOfBlock = asColor(b.exercises[0]?.color);
     const restSec = parseRecupSeconds(b.exercises[0]?.recup, defaultRestFor(colorOfBlock));
@@ -909,10 +939,21 @@ function buildSteps(exercises: ProgExercise[]): Step[] {
     // EMOM blocks get a dedicated timer step — no brief, no sets
     if (blockType === "emom" && !isSuperset) {
       const ex = b.exercises[0];
-      const { durationMin, repsPerMin } = parseEmom(
+      const parsed = parseEmom(
         ex.series != null ? String(ex.series) : null,
         ex.reps != null ? String(ex.reps) : null,
+        ex.name ?? null,
       );
+      const durationMin = parsed.durationMin;
+      // Reps/min : si le format ne les donne pas directement, on les déduit d'un
+      // total « X en tout » (ex. « 30 en tout » sur EMOM6' → 5 reps/min).
+      let repsPerMin = parsed.repsPerMin;
+      if (repsPerMin == null) {
+        const totalReps = parseTotalReps(ex.reps);
+        if (totalReps != null && durationMin > 0) {
+          repsPerMin = Math.max(1, Math.round(totalReps / durationMin));
+        }
+      }
       const repsRaw = ex.reps != null ? String(ex.reps).trim() : "";
       const altMatch = repsRaw.match(/^(\d+)\s*\/\s*(\d+)$/);
       const repsLabel = altMatch
@@ -1701,7 +1742,9 @@ export function LiveSession({
               aria-label={
                 sessionMode === "expert" ? t("Voir le résumé de séance") : t("Voir toute la séance")
               }
-              title={sessionMode === "expert" ? t("Voir le résumé de séance") : t("Voir toute la séance")}
+              title={
+                sessionMode === "expert" ? t("Voir le résumé de séance") : t("Voir toute la séance")
+              }
               className="cst-mono"
               style={{
                 background: "transparent",
@@ -3735,10 +3778,7 @@ function EmomScreen({
             {exercise.name.toUpperCase()}
           </h2>
           {exercise.charge && !isBodyweight(exercise.charge) && (
-            <div
-              className="cst-mono"
-              style={{ fontSize: 13, marginTop: 6, color: "#D4A53B" }}
-            >
+            <div className="cst-mono" style={{ fontSize: 13, marginTop: 6, color: "#D4A53B" }}>
               ⚖ CHARGE : {exercise.charge}
             </div>
           )}
