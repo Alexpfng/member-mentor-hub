@@ -126,7 +126,7 @@ async function aggregateFeedback(
   if (candidateWeeks.length === 0) return null;
 
   let firstWeekWithSessions: AggregatedFeedbackContext | null = null;
-  let latestWeekWithFeedback: AggregatedFeedbackContext | null = null;
+  let mostRecentWeekWithFeedback: AggregatedFeedbackContext | null = null;
   const feedbackMaps: Array<Record<string, AdapterExerciseFeedback>> = [];
 
   for (const weekNumber of candidateWeeks) {
@@ -162,15 +162,24 @@ async function aggregateFeedback(
 
     if (Object.keys(feedback).length > 0) {
       feedbackMaps.push(feedback);
-      latestWeekWithFeedback = { weekNumber, sessions: sourceSessions, feedback };
+      // candidateWeeks est ordonné du plus récent au plus ancien : on garde la
+      // PREMIÈRE semaine trouvée (= la plus récente avec du retour membre). Avant,
+      // on écrasait à chaque tour jusqu'à la plus ancienne → en adaptant la S4 le
+      // coach voyait « retour membre S1 » au lieu de la semaine qu'il venait de finir.
+      if (!mostRecentWeekWithFeedback) {
+        mostRecentWeekWithFeedback = { weekNumber, sessions: sourceSessions, feedback };
+      }
     }
   }
 
-  if (latestWeekWithFeedback) {
+  if (mostRecentWeekWithFeedback) {
     return {
-      weekNumber: latestWeekWithFeedback.weekNumber,
-      sessions: latestWeekWithFeedback.sessions,
-      feedback: mergeExerciseFeedbackMaps(feedbackMaps),
+      weekNumber: mostRecentWeekWithFeedback.weekNumber,
+      sessions: mostRecentWeekWithFeedback.sessions,
+      // feedbackMaps est [plus récent … plus ancien] et mergeExerciseFeedbackMaps
+      // laisse gagner le DERNIER map pour un même exo → on inverse pour que la
+      // semaine la plus récente prime (les semaines antérieures ne servent que de repli).
+      feedback: mergeExerciseFeedbackMaps([...feedbackMaps].reverse()),
     };
   }
 
