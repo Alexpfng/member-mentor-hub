@@ -1,6 +1,10 @@
 import { describe, expect, it } from "bun:test";
 
-import { getFeedbackWeekCandidates, mergeExerciseFeedbackMaps } from "./adapter-feedback-source";
+import {
+  filterFeedbackSessionsForProgram,
+  getFeedbackWeekCandidates,
+  mergeExerciseFeedbackMaps,
+} from "./adapter-feedback-source";
 
 function fb(rpe: number) {
   return { rpe, pain: false, tooHard: false, tooEasy: false, failure: false };
@@ -83,5 +87,25 @@ describe("mergeExerciseFeedbackMaps", () => {
         loadLabel: "23.75kg",
       },
     });
+  });
+});
+
+describe("filterFeedbackSessionsForProgram", () => {
+  it("drops sessions coming from an older program when a new assignment is active", () => {
+    expect(
+      filterFeedbackSessionsForProgram(
+        [
+          { id: "old-1", program_id: "old-program", week_number: 1 },
+          { id: "new-1", program_id: "new-program", week_number: 1 },
+          { id: "free-1", program_id: null, week_number: 1 },
+        ],
+        "new-program",
+      ),
+    ).toEqual([{ id: "new-1", program_id: "new-program", week_number: 1 }]);
+  });
+
+  it("keeps the original list when no active program is provided", () => {
+    const sessions = [{ id: "s1", program_id: "prog-a", week_number: 2 }];
+    expect(filterFeedbackSessionsForProgram(sessions, null)).toEqual(sessions);
   });
 });

@@ -14,7 +14,12 @@ import {
 import { normalizeWeekId } from "@/lib/coach-navigation";
 import { findExerciseFeedback } from "@/lib/exercise-feedback";
 import { createLibraryExerciseFromProgram, listExercises } from "@/lib/exercises.functions";
-import { setExerciseQuickCoachNote, setExerciseQuickRpe } from "@/lib/adapter-week-rpe";
+import {
+  resetWeekExerciseRpeTargets,
+  setExerciseQuickCoachNote,
+  setExerciseQuickRpe,
+} from "@/lib/adapter-week-rpe";
+import { getCoachRpeBadgeLabel } from "@/lib/adapter-week-rpe-visuals";
 import { parseRpeCell } from "@/lib/rpe-cell";
 import { getQuickRpePopoverPlacement } from "@/lib/coach-rpe-feedback";
 import { sanitizeLibraryExerciseNotes } from "@/lib/library-exercise-payload";
@@ -918,23 +923,18 @@ export default function AdapterSemaine() {
   function resetAllRpe() {
     if (!window.confirm("Effacer tous les RPE de cette semaine ?")) return;
     let count = 0;
-    setStructure((s) => ({
-      ...s,
-      days: (s.days ?? []).map((day) => ({
-        ...day,
-        exercises: (day.exercises ?? []).map((ex) => {
-          // N'efface que les vrais RPE numériques : un rpe_target texte est une
-          // consigne cardio (héritée d'imports) qu'on doit préserver.
-          const str = String(ex.rpe_target ?? "").trim();
-          const isNumeric = str !== "" && !Number.isNaN(Number(str.replace(",", ".")));
-          if (isNumeric) {
-            count++;
-            return { ...ex, rpe_target: null };
-          }
-          return ex;
-        }),
-      })),
-    }));
+    setStructure((s) => {
+      count = (s.days ?? []).reduce(
+        (total, day) =>
+          total +
+          (day.exercises ?? []).filter((ex) => {
+            const str = String(ex.rpe_target ?? "").trim();
+            return str !== "" && !Number.isNaN(Number(str.replace(",", ".")));
+          }).length,
+        0,
+      );
+      return resetWeekExerciseRpeTargets(s);
+    });
     setQuickRpeTarget(null);
     setTimeout(
       () => toast.success(`${count > 0 ? count : "Aucun"} RPE réinitialisé${count > 1 ? "s" : ""}`),
@@ -1321,29 +1321,8 @@ export default function AdapterSemaine() {
                   const rpeComment = parsedRpe.comment;
                   const rpeConsigne = parsedRpe.consigne;
                   const memberRpeValue = fb?.rpe ?? null;
-                  const memberRpeDisplay =
-                    memberRpeValue != null ? formatRpeValue(memberRpeValue) : null;
-                  // Badge shows member feedback only when no coach cible is set.
-                  // This way, resetting rpe_target immediately reflects in the badge.
-                  const badgeShowsMemberRpe =
-                    memberRpeDisplay != null &&
-                    memberRpeValue != null &&
-                    !rpeIsNumeric &&
-                    !rpeIsFailure;
-                  const badgeLabel = badgeShowsMemberRpe
-                    ? `RPE ${memberRpeDisplay}`
-                    : rpeIsNumeric
-                      ? `CIBLE ${rpeDisplay}`
-                      : rpeIsFailure
-                        ? "ÉCHEC"
-                        : "RPE CIBLE";
-                  const badgeColor = badgeShowsMemberRpe
-                    ? (memberRpeValue ?? 0) >= 9
-                      ? "#C0392B"
-                      : (memberRpeValue ?? 0) >= 7
-                        ? "#E07B39"
-                        : "#5BA85A"
-                    : rpeIsNumeric
+                  const badgeLabel = getCoachRpeBadgeLabel({ rpe_target: ex.rpe_target });
+                  const badgeColor = rpeIsNumeric
                       ? cardColor
                       : rpeIsFailure
                         ? "#ffb0a5"
@@ -1538,11 +1517,7 @@ export default function AdapterSemaine() {
                                   );
                                 }}
                                 className="cst-mono"
-                                title={
-                                  badgeShowsMemberRpe
-                                    ? `RPE réel du coaché · S${ctx.sourceSummary.weekNumber ?? "?"}`
-                                    : (rpeConsigne ?? "Modifier le RPE")
-                                }
+                                title={rpeConsigne ?? "Modifier le RPE"}
                                 style={{
                                   fontSize: 10,
                                   fontWeight: 700,
@@ -1550,14 +1525,12 @@ export default function AdapterSemaine() {
                                   overflow: "hidden",
                                   textOverflow: "ellipsis",
                                   whiteSpace: "nowrap",
-                                  background: badgeShowsMemberRpe
-                                    ? `${badgeColor}22`
-                                    : rpeIsNumeric
-                                      ? `${cardColor}33`
-                                      : rpeIsFailure
-                                        ? "rgba(201,72,58,0.22)"
-                                        : "rgba(255,255,255,0.06)",
-                                  border: `1px solid ${badgeShowsMemberRpe ? badgeColor + "66" : rpeIsNumeric ? cardColor + "66" : rpeIsFailure ? "rgba(255,138,122,0.32)" : "rgba(255,255,255,0.12)"}`,
+                                  background: rpeIsNumeric
+                                    ? `${cardColor}33`
+                                    : rpeIsFailure
+                                      ? "rgba(201,72,58,0.22)"
+                                      : "rgba(255,255,255,0.06)",
+                                  border: `1px solid ${rpeIsNumeric ? cardColor + "66" : rpeIsFailure ? "rgba(255,138,122,0.32)" : "rgba(255,255,255,0.12)"}`,
                                   borderRadius: 5,
                                   padding: "2px 7px",
                                   color: badgeColor,

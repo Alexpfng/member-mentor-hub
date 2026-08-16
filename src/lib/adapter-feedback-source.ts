@@ -21,6 +21,13 @@ export function getFeedbackWeekCandidates({
   return candidates;
 }
 
+export function filterFeedbackSessionsForProgram<
+  T extends { program_id?: string | null },
+>(sessions: T[], programId: string | null | undefined) {
+  if (!programId) return sessions;
+  return sessions.filter((session) => session.program_id === programId);
+}
+
 export type AdapterExerciseFeedback = {
   rpe: number | null;
   pain: boolean;

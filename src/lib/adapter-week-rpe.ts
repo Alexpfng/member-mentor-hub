@@ -3,6 +3,11 @@ type ProgExerciseWithCoachNoteLike = ProgExerciseLike & { coach_notes?: string |
 type DayLike = { exercises?: ProgExerciseWithCoachNoteLike[] };
 type WeekStructureLike = { days?: DayLike[] };
 
+function isNumericCoachRpe(value: string | number | null | undefined) {
+  const stringValue = String(value ?? "").trim();
+  return stringValue !== "" && !Number.isNaN(Number(stringValue.replace(",", ".")));
+}
+
 export function setExerciseQuickRpe<T extends WeekStructureLike>(
   structure: T,
   dayIdx: number,
@@ -31,4 +36,16 @@ export function setExerciseQuickCoachNote<T extends WeekStructureLike>(
   day.exercises = exercises;
   days[dayIdx] = day;
   return { ...structure, days };
+}
+
+export function resetWeekExerciseRpeTargets<T extends WeekStructureLike>(structure: T): T {
+  return {
+    ...structure,
+    days: (structure.days ?? []).map((day) => ({
+      ...day,
+      exercises: (day.exercises ?? []).map((exercise) =>
+        isNumericCoachRpe(exercise.rpe_target) ? { ...exercise, rpe_target: null } : exercise,
+      ),
+    })),
+  };
 }

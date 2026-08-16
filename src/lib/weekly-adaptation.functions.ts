@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { localDateISO } from "@/lib/local-date";
 import {
+  filterFeedbackSessionsForProgram,
   getFeedbackWeekCandidates,
   mergeExerciseFeedbackMaps,
   type AdapterExerciseFeedback,
@@ -111,7 +112,12 @@ async function resolveSourceWeek(
 // ─────────────────────────────────────────────────────────────────────────────
 // Aggregate feedback from previous week to feed suggestions
 // ─────────────────────────────────────────────────────────────────────────────
-type FeedbackSession = { id: string; status: string | null; average_rpe: number | null };
+type FeedbackSession = {
+  id: string;
+  status: string | null;
+  average_rpe: number | null;
+  program_id: string | null;
+};
 
 type AggregatedFeedbackContext = {
   weekNumber: number | null;
@@ -122,6 +128,7 @@ type AggregatedFeedbackContext = {
 async function aggregateFeedback(
   memberId: string,
   candidateWeeks: number[],
+  programId: string | null,
 ): Promise<AggregatedFeedbackContext | null> {
   if (candidateWeeks.length === 0) return null;
 
@@ -132,10 +139,10 @@ async function aggregateFeedback(
   for (const weekNumber of candidateWeeks) {
     const { data: sessions } = await supabaseAdmin
       .from("sessions")
-      .select("id, status, average_rpe")
+      .select("id, status, average_rpe, program_id")
       .eq("member_id", memberId)
       .eq("week_number", weekNumber);
-    const sourceSessions = sessions ?? [];
+    const sourceSessions = filterFeedbackSessionsForProgram(sessions ?? [], programId);
     const sessionIds = sourceSessions.map((s) => s.id);
     if (sessionIds.length === 0) continue;
 
@@ -339,6 +346,7 @@ export const getMemberWeekContext = createServerFn({ method: "POST" })
         targetWeekNumber: weekRow.week_number,
         basedOnWeek: weekRow.based_on_week ?? null,
       }),
+      assignment?.program_id ?? weekRow.program_id ?? null,
     );
     const feedback = feedbackContext?.feedback ?? {};
 

@@ -1,6 +1,10 @@
 import { describe, expect, it } from "bun:test";
 
-import { setExerciseQuickCoachNote, setExerciseQuickRpe } from "./adapter-week-rpe";
+import {
+  resetWeekExerciseRpeTargets,
+  setExerciseQuickCoachNote,
+  setExerciseQuickRpe,
+} from "./adapter-week-rpe";
 
 describe("setExerciseQuickRpe", () => {
   it("updates only the targeted exercise rpe in the selected day", () => {
@@ -45,6 +49,36 @@ describe("setExerciseQuickRpe", () => {
       days: [
         { label: "Séance 1", exercises: [{ name: "A", coach_notes: "ancien" }, { name: "B", coach_notes: "à surveiller" }] },
         { label: "Séance 2", exercises: [{ name: "C", coach_notes: "ok" }] },
+      ],
+    });
+  });
+
+  it("clears only numeric coach rpe targets across the full week", () => {
+    const structure = {
+      days: [
+        {
+          label: "Séance 1",
+          exercises: [
+            { name: "A", rpe_target: 8 },
+            { name: "B", rpe_target: "8,5" },
+            { name: "C", rpe_target: "échec" },
+            { name: "D", rpe_target: "courir relâché 20 min" },
+          ],
+        },
+      ],
+    };
+
+    expect(resetWeekExerciseRpeTargets(structure)).toEqual({
+      days: [
+        {
+          label: "Séance 1",
+          exercises: [
+            { name: "A", rpe_target: null },
+            { name: "B", rpe_target: null },
+            { name: "C", rpe_target: "échec" },
+            { name: "D", rpe_target: "courir relâché 20 min" },
+          ],
+        },
       ],
     });
   });
