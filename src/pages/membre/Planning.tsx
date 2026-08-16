@@ -23,6 +23,7 @@ import {
 } from "@/lib/planning.functions";
 import { createFreeSession } from "@/lib/free-session.functions";
 import { useI18n } from "@/lib/i18n";
+import { applyPlannedSessionToWeekPlan } from "@/lib/planning-local-state";
 
 // Libellé du jour déduit de la DATE réelle (et non de la position dans la grille).
 // Le programme peut démarrer un autre jour que lundi ; la case doit afficher le vrai
@@ -306,8 +307,8 @@ export default function MemberPlanning() {
     useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 10 } }),
   );
 
-  const reload = async () => {
-    setLoading(true);
+  const reload = async ({ showLoading = true }: { showLoading?: boolean } = {}) => {
+    if (showLoading) setLoading(true);
     try {
       const r = await listFn({ data: weekOffset !== undefined ? { weekNumber: weekOffset } : {} });
       setData(r);
@@ -315,7 +316,7 @@ export default function MemberPlanning() {
     } catch (e: any) {
       toast.error(e?.message ?? t("Erreur"));
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
@@ -468,7 +469,7 @@ export default function MemberPlanning() {
       // Si une ligne orpheline traînait pour cette séance, on la répare en la
       // datant plutôt que d'en créer une seconde à côté.
       const stranded = strandedPlanned.find((p: any) => p.day_label === def.label);
-      await upsertFn({
+      const row = await upsertFn({
         data: {
           id: stranded?.id,
           programId: data.assignment?.program_id ?? null,
@@ -477,8 +478,9 @@ export default function MemberPlanning() {
           plannedDate: date,
         },
       });
+      setData((current: any) => applyPlannedSessionToWeekPlan(current, row as any));
       setModal(null);
-      await reload();
+      void reload({ showLoading: false });
     } catch (e: any) {
       toast.error(e?.message ?? t("Erreur"));
     } finally {
@@ -560,7 +562,7 @@ export default function MemberPlanning() {
     if (busy) return;
     setBusy(true);
     try {
-      await upsertFn({
+      const row = await upsertFn({
         data: {
           id: planned.id,
           programId: planned.program_id ?? null,
@@ -569,8 +571,9 @@ export default function MemberPlanning() {
           plannedDate: date,
         },
       });
+      setData((current: any) => applyPlannedSessionToWeekPlan(current, row as any));
       setModal(null);
-      await reload();
+      void reload({ showLoading: false });
     } catch (e: any) {
       toast.error(e?.message ?? t("Erreur"));
     } finally {
