@@ -14,6 +14,11 @@ import {
   type SessionProgressStep,
 } from "@/lib/live-session-progress";
 import {
+  createSessionSnapshot,
+  shouldPersistSessionSnapshot,
+  type SessionSnapshot,
+} from "@/lib/live-session-snapshot";
+import {
   buildExpertExerciseFeedbackRows,
   normalizeExpertRpeForStorage,
 } from "@/lib/live-session-feedback";
@@ -1086,23 +1091,21 @@ function buildSteps(exercises: ProgExercise[]): Step[] {
 
 const STORAGE_KEY = (id: string) => `cst_session_${id}`;
 
-type SessionSnapshot = {
-  sessionId: string;
-  stepIdx: number;
-  phase: "intro" | "step" | "rest" | "recap";
-  savedByStep: Record<
-    number,
-    { weight: number | null; reps: number | null; rpe: number | null; exo: string }
-  >;
-  startedAt: number;
-  updatedAt: number;
-};
-
 function loadSnapshot(sessionId: string): SessionSnapshot | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY(sessionId));
     if (!raw) return null;
-    const snap = JSON.parse(raw) as SessionSnapshot;
+    const parsed = JSON.parse(raw) as Partial<SessionSnapshot> & { sessionId?: string };
+    const snap: SessionSnapshot = {
+      sessionId: parsed.sessionId ?? sessionId,
+      stepIdx: parsed.stepIdx ?? 0,
+      phase: parsed.phase ?? "intro",
+      savedByStep: parsed.savedByStep ?? {},
+      startedAt: parsed.startedAt ?? Date.now(),
+      updatedAt: parsed.updatedAt ?? Date.now(),
+      expertRecapRpeByExercise: parsed.expertRecapRpeByExercise ?? {},
+      expertRecapCommentByExercise: parsed.expertRecapCommentByExercise ?? {},
+    };
     if (snap.sessionId !== sessionId) return null;
     return snap;
   } catch {
@@ -1169,10 +1172,10 @@ export function LiveSession({
   const [sessionMode] = useState<"expert" | "debutant">(initialMode ?? "debutant");
   const [expertRecapRpeByExercise, setExpertRecapRpeByExercise] = useState<
     Record<string, number | null>
-  >({});
+  >(snap?.expertRecapRpeByExercise ?? {});
   const [expertRecapCommentByExercise, setExpertRecapCommentByExercise] = useState<
     Record<string, string>
-  >({});
+  >(snap?.expertRecapCommentByExercise ?? {});
   const [expertRecapPickerFor, setExpertRecapPickerFor] = useState<string | null>(null);
   // Mode expert : la fin de séance fait ses propres écritures DB (pas via onFinish),
   // il lui faut donc son propre indicateur « en cours » pour le retour visuel.
@@ -1277,17 +1280,34 @@ export function LiveSession({
 
   // Persist progress to localStorage after every meaningful state change
   useEffect(() => {
-    if (phase === "intro" && Object.keys(savedByStep).length === 0) return;
-    if (phase === "recap") return; // recap = finished, will be cleared by onFinish
-    saveSnapshot({
-      sessionId,
-      stepIdx,
-      phase,
-      savedByStep,
-      startedAt: startedAtRef.current,
-      updatedAt: Date.now(),
-    });
-  }, [sessionId, stepIdx, phase, savedByStep]);
+    if (
+      !shouldPersistSessionSnapshot({
+        phase,
+        savedStepCount: Object.keys(savedByStep).length,
+      })
+    ) {
+      return;
+    }
+    saveSnapshot(
+      createSessionSnapshot({
+        sessionId,
+        stepIdx,
+        phase,
+        savedByStep,
+        startedAt: startedAtRef.current,
+        updatedAt: Date.now(),
+        expertRecapRpeByExercise,
+        expertRecapCommentByExercise,
+      }),
+    );
+  }, [
+    sessionId,
+    stepIdx,
+    phase,
+    savedByStep,
+    expertRecapRpeByExercise,
+    expertRecapCommentByExercise,
+  ]);
 
   // Expose quit trigger to parent (outer "← QUITTER" button)
   useEffect(() => {
