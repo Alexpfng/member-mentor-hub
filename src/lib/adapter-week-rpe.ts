@@ -1,6 +1,7 @@
 type ProgExerciseLike = {
   rpe_target?: string | number | null;
   rpe_cleared?: boolean | null;
+  member_rpe_hidden?: boolean | null;
 };
 type ProgExerciseWithCoachNoteLike = ProgExerciseLike & { coach_notes?: string | null };
 type DayLike = { exercises?: ProgExerciseWithCoachNoteLike[] };
@@ -24,6 +25,7 @@ export function setExerciseQuickRpe<T extends WeekStructureLike>(
     ...exercises[exoIdx],
     rpe_target: rpe,
     rpe_cleared: rpe == null,
+    member_rpe_hidden: rpe == null,
   };
   day.exercises = exercises;
   days[dayIdx] = day;
@@ -54,6 +56,7 @@ export function resetWeekExerciseRpeTargets<T extends WeekStructureLike>(structu
         ...exercise,
         rpe_target: isNumericCoachRpe(exercise.rpe_target) ? null : exercise.rpe_target,
         rpe_cleared: true,
+        member_rpe_hidden: true,
       })),
     })),
   };

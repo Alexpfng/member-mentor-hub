@@ -46,6 +46,7 @@ type ProgExercise = {
   recup?: string | null;
   rpe_target?: string | number | null;
   rpe_cleared?: boolean | null;
+  member_rpe_hidden?: boolean | null;
   color?: string | null;
   coach_notes?: string | null;
   film_requested?: boolean | null;
@@ -930,7 +931,11 @@ export default function AdapterSemaine() {
           total +
           (day.exercises ?? []).filter((ex) => {
             const str = String(ex.rpe_target ?? "").trim();
-            return str !== "" && !Number.isNaN(Number(str.replace(",", ".")));
+            const hasCoachRpe = str !== "" && !Number.isNaN(Number(str.replace(",", ".")));
+            const hasVisibleMemberRpe =
+              !ex.member_rpe_hidden &&
+              findExerciseFeedback(ctx?.feedback ?? [], ex.name)?.feedback?.rpe != null;
+            return hasCoachRpe || hasVisibleMemberRpe;
           }).length,
         0,
       );
@@ -1325,10 +1330,13 @@ export default function AdapterSemaine() {
                   const badgeLabel = getCoachRpeBadgeLabel({
                     rpe_target: ex.rpe_target,
                     memberRpe: memberRpeValue,
-                    wasReset: ex.rpe_cleared,
+                    memberRpeHidden: ex.member_rpe_hidden,
                   });
                   const badgeShowsMemberRpe =
-                    memberRpeValue != null && !rpeIsNumeric && !rpeIsFailure;
+                    memberRpeValue != null &&
+                    !rpeIsNumeric &&
+                    !rpeIsFailure &&
+                    !ex.member_rpe_hidden;
                   const badgeColor = badgeShowsMemberRpe
                     ? memberRpeValue >= 9
                       ? "#C0392B"

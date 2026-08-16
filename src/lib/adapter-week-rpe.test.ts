@@ -10,7 +10,13 @@ describe("setExerciseQuickRpe", () => {
   it("updates only the targeted exercise rpe in the selected day", () => {
     const structure = {
       days: [
-        { label: "Séance 1", exercises: [{ name: "A", rpe_target: 6 }, { name: "B", rpe_target: 7 }] },
+        {
+          label: "Séance 1",
+          exercises: [
+            { name: "A", rpe_target: 6 },
+            { name: "B", rpe_target: 7 },
+          ],
+        },
         { label: "Séance 2", exercises: [{ name: "C", rpe_target: 8 }] },
       ],
     };
@@ -19,7 +25,10 @@ describe("setExerciseQuickRpe", () => {
       days: [
         {
           label: "Séance 1",
-          exercises: [{ name: "A", rpe_target: 6 }, { name: "B", rpe_target: 9, rpe_cleared: false }],
+          exercises: [
+            { name: "A", rpe_target: 6 },
+            { name: "B", rpe_target: 9, rpe_cleared: false, member_rpe_hidden: false },
+          ],
         },
         { label: "Séance 2", exercises: [{ name: "C", rpe_target: 8 }] },
       ],
@@ -35,21 +44,37 @@ describe("setExerciseQuickRpe", () => {
 
     expect(setExerciseQuickRpe(structure, 0, 0, null)).toEqual({
       days: [
-        { label: "Séance 1", exercises: [{ name: "A", rpe_target: null, rpe_cleared: true }] },
+        {
+          label: "Séance 1",
+          exercises: [{ name: "A", rpe_target: null, rpe_cleared: true, member_rpe_hidden: true }],
+        },
       ],
     });
   });
 
-  it("removes the explicit reset marker when a new coach target is set again", () => {
+  it("removes the explicit member rpe hide marker when a new coach target is set again", () => {
     const structure = {
       days: [
-        { label: "Séance 1", exercises: [{ name: "A", rpe_target: null, rpe_cleared: true }] },
+        {
+          label: "Séance 1",
+          exercises: [
+            {
+              name: "A",
+              rpe_target: null,
+              rpe_cleared: true,
+              member_rpe_hidden: true,
+            },
+          ],
+        },
       ],
     };
 
     expect(setExerciseQuickRpe(structure, 0, 0, 8.5)).toEqual({
       days: [
-        { label: "Séance 1", exercises: [{ name: "A", rpe_target: 8.5, rpe_cleared: false }] },
+        {
+          label: "Séance 1",
+          exercises: [{ name: "A", rpe_target: 8.5, rpe_cleared: false, member_rpe_hidden: false }],
+        },
       ],
     });
   });
@@ -57,14 +82,26 @@ describe("setExerciseQuickRpe", () => {
   it("updates only the targeted exercise coach note in the selected day", () => {
     const structure = {
       days: [
-        { label: "Séance 1", exercises: [{ name: "A", coach_notes: "ancien" }, { name: "B", coach_notes: null }] },
+        {
+          label: "Séance 1",
+          exercises: [
+            { name: "A", coach_notes: "ancien" },
+            { name: "B", coach_notes: null },
+          ],
+        },
         { label: "Séance 2", exercises: [{ name: "C", coach_notes: "ok" }] },
       ],
     };
 
     expect(setExerciseQuickCoachNote(structure, 0, 1, "à surveiller")).toEqual({
       days: [
-        { label: "Séance 1", exercises: [{ name: "A", coach_notes: "ancien" }, { name: "B", coach_notes: "à surveiller" }] },
+        {
+          label: "Séance 1",
+          exercises: [
+            { name: "A", coach_notes: "ancien" },
+            { name: "B", coach_notes: "à surveiller" },
+          ],
+        },
         { label: "Séance 2", exercises: [{ name: "C", coach_notes: "ok" }] },
       ],
     });
@@ -90,10 +127,15 @@ describe("setExerciseQuickRpe", () => {
         {
           label: "Séance 1",
           exercises: [
-            { name: "A", rpe_target: null, rpe_cleared: true },
-            { name: "B", rpe_target: null, rpe_cleared: true },
-            { name: "C", rpe_target: "échec", rpe_cleared: true },
-            { name: "D", rpe_target: "courir relâché 20 min", rpe_cleared: true },
+            { name: "A", rpe_target: null, rpe_cleared: true, member_rpe_hidden: true },
+            { name: "B", rpe_target: null, rpe_cleared: true, member_rpe_hidden: true },
+            { name: "C", rpe_target: "échec", rpe_cleared: true, member_rpe_hidden: true },
+            {
+              name: "D",
+              rpe_target: "courir relâché 20 min",
+              rpe_cleared: true,
+              member_rpe_hidden: true,
+            },
           ],
         },
       ],

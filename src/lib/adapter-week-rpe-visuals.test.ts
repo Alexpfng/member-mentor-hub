@@ -11,16 +11,20 @@ describe("getCoachRpeBadgeLabel", () => {
     expect(getCoachRpeBadgeLabel({ rpe_target: null, memberRpe: 8.5 })).toBe("RPE 8,5");
   });
 
-  it("keeps showing the member rpe after reset when feedback exists", () => {
+  it("keeps showing the member rpe when only the legacy reset marker exists", () => {
     expect(getCoachRpeBadgeLabel({ rpe_target: null, memberRpe: 8.5, wasReset: true })).toBe(
       "RPE 8,5",
     );
   });
 
-  it("falls back to an empty coach badge after reset when no member feedback exists", () => {
-    expect(getCoachRpeBadgeLabel({ rpe_target: null, memberRpe: null, wasReset: true })).toBe(
-      "RPE —",
-    );
+  it("hides the member rpe after an explicit member rpe clear", () => {
+    expect(
+      getCoachRpeBadgeLabel({
+        rpe_target: null,
+        memberRpe: 8.5,
+        memberRpeHidden: true,
+      }),
+    ).toBe("RPE —");
   });
 
   it("keeps the failure badge when the coach target is a failure marker", () => {
