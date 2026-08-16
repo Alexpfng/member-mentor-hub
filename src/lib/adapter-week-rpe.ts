@@ -1,4 +1,7 @@
-type ProgExerciseLike = { rpe_target?: string | number | null };
+type ProgExerciseLike = {
+  rpe_target?: string | number | null;
+  rpe_cleared?: boolean | null;
+};
 type ProgExerciseWithCoachNoteLike = ProgExerciseLike & { coach_notes?: string | null };
 type DayLike = { exercises?: ProgExerciseWithCoachNoteLike[] };
 type WeekStructureLike = { days?: DayLike[] };
@@ -17,7 +20,11 @@ export function setExerciseQuickRpe<T extends WeekStructureLike>(
   const days = [...(structure.days ?? [])];
   const day = { ...days[dayIdx] };
   const exercises = [...(day.exercises ?? [])];
-  exercises[exoIdx] = { ...exercises[exoIdx], rpe_target: rpe };
+  exercises[exoIdx] = {
+    ...exercises[exoIdx],
+    rpe_target: rpe,
+    rpe_cleared: rpe == null,
+  };
   day.exercises = exercises;
   days[dayIdx] = day;
   return { ...structure, days };
@@ -43,9 +50,11 @@ export function resetWeekExerciseRpeTargets<T extends WeekStructureLike>(structu
     ...structure,
     days: (structure.days ?? []).map((day) => ({
       ...day,
-      exercises: (day.exercises ?? []).map((exercise) =>
-        isNumericCoachRpe(exercise.rpe_target) ? { ...exercise, rpe_target: null } : exercise,
-      ),
+      exercises: (day.exercises ?? []).map((exercise) => ({
+        ...exercise,
+        rpe_target: isNumericCoachRpe(exercise.rpe_target) ? null : exercise.rpe_target,
+        rpe_cleared: true,
+      })),
     })),
   };
 }

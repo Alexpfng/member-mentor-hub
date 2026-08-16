@@ -7,8 +7,14 @@ describe("getCoachRpeBadgeLabel", () => {
     expect(getCoachRpeBadgeLabel({ rpe_target: 8.5, memberRpe: 9 })).toBe("RPE 8,5");
   });
 
-  it("falls back to an empty coach badge after reset even if member feedback exists", () => {
-    expect(getCoachRpeBadgeLabel({ rpe_target: null, memberRpe: 8.5 })).toBe("RPE —");
+  it("shows the member rpe when the coach target is empty but no reset happened yet", () => {
+    expect(getCoachRpeBadgeLabel({ rpe_target: null, memberRpe: 8.5 })).toBe("RPE 8,5");
+  });
+
+  it("falls back to an empty coach badge only after an explicit reset", () => {
+    expect(getCoachRpeBadgeLabel({ rpe_target: null, memberRpe: 8.5, wasReset: true })).toBe(
+      "RPE —",
+    );
   });
 
   it("keeps the failure badge when the coach target is a failure marker", () => {

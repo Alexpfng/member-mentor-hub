@@ -45,6 +45,7 @@ type ProgExercise = {
   tempo?: string | null;
   recup?: string | null;
   rpe_target?: string | number | null;
+  rpe_cleared?: boolean | null;
   color?: string | null;
   coach_notes?: string | null;
   film_requested?: boolean | null;
@@ -1321,8 +1322,20 @@ export default function AdapterSemaine() {
                   const rpeComment = parsedRpe.comment;
                   const rpeConsigne = parsedRpe.consigne;
                   const memberRpeValue = fb?.rpe ?? null;
-                  const badgeLabel = getCoachRpeBadgeLabel({ rpe_target: ex.rpe_target });
-                  const badgeColor = rpeIsNumeric
+                  const badgeLabel = getCoachRpeBadgeLabel({
+                    rpe_target: ex.rpe_target,
+                    memberRpe: memberRpeValue,
+                    wasReset: ex.rpe_cleared,
+                  });
+                  const badgeShowsMemberRpe =
+                    memberRpeValue != null && !rpeIsNumeric && !rpeIsFailure && !ex.rpe_cleared;
+                  const badgeColor = badgeShowsMemberRpe
+                    ? memberRpeValue >= 9
+                      ? "#C0392B"
+                      : memberRpeValue >= 7
+                        ? "#E07B39"
+                        : "#5BA85A"
+                    : rpeIsNumeric
                       ? cardColor
                       : rpeIsFailure
                         ? "#ffb0a5"

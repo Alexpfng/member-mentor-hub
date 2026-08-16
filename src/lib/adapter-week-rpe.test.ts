@@ -17,7 +17,10 @@ describe("setExerciseQuickRpe", () => {
 
     expect(setExerciseQuickRpe(structure, 0, 1, 9)).toEqual({
       days: [
-        { label: "Séance 1", exercises: [{ name: "A", rpe_target: 6 }, { name: "B", rpe_target: 9 }] },
+        {
+          label: "Séance 1",
+          exercises: [{ name: "A", rpe_target: 6 }, { name: "B", rpe_target: 9, rpe_cleared: false }],
+        },
         { label: "Séance 2", exercises: [{ name: "C", rpe_target: 8 }] },
       ],
     });
@@ -32,7 +35,21 @@ describe("setExerciseQuickRpe", () => {
 
     expect(setExerciseQuickRpe(structure, 0, 0, null)).toEqual({
       days: [
-        { label: "Séance 1", exercises: [{ name: "A", rpe_target: null }] },
+        { label: "Séance 1", exercises: [{ name: "A", rpe_target: null, rpe_cleared: true }] },
+      ],
+    });
+  });
+
+  it("removes the explicit reset marker when a new coach target is set again", () => {
+    const structure = {
+      days: [
+        { label: "Séance 1", exercises: [{ name: "A", rpe_target: null, rpe_cleared: true }] },
+      ],
+    };
+
+    expect(setExerciseQuickRpe(structure, 0, 0, 8.5)).toEqual({
+      days: [
+        { label: "Séance 1", exercises: [{ name: "A", rpe_target: 8.5, rpe_cleared: false }] },
       ],
     });
   });
@@ -73,10 +90,10 @@ describe("setExerciseQuickRpe", () => {
         {
           label: "Séance 1",
           exercises: [
-            { name: "A", rpe_target: null },
-            { name: "B", rpe_target: null },
-            { name: "C", rpe_target: "échec" },
-            { name: "D", rpe_target: "courir relâché 20 min" },
+            { name: "A", rpe_target: null, rpe_cleared: true },
+            { name: "B", rpe_target: null, rpe_cleared: true },
+            { name: "C", rpe_target: "échec", rpe_cleared: true },
+            { name: "D", rpe_target: "courir relâché 20 min", rpe_cleared: true },
           ],
         },
       ],
