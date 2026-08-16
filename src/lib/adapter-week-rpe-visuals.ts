@@ -20,12 +20,12 @@ export function getCoachRpeBadgeLabel({ rpe_target, memberRpe, wasReset }: Coach
     return `RPE ${formatCoachRpeValue(rawValue.replace(",", "."))}`;
   }
 
-  if (wasReset) {
-    return "RPE —";
-  }
-
   if (memberRpe != null) {
     return `RPE ${formatCoachRpeValue(String(memberRpe).replace(".", ","))}`;
+  }
+
+  if (wasReset) {
+    return "RPE —";
   }
 
   return "RPE —";

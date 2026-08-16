@@ -1328,7 +1328,7 @@ export default function AdapterSemaine() {
                     wasReset: ex.rpe_cleared,
                   });
                   const badgeShowsMemberRpe =
-                    memberRpeValue != null && !rpeIsNumeric && !rpeIsFailure && !ex.rpe_cleared;
+                    memberRpeValue != null && !rpeIsNumeric && !rpeIsFailure;
                   const badgeColor = badgeShowsMemberRpe
                     ? memberRpeValue >= 9
                       ? "#C0392B"
