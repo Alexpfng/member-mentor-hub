@@ -1,8 +1,10 @@
 import { describe, expect, it } from "bun:test";
 
 import {
+  allExercisesDone,
   buildExerciseOverview,
   groupExpertRecapByExercise,
+  isExerciseDone,
   nextUndoneExerciseName,
   type ExpertSavedStep,
   type SessionProgressStep,
@@ -99,5 +101,33 @@ describe("nextUndoneExerciseName", () => {
   it("ignores exercises that have no work step to log", () => {
     const withGhost = [...names, "Échauffement"]; // aucun step associé
     expect(nextUndoneExerciseName(withGhost, steps, done(0, 1, 2, 3), "Gainage")).toBeNull();
+  });
+});
+
+describe("isExerciseDone / allExercisesDone", () => {
+  const names = ["Squat", "Row", "Gainage"];
+  const done = (...idx: number[]): Record<number, ExpertSavedStep> =>
+    Object.fromEntries(idx.map((i) => [i, { exo: "x", weight: null, reps: null, rpe: null }]));
+
+  it("marks an exercise done only when every one of its steps is saved", () => {
+    expect(isExerciseDone("Squat", steps, done(0))).toBe(false); // 1/2 séries
+    expect(isExerciseDone("Squat", steps, done(0, 1))).toBe(true); // 2/2
+    expect(isExerciseDone("Row", steps, done(2))).toBe(true);
+  });
+
+  it("never counts an exercise with no work step as done", () => {
+    expect(isExerciseDone("Échauffement", steps, done(0, 1, 2, 3))).toBe(false);
+  });
+
+  it("is true only once all loggable exercises are complete", () => {
+    // Scénario de Léo : A fait, C fait, on finit B (le dernier restant) → séance finie.
+    expect(allExercisesDone(names, steps, done(0, 1, 2))).toBe(false); // Gainage pas fait
+    expect(allExercisesDone(names, steps, done(0, 1, 3))).toBe(false); // Row pas fait
+    expect(allExercisesDone(names, steps, done(0, 1, 2, 3))).toBe(true); // tout fait
+  });
+
+  it("ignores ghost exercises (no work step) when deciding the session is over", () => {
+    const withGhost = [...names, "Échauffement"];
+    expect(allExercisesDone(withGhost, steps, done(0, 1, 2, 3))).toBe(true);
   });
 });

@@ -54,6 +54,43 @@ export function groupExpertRecapByExercise(savedByStep: Record<number, ExpertSav
   return Array.from(groups.values());
 }
 
+/** Un exercice a-t-il au moins une étape à logger ? (un intitulé sans série ne
+ *  compte pas — rien à faire dessus, donc jamais « en attente »). */
+function hasWorkStep(exerciseName: string, steps: SessionProgressStep[]): boolean {
+  return steps.some((step) => step.exerciseName === exerciseName);
+}
+
+/**
+ * Un exercice est TERMINÉ quand toutes ses étapes de travail sont saisies. Un
+ * exercice sans étape à logger n'est jamais « terminé » (il n'y a rien à faire,
+ * on ne veut pas le compter comme un travail accompli).
+ */
+export function isExerciseDone(
+  exerciseName: string,
+  steps: SessionProgressStep[],
+  savedByStep: Record<number, ExpertSavedStep>,
+): boolean {
+  const workStepIdxs = steps
+    .filter((step) => step.exerciseName === exerciseName)
+    .map((step) => step.index);
+  if (workStepIdxs.length === 0) return false;
+  return workStepIdxs.every((index) => savedByStep[index] != null);
+}
+
+/**
+ * Tous les exercices à logger sont-ils faits ? Sert à clore la séance dès que
+ * plus rien ne reste — où que se trouve le membre — pour ne jamais rester bloqué
+ * sur un exo déjà bouclé ni rater l'écran de fin.
+ */
+export function allExercisesDone(
+  exerciseNames: string[],
+  steps: SessionProgressStep[],
+  savedByStep: Record<number, ExpertSavedStep>,
+): boolean {
+  const toLog = exerciseNames.filter((name) => hasWorkStep(name, steps));
+  return toLog.length > 0 && toLog.every((name) => isExerciseDone(name, steps, savedByStep));
+}
+
 /**
  * Prochain exercice NON terminé, dans l'ordre du programme : on cherche d'abord
  * vers l'avant à partir de l'exercice courant, puis on reboucle au début. Les
@@ -75,12 +112,7 @@ export function nextUndoneExerciseName(
   // On repart juste après l'exercice courant, puis on reboucle jusqu'à lui inclus.
   const order = [...exerciseNames.slice(currentPos + 1), ...exerciseNames.slice(0, currentPos + 1)];
   for (const name of order) {
-    const workStepIdxs = steps
-      .filter((step) => step.exerciseName === name)
-      .map((step) => step.index);
-    if (workStepIdxs.length === 0) continue; // aucun travail à logger → rien à rattraper
-    const done = workStepIdxs.every((index) => savedByStep[index] != null);
-    if (!done) return name;
+    if (hasWorkStep(name, steps) && !isExerciseDone(name, steps, savedByStep)) return name;
   }
   return null;
 }
