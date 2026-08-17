@@ -10,6 +10,7 @@ import { useI18n } from "@/lib/i18n";
 import {
   buildExerciseOverview,
   groupExpertRecapByExercise,
+  nextUndoneExerciseName,
   type ExpertSavedStep,
   type SessionProgressStep,
 } from "@/lib/live-session-progress";
@@ -1365,10 +1366,61 @@ export function LiveSession({
   );
   const expertRecapGroups = useMemo(() => groupExpertRecapByExercise(savedByStep), [savedByStep]);
 
-  function goNext() {
+  // Étape d'entrée d'un exercice : le brief de son bloc, ou directement l'écran
+  // EMOM / circuit pour les blocs qui n'ont pas de brief. Sert au saut manuel
+  // (« choisir un exercice ») comme au renvoi automatique vers un exo non fait.
+  function entryStepIndexFor(name: string): number {
+    return steps.findIndex((s) =>
+      s.kind === "set" || s.kind === "emom"
+        ? s.exercise.name === name
+        : s.kind === "brief" || s.kind === "circuit"
+          ? s.exercises.some((e) => e.name === name)
+          : false,
+    );
+  }
+
+  function currentExerciseName(): string | null {
+    if (!current) return null;
+    if (current.kind === "set" || current.kind === "emom") return current.exercise.name;
+    if (current.kind === "brief" || current.kind === "circuit")
+      return current.exercises[0]?.name ?? null;
+    return null;
+  }
+
+  // Fin d'un exercice : on renvoie sur le prochain exo non fait ; s'il n'en reste
+  // aucun, la séance se termine. Le membre n'a plus à penser à repasser par le
+  // résumé pour rattraper un exo sauté (facile à oublier en pleine séance).
+  function advanceToNextUndoneOrRecap(map: Record<number, ExpertSavedStep>) {
+    const name = nextUndoneExerciseName(exerciseNames, progressSteps, map, currentExerciseName());
+    const target = name != null ? entryStepIndexFor(name) : -1;
+    if (name == null || target < 0) {
+      setPhase("recap");
+      return;
+    }
+    setStepIdx(target);
+    setPhase("step");
+  }
+
+  // `freshSaved` : la carte des saisies incluant la série qu'on vient d'écrire
+  // (le state React n'est pas encore à jour au moment de l'appel). Sans elle, un
+  // exo tout juste terminé serait vu comme non fait.
+  function goNext(freshSaved?: Record<number, ExpertSavedStep>) {
     setLogging(null);
     setValidationError(null);
     setTimedDone(false);
+    const map = freshSaved ?? savedByStep;
+    // Un exercice vient d'être bouclé (dernière série, EMOM ou circuit) → plutôt
+    // que d'avancer d'une étape (ce qui saute les exos non faits et peut clore la
+    // séance en les perdant), on file vers le prochain exo non fait.
+    const exerciseFinished =
+      current?.kind === "emom" ||
+      current?.kind === "circuit" ||
+      (current?.kind === "set" && current.isLastSetOfExercise && !current.restAfter);
+    if (exerciseFinished) {
+      advanceToNextUndoneOrRecap(map);
+      return;
+    }
+    // Sinon progression linéaire : brief → 1re série, série → série suivante.
     if (stepIdx >= steps.length - 1) {
       setPhase("recap");
       return;
@@ -1490,15 +1542,16 @@ export function LiveSession({
       });
       if (error) throw error;
     }, "set_logs insert failed");
-    setSavedByStep((m) => ({
-      ...m,
+    const nextSaved = {
+      ...savedByStep,
       [stepIdx]: { exo: step.exercise.name, weight: weight_kg, reps, rpe: l.rpe },
-    }));
+    };
+    setSavedByStep(nextSaved);
     if (step.restAfter) {
       setPhase("rest");
       setLogging(null);
     } else {
-      goNext();
+      goNext(nextSaved);
     }
   }
 
@@ -1506,19 +1559,20 @@ export function LiveSession({
     const defaults = computeDefaults(step);
     const parsedWeight = defaults.weight ? parseFloat(defaults.weight.replace(",", ".")) : NaN;
     const prescribedMetric = getExpertSetLoggedValue(step.exercise, step.totalSets, step.setNumber);
-    setSavedByStep((m) => ({
-      ...m,
+    const nextSaved = {
+      ...savedByStep,
       [stepIdx]: {
         exo: step.exercise.name,
         weight: Number.isFinite(parsedWeight) ? parsedWeight : null,
         reps: prescribedMetric.value,
         rpe,
       },
-    }));
+    };
+    setSavedByStep(nextSaved);
     if (step.restAfter) {
       setPhase("rest");
     } else {
-      goNext();
+      goNext(nextSaved);
     }
   }
 
@@ -1643,13 +1697,7 @@ export function LiveSession({
   // Saut direct vers un exercice depuis l'aperçu (ex. machine prise → faire un autre exo).
   // On ne réordonne PAS les étapes (les saisies restent indexées par étape) : on navigue seulement.
   function jumpToExercise(name: string) {
-    const idx = steps.findIndex((s) =>
-      s.kind === "set" || s.kind === "emom"
-        ? s.exercise.name === name
-        : s.kind === "brief" || s.kind === "circuit"
-          ? s.exercises.some((e) => e.name === name)
-          : false,
-    );
+    const idx = entryStepIndexFor(name);
     setShowOverview(false);
     if (idx < 0) return;
     if (phase === "intro") startedAtRef.current = Date.now();
@@ -2449,7 +2497,7 @@ export function LiveSession({
           seconds={current.restSeconds}
           nextPreview={current.nextPreview ?? null}
           currentExercise={current.exercise}
-          onDone={goNext}
+          onDone={() => goNext()}
           onVideo={() => setShowVideo(current.exercise)}
           onCues={() => setShowCues(current.exercise)}
         />
@@ -2511,15 +2559,16 @@ export function LiveSession({
               });
               if (error) throw error;
             }, "emom set_logs insert failed");
-            setSavedByStep((m) => ({
-              ...m,
+            const nextSaved = {
+              ...savedByStep,
               [stepIdx]: {
                 exo: current.exercise.name,
                 weight: null,
                 reps: computedReps,
                 rpe: emomRpe,
               },
-            }));
+            };
+            setSavedByStep(nextSaved);
             // Mode expert : pré-remplit le RPE du récap final avec celui saisi
             // sur l'écran EMOM, pour qu'il ne soit ni redemandé ni perdu.
             if (sessionMode === "expert" && emomRpe != null) {
@@ -2529,7 +2578,7 @@ export function LiveSession({
                   : { ...prev, [current.exercise.name]: emomRpe },
               );
             }
-            goNext();
+            goNext(nextSaved);
           }}
           onPain={() => setPainFor(current.exercise.name)}
         />
@@ -2583,18 +2632,16 @@ export function LiveSession({
             }, "circuit set_logs insert failed");
             // Un exercice par ligne de récap : le libellé « A+B+C » créait un
             // groupe fantôme en mode expert, rattaché à aucun exercice réel.
-            setSavedByStep((m) => {
-              const next = { ...m };
-              current.exercises.forEach((ex, i) => {
-                next[stepIdx + i / 100] = {
-                  exo: ex.name,
-                  weight: null,
-                  reps: null,
-                  rpe: circuitRpe,
-                };
-              });
-              return next;
+            const nextSaved = { ...savedByStep };
+            current.exercises.forEach((ex, i) => {
+              nextSaved[stepIdx + i / 100] = {
+                exo: ex.name,
+                weight: null,
+                reps: null,
+                rpe: circuitRpe,
+              };
             });
+            setSavedByStep(nextSaved);
             if (sessionMode === "expert" && circuitRpe != null) {
               setExpertRecapRpeByExercise((prev) => {
                 const next = { ...prev };
@@ -2604,7 +2651,7 @@ export function LiveSession({
                 return next;
               });
             }
-            goNext();
+            goNext(nextSaved);
           }}
           onPain={() => setPainFor(current.exercises[0]?.name ?? "")}
         />
@@ -2818,7 +2865,7 @@ export function LiveSession({
               </button>
             )}
             <button
-              onClick={goNext}
+              onClick={() => goNext()}
               className="cst-btn cst-btn-primary"
               style={{ flex: 1, padding: "16px 0", fontSize: 14 }}
             >
