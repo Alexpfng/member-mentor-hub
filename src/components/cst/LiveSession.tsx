@@ -8,8 +8,10 @@ import { ExerciseThread } from "./ExerciseThread";
 import PainReportDialog from "./PainReportDialog";
 import { useI18n } from "@/lib/i18n";
 import {
+  allExercisesDone,
   buildExerciseOverview,
   groupExpertRecapByExercise,
+  isExerciseDone,
   nextUndoneExerciseName,
   type ExpertSavedStep,
   type SessionProgressStep,
@@ -1379,12 +1381,15 @@ export function LiveSession({
     );
   }
 
-  function currentExerciseName(): string | null {
-    if (!current) return null;
-    if (current.kind === "set" || current.kind === "emom") return current.exercise.name;
-    if (current.kind === "brief" || current.kind === "circuit")
-      return current.exercises[0]?.name ?? null;
+  function stepExerciseName(step: Step | undefined): string | null {
+    if (!step) return null;
+    if (step.kind === "set" || step.kind === "emom") return step.exercise.name;
+    if (step.kind === "brief" || step.kind === "circuit") return step.exercises[0]?.name ?? null;
     return null;
+  }
+
+  function currentExerciseName(): string | null {
+    return stepExerciseName(current);
   }
 
   // Fin d'un exercice : on renvoie sur le prochain exo non fait ; s'il n'en reste
@@ -1409,6 +1414,13 @@ export function LiveSession({
     setValidationError(null);
     setTimedDone(false);
     const map = freshSaved ?? savedByStep;
+    // Dès que TOUT est fait, la séance se termine — où qu'on se trouve. Sans ce
+    // garde-fou, revenir sur un exo déjà fait (résumé) pouvait renvoyer sur le
+    // suivant au lieu d'afficher l'écran de fin.
+    if (allExercisesDone(exerciseNames, progressSteps, map)) {
+      setPhase("recap");
+      return;
+    }
     // Un exercice vient d'être bouclé (dernière série, EMOM ou circuit) → plutôt
     // que d'avancer d'une étape (ce qui saute les exos non faits et peut clore la
     // séance en les perdant), on file vers le prochain exo non fait.
@@ -1420,12 +1432,20 @@ export function LiveSession({
       advanceToNextUndoneOrRecap(map);
       return;
     }
-    // Sinon progression linéaire : brief → 1re série, série → série suivante.
-    if (stepIdx >= steps.length - 1) {
-      setPhase("recap");
+    // Progression linéaire : brief → 1re série, série → série suivante. Mais si
+    // l'étape suivante bascule sur un AUTRE exo déjà terminé (cas du retour en
+    // arrière), on saute directement au prochain non fait — jamais de série déjà
+    // loggée à refaire.
+    const nextIdx = stepIdx + 1;
+    const currentName = currentExerciseName();
+    const nextName = stepExerciseName(steps[nextIdx]);
+    const crossesIntoDoneExo =
+      nextName != null && nextName !== currentName && isExerciseDone(nextName, progressSteps, map);
+    if (nextIdx > steps.length - 1 || crossesIntoDoneExo) {
+      advanceToNextUndoneOrRecap(map);
       return;
     }
-    setStepIdx((i) => i + 1);
+    setStepIdx(nextIdx);
     setPhase("step");
   }
 
