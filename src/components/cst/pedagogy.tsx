@@ -40,16 +40,16 @@ const COLOR_META: Record<
     rpeTarget: "RPE 6-7. Réduis les reps si la vitesse baisse.",
   },
   lime: {
+    title: "CORE",
+    subtitle: "Gainage et stabilité du tronc",
+    rule: "Gainage, anti-mouvement et stabilité du tronc. Contrôle total, pas de compensation lombaire. Respiration maîtrisée.",
+    rpeTarget: "RPE 3-5. La technique prime.",
+  },
+  blue: {
     title: "MOBILITÉ",
     subtitle: "Amplitude et contrôle articulaire",
     rule: "Cherche l'amplitude maximale contrôlée. Mouvements lents, sans à-coups, respiration ample. Jamais de douleur.",
     rpeTarget: "RPE 3-5. Priorité à l'amplitude, pas à la charge.",
-  },
-  blue: {
-    title: "PRÉVENTION / GAINAGE",
-    subtitle: "Forme, contrôle, mind-muscle",
-    rule: "Prévention de blessure et stabilité. Contrôle total. Pas de fatigue excessive.",
-    rpeTarget: "RPE 3-5. La technique prime.",
   },
 };
 
@@ -189,8 +189,8 @@ const RPE_GUIDANCE: Record<NonNullable<ExerciseColor>, string> = {
   red: "🔴 Force : 1-2 reps en réserve — vise RPE 7-8",
   green: "🟢 Isolation : 1 rep en réserve max — approche l'échec",
   yellow: "🟡 Explosif : qualité > quantité — jamais d'échec",
-  lime: "🟢 Mobilité : amplitude max contrôlée — RPE 3-5, jamais de douleur",
-  blue: "🔵 Prévention : contrôle total — pas de fatigue excessive",
+  lime: "🟡 Core : gainage & stabilité du tronc — contrôle total, RPE 3-5",
+  blue: "🔵 Mobilité : amplitude max contrôlée — RPE 3-5, jamais de douleur",
 };
 
 export function RPEGuidance({ color }: { color: ExerciseColor }) {
@@ -230,7 +230,7 @@ export function rpeFeedbackMessage(
   if (color === "yellow" && rpe >= 9)
     return "⚠️ Sur les explosifs, la qualité prime. Réduis les reps pour maintenir la vitesse d'exécution.";
   if (color === "blue" && rpe >= 8)
-    return "💡 Sur la prévention, vise un RPE plus bas (3-5). Contrôle, pas fatigue.";
+    return "💡 Sur la mobilité, vise un RPE plus bas (3-5). Contrôle, pas fatigue.";
   return null;
 }
 

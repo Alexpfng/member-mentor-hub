@@ -189,8 +189,8 @@ const COLOR_MAP: Record<string, { bg: string; label: string }> = {
   red: { bg: "#C44A3A", label: "Force / Épuisant" },
   green: { bg: "#5BA85A", label: "Isolation" },
   yellow: { bg: "#D4A82E", label: "Explosivité" },
-  lime: { bg: "#E8D44A", label: "Mobilité" },
-  blue: { bg: "#4A8BC4", label: "Technique" },
+  lime: { bg: "#E8D44A", label: "CORE" },
+  blue: { bg: "#4A8BC4", label: "Mobilité" },
 };
 
 function ColorDot({ c }: { c?: string | null }) {

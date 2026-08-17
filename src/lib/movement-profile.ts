@@ -11,25 +11,20 @@
 
 import { normalizeExerciseFeedbackKey } from "./exercise-feedback";
 
-export type MovementAxis = "force" | "isolation" | "explosif" | "mobilite" | "prevention";
+export type MovementAxis = "force" | "isolation" | "explosif" | "core" | "mobilite";
 
 export const AXIS_LABEL: Record<MovementAxis, string> = {
   force: "Force",
   isolation: "Isolation",
   explosif: "Explosivité",
+  core: "Core",
   mobilite: "Mobilité",
-  prevention: "Prévention",
 };
 
-export const AXIS_ORDER: MovementAxis[] = [
-  "force",
-  "isolation",
-  "explosif",
-  "mobilite",
-  "prevention",
-];
+export const AXIS_ORDER: MovementAxis[] = ["force", "isolation", "explosif", "core", "mobilite"];
 
-/** La couleur est stockée en nom (structure, bibliothèque) ou en emoji (builder). */
+/** La couleur est stockée en nom (structure, bibliothèque) ou en emoji (builder).
+ *  Jaune clair (lime / orange / 🟠) = CORE ; bleu (🔵) = Mobilité. */
 const COLOR_TO_AXIS: Record<string, MovementAxis> = {
   red: "force",
   "🔴": "force",
@@ -37,11 +32,11 @@ const COLOR_TO_AXIS: Record<string, MovementAxis> = {
   "🟢": "isolation",
   yellow: "explosif",
   "🟡": "explosif",
-  lime: "mobilite",
-  orange: "mobilite",
-  "🟠": "mobilite",
-  blue: "prevention",
-  "🔵": "prevention",
+  lime: "core",
+  orange: "core",
+  "🟠": "core",
+  blue: "mobilite",
+  "🔵": "mobilite",
 };
 
 export function axisFromColor(color: string | null | undefined): MovementAxis | null {
