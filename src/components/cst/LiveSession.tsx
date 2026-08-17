@@ -1421,23 +1421,6 @@ export function LiveSession({
     setPhase(steps.length ? "step" : "intro");
   }
 
-  // H2 : passer à l'exercice suivant (machine prise) — on pourra y revenir via le navigateur
-  function goNextBlock() {
-    setLogging(null);
-    setValidationError(null);
-    setTimedDone(false);
-    if (!current) return;
-    const currentBlockIdx = current.blockIdx;
-    for (let i = stepIdx + 1; i < steps.length; i++) {
-      if (steps[i].blockIdx > currentBlockIdx) {
-        setStepIdx(i);
-        setPhase("step");
-        return;
-      }
-    }
-    setPhase("recap");
-  }
-
   function handleHeaderBack() {
     if (phase === "intro") {
       if (Object.keys(savedByStep).length > 0) setShowQuitConfirm(true);
@@ -1897,7 +1880,7 @@ export function LiveSession({
               >
                 {sessionMode === "expert"
                   ? "Touchez un exercice pour y aller directement. ✓ = fait, … = en cours, □ = pas encore fait. Les exos déjà effectués peuvent recevoir leur RPE ici."
-                  : "Touche « ALLER → » pour faire un exercice tout de suite (ex. machine déjà prise)."}
+                  : "Touche un exercice pour y aller directement (ex. machine déjà prise à la salle)."}
               </p>
               {overviewRows.length > 0 && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 14 }}>
@@ -1916,7 +1899,9 @@ export function LiveSession({
                           : t("À FAIRE");
                     const statusIcon =
                       row.state === "done" ? "✓" : row.state === "current" ? "…" : "□";
-                    const isClickable = sessionMode === "expert";
+                    // Toujours cliquable : toucher un exo y renvoie directement (machine prise → autre exo),
+                    // en mode expert comme en mode assisté.
+                    const isClickable = true;
                     const canAssignRpe = sessionMode === "expert" && row.completedSteps > 0;
                     return (
                       <div
@@ -3014,11 +2999,12 @@ export function LiveSession({
 
           {canGoNextBlock && (
             <button
-              onClick={goNextBlock}
+              onClick={() => setShowOverview(true)}
               className="cst-btn cst-btn-ghost-dark cst-btn-sm"
               style={{ width: "100%", borderStyle: "dashed", opacity: 0.9 }}
+              title="Machine prise ? Choisis l'exercice que tu veux faire à la place"
             >
-              ⤼ Passer cet exercice (j'y reviens via ☰)
+              ⤼ Passer / choisir un autre exercice
             </button>
           )}
 
@@ -3391,12 +3377,12 @@ export function LiveSession({
 
         {canGoNextBlock && (
           <button
-            onClick={goNextBlock}
+            onClick={() => setShowOverview(true)}
             className="cst-btn cst-btn-ghost-dark cst-btn-sm"
             style={{ width: "100%", borderStyle: "dashed", opacity: 0.9 }}
-            title="Machine prise ? Passe à l'exercice suivant — tu reviendras via ☰ en haut"
+            title="Machine prise ? Choisis l'exercice que tu veux faire à la place"
           >
-            ⤼ Passer cet exercice (j'y reviens via ☰)
+            ⤼ Passer / choisir un autre exercice
           </button>
         )}
 
