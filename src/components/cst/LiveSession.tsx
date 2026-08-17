@@ -1406,6 +1406,18 @@ export function LiveSession({
     setPhase("step");
   }
 
+  // Repos de transition entre deux blocs : après la DERNIÈRE série d'un exercice,
+  // on affiche le décompte de récup avant d'enchaîner — comme entre deux séries.
+  // Léo le voulait « entre les blocs » et pas seulement au sein d'un bloc. Pas de
+  // repos si c'était le dernier exo à faire (on file directement au récap).
+  function restBeforeNextBlock(step: WorkSet, saved: Record<number, ExpertSavedStep>): boolean {
+    return (
+      step.isLastSetOfExercise &&
+      step.restSeconds > 0 &&
+      !allExercisesDone(exerciseNames, progressSteps, saved)
+    );
+  }
+
   // `freshSaved` : la carte des saisies incluant la série qu'on vient d'écrire
   // (le state React n'est pas encore à jour au moment de l'appel). Sans elle, un
   // exo tout juste terminé serait vu comme non fait.
@@ -1567,7 +1579,7 @@ export function LiveSession({
       [stepIdx]: { exo: step.exercise.name, weight: weight_kg, reps, rpe: l.rpe },
     };
     setSavedByStep(nextSaved);
-    if (step.restAfter) {
+    if (step.restAfter || restBeforeNextBlock(step, nextSaved)) {
       setPhase("rest");
       setLogging(null);
     } else {
@@ -1589,7 +1601,7 @@ export function LiveSession({
       },
     };
     setSavedByStep(nextSaved);
-    if (step.restAfter) {
+    if (step.restAfter || restBeforeNextBlock(step, nextSaved)) {
       setPhase("rest");
     } else {
       goNext(nextSaved);
