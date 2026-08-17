@@ -3,6 +3,7 @@ import { describe, expect, it } from "bun:test";
 import {
   buildExerciseOverview,
   groupExpertRecapByExercise,
+  nextUndoneExerciseName,
   type ExpertSavedStep,
   type SessionProgressStep,
 } from "./live-session-progress";
@@ -61,5 +62,42 @@ describe("buildExerciseOverview", () => {
       { exerciseName: "Squat", state: "current", completedSteps: 1, totalSteps: 2 },
       { exerciseName: "Row", state: "todo", completedSteps: 0, totalSteps: 1 },
     ]);
+  });
+});
+
+describe("nextUndoneExerciseName", () => {
+  const names = ["Squat", "Row", "Gainage"];
+  const done = (...idx: number[]): Record<number, ExpertSavedStep> =>
+    Object.fromEntries(idx.map((i) => [i, { exo: "x", weight: null, reps: null, rpe: null }]));
+
+  it("continues forward to the next un-done exercise", () => {
+    // Squat fait (0,1), on est sur Squat → l'exercice suivant non fait est Row.
+    expect(nextUndoneExerciseName(names, steps, done(0, 1), "Squat")).toBe("Row");
+  });
+
+  it("wraps back to an earlier skipped exercise once nothing remains ahead", () => {
+    // On vient de finir le dernier (Gainage) mais Squat/Row ont été sautés :
+    // on reboucle au tout premier exo non fait.
+    expect(nextUndoneExerciseName(names, steps, done(3), "Gainage")).toBe("Squat");
+  });
+
+  it("skips already-done exercises when wrapping", () => {
+    // Squat fait, Row sauté, on finit Gainage → on reboucle sur Row, pas Squat.
+    expect(nextUndoneExerciseName(names, steps, done(0, 1, 3), "Gainage")).toBe("Row");
+  });
+
+  it("returns null when every exercise is done", () => {
+    expect(nextUndoneExerciseName(names, steps, done(0, 1, 2, 3), "Gainage")).toBeNull();
+  });
+
+  it("counts an exercise done only when ALL its steps are saved", () => {
+    // Row et Gainage faits, on finit sur Gainage ; Squat n'a qu'une de ses deux
+    // séries saisies → il reste à faire, on y revient.
+    expect(nextUndoneExerciseName(names, steps, done(0, 2, 3), "Gainage")).toBe("Squat");
+  });
+
+  it("ignores exercises that have no work step to log", () => {
+    const withGhost = [...names, "Échauffement"]; // aucun step associé
+    expect(nextUndoneExerciseName(withGhost, steps, done(0, 1, 2, 3), "Gainage")).toBeNull();
   });
 });
