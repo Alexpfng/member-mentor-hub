@@ -2259,8 +2259,8 @@ export function LiveSession({
                   {c === "red" && "Force"}
                   {c === "green" && "Isolation"}
                   {c === "yellow" && "Explosif"}
-                  {c === "lime" && "Mobilité"}
-                  {c === "blue" && "Prévention"}
+                  {c === "lime" && "CORE"}
+                  {c === "blue" && "Mobilité"}
                 </button>
               ))}
             </div>

@@ -25,9 +25,9 @@ describe("axisFromColor", () => {
   it("accepte les deux écritures de couleur", () => {
     expect(axisFromColor("red")).toBe("force");
     expect(axisFromColor("🔴")).toBe("force");
-    expect(axisFromColor("LIME")).toBe("mobilite");
-    // Le builder a longtemps écrit « orange » pour la mobilité.
-    expect(axisFromColor("orange")).toBe("mobilite");
+    expect(axisFromColor("LIME")).toBe("core");
+    // Le builder a longtemps écrit « orange » pour la couleur claire (désormais CORE).
+    expect(axisFromColor("orange")).toBe("core");
   });
 
   it("renvoie null sur une couleur inconnue ou absente", () => {
@@ -41,7 +41,7 @@ describe("buildAxisIndex", () => {
     const index = buildAxisIndex(LIBRARY);
     expect(index.get("back squat libre")).toBe("force");
     expect(index.get("developpe couche halteres")).toBe("force");
-    expect(index.get("cars epaules")).toBe("mobilite");
+    expect(index.get("cars epaules")).toBe("core");
   });
 
   it("ignore les exercices sans couleur", () => {
@@ -74,11 +74,11 @@ describe("buildMovementProfile", () => {
   });
 
   it("compte les répétitions quand il n'y a pas de charge", () => {
-    // Sinon la mobilité pèserait zéro et son axe resterait plat à vie.
+    // Sinon le core (souvent au poids du corps) pèserait zéro et resterait plat à vie.
     const profile = buildMovementProfile([set("CARs épaules", "2026-01-01", null, 12)], index);
-    const mobilite = profile.points.find((p) => p.axis === "mobilite");
-    expect(mobilite?.afterRaw).toBe(12);
-    expect(mobilite?.empty).toBe(false);
+    const core = profile.points.find((p) => p.axis === "core");
+    expect(core?.afterRaw).toBe(12);
+    expect(core?.empty).toBe(false);
   });
 
   it("sépare début et fin sur deux fenêtres de même durée", () => {

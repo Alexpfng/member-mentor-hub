@@ -87,18 +87,18 @@ const BASE_LIBRARY: LibraryExercise[] = [
   { id: 'rdl', name: 'Romanian Deadlift', category: 'LEGS', color: '🟡' },
   { id: 'fp', name: 'Face Pull', category: 'PULL', color: '🟢' },
   { id: 'cr', name: 'Calf Raises', category: 'LEGS', color: '🟡' },
-  { id: 'plank', name: 'Plank', category: 'CORE', color: '🔵' },
-  { id: 'db', name: 'Dead Bug', category: 'CORE', color: '🔵' },
+  { id: 'plank', name: 'Plank', category: 'CORE', color: '🟠' },
+  { id: 'db', name: 'Dead Bug', category: 'CORE', color: '🟠' },
   { id: 'run', name: 'Run Zone 2', category: 'CARDIO', color: '🟡' },
   { id: 'box', name: 'Box Jump', category: 'CARDIO', color: '🟡' },
 ];
 
 const REST_OPTIONS = ['0s','30s','45s','1 min','1min30','2 min','2min30','3 min','4 min','5 min'];
-// La 5e pastille (clé interne '🟠') représente la couleur « lime » = mobilité (jaune clair),
+// La 5e pastille (clé interne '🟠') représente la couleur « lime » = CORE (jaune clair),
 // rendue en pastille de couleur (et non en glyphe) → cohérent avec « Adapter la semaine ».
 const COLORS: ExColor[] = ['🔴','🟢','🟡','🟠','🔵'];
 const COLOR_HEX: Record<ExColor, string> = { '🔴': '#C56A60', '🟢': '#7AAB7E', '🟡': '#E2C36B', '🟠': '#E8D44A', '🔵': '#6FA3C4' };
-const COLOR_LABEL: Record<ExColor, string> = { '🔴': 'Force / Épuisant', '🟢': 'Isolation', '🟡': 'Explosivité', '🟠': 'Mobilité', '🔵': 'Technique' };
+const COLOR_LABEL: Record<ExColor, string> = { '🔴': 'Force / Épuisant', '🟢': 'Isolation', '🟡': 'Explosivité', '🟠': 'CORE', '🔵': 'Mobilité' };
 
 // ─── YOUTUBE UTILS ─────────────────────────────────────────────────────────────
 
