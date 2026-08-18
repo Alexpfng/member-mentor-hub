@@ -8,6 +8,7 @@ import {
   listGlossary,
   upsertExercise,
   setExerciseArchived,
+  setExerciseIntensity,
   seedExerciseLibraryV2,
   createIntensityCode,
   deleteIntensityCode,
@@ -70,6 +71,7 @@ export default function Exercices() {
   const fetchGlossary = useServerFn(listGlossary);
   const saveExercise = useServerFn(upsertExercise);
   const archiveFn = useServerFn(setExerciseArchived);
+  const intensityFn = useServerFn(setExerciseIntensity);
   const seedFn = useServerFn(seedExerciseLibraryV2);
   const createCodeFn = useServerFn(createIntensityCode);
   const deleteCodeFn = useServerFn(deleteIntensityCode);
@@ -89,6 +91,7 @@ export default function Exercices() {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [showBulkColors, setShowBulkColors] = useState(false);
 
   // Custom presets for locally-managed filter categories
   const [customPatterns, setCustomPatterns] = useState<string[]>(() => loadPresets("cst_custom_patterns"));
@@ -322,6 +325,24 @@ export default function Exercices() {
     }
   }
 
+  async function bulkSetIntensity(code: string) {
+    if (!selected.size) return;
+    setBulkBusy(true);
+    try {
+      await Promise.all(
+        Array.from(selected).map((id) => intensityFn({ data: { id, intensity_code: code } })),
+      );
+      toast.success(`Couleur appliquée à ${selected.size} exercice(s)`);
+      setSelected(new Set());
+      setShowBulkColors(false);
+      await reload();
+    } catch (e) {
+      toast.error((e as Error).message || "Erreur");
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
   function toggleExpand(id: string) {
     const next = new Set(expanded);
     if (next.has(id)) next.delete(id);
@@ -451,9 +472,24 @@ export default function Exercices() {
         {selected.size > 0 && (
           <div style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", padding: "10px 14px", background: "rgba(45,90,53,0.12)", border: "1px solid var(--cst-mid-green)", borderRadius: 10 }}>
             <span className="cst-mono" style={{ fontSize: 12, color: "var(--cst-text)", letterSpacing: "0.1em" }}>{selected.size} SÉLECTIONNÉ(S)</span>
-            <button onClick={() => bulkArchive(true)} disabled={bulkBusy} style={btnPrimary}>{bulkBusy ? "…" : "Archiver la sélection"}</button>
+            <button onClick={() => setShowBulkColors((v) => !v)} disabled={bulkBusy} style={btnPrimary}>{bulkBusy ? "…" : "Modifier la couleur ▾"}</button>
+            {showBulkColors && (
+              <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                {codes.map((c) => (
+                  <button
+                    key={c.code}
+                    onClick={() => bulkSetIntensity(c.code)}
+                    disabled={bulkBusy}
+                    title={c.label}
+                    aria-label={c.label}
+                    style={{ width: 26, height: 26, borderRadius: "50%", cursor: "pointer", border: "1px solid var(--cst-card-border)", background: c.color_hex }}
+                  />
+                ))}
+              </div>
+            )}
+            <button onClick={() => bulkArchive(true)} disabled={bulkBusy} style={btnGhost}>{bulkBusy ? "…" : "Archiver"}</button>
             {showArchived && <button onClick={() => bulkArchive(false)} disabled={bulkBusy} style={btnGhost}>Désarchiver</button>}
-            <button onClick={() => setSelected(new Set())} style={btnGhost}>Annuler</button>
+            <button onClick={() => { setSelected(new Set()); setShowBulkColors(false); }} style={btnGhost}>Annuler</button>
           </div>
         )}
 

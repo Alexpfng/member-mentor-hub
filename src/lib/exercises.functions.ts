@@ -221,6 +221,24 @@ export const setExerciseArchived = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+// Change la couleur/classification (intensity_code) d'un exercice de la bibliothèque.
+// On garde « category » aligné, comme upsertExercise, car l'app lit l'un ou l'autre.
+export const setExerciseIntensity = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ id: z.string().uuid(), intensity_code: z.string().min(1) }).parse(d)
+  )
+  .handler(async ({ data, context }) => {
+    await assertCoach(context.userId);
+    const code = data.intensity_code.trim() || "non_classe";
+    const { error } = await supabaseAdmin
+      .from("exercises")
+      .update({ intensity_code: code, category: code })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 export const seedExerciseLibraryV2 = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
