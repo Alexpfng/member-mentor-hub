@@ -456,7 +456,7 @@ function QuickConfig({ ex, onChange, onClose, canChain }: PopoverProps) {
 
 // ─── SORTABLE EXERCISE CARD ───────────────────────────────────────────────────
 
-function SortableExCard({ ex, onEdit, onDelete }: { ex: ProgramExercise; onEdit: () => void; onDelete: () => void }) {
+function SortableExCard({ ex, onEdit, onDelete, selected, onToggleSelect }: { ex: ProgramExercise; onEdit: () => void; onDelete: () => void; selected: boolean; onToggleSelect: () => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: ex.uid });
   const ytId = extractYTId(ex.youtube_url);
 
@@ -464,10 +464,14 @@ function SortableExCard({ ex, onEdit, onDelete }: { ex: ProgramExercise; onEdit:
     <div ref={setNodeRef} style={{
       transform: CSS.Transform.toString(transform), transition,
       opacity: isDragging ? 0.4 : 1,
-      background: '#1F2A22', border: '1px solid rgba(255,255,255,0.08)',
+      background: selected ? '#243B2C' : '#1F2A22',
+      border: selected ? '1px solid var(--cst-mid-green)' : '1px solid rgba(255,255,255,0.08)',
       borderRadius: 8, padding: '10px 12px',
       display: 'flex', alignItems: 'flex-start', gap: 8,
     }}>
+      <input type="checkbox" checked={selected} onChange={onToggleSelect}
+        onClick={e => e.stopPropagation()} title="Sélectionner pour modifier la couleur en groupe"
+        style={{ marginTop: 3, flexShrink: 0, width: 15, height: 15, cursor: 'pointer', accentColor: 'var(--cst-mid-green)' }} />
       <span {...attributes} {...listeners} style={{
         cursor: 'grab', color: 'rgba(255,255,255,0.3)', fontSize: 14,
         paddingTop: 2, flexShrink: 0, userSelect: 'none',
@@ -508,6 +512,7 @@ function SortableExCard({ ex, onEdit, onDelete }: { ex: ProgramExercise; onEdit:
 function DayColumn({
   day, weekIdx, dayIdx,
   isOver, onAddExercise, onUpdateExercise, onDeleteExercise, onRenameDay,
+  selectedUids, onToggleSelect,
 }: {
   day: Day; weekIdx: number; dayIdx: number;
   isOver: boolean;
@@ -515,6 +520,8 @@ function DayColumn({
   onUpdateExercise: (dayId: string, ex: ProgramExercise) => void;
   onDeleteExercise: (dayId: string, uid: string) => void;
   onRenameDay: (dayId: string, name: string, type: Day['type']) => void;
+  selectedUids: Set<string>;
+  onToggleSelect: (uid: string) => void;
 }) {
   const [editingEx, setEditingEx] = useState<ProgramExercise | null>(null);
   const [renamingDay, setRenamingDay] = useState(false);
@@ -563,6 +570,8 @@ function DayColumn({
       <SortableContext items={day.exercises.map(e => e.uid)} strategy={verticalListSortingStrategy}>
         {day.exercises.map(ex => (
           <SortableExCard key={ex.uid} ex={ex}
+            selected={selectedUids.has(ex.uid)}
+            onToggleSelect={() => onToggleSelect(ex.uid)}
             onEdit={() => setEditingEx(ex)}
             onDelete={() => { onDeleteExercise(day.id, ex.uid); toast('Exercice supprimé', { action: { label: 'Annuler', onClick: () => {} } }); }} />
         ))}
@@ -686,6 +695,9 @@ export default function BuilderNew({ programIdParam }: { programIdParam?: string
   // Structure
   const [weeks, setWeeks] = useState<Week[]>([makeWeek()]);
   const [activeWeekIdx, setActiveWeekIdx] = useState(0);
+  // Sélection groupée d'exos (modif couleur en masse), limitée à la semaine affichée.
+  const [selectedUids, setSelectedUids] = useState<Set<string>>(new Set());
+  const [showBulkColors, setShowBulkColors] = useState(false);
 
 
   // DnD state
@@ -728,6 +740,30 @@ export default function BuilderNew({ programIdParam }: { programIdParam?: string
   const currentWeek = weeks[activeWeekIdx];
 
   const updateWeeks = (fn: (w: Week[]) => Week[]) => setWeeks(fn);
+
+  // La sélection porte sur la semaine affichée : on la vide dès qu'on change d'onglet.
+  useEffect(() => { setSelectedUids(new Set()); setShowBulkColors(false); }, [activeWeekIdx]);
+
+  const toggleSelected = useCallback((exUid: string) => {
+    setSelectedUids(prev => {
+      const next = new Set(prev);
+      if (next.has(exUid)) next.delete(exUid); else next.add(exUid);
+      return next;
+    });
+  }, []);
+
+  // Applique une couleur à tous les exos cochés de la semaine affichée, d'un seul coup.
+  const bulkSetColor = useCallback((color: ExColor) => {
+    const n = selectedUids.size;
+    if (!n) return;
+    updateWeeks(ws => ws.map((w, wi) => wi !== activeWeekIdx ? w : {
+      ...w,
+      days: w.days.map(d => ({ ...d, exercises: d.exercises.map(e => selectedUids.has(e.uid) ? { ...e, color } : e) })),
+    }));
+    setSelectedUids(new Set());
+    setShowBulkColors(false);
+    toast.success(`Couleur appliquée à ${n} exercice${n > 1 ? 's' : ''}`);
+  }, [selectedUids, activeWeekIdx]);
 
   const addExerciseToDayFromLib = useCallback((dayId: string, lib: LibraryExercise) => {
     const ex = makeExercise(lib);
@@ -1125,6 +1161,38 @@ export default function BuilderNew({ programIdParam }: { programIdParam?: string
             }}>+ Semaine</button>
           </div>
 
+          {/* Barre de modification groupée — apparaît dès qu'un exo est coché */}
+          {selectedUids.size > 0 && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
+              margin: '12px 16px 0', padding: '10px 12px', borderRadius: 8,
+              background: 'rgba(45,90,53,0.18)', border: '1px solid var(--cst-mid-green)',
+            }}>
+              <span style={{ fontFamily: 'var(--cst-mono)', fontSize: 12, letterSpacing: '0.1em', color: '#fff' }}>
+                {selectedUids.size} sélectionné{selectedUids.size > 1 ? 's' : ''}
+              </span>
+              <button onClick={() => setShowBulkColors(v => !v)} style={{
+                background: 'var(--cst-mid-green)', border: 'none', color: '#fff', borderRadius: 6,
+                padding: '6px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              }}>Modifier ▾</button>
+              {showBulkColors && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontFamily: 'var(--cst-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--cst-text-muted)' }}>Couleur</span>
+                  {COLORS.map(c => (
+                    <button key={c} onClick={() => bulkSetColor(c)} title={COLOR_LABEL[c]} aria-label={COLOR_LABEL[c]} style={{
+                      width: 28, height: 28, borderRadius: '50%', cursor: 'pointer',
+                      border: '1px solid var(--cst-card-border)', background: COLOR_HEX[c],
+                    }} />
+                  ))}
+                </div>
+              )}
+              <button onClick={() => { setSelectedUids(new Set()); setShowBulkColors(false); }} style={{
+                marginLeft: 'auto', background: 'none', border: '1px solid rgba(255,255,255,0.2)',
+                color: 'rgba(255,255,255,0.7)', borderRadius: 6, padding: '6px 10px', fontSize: 12, cursor: 'pointer',
+              }}>Annuler</button>
+            </div>
+          )}
+
           {/* Day columns */}
           <div className="cst-scroll-visible" style={{ flex: 1, padding: 16, display: 'flex', gap: 10, alignItems: 'flex-start', overflowX: 'auto', overflowY: 'auto' }}>
             {currentWeek.days.map((day) => (
@@ -1139,6 +1207,8 @@ export default function BuilderNew({ programIdParam }: { programIdParam?: string
                   onUpdateExercise={updateExercise}
                   onDeleteExercise={deleteExercise}
                   onRenameDay={renameDay}
+                  selectedUids={selectedUids}
+                  onToggleSelect={toggleSelected}
                 />
               </DroppableDayWrapper>
             ))}
