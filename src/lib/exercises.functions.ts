@@ -221,22 +221,83 @@ export const setExerciseArchived = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-// Change la couleur/classification (intensity_code) d'un exercice de la bibliothèque.
-// On garde « category » aligné, comme upsertExercise, car l'app lit l'un ou l'autre.
-export const setExerciseIntensity = createServerFn({ method: "POST" })
+// Couleurs « programme » (celles du builder et des séances) : rouge/vert/jaune/
+// lime/bleu = Force/Isolation/Explosivité/CORE/Mobilité. C'est CE champ (color)
+// que lisent le builder et les programmes — pas intensity_code (page biblio).
+const PROGRAM_COLOR = z.enum(["red", "green", "yellow", "lime", "blue"]);
+
+// Propage une couleur à tous les exercices d'un même nom dans les programmes du
+// coach : le classement fait dans la bibliothèque se répercute tout seul sur les
+// programmes déjà construits (self-service, aucune SQL à lancer). On matche par
+// nom car les exos de programme sont des copies (JSONB), sans lien dur à la biblio.
+// Vue minimale de la structure JSONB d'un programme (weeks/days/exercises) : juste
+// ce qu'il faut pour retrouver et recolorer un exercice par son nom.
+type ProgEx = { name?: string; color?: string };
+type ProgStructure = { weeks?: Array<{ days?: Array<{ exercises?: ProgEx[] }> }> };
+
+async function propagateColorToPrograms(
+  coachId: string,
+  names: Set<string>,
+  color: string,
+): Promise<number> {
+  const { data: programs, error } = await supabaseAdmin
+    .from("programs")
+    .select("id, structure")
+    .eq("coach_id", coachId);
+  if (error) throw new Error(error.message);
+  let updated = 0;
+  for (const program of programs ?? []) {
+    const structure = program.structure;
+    const view = structure as unknown as ProgStructure | null;
+    const weeks = view?.weeks;
+    if (!Array.isArray(weeks)) continue;
+    let changed = false;
+    for (const week of weeks) {
+      for (const day of week?.days ?? []) {
+        for (const ex of day?.exercises ?? []) {
+          if (ex && ex.name && names.has(ex.name) && ex.color !== color) {
+            ex.color = color;
+            changed = true;
+          }
+        }
+      }
+    }
+    if (changed) {
+      const { error: upErr } = await supabaseAdmin
+        .from("programs")
+        .update({ structure })
+        .eq("id", program.id);
+      if (upErr) throw new Error(upErr.message);
+      updated += 1;
+    }
+  }
+  return updated;
+}
+
+// Change la couleur « programme » d'un ou plusieurs exercices de la bibliothèque,
+// et la propage automatiquement aux programmes du coach.
+export const setExercisesColor = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({ id: z.string().uuid(), intensity_code: z.string().min(1) }).parse(d)
+    z.object({ ids: z.array(z.string().uuid()).min(1), color: PROGRAM_COLOR }).parse(d)
   )
   .handler(async ({ data, context }) => {
     await assertCoach(context.userId);
-    const code = data.intensity_code.trim() || "non_classe";
-    const { error } = await supabaseAdmin
+    const { data: rows, error: nameErr } = await supabaseAdmin
       .from("exercises")
-      .update({ intensity_code: code, category: code })
-      .eq("id", data.id);
-    if (error) throw new Error(error.message);
-    return { ok: true };
+      .select("id, name")
+      .in("id", data.ids);
+    if (nameErr) throw new Error(nameErr.message);
+    const names = new Set<string>((rows ?? []).map((r) => r.name).filter(Boolean));
+
+    const { error: colorErr } = await supabaseAdmin
+      .from("exercises")
+      .update({ color: data.color })
+      .in("id", data.ids);
+    if (colorErr) throw new Error(colorErr.message);
+
+    const programsUpdated = await propagateColorToPrograms(context.userId, names, data.color);
+    return { ok: true, programsUpdated };
   });
 
 export const seedExerciseLibraryV2 = createServerFn({ method: "POST" })

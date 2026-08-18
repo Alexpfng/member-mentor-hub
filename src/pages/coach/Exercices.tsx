@@ -8,7 +8,7 @@ import {
   listGlossary,
   upsertExercise,
   setExerciseArchived,
-  setExerciseIntensity,
+  setExercisesColor,
   seedExerciseLibraryV2,
   createIntensityCode,
   deleteIntensityCode,
@@ -18,6 +18,7 @@ type Exercise = {
   id: string;
   name: string;
   intensity_code: string | null;
+  color: string | null;
   category: string | null;
   muscle_group: string | null;
   equipement: string | null;
@@ -32,6 +33,19 @@ type Exercise = {
 
 type IntensityCode = { code: string; label: string; description: string; color_hex: string };
 type GlossaryEntry = { cle: string; titre: string; contenu: string };
+
+// Couleurs « programme » (mêmes que le builder / les séances) : c'est CE champ
+// (color) que lisent les programmes, et que la modif groupée pilote désormais.
+const PROGRAM_COLORS: { value: string; label: string; hex: string }[] = [
+  { value: "red", label: "Force / Épuisant", hex: "#C56A60" },
+  { value: "green", label: "Isolation", hex: "#7AAB7E" },
+  { value: "yellow", label: "Explosivité", hex: "#E2C36B" },
+  { value: "lime", label: "CORE", hex: "#E8D44A" },
+  { value: "blue", label: "Mobilité", hex: "#6FA3C4" },
+];
+const PROGRAM_COLOR_HEX: Record<string, string> = Object.fromEntries(
+  PROGRAM_COLORS.map((c) => [c.value, c.hex]),
+);
 
 const PATTERN_OPTIONS: { value: string; label: string }[] = [
   { value: "push", label: "Push" },
@@ -71,7 +85,7 @@ export default function Exercices() {
   const fetchGlossary = useServerFn(listGlossary);
   const saveExercise = useServerFn(upsertExercise);
   const archiveFn = useServerFn(setExerciseArchived);
-  const intensityFn = useServerFn(setExerciseIntensity);
+  const colorFn = useServerFn(setExercisesColor);
   const seedFn = useServerFn(seedExerciseLibraryV2);
   const createCodeFn = useServerFn(createIntensityCode);
   const deleteCodeFn = useServerFn(deleteIntensityCode);
@@ -124,12 +138,6 @@ export default function Exercices() {
     reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const codeMap = useMemo(() => {
-    const m = new Map<string, IntensityCode>();
-    codes.forEach((c) => m.set(c.code, c));
-    return m;
-  }, [codes]);
 
   const muscles = useMemo(() => {
     const s = new Set<string>([...customMuscles]);
@@ -325,14 +333,17 @@ export default function Exercices() {
     }
   }
 
-  async function bulkSetIntensity(code: string) {
+  async function bulkSetColor(color: string) {
     if (!selected.size) return;
     setBulkBusy(true);
+    const n = selected.size;
     try {
-      await Promise.all(
-        Array.from(selected).map((id) => intensityFn({ data: { id, intensity_code: code } })),
+      const res = await colorFn({ data: { ids: Array.from(selected), color } });
+      const progs = res?.programsUpdated ?? 0;
+      toast.success(
+        `Couleur appliquée à ${n} exercice(s)` +
+          (progs > 0 ? ` · ${progs} programme(s) mis à jour` : ""),
       );
-      toast.success(`Couleur appliquée à ${selected.size} exercice(s)`);
       setSelected(new Set());
       setShowBulkColors(false);
       await reload();
@@ -475,14 +486,14 @@ export default function Exercices() {
             <button onClick={() => setShowBulkColors((v) => !v)} disabled={bulkBusy} style={btnPrimary}>{bulkBusy ? "…" : "Modifier la couleur ▾"}</button>
             {showBulkColors && (
               <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                {codes.map((c) => (
+                {PROGRAM_COLORS.map((c) => (
                   <button
-                    key={c.code}
-                    onClick={() => bulkSetIntensity(c.code)}
+                    key={c.value}
+                    onClick={() => bulkSetColor(c.value)}
                     disabled={bulkBusy}
                     title={c.label}
                     aria-label={c.label}
-                    style={{ width: 26, height: 26, borderRadius: "50%", cursor: "pointer", border: "1px solid var(--cst-card-border)", background: c.color_hex }}
+                    style={{ width: 26, height: 26, borderRadius: "50%", cursor: "pointer", border: "1px solid var(--cst-card-border)", background: c.hex }}
                   />
                 ))}
               </div>
@@ -554,8 +565,7 @@ export default function Exercices() {
             </div>
           ) : (
             sorted.map((ex) => {
-              const code = ex.intensity_code || ex.category || "non_classe";
-              const meta = codeMap.get(code);
+              const colorMeta = PROGRAM_COLORS.find((c) => c.value === ex.color);
               const isOpen = expanded.has(ex.id);
               const ytId = getYoutubeEmbedId(ex);
               return (
@@ -582,12 +592,12 @@ export default function Exercices() {
                       aria-label={`Sélectionner ${ex.name}`}
                     />
                     <span
-                      title={meta?.label || code}
+                      title={colorMeta ? colorMeta.label : "Sans couleur"}
                       style={{
                         width: 12,
                         height: 12,
                         borderRadius: "50%",
-                        background: meta?.color_hex || "#999",
+                        background: colorMeta ? colorMeta.hex : "#555",
                         border: "1px solid rgba(0,0,0,0.15)",
                       }}
                     />
