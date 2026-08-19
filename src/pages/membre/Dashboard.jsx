@@ -9,6 +9,7 @@ import { CSTLogo, CSTSectionNum, CSTAvatar } from "../../components/Atoms";
 import ThemeToggle from "../../components/ThemeToggle";
 import { WeightLogDialog } from "../../components/cst/WeightLogDialog";
 import { ActivityLogDialog } from "../../components/cst/ActivityLogDialog";
+import { DailyHabitCard } from "../../components/cst/DailyHabitCard";
 import { usePRConfetti } from "@/hooks/usePRConfetti";
 import { getMemberDashboard } from "@/lib/member-stats.functions";
 import { getMyActivity } from "@/lib/activity.functions";
@@ -58,6 +59,16 @@ export default function MemberDashboard() {
 
   const fetchDashboard = useServerFn(getMemberDashboard);
   const fetchActivity = useServerFn(getMyActivity);
+
+  // Recharge l'activité après une saisie (série et anneau se remettent à jour
+  // tout de suite, sans recharger la page).
+  const reloadActivity = async () => {
+    try {
+      setActivity(await fetchActivity({ data: {} }));
+    } catch (err) {
+      console.error("getMyActivity failed", err);
+    }
+  };
   const fetchFeedback = useServerFn(getMemberCoachFeedback);
   const fetchPlan = useServerFn(listWeekPlan);
   const upsertPlanned = useServerFn(upsertPlannedSession);
@@ -1036,67 +1047,15 @@ export default function MemberDashboard() {
                 </button>
               </div>
 
-              {/* Activité du jour (pas / calories) */}
-              <div
-                className="cst-card-dark"
-                style={{
-                  marginTop: 14,
-                  padding: 14,
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: 12,
-                }}
-              >
-                <div className="cst-col" style={{ gap: 6 }}>
-                  <span className="cst-mono" style={{ fontSize: 9 }}>
-                    {t("ACTIVITÉ DU JOUR")}
-                  </span>
-                  <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
-                    <div className="cst-col" style={{ gap: 2 }}>
-                      <span className="cst-mono" style={{ fontSize: 8, opacity: 0.5 }}>
-                        {t("PAS")}
-                      </span>
-                      <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-                        <span className="cst-display" style={{ fontSize: 20 }}>
-                          {activity?.today?.steps != null
-                            ? activity.today.steps.toLocaleString("fr-FR")
-                            : "—"}
-                        </span>
-                        {activity?.goals?.steps != null && (
-                          <span className="cst-mono" style={{ fontSize: 9, opacity: 0.5 }}>
-                            / {activity.goals.steps.toLocaleString("fr-FR")}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="cst-col" style={{ gap: 2 }}>
-                      <span className="cst-mono" style={{ fontSize: 8, opacity: 0.5 }}>
-                        CALORIES
-                      </span>
-                      <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-                        <span className="cst-display" style={{ fontSize: 20 }}>
-                          {activity?.today?.calories != null
-                            ? activity.today.calories.toLocaleString("fr-FR")
-                            : "—"}
-                        </span>
-                        {activity?.goals?.calories != null && (
-                          <span className="cst-mono" style={{ fontSize: 9, opacity: 0.5 }}>
-                            / {activity.goals.calories.toLocaleString("fr-FR")}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <button
-                  className="cst-btn cst-btn-ghost-dark"
-                  style={{ fontSize: 10 }}
-                  onClick={() => setActivityOpen(true)}
-                >
-                  {t("+ NOTER")}
-                </button>
-              </div>
+              {/* Activité du jour : carte d'habitude (série + objectif + saisie rapide) */}
+              <DailyHabitCard
+                days={activity?.list ?? []}
+                today={activity?.today ?? null}
+                goals={activity?.goals ?? { steps: null, calories: null }}
+                todayISO={todayISO}
+                onSaved={reloadActivity}
+                onOpenDetails={() => setActivityOpen(true)}
+              />
 
               {/* Coach message */}
               {coachMessage?.content && (
@@ -1241,6 +1200,7 @@ export default function MemberDashboard() {
         defaultCalories={activity?.today?.calories ?? null}
         goalSteps={activity?.goals?.steps ?? null}
         goalCalories={activity?.goals?.calories ?? null}
+        onSaved={reloadActivity}
       />
     </div>
   );
