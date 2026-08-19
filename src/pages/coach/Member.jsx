@@ -1010,7 +1010,16 @@ export default function CoachMember() {
           }}
         >
           <div>
-            {activeTab === 1 && <MemberFollowupTab memberId={memberId} />}
+            {activeTab === 1 && (
+              <>
+                <MemberTrackingPanel
+                  weights={tracking?.weights ?? []}
+                  activity={tracking?.activity ?? []}
+                  goals={tracking?.goals ?? { steps: null, calories: null }}
+                />
+                <MemberFollowupTab memberId={memberId} />
+              </>
+            )}
             {activeTab === 0 && (
               <>
                 {!data.program ? (
@@ -1430,11 +1439,6 @@ export default function CoachMember() {
                     </div>
                   ))}
                 </div>
-                <MemberTrackingPanel
-                  weights={tracking?.weights ?? []}
-                  activity={tracking?.activity ?? []}
-                  goals={tracking?.goals ?? { steps: null, calories: null }}
-                />
               </>
             )}
 

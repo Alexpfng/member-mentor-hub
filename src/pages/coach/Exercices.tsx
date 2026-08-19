@@ -8,6 +8,7 @@ import {
   listGlossary,
   upsertExercise,
   setExerciseArchived,
+  setExercisesColor,
   seedExerciseLibraryV2,
   createIntensityCode,
   deleteIntensityCode,
@@ -17,6 +18,7 @@ type Exercise = {
   id: string;
   name: string;
   intensity_code: string | null;
+  color: string | null;
   category: string | null;
   muscle_group: string | null;
   equipement: string | null;
@@ -31,6 +33,19 @@ type Exercise = {
 
 type IntensityCode = { code: string; label: string; description: string; color_hex: string };
 type GlossaryEntry = { cle: string; titre: string; contenu: string };
+
+// Couleurs « programme » (mêmes que le builder / les séances) : c'est CE champ
+// (color) que lisent les programmes, et que la modif groupée pilote désormais.
+const PROGRAM_COLORS: { value: string; label: string; hex: string }[] = [
+  { value: "red", label: "Force / Épuisant", hex: "#C56A60" },
+  { value: "green", label: "Isolation", hex: "#7AAB7E" },
+  { value: "yellow", label: "Explosivité", hex: "#E2C36B" },
+  { value: "lime", label: "CORE", hex: "#E8D44A" },
+  { value: "blue", label: "Mobilité", hex: "#6FA3C4" },
+];
+const PROGRAM_COLOR_HEX: Record<string, string> = Object.fromEntries(
+  PROGRAM_COLORS.map((c) => [c.value, c.hex]),
+);
 
 const PATTERN_OPTIONS: { value: string; label: string }[] = [
   { value: "push", label: "Push" },
@@ -70,6 +85,7 @@ export default function Exercices() {
   const fetchGlossary = useServerFn(listGlossary);
   const saveExercise = useServerFn(upsertExercise);
   const archiveFn = useServerFn(setExerciseArchived);
+  const colorFn = useServerFn(setExercisesColor);
   const seedFn = useServerFn(seedExerciseLibraryV2);
   const createCodeFn = useServerFn(createIntensityCode);
   const deleteCodeFn = useServerFn(deleteIntensityCode);
@@ -89,6 +105,7 @@ export default function Exercices() {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [showBulkColors, setShowBulkColors] = useState(false);
 
   // Custom presets for locally-managed filter categories
   const [customPatterns, setCustomPatterns] = useState<string[]>(() => loadPresets("cst_custom_patterns"));
@@ -121,12 +138,6 @@ export default function Exercices() {
     reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const codeMap = useMemo(() => {
-    const m = new Map<string, IntensityCode>();
-    codes.forEach((c) => m.set(c.code, c));
-    return m;
-  }, [codes]);
 
   const muscles = useMemo(() => {
     const s = new Set<string>([...customMuscles]);
@@ -322,6 +333,27 @@ export default function Exercices() {
     }
   }
 
+  async function bulkSetColor(color: string) {
+    if (!selected.size) return;
+    setBulkBusy(true);
+    const n = selected.size;
+    try {
+      const res = await colorFn({ data: { ids: Array.from(selected), color } });
+      const progs = res?.programsUpdated ?? 0;
+      toast.success(
+        `Couleur appliquée à ${n} exercice(s)` +
+          (progs > 0 ? ` · ${progs} programme(s) mis à jour` : ""),
+      );
+      setSelected(new Set());
+      setShowBulkColors(false);
+      await reload();
+    } catch (e) {
+      toast.error((e as Error).message || "Erreur");
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
   function toggleExpand(id: string) {
     const next = new Set(expanded);
     if (next.has(id)) next.delete(id);
@@ -451,9 +483,24 @@ export default function Exercices() {
         {selected.size > 0 && (
           <div style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", padding: "10px 14px", background: "rgba(45,90,53,0.12)", border: "1px solid var(--cst-mid-green)", borderRadius: 10 }}>
             <span className="cst-mono" style={{ fontSize: 12, color: "var(--cst-text)", letterSpacing: "0.1em" }}>{selected.size} SÉLECTIONNÉ(S)</span>
-            <button onClick={() => bulkArchive(true)} disabled={bulkBusy} style={btnPrimary}>{bulkBusy ? "…" : "Archiver la sélection"}</button>
+            <button onClick={() => setShowBulkColors((v) => !v)} disabled={bulkBusy} style={btnPrimary}>{bulkBusy ? "…" : "Modifier la couleur ▾"}</button>
+            {showBulkColors && (
+              <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                {PROGRAM_COLORS.map((c) => (
+                  <button
+                    key={c.value}
+                    onClick={() => bulkSetColor(c.value)}
+                    disabled={bulkBusy}
+                    title={c.label}
+                    aria-label={c.label}
+                    style={{ width: 26, height: 26, borderRadius: "50%", cursor: "pointer", border: "1px solid var(--cst-card-border)", background: c.hex }}
+                  />
+                ))}
+              </div>
+            )}
+            <button onClick={() => bulkArchive(true)} disabled={bulkBusy} style={btnGhost}>{bulkBusy ? "…" : "Archiver"}</button>
             {showArchived && <button onClick={() => bulkArchive(false)} disabled={bulkBusy} style={btnGhost}>Désarchiver</button>}
-            <button onClick={() => setSelected(new Set())} style={btnGhost}>Annuler</button>
+            <button onClick={() => { setSelected(new Set()); setShowBulkColors(false); }} style={btnGhost}>Annuler</button>
           </div>
         )}
 
@@ -518,8 +565,7 @@ export default function Exercices() {
             </div>
           ) : (
             sorted.map((ex) => {
-              const code = ex.intensity_code || ex.category || "non_classe";
-              const meta = codeMap.get(code);
+              const colorMeta = PROGRAM_COLORS.find((c) => c.value === ex.color);
               const isOpen = expanded.has(ex.id);
               const ytId = getYoutubeEmbedId(ex);
               return (
@@ -546,12 +592,12 @@ export default function Exercices() {
                       aria-label={`Sélectionner ${ex.name}`}
                     />
                     <span
-                      title={meta?.label || code}
+                      title={colorMeta ? colorMeta.label : "Sans couleur"}
                       style={{
                         width: 12,
                         height: 12,
                         borderRadius: "50%",
-                        background: meta?.color_hex || "#999",
+                        background: colorMeta ? colorMeta.hex : "#555",
                         border: "1px solid rgba(0,0,0,0.15)",
                       }}
                     />
