@@ -26,6 +26,7 @@ import {
   normalizeExpertRpeForStorage,
 } from "@/lib/live-session-feedback";
 import { getExpertEmomLoggedValue, getExpertSetLoggedValue } from "@/lib/session-prescription";
+import { parseEmom } from "@/lib/emom";
 import { parseRpeCell } from "@/lib/rpe-cell";
 import {
   buildLadderCycle,
@@ -816,62 +817,6 @@ function parseTotalReps(reps?: string | number | null): number | null {
   if (!/tout|total/.test(r)) return null;
   const m = r.match(/(\d+)/);
   return m ? parseInt(m[1], 10) : null;
-}
-
-/** Parses EMOM params from series or reps fields.
- * Duration formats (coach sets in program):
- *   "EMOM15'"   → 15 min  (apostrophe droit ou typographique)
- *   "EMOM15min" → 15 min
- *   "EMOM15m"   → 15 min
- *   "EMOM3×15'" → 3 reps/min, 15 min  (× ou x ou /)
- *   "EMOM3/15'" → 3 reps/min, 15 min
- * Reps only (durée par défaut 10 min) :
- *   "EMOM3"     → 3 reps/min, 10 min
- */
-function parseEmom(
-  series: string | null,
-  reps: string | null,
-  name: string | null = null,
-): { durationMin: number; repsPerMin: number | null } {
-  // Normalise: apostrophe typographique → droit, minuscule.
-  // Le nom est inclus pour les regex « emom… » (le coach écrit souvent la durée
-  // dans le nom, ex. « … EMOM6' ») mais PAS pour les fallbacks durFromSeries /
-  // repsFromSeries plus bas, qui restent liés au vrai champ Séries.
-  const src = `${name ?? ""} ${series ?? ""} ${reps ?? ""}`.toLowerCase().replace(/[‘’ʼ]/g, "'");
-
-  // Combined "EMOMreps×dur'" or "EMOMreps/dur'" → e.g. "EMOM3×15'" "EMOM3/10min"
-  const combinedMatch = src.match(/emom\s*(\d+)\s*[x×\/]\s*(\d+)\s*(?:'|min\b|m\b)/);
-  if (combinedMatch) {
-    return {
-      durationMin: parseInt(combinedMatch[2], 10),
-      repsPerMin: parseInt(combinedMatch[1], 10),
-    };
-  }
-
-  // Duration-only: "EMOM15'" or "EMOM15min" or "EMOM15m"
-  const durMatch = src.match(/emom\s*(\d+)\s*(?:'|min\b|m\b)/);
-  if (durMatch) {
-    // Reps may come from separate reps field
-    const repsVal = reps?.match(/^(\d+)$/)?.[1] ?? reps?.match(/emom\s*(\d+)\s*reps?/i)?.[1];
-    return {
-      durationMin: parseInt(durMatch[1], 10),
-      repsPerMin: repsVal ? parseInt(repsVal, 10) : null,
-    };
-  }
-
-  // Type EMOM explicite (sélecteur builder) : durée = champ Séries (nb de minutes),
-  // reps/min = champ Reps — y compris alterné « 3/4 » (paires/impaires).
-  const repsFromSeries = series?.match(/emom\s*(\d+)/i)?.[1];
-  const repsAlt = reps?.match(/^\s*(\d+)\s*\/\s*\d+\s*$/)?.[1];
-  const repsFromReps =
-    reps?.match(/^(\d+)$/)?.[1] ?? repsAlt ?? reps?.match(/emom\s*(\d+)\s*reps?/i)?.[1];
-  const repsPerMin = repsFromSeries
-    ? parseInt(repsFromSeries, 10)
-    : repsFromReps
-      ? parseInt(repsFromReps, 10)
-      : null;
-  const durFromSeries = series?.match(/^\s*(\d+)\s*(?:'|min|m)?\s*$/i)?.[1];
-  return { durationMin: durFromSeries ? parseInt(durFromSeries, 10) : 10, repsPerMin };
 }
 
 /* ───────── Types : steps ───────── */
