@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
 import MemberNav from "../../components/MemberNav";
+import { GuidedTour } from "@/components/cst/GuidedTour";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -50,6 +51,7 @@ export default function MemberProfil() {
   const [planningWeekStartDay, setPlanningWeekStartDay] = useState(1);
   const [planningBusy, setPlanningBusy] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [tourOpen, setTourOpen] = useState(false);
   const [strava, setStrava] = useState<{
     connected: boolean;
     athleteId: number | null;
@@ -390,6 +392,22 @@ export default function MemberProfil() {
         </section>
 
         <section className="mb-8">
+          <h2 className="font-mono text-xs tracking-widest opacity-60 mb-3">
+            {t("DÉCOUVRIR L'APP")}
+          </h2>
+          <button
+            onClick={() => setTourOpen(true)}
+            className="cst-btn cst-btn-ghost-dark w-full"
+            style={{ fontSize: 12, padding: "12px 0" }}
+          >
+            {t("▶ REVOIR LA VISITE GUIDÉE")}
+          </button>
+          <div className="text-xs opacity-60 mt-2">
+            {t("Les 10 étapes d'une séance, en images. Deux minutes.")}
+          </div>
+        </section>
+
+        <section className="mb-8">
           <h2 className="font-mono text-xs tracking-widest opacity-60 mb-3">NOTIFICATIONS</h2>
           {loading || !prefs ? (
             <div className="opacity-60 text-sm">{t("Chargement…")}</div>
@@ -512,6 +530,7 @@ export default function MemberProfil() {
           </div>
         </section>
       </div>
+      <GuidedTour open={tourOpen} onClose={() => setTourOpen(false)} />
       <MemberNav />
     </div>
   );
