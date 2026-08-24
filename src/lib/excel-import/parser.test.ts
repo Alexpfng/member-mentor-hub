@@ -109,6 +109,64 @@ describe("import Excel — séances de course à pied", () => {
   });
 });
 
+/** Le vrai fichier du coach : un bloc occupe DEUX lignes (cellules fusionnées),
+ *  la seconde portant « OBJECTIF : » avec la récup de l'intervalle. */
+const COURSE_MERGED = [
+  ["Séance type fractionné (Durée : ~1h15)"],
+  ["Exercice", "Reps", "Temps", "Allure", "Recup", "RPE", "Consignes / Explications"],
+  ["A. Echauffement & travail de pied", null, null, null, "30'", null, "30s entre chaque exo"],
+  ["~2 à 3km échauffement"],
+  [
+    "BLOC B : 10x1'/1'",
+    "10",
+    "1min travail",
+    "~ 5:00 / km",
+    "1'",
+    null,
+    "Sois précis sur les 10 répétitions",
+  ],
+  ["OBJECTIF :", null, "1min recup", "~ 7:00 / km", null, null, null],
+  ["travail de maintien d'allure"],
+  ["1km de recup passive à ~7:00/km"],
+];
+
+/** Fichier 2 : les liens vidéo sont dans une colonne SANS en-tête. */
+const COURSE_LINKS = [
+  ["Séance fractionné (Durée : ~60min)"],
+  ["Exercice", "Série(s)", "Reps", "Distance", "Récup", "RPE", "Explanation"],
+  [
+    "A1. Mouvements balistiques de hanche",
+    "2",
+    "20 / côté",
+    null,
+    null,
+    null,
+    "Échauffe tes hanches",
+    "https://www.youtube.com/shorts/so-iEzLAc14",
+  ],
+];
+
+describe("import Excel — format réel du coach", () => {
+  it("ne fait pas un exercice de la ligne « OBJECTIF » qui porte la récup", async () => {
+    const parsed = await parseExcelFile(makeFile(COURSE_MERGED));
+    const exos = parsed.weeks[0].days.flatMap((d) => d.exercises);
+    expect(exos.some((e) => /^objectif/i.test(e.name))).toBe(false);
+  });
+
+  it("rattache l'objectif et sa récup au bloc concerné", async () => {
+    const parsed = await parseExcelFile(makeFile(COURSE_MERGED));
+    const exos = parsed.weeks[0].days.flatMap((d) => d.exercises);
+    const bloc = exos.find((e) => e.name.includes("BLOC B"));
+    expect(bloc?.coach_notes ?? "").toContain("1min recup");
+  });
+
+  it("récupère les liens vidéo même sans en-tête de colonne", async () => {
+    const parsed = await parseExcelFile(makeFile(COURSE_LINKS));
+    const exos = parsed.weeks[0].days.flatMap((d) => d.exercises);
+    expect(exos[0]?.youtube_id).toBe("so-iEzLAc14");
+  });
+});
+
 describe("import Excel — muscu (non-régression)", () => {
   it("lit séries, reps, charge, tempo, récup, RPE et notes", async () => {
     const parsed = await parseExcelFile(makeFile(MUSCU));

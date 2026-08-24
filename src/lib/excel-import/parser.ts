@@ -83,7 +83,7 @@ const SESSION_RE =
   /(full[\s-]?body|lower|upper|push|pull|legs?|jambe|séance|seance|course|cardio|côtes|cotes|fractionn|endurance|renfo|mobilité|sortie|hiit|circuit|bloc)/i;
 const EX_CODE_RE = /^([A-H]\d*)[.)]\s*(.*)/i;
 const JUNK_RE =
-  /^(objectif|important|consigne|remarque|note|attention|rappel|\(|on cherche|on peut|pour |~|\d+\s*(min|km|m))/i;
+  /^(objectif|obj\.|important|consigne|remarque|note|attention|rappel|\(|on cherche|on peut|pour |~|\d+\s*(min|km|m))/i;
 
 function getCell(ws: XLSX.WorkSheet, row: number, col: number): any {
   const addr = XLSX.utils.encode_cell({ r: row, c: col });
@@ -122,6 +122,24 @@ function getYoutubeUrl(ws: XLSX.WorkSheet, row: number, col: number): string | n
   const v = String(cell.v || "");
   const m = v.match(/https?:\/\/\S+/);
   return m ? m[0] : null;
+}
+
+/** Cherche, sous l'en-tête, une colonne contenant des liens vidéo. */
+function findLinkColumn(
+  ws: XLSX.WorkSheet,
+  range: XLSX.Range,
+  headerRow: number,
+  nameCol: number,
+): number | null {
+  for (let r = headerRow + 1; r <= Math.min(headerRow + 25, range.e.r); r++) {
+    for (let c = nameCol + 1; c <= Math.min(nameCol + 14, range.e.c); c++) {
+      const cell = getCell(ws, r, c);
+      const raw = cell?.v !== undefined && cell?.v !== null ? String(cell.v) : "";
+      const link = cell?.l?.Target ? String(cell.l.Target) : raw;
+      if (/youtu\.?be|youtube\.com/i.test(link)) return c;
+    }
+  }
+  return null;
 }
 
 function findColumnLayout(ws: XLSX.WorkSheet, range: XLSX.Range): ColumnLayout | null {
@@ -176,6 +194,15 @@ function findColumnLayout(ws: XLSX.WorkSheet, range: XLSX.Range): ColumnLayout |
       fallback("recupCol", c + 6);
       fallback("rpeCol", c + 7);
       fallback("notesCol", c + 8);
+      // Le coach colle souvent ses liens dans une colonne sans en-tête : on la
+      // repère à son contenu plutôt que de parier sur une position fixe.
+      if (layout.youtubeCol === undefined) {
+        const found = findLinkColumn(ws, range, r, c);
+        if (found !== null && !taken.has(found)) {
+          layout.youtubeCol = found;
+          taken.add(found);
+        }
+      }
       fallback("youtubeCol", c + 12);
       // Une colonne absente du tableau ne doit rien lire : -1 = « pas de colonne ».
       for (const key of [
@@ -322,12 +349,29 @@ function parseWeekSheet(ws: XLSX.WorkSheet, sheetName: string): ImportedWeek | n
     // Le texte éventuel de la colonne RPE fait partie de la consigne.
     const rpeIsNumeric = !!rpe && !Number.isNaN(Number(rpe.replace(",", ".")));
     const hasNumericData = !!(series || reps || charge || rpeIsNumeric);
+    // Un bloc du coach s'étale souvent sur deux lignes (cellules fusionnées) : la
+    // seconde porte « OBJECTIF : » ET la récup de l'intervalle (« 1min recup »,
+    // « ~7:00/km »). Elle reste une consigne malgré ces valeurs — sinon elle
+    // devenait un exercice fantôme. Une ligne qui commence simplement par une
+    // minuscule, elle, n'est une consigne que si elle ne porte aucune donnée :
+    // un vrai exercice peut s'appeler « développé couché ».
+    const isConsigneLabel = JUNK_RE.test(name);
     const looksLikeConsigne =
-      !exMatch && !hasNumericData && (JUNK_RE.test(name) || /^[a-zàâäéèêëîïôöùûüç]/.test(name));
+      !exMatch &&
+      (isConsigneLabel || (!hasNumericData && /^[a-zàâäéèêëîïôöùûüç]/.test(name)));
     if (looksLikeConsigne) {
       const prev = currentDay?.exercises[currentDay.exercises.length - 1];
       if (prev) {
-        const fragment = [name, rpe && !rpeIsNumeric ? rpe : null].filter(Boolean).join(" — ");
+        const fragment = [
+          name,
+          reps && reps !== name ? reps : null,
+          charge && charge !== name ? charge : null,
+          recup,
+          rpe && !rpeIsNumeric ? rpe : null,
+          cellStr(ws, r, layout.notesCol),
+        ]
+          .filter(Boolean)
+          .join(" — ");
         prev.coach_notes = prev.coach_notes ? `${prev.coach_notes}\n${fragment}` : fragment;
       }
       continue;
