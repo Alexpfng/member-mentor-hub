@@ -10,6 +10,7 @@ import ThemeToggle from "../../components/ThemeToggle";
 import { WeightLogDialog } from "../../components/cst/WeightLogDialog";
 import { ActivityLogDialog } from "../../components/cst/ActivityLogDialog";
 import { DailyHabitCard } from "../../components/cst/DailyHabitCard";
+import { GuidedTour, hasSeenTour } from "../../components/cst/GuidedTour";
 import { usePRConfetti } from "@/hooks/usePRConfetti";
 import { getMemberDashboard } from "@/lib/member-stats.functions";
 import { getMyActivity } from "@/lib/activity.functions";
@@ -48,6 +49,8 @@ export default function MemberDashboard() {
   const [weightOpen, setWeightOpen] = useState(false);
   const [weightRefresh, setWeightRefresh] = useState(0);
   const [activityOpen, setActivityOpen] = useState(false);
+  // Visite guidée : proposée une seule fois, au tout premier lancement.
+  const [tourOpen, setTourOpen] = useState(() => !hasSeenTour());
   const [activity, setActivity] = useState(null);
   const [streak, setStreak] = useState(0);
   const [coachMessage, setCoachMessage] = useState(null);
@@ -1190,6 +1193,7 @@ export default function MemberDashboard() {
         }}
       />
 
+      <GuidedTour open={tourOpen} onClose={() => setTourOpen(false)} />
       <ActivityLogDialog
         open={activityOpen}
         onOpenChange={(o) => {
