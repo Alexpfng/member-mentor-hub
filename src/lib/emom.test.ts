@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 
-import { parseEmom } from "./emom";
+import { alternatingRepsCycle, parseEmom } from "./emom";
 
 describe("parseEmom — saisie via le builder (Durée = Séries, Reps/min = Reps)", () => {
   it("lit la durée et les reps des deux champs", () => {
@@ -70,5 +70,24 @@ describe("parseEmom — durée et reps saisies à l'envers", () => {
 describe("parseEmom — repli", () => {
   it("retombe sur 10 minutes quand rien n'est exploitable", () => {
     expect(parseEmom(null, null, "Tractions")).toEqual({ durationMin: 10, repsPerMin: null });
+  });
+});
+
+describe("alternatingRepsCycle", () => {
+  it("joue la 1re minute (impaire) avec la seconde valeur", () => {
+    // « 1/2 » = 1 rep les minutes paires, 2 reps les impaires.
+    // Minute 1 impaire → 2 reps, minute 2 paire → 1 rep.
+    expect(alternatingRepsCycle("1/2")).toEqual([2, 1]);
+  });
+
+  it("accepte les espaces autour du séparateur", () => {
+    expect(alternatingRepsCycle(" 3 / 4 ")).toEqual([4, 3]);
+  });
+
+  it("renvoie null hors notation alternée", () => {
+    expect(alternatingRepsCycle("10")).toBeNull();
+    expect(alternatingRepsCycle(null)).toBeNull();
+    expect(alternatingRepsCycle("EMOM 10")).toBeNull();
+    expect(alternatingRepsCycle("3/4/5")).toBeNull(); // ladder, pas alterné
   });
 });
