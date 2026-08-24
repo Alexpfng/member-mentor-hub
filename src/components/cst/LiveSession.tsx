@@ -26,7 +26,7 @@ import {
   normalizeExpertRpeForStorage,
 } from "@/lib/live-session-feedback";
 import { getExpertEmomLoggedValue, getExpertSetLoggedValue } from "@/lib/session-prescription";
-import { parseEmom } from "@/lib/emom";
+import { alternatingRepsCycle, parseEmom } from "@/lib/emom";
 import { parseRpeCell } from "@/lib/rpe-cell";
 import {
   buildLadderCycle,
@@ -914,6 +914,10 @@ function buildSteps(exercises: ProgExercise[]): Step[] {
         : repsPerMin != null
           ? String(repsPerMin)
           : null;
+      // Reps alternées (« 1/2 ») : on fournit le cycle minute par minute, sinon
+      // l'écran affichait la même cible à chaque minute et l'alternance n'était
+      // qu'une phrase en en-tête.
+      const altCycle = alternatingRepsCycle(repsRaw);
       steps.push({
         kind: "emom",
         blockIdx,
@@ -923,6 +927,7 @@ function buildSteps(exercises: ProgExercise[]): Step[] {
         repsPerMin,
         repsLabel,
         alternating: !!altMatch,
+        repsCycle: altCycle,
       });
       return;
     }
@@ -3704,11 +3709,14 @@ function EmomScreen({
   onPain: () => void;
 }) {
   const cycle = repsCycle ?? [];
-  const isLadder = cycle.length > 0;
+  // Un cycle sert aux Ladder ET aux EMOM à reps alternées : seul le libellé du
+  // bloc change, la mécanique « une cible par minute » est la même.
+  const hasCycle = cycle.length > 0;
+  const isLadder = hasCycle && !alternating;
   const blockLabel = isLadder ? "LADDER" : "EMOM";
-  // Cible de la minute : constante en EMOM, variable en Ladder.
+  // Cible de la minute : constante en EMOM simple, variable dès qu'il y a un cycle.
   const targetAtMinute = (minuteIdx: number) =>
-    isLadder ? ladderRepsForMinute(cycle, minuteIdx) : repsPerMin;
+    hasCycle ? ladderRepsForMinute(cycle, minuteIdx) : repsPerMin;
   const planFor = (minutes: number) =>
     Array.from({ length: minutes }, (_, i) => targetAtMinute(i) ?? 0);
 

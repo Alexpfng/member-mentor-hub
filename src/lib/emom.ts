@@ -85,3 +85,24 @@ export function parseEmom(
     repsPerMin,
   });
 }
+
+/**
+ * Reps alternées d'une minute à l'autre, notées « paires/impaires » — ex. « 1/2 »
+ * = 1 rep les minutes paires, 2 reps les minutes impaires. C'est la notation déjà
+ * annoncée au coaché sur l'écran EMOM.
+ *
+ * Renvoie le cycle à jouer minute par minute, dans l'ordre réel : la 1re minute
+ * est IMPAIRE, donc elle prend la seconde valeur. `null` si ce n'est pas une
+ * notation alternée.
+ */
+export function alternatingRepsCycle(reps: string | null | undefined): number[] | null {
+  const match = String(reps ?? "")
+    .trim()
+    .match(/^(\d+)\s*\/\s*(\d+)$/);
+  if (!match) return null;
+  const even = parseInt(match[1], 10);
+  const odd = parseInt(match[2], 10);
+  if (!Number.isFinite(even) || !Number.isFinite(odd)) return null;
+  // minute 1 (impaire) → odd, minute 2 (paire) → even, puis on boucle.
+  return [odd, even];
+}
