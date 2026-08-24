@@ -761,6 +761,10 @@ export default function AdapterSemaine() {
   const [showDuplicate, setShowDuplicate] = useState(false);
   const [confirmDeleteDay, setConfirmDeleteDay] = useState<number | null>(null);
   const [editTarget, setEditTarget] = useState<{ dayIdx: number; exoIdx: number } | null>(null);
+  // Sélection groupée d'exercices pour changer leur couleur d'un coup (même
+  // principe que la bibliothèque et le builder). Clé = « jour:index ».
+  const [selectedExos, setSelectedExos] = useState<Set<string>>(new Set());
+  const [showBulkColors, setShowBulkColors] = useState(false);
   const [libraryTarget, setLibraryTarget] = useState<number | null>(null);
   const [quickRpeTarget, setQuickRpeTarget] = useState<{
     dayIdx: number;
@@ -836,7 +840,44 @@ export default function AdapterSemaine() {
       return { ...s, days };
     });
   }
+  function exoKey(dayIdx: number, exoIdx: number) {
+    return `${dayIdx}:${exoIdx}`;
+  }
+  function toggleExoSelected(dayIdx: number, exoIdx: number) {
+    const key = exoKey(dayIdx, exoIdx);
+    setSelectedExos((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+  /** Applique une couleur à tous les exercices cochés, dans tous les jours. */
+  function bulkSetColor(color: string) {
+    if (selectedExos.size === 0) return;
+    const count = selectedExos.size;
+    setStructure((s) => {
+      const days = (s.days ?? []).map((day, di) => ({
+        ...day,
+        exercises: (day.exercises ?? []).map((ex, ei) =>
+          selectedExos.has(exoKey(di, ei)) ? { ...ex, color } : ex,
+        ),
+      }));
+      return { ...s, days };
+    });
+    setSelectedExos(new Set());
+    setShowBulkColors(false);
+    toast.success(`Couleur appliquée à ${count} exercice${count > 1 ? "s" : ""}`);
+  }
+  /** La sélection est indexée par position : tout ce qui déplace ou supprime un
+   *  exercice la rend caduque, on la vide plutôt que de recolorer le mauvais. */
+  function clearExoSelection() {
+    setSelectedExos(new Set());
+    setShowBulkColors(false);
+  }
+
   function removeExo(dayIdx: number, exoIdx: number) {
+    clearExoSelection();
     setStructure((s) => {
       const days = [...(s.days ?? [])];
       const day = { ...days[dayIdx] };
@@ -848,6 +889,7 @@ export default function AdapterSemaine() {
   // Réordonne un exercice (ou un bloc cardio fusionné de `len` exercices) dans sa séance.
   // dir = -1 monter, +1 descendre. Pour un exercice simple, len = 1.
   function moveBlock(dayIdx: number, startIdx: number, len: number, dir: -1 | 1) {
+    clearExoSelection();
     setStructure((s) => {
       const days = [...(s.days ?? [])];
       const day = { ...days[dayIdx] };
@@ -1182,6 +1224,80 @@ export default function AdapterSemaine() {
           </div>
         )}
 
+        {/* Modification groupée — apparaît dès qu'un exercice est coché */}
+        {selectedExos.size > 0 && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              flexWrap: "wrap",
+              marginBottom: 12,
+              padding: "10px 12px",
+              borderRadius: 8,
+              background: "rgba(45,90,53,0.18)",
+              border: "1px solid var(--cst-mid-green)",
+            }}
+          >
+            <span
+              className="cst-mono"
+              style={{ fontSize: 12, letterSpacing: "0.1em", color: "var(--cst-text)" }}
+            >
+              {selectedExos.size} SÉLECTIONNÉ{selectedExos.size > 1 ? "S" : ""}
+            </span>
+            <button
+              onClick={() => setShowBulkColors((v) => !v)}
+              style={{
+                background: "var(--cst-mid-green)",
+                border: "none",
+                color: "#fff",
+                borderRadius: 6,
+                padding: "6px 12px",
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              Modifier la couleur ▾
+            </button>
+            {showBulkColors && (
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                {Object.entries(COLOR_MAP).map(([key, { bg, label }]) => (
+                  <button
+                    key={key}
+                    onClick={() => bulkSetColor(key)}
+                    title={label}
+                    aria-label={label}
+                    style={{
+                      width: 26,
+                      height: 26,
+                      borderRadius: "50%",
+                      background: bg,
+                      border: "1px solid rgba(255,255,255,0.25)",
+                      cursor: "pointer",
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+            <button
+              onClick={clearExoSelection}
+              style={{
+                marginLeft: "auto",
+                background: "none",
+                border: "1px solid rgba(255,255,255,0.2)",
+                color: "var(--cst-text-soft)",
+                borderRadius: 6,
+                padding: "6px 10px",
+                fontSize: 12,
+                cursor: "pointer",
+              }}
+            >
+              Annuler
+            </button>
+          </div>
+        )}
+
         {/* Jours en colonnes (builder léger) */}
         {(structure.days ?? []).length > 0 && (
           <div
@@ -1382,6 +1498,21 @@ export default function AdapterSemaine() {
                             : {}),
                         }}
                       >
+                        <input
+                          type="checkbox"
+                          checked={selectedExos.has(exoKey(di, ei))}
+                          onChange={() => toggleExoSelected(di, ei)}
+                          title="Sélectionner pour changer la couleur en groupe"
+                          aria-label={`Sélectionner ${ex.name}`}
+                          style={{
+                            marginTop: 10,
+                            width: 15,
+                            height: 15,
+                            flexShrink: 0,
+                            cursor: "pointer",
+                            accentColor: "var(--cst-mid-green)",
+                          }}
+                        />
                         <div
                           onClick={() => setEditTarget({ dayIdx: di, exoIdx: ei })}
                           role="button"
