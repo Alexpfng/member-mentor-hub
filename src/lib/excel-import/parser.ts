@@ -49,6 +49,10 @@ export type ColumnLayout = {
   rpeCol: number;
   notesCol: number;
   youtubeCol: number;
+  /** Colonnes propres aux séances de course : absentes des tableaux de muscu. */
+  distanceCol?: number;
+  allureCol?: number;
+  tempsCol?: number;
 };
 
 export type ParsedExcel = {
@@ -79,7 +83,7 @@ const SESSION_RE =
   /(full[\s-]?body|lower|upper|push|pull|legs?|jambe|séance|seance|course|cardio|côtes|cotes|fractionn|endurance|renfo|mobilité|sortie|hiit|circuit|bloc)/i;
 const EX_CODE_RE = /^([A-H]\d*)[.)]\s*(.*)/i;
 const JUNK_RE =
-  /^(objectif|important|consigne|remarque|note|attention|rappel|\(|on cherche|on peut|pour |~|\d+\s*(min|km|m))/i;
+  /^(objectif|obj\.|important|consigne|remarque|note|attention|rappel|\(|on cherche|on peut|pour |~|\d+\s*(min|km|m))/i;
 
 function getCell(ws: XLSX.WorkSheet, row: number, col: number): any {
   const addr = XLSX.utils.encode_cell({ r: row, c: col });
@@ -87,6 +91,7 @@ function getCell(ws: XLSX.WorkSheet, row: number, col: number): any {
 }
 
 function cellStr(ws: XLSX.WorkSheet, r: number, c: number): string | null {
+  if (c < 0) return null; // colonne absente du tableau
   const cell = getCell(ws, r, c);
   if (!cell || cell.v === undefined || cell.v === null) return null;
   const s = String(cell.v).trim();
@@ -119,34 +124,100 @@ function getYoutubeUrl(ws: XLSX.WorkSheet, row: number, col: number): string | n
   return m ? m[0] : null;
 }
 
+/** Cherche, sous l'en-tête, une colonne contenant des liens vidéo. */
+function findLinkColumn(
+  ws: XLSX.WorkSheet,
+  range: XLSX.Range,
+  headerRow: number,
+  nameCol: number,
+): number | null {
+  for (let r = headerRow + 1; r <= Math.min(headerRow + 25, range.e.r); r++) {
+    for (let c = nameCol + 1; c <= Math.min(nameCol + 14, range.e.c); c++) {
+      const cell = getCell(ws, r, c);
+      const raw = cell?.v !== undefined && cell?.v !== null ? String(cell.v) : "";
+      const link = cell?.l?.Target ? String(cell.l.Target) : raw;
+      if (/youtu\.?be|youtube\.com/i.test(link)) return c;
+    }
+  }
+  return null;
+}
+
 function findColumnLayout(ws: XLSX.WorkSheet, range: XLSX.Range): ColumnLayout | null {
   for (let r = range.s.r; r <= Math.min(range.s.r + 40, range.e.r); r++) {
     for (let c = 0; c < 6; c++) {
       const cell = getCell(ws, r, c);
       if (!cell || cell.v === undefined) continue;
-      if (String(cell.v).trim().toLowerCase() === "exercice") {
-        const layout: Partial<ColumnLayout> = { nameCol: c, headerRow: r };
-        for (let cc = c; cc < c + 14; cc++) {
-          const h = getCell(ws, r, cc);
-          if (!h) continue;
-          const label = String(h.v).trim().toLowerCase();
-          if (/série|serie/.test(label)) layout.seriesCol = cc;
-          else if (/reps|rép|rep/.test(label)) layout.repsCol = cc;
-          else if (/charge/.test(label)) layout.chargeCol = cc;
-          else if (/tempo|temps/.test(label)) layout.tempoCol = cc;
-          else if (/récup|recup/.test(label)) layout.recupCol = cc;
-          else if (/rpe/.test(label)) layout.rpeCol = cc;
-        }
-        layout.seriesCol ??= c + 2;
-        layout.repsCol ??= c + 3;
-        layout.chargeCol ??= c + 4;
-        layout.tempoCol ??= c + 5;
-        layout.recupCol ??= c + 6;
-        layout.rpeCol ??= c + 7;
-        layout.notesCol = c + 8;
-        layout.youtubeCol = c + 12;
-        return layout as ColumnLayout;
+      // Les tableaux du coach sont tantôt en français, tantôt en anglais.
+      if (!/^exerc(ice|ise)$/i.test(String(cell.v).trim())) continue;
+
+      const layout: Partial<ColumnLayout> = { nameCol: c, headerRow: r };
+      const taken = new Set<number>([c]);
+      const set = (key: keyof ColumnLayout, col: number) => {
+        if (layout[key] !== undefined) return; // la première colonne trouvée gagne
+        layout[key] = col;
+        taken.add(col);
+      };
+
+      for (let cc = c; cc < c + 14; cc++) {
+        const h = getCell(ws, r, cc);
+        if (!h || h.v === undefined) continue;
+        const label = String(h.v).trim().toLowerCase();
+        if (cc === c) continue; // la colonne du nom
+        // « tempo » (muscu, ex. 3010) et « temps » (course, ex. 1min travail) sont
+        // deux choses différentes : les confondre collait la durée d'un intervalle
+        // dans le champ tempo, et faussait toute la ligne.
+        if (/tempo/.test(label)) set("tempoCol", cc);
+        else if (/temps|durée|duree/.test(label)) set("tempsCol", cc);
+        else if (/série|serie/.test(label)) set("seriesCol", cc);
+        else if (/reps|rép|rep\b/.test(label)) set("repsCol", cc);
+        else if (/charge|poids/.test(label)) set("chargeCol", cc);
+        else if (/distance/.test(label)) set("distanceCol", cc);
+        else if (/allure|pace|vitesse/.test(label)) set("allureCol", cc);
+        else if (/récup|recup|repos/.test(label)) set("recupCol", cc);
+        else if (/rpe/.test(label)) set("rpeCol", cc);
+        else if (/consigne|explication|explanation|note|remarque/.test(label)) set("notesCol", cc);
+        else if (/vidéo|video|youtube|lien|url/.test(label)) set("youtubeCol", cc);
       }
+
+      // Repli par position UNIQUEMENT pour ce qui n'a pas été nommé, et sans
+      // marcher sur une colonne déjà attribuée : sinon « Récup » se retrouvait
+      // lu comme une charge et tout le tableau se décalait.
+      const fallback = (key: keyof ColumnLayout, col: number) => {
+        if (layout[key] !== undefined || taken.has(col)) return;
+        layout[key] = col;
+        taken.add(col);
+      };
+      fallback("seriesCol", c + 2);
+      fallback("repsCol", c + 3);
+      fallback("chargeCol", c + 4);
+      fallback("tempoCol", c + 5);
+      fallback("recupCol", c + 6);
+      fallback("rpeCol", c + 7);
+      fallback("notesCol", c + 8);
+      // Le coach colle souvent ses liens dans une colonne sans en-tête : on la
+      // repère à son contenu plutôt que de parier sur une position fixe.
+      if (layout.youtubeCol === undefined) {
+        const found = findLinkColumn(ws, range, r, c);
+        if (found !== null && !taken.has(found)) {
+          layout.youtubeCol = found;
+          taken.add(found);
+        }
+      }
+      fallback("youtubeCol", c + 12);
+      // Une colonne absente du tableau ne doit rien lire : -1 = « pas de colonne ».
+      for (const key of [
+        "seriesCol",
+        "repsCol",
+        "chargeCol",
+        "tempoCol",
+        "recupCol",
+        "rpeCol",
+        "notesCol",
+        "youtubeCol",
+      ] as const) {
+        layout[key] ??= -1;
+      }
+      return layout as ColumnLayout;
     }
   }
   return null;
@@ -242,11 +313,26 @@ function parseWeekSheet(ws: XLSX.WorkSheet, sheetName: string): ImportedWeek | n
     if (!name || name.toLowerCase() === "exercice") continue;
 
     const series = cellStr(ws, r, layout.seriesCol);
-    const reps = cellStr(ws, r, layout.repsCol);
-    const charge = cellStr(ws, r, layout.chargeCol);
+    const rawReps = cellStr(ws, r, layout.repsCol);
+    const rawCharge = cellStr(ws, r, layout.chargeCol);
     const rpe = cellStr(ws, r, layout.rpeCol);
     const tempo = cellStr(ws, r, layout.tempoCol);
     const recup = cellStr(ws, r, layout.recupCol);
+
+    // Séances de course : la distance et le temps jouent le rôle des répétitions,
+    // l'allure celui de la charge (c'est l'intensité prescrite). Ce qui ne rentre
+    // pas est repris en note plutôt que jeté — le coach ne doit rien perdre.
+    const distance = cellStr(ws, r, layout.distanceCol ?? -1);
+    const allure = cellStr(ws, r, layout.allureCol ?? -1);
+    const temps = cellStr(ws, r, layout.tempsCol ?? -1);
+    const reps = rawReps ?? distance ?? temps;
+    const charge = rawCharge ?? allure;
+    const leftovers = [
+      rawReps && distance ? `Distance : ${distance}` : null,
+      (rawReps || distance) && temps ? `Temps : ${temps}` : null,
+      rawCharge && allure ? `Allure : ${allure}` : null,
+    ].filter(Boolean) as string[];
+
     const hasData = !!(series || reps || charge || rpe);
     const exMatch = name.match(EX_CODE_RE);
 
@@ -263,12 +349,29 @@ function parseWeekSheet(ws: XLSX.WorkSheet, sheetName: string): ImportedWeek | n
     // Le texte éventuel de la colonne RPE fait partie de la consigne.
     const rpeIsNumeric = !!rpe && !Number.isNaN(Number(rpe.replace(",", ".")));
     const hasNumericData = !!(series || reps || charge || rpeIsNumeric);
+    // Un bloc du coach s'étale souvent sur deux lignes (cellules fusionnées) : la
+    // seconde porte « OBJECTIF : » ET la récup de l'intervalle (« 1min recup »,
+    // « ~7:00/km »). Elle reste une consigne malgré ces valeurs — sinon elle
+    // devenait un exercice fantôme. Une ligne qui commence simplement par une
+    // minuscule, elle, n'est une consigne que si elle ne porte aucune donnée :
+    // un vrai exercice peut s'appeler « développé couché ».
+    const isConsigneLabel = JUNK_RE.test(name);
     const looksLikeConsigne =
-      !exMatch && !hasNumericData && (JUNK_RE.test(name) || /^[a-zàâäéèêëîïôöùûüç]/.test(name));
+      !exMatch &&
+      (isConsigneLabel || (!hasNumericData && /^[a-zàâäéèêëîïôöùûüç]/.test(name)));
     if (looksLikeConsigne) {
       const prev = currentDay?.exercises[currentDay.exercises.length - 1];
       if (prev) {
-        const fragment = [name, rpe && !rpeIsNumeric ? rpe : null].filter(Boolean).join(" — ");
+        const fragment = [
+          name,
+          reps && reps !== name ? reps : null,
+          charge && charge !== name ? charge : null,
+          recup,
+          rpe && !rpeIsNumeric ? rpe : null,
+          cellStr(ws, r, layout.notesCol),
+        ]
+          .filter(Boolean)
+          .join(" — ");
         prev.coach_notes = prev.coach_notes ? `${prev.coach_notes}\n${fragment}` : fragment;
       }
       continue;
@@ -294,7 +397,7 @@ function parseWeekSheet(ws: XLSX.WorkSheet, sheetName: string): ImportedWeek | n
       tempo,
       recup,
       rpe_target: rpe,
-      coach_notes: cellStr(ws, r, layout.notesCol),
+      coach_notes: [cellStr(ws, r, layout.notesCol), ...leftovers].filter(Boolean).join("\n") || null,
       color: detectColor(nameCell),
       youtube_url: url,
       youtube_id: extractYoutubeId(url),
