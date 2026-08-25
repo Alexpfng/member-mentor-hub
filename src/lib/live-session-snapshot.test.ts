@@ -30,6 +30,7 @@ describe("createSessionSnapshot", () => {
         updatedAt: 222,
         expertRecapRpeByExercise: { Squat: 8.5 },
         expertRecapCommentByExercise: { Squat: "propre" },
+        sessionNote: "grosse fatigue aujourd'hui",
       }),
     ).toEqual<SessionSnapshot>({
       sessionId: "session-1",
@@ -42,6 +43,7 @@ describe("createSessionSnapshot", () => {
       updatedAt: 222,
       expertRecapRpeByExercise: { Squat: 8.5 },
       expertRecapCommentByExercise: { Squat: "propre" },
+      sessionNote: "grosse fatigue aujourd'hui",
     });
   });
 });

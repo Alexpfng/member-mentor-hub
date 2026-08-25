@@ -8,6 +8,7 @@ type FeedbackBucket = {
   tooEasy: boolean;
   failure: boolean;
   weights: number[];
+  comments: Array<{ text: string; at: number }>;
 };
 
 type LogRow = {
@@ -17,6 +18,7 @@ type LogRow = {
   logged_at: string | null;
   weight_kg?: number | null;
   reps?: number | null;
+  note?: string | null;
 };
 
 type FeedbackRow = {
@@ -26,6 +28,7 @@ type FeedbackRow = {
   felt_too_easy: boolean | null;
   could_not_do: boolean | null;
   created_at: string | null;
+  member_comment?: string | null;
 };
 
 type PainRow = {
@@ -53,6 +56,7 @@ function ensureBucket(
       tooEasy: false,
       failure: false,
       weights: [],
+      comments: [],
     };
   }
   return { key, bucket: acc[key] };
@@ -70,6 +74,29 @@ function registerLatestRpe(bucket: FeedbackBucket, value: number | null, at: num
     bucket.lastRpeAt = at;
     bucket.lastRpe = normalized;
   }
+}
+
+/** Un même commentaire peut arriver par la série ET par le bloc : on ne le
+ *  garde qu'une fois, et on privilégie le plus récent à l'affichage. */
+function registerComment(bucket: FeedbackBucket, value: string | null | undefined, at: number) {
+  const text = String(value ?? "").trim();
+  if (!text) return;
+  const existing = bucket.comments.find((entry) => entry.text === text);
+  if (existing) {
+    existing.at = Math.max(existing.at, at);
+    return;
+  }
+  bucket.comments.push({ text, at });
+}
+
+/** Commentaires du plus récent au plus ancien, bornés pour ne pas noyer la carte. */
+const MAX_MEMBER_COMMENTS = 4;
+
+function formatComments(comments: Array<{ text: string; at: number }>) {
+  return [...comments]
+    .sort((a, b) => b.at - a.at)
+    .slice(0, MAX_MEMBER_COMMENTS)
+    .map((entry) => entry.text);
 }
 
 function registerWeight(bucket: FeedbackBucket, value: number | null | undefined) {
@@ -104,6 +131,7 @@ export function buildCoachExerciseFeedback({
     if (!entry) return;
     registerLatestRpe(entry.bucket, row.rpe, ts(row.logged_at));
     registerWeight(entry.bucket, row.weight_kg);
+    registerComment(entry.bucket, row.note, ts(row.logged_at));
     if (entry.bucket && row.completed === false) entry.bucket.failure = true;
   });
 
@@ -114,6 +142,7 @@ export function buildCoachExerciseFeedback({
     if (row.felt_too_easy) entry.bucket.tooEasy = true;
     if (row.could_not_do) entry.bucket.failure = true;
     registerLatestRpe(entry.bucket, row.rpe, ts(row.created_at));
+    registerComment(entry.bucket, row.member_comment, ts(row.created_at));
   });
 
   pains.forEach((row) => {
@@ -132,6 +161,7 @@ export function buildCoachExerciseFeedback({
         tooEasy: value.tooEasy,
         failure: value.failure,
         loadLabel: formatLoadLabel(value.weights),
+        comments: formatComments(value.comments),
       },
     ]),
   );

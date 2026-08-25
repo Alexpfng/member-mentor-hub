@@ -3,6 +3,8 @@ export type ExpertSavedStep = {
   weight: number | null;
   reps: number | null;
   rpe: number | null;
+  /** Commentaire libre laissé par le membre au moment de valider la série. */
+  note?: string | null;
 };
 
 export type SessionProgressStep = {
@@ -29,6 +31,7 @@ export function groupExpertRecapByExercise(savedByStep: Record<number, ExpertSav
         weight: number | null;
         reps: number | null;
         rpe: number | null;
+        note?: string | null;
       }>;
     }
   >();
@@ -47,6 +50,7 @@ export function groupExpertRecapByExercise(savedByStep: Record<number, ExpertSav
         weight: row.weight,
         reps: row.reps,
         rpe: row.rpe,
+        note: row.note ?? null,
       });
       groups.set(row.exo, existing);
     });

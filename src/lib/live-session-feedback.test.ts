@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import {
   buildExpertExerciseFeedbackRows,
+  buildMemberCommentFeedbackRows,
   normalizeExpertRpeForStorage,
   trimOptionalComment,
 } from "./live-session-feedback";
@@ -68,5 +69,44 @@ describe("buildExpertExerciseFeedbackRows", () => {
         member_comment: "échec sur la dernière rep",
       },
     ]);
+  });
+});
+
+describe("buildMemberCommentFeedbackRows", () => {
+  const groups = [
+    {
+      exerciseName: "Rowing barre",
+      rows: [{ stepIdx: 0, setNumber: 1, weight: 40, reps: 8, rpe: 8 }],
+    },
+    {
+      exerciseName: "Back squat",
+      rows: [{ stepIdx: 1, setNumber: 1, weight: 80, reps: 5, rpe: 9 }],
+    },
+  ];
+
+  test("ne remonte que les exercices réellement commentés", () => {
+    expect(
+      buildMemberCommentFeedbackRows("session-2", groups, {
+        "Rowing barre": "  barre trop basse  ",
+        "Back squat": "   ",
+      }),
+    ).toEqual([
+      {
+        session_id: "session-2",
+        exercise_name: "Rowing barre",
+        member_comment: "barre trop basse",
+      },
+    ]);
+  });
+
+  test("n'écrit aucun RPE de bloc — il est déjà saisi série par série", () => {
+    const [row] = buildMemberCommentFeedbackRows("session-2", groups, {
+      "Back squat": "genou qui tire",
+    });
+    expect(row).not.toHaveProperty("rpe");
+  });
+
+  test("ne produit rien quand aucun commentaire n'est saisi", () => {
+    expect(buildMemberCommentFeedbackRows("session-2", groups, {})).toEqual([]);
   });
 });

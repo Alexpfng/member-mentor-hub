@@ -35,6 +35,8 @@ export type AdapterExerciseFeedback = {
   tooEasy: boolean;
   failure: boolean;
   loadLabel?: string | null;
+  /** Commentaires libres du membre (série + bloc), du plus récent au plus ancien. */
+  comments?: string[];
 };
 
 export function mergeExerciseFeedbackMaps(
@@ -48,6 +50,8 @@ export function mergeExerciseFeedbackMaps(
         continue;
       }
 
+      const comments = [...new Set([...(feedback.comments ?? []), ...(previous.comments ?? [])])];
+
       merged[key] = {
         rpe: feedback.rpe ?? previous.rpe,
         pain: previous.pain || feedback.pain,
@@ -55,6 +59,7 @@ export function mergeExerciseFeedbackMaps(
         tooEasy: previous.tooEasy || feedback.tooEasy,
         failure: previous.failure || feedback.failure,
         loadLabel: feedback.loadLabel ?? previous.loadLabel,
+        comments: comments.length > 0 ? comments : undefined,
       };
     }
     return merged;
