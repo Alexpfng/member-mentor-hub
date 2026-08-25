@@ -129,3 +129,81 @@ describe("getQuickRpePopoverPlacement", () => {
     ).toBe("bottom");
   });
 });
+
+describe("buildCoachExerciseFeedback — commentaires du membre", () => {
+  it("remonte les notes de série et les commentaires de bloc, du plus récent au plus ancien", () => {
+    const feedback = buildCoachExerciseFeedback({
+      logs: [
+        {
+          exercise_name: "Développé couché",
+          rpe: 8,
+          completed: true,
+          logged_at: "2026-08-06T14:00:00.000Z",
+          note: "banc pris, fait aux haltères",
+        },
+      ],
+      feedbacks: [
+        {
+          exercise_name: "Développé couché",
+          rpe: 9,
+          felt_too_hard: false,
+          felt_too_easy: false,
+          could_not_do: false,
+          created_at: "2026-08-06T14:20:00.000Z",
+          member_comment: "épaule un peu sensible",
+        },
+      ],
+      pains: [],
+    });
+
+    expect(feedback["developpe couche"]?.comments).toEqual([
+      "épaule un peu sensible",
+      "banc pris, fait aux haltères",
+    ]);
+  });
+
+  it("ne garde qu'une fois un commentaire dupliqué entre série et bloc", () => {
+    const feedback = buildCoachExerciseFeedback({
+      logs: [
+        {
+          exercise_name: "Tractions",
+          rpe: 9,
+          completed: true,
+          logged_at: "2026-08-06T14:00:00.000Z",
+          note: "  échec sur la dernière  ",
+        },
+      ],
+      feedbacks: [
+        {
+          exercise_name: "Tractions",
+          rpe: 9,
+          felt_too_hard: false,
+          felt_too_easy: false,
+          could_not_do: false,
+          created_at: "2026-08-06T14:30:00.000Z",
+          member_comment: "échec sur la dernière",
+        },
+      ],
+      pains: [],
+    });
+
+    expect(feedback["tractions"]?.comments).toEqual(["échec sur la dernière"]);
+  });
+
+  it("renvoie une liste vide quand le membre n'a rien écrit", () => {
+    const feedback = buildCoachExerciseFeedback({
+      logs: [
+        {
+          exercise_name: "Soulevé de terre",
+          rpe: 7,
+          completed: true,
+          logged_at: "2026-08-06T14:00:00.000Z",
+        },
+      ],
+      feedbacks: [],
+      pains: [],
+    });
+
+    expect(feedback["souleve de terre"]?.comments).toEqual([]);
+  });
+});

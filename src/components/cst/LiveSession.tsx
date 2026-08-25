@@ -23,7 +23,9 @@ import {
 } from "@/lib/live-session-snapshot";
 import {
   buildExpertExerciseFeedbackRows,
+  buildMemberCommentFeedbackRows,
   normalizeExpertRpeForStorage,
+  trimOptionalComment,
 } from "@/lib/live-session-feedback";
 import { getExpertEmomLoggedValue, getExpertSetLoggedValue } from "@/lib/session-prescription";
 import { alternatingRepsCycle, parseEmom } from "@/lib/emom";
@@ -770,6 +772,76 @@ function ExpertOverviewRpeBadge({
   );
 }
 
+/* ───────── Récap assisté : une carte par exercice + commentaire libre ───────── */
+
+function MemberRecapExerciseCard({
+  group,
+  comment,
+  onCommentChange,
+}: {
+  group: ExpertRecapGroup;
+  comment: string;
+  onCommentChange: (value: string) => void;
+}) {
+  const [open, setOpen] = useState(comment.trim().length > 0);
+
+  return (
+    <div
+      style={{
+        padding: "10px 12px",
+        background: "rgba(0,0,0,0.18)",
+        borderRadius: 6,
+        display: "flex",
+        flexDirection: "column",
+        gap: 8,
+      }}
+    >
+      <div className="cst-mono" style={{ fontSize: 12, opacity: 0.9 }}>
+        {group.exerciseName}
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+        {group.rows.map((row) => (
+          <div key={row.stepIdx} className="cst-mono" style={{ fontSize: 11, opacity: 0.7 }}>
+            S{row.setNumber} — {row.weight ?? "—"}kg × {row.reps ?? "—"} @ RPE {row.rpe ?? "—"}
+            {row.note && (
+              <span style={{ fontStyle: "italic", opacity: 0.85 }}> · « {row.note} »</span>
+            )}
+          </div>
+        ))}
+      </div>
+      {open || comment ? (
+        <textarea
+          defaultValue={comment}
+          onChange={(e) => onCommentChange(e.target.value)}
+          placeholder="Un mot sur cet exercice pour ton coach…"
+          rows={2}
+          maxLength={300}
+          style={{
+            width: "100%",
+            resize: "vertical",
+            padding: "8px 10px",
+            fontSize: 12,
+            lineHeight: 1.4,
+            color: "#fff",
+            background: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(255,255,255,0.12)",
+            borderRadius: 6,
+            fontFamily: "inherit",
+          }}
+        />
+      ) : (
+        <button
+          onClick={() => setOpen(true)}
+          className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+          style={{ alignSelf: "flex-start", borderStyle: "dashed", opacity: 0.9 }}
+        >
+          💬 Commenter cet exercice
+        </button>
+      )}
+    </div>
+  );
+}
+
 function rpeButtonReset(color: string) {
   return {
     appearance: "none" as const,
@@ -1058,6 +1130,7 @@ function loadSnapshot(sessionId: string): SessionSnapshot | null {
       updatedAt: parsed.updatedAt ?? Date.now(),
       expertRecapRpeByExercise: parsed.expertRecapRpeByExercise ?? {},
       expertRecapCommentByExercise: parsed.expertRecapCommentByExercise ?? {},
+      sessionNote: parsed.sessionNote ?? "",
     };
     if (snap.sessionId !== sessionId) return null;
     return snap;
@@ -1139,7 +1212,12 @@ export function LiveSession({
     weight: string;
     reps: string;
     rpe: number | null;
+    note: string;
   }>(null);
+  /** Zone de commentaire d'une série : repliée tant que le membre ne l'ouvre pas. */
+  const [setNoteOpen, setSetNoteOpen] = useState(false);
+  /** Mot de fin de séance pour le coach (sessions.member_note). */
+  const [sessionNote, setSessionNote] = useState(snap?.sessionNote ?? "");
   const [validationError, setValidationError] = useState<string | null>(null);
   const [showOverview, setShowOverview] = useState(false);
   const [showThread, setShowThread] = useState<string | null>(null);
@@ -1251,6 +1329,7 @@ export function LiveSession({
         updatedAt: Date.now(),
         expertRecapRpeByExercise,
         expertRecapCommentByExercise,
+        sessionNote,
       }),
     );
   }, [
@@ -1260,6 +1339,7 @@ export function LiveSession({
     savedByStep,
     expertRecapRpeByExercise,
     expertRecapCommentByExercise,
+    sessionNote,
   ]);
 
   // Expose quit trigger to parent (outer "← QUITTER" button)
@@ -1471,7 +1551,7 @@ export function LiveSession({
 
   async function saveSetAndAdvance(
     step: WorkSet,
-    l: { weight: string; reps: string; rpe: number | null },
+    l: { weight: string; reps: string; rpe: number | null; note?: string },
   ) {
     const bodyweight = isBodyweight(step.exercise.charge);
     const durationMode = isDurationReps(step.exercise.reps);
@@ -1503,6 +1583,7 @@ export function LiveSession({
     const r = parseInt(l.reps, 10);
     const weight_kg = bodyweight ? null : isNaN(w) ? null : w;
     const reps = isNaN(r) ? null : r;
+    const note = trimOptionalComment(l.note);
 
     queueWrite(async () => {
       // Revalider une série (retour en arrière) doit REMPLACER la ligne existante,
@@ -1520,13 +1601,14 @@ export function LiveSession({
         weight_kg,
         reps,
         rpe: l.rpe,
+        note,
         completed: true,
       });
       if (error) throw error;
     }, "set_logs insert failed");
     const nextSaved = {
       ...savedByStep,
-      [stepIdx]: { exo: step.exercise.name, weight: weight_kg, reps, rpe: l.rpe },
+      [stepIdx]: { exo: step.exercise.name, weight: weight_kg, reps, rpe: l.rpe, note },
     };
     setSavedByStep(nextSaved);
     if (step.restAfter || restBeforeNextBlock(step, nextSaved)) {
@@ -1556,6 +1638,37 @@ export function LiveSession({
     } else {
       goNext(nextSaved);
     }
+  }
+
+  /** Écrit le mot de fin de séance sur la séance (visible côté coach). */
+  async function saveSessionNote() {
+    const { error } = await supabase
+      .from("sessions")
+      .update({ member_note: trimOptionalComment(sessionNote) })
+      .eq("id", sessionId);
+    if (error) throw error;
+  }
+
+  /**
+   * Mode assisté : les séries sont déjà en base au fil de l'eau, il ne reste
+   * que les retours libres — commentaire par exercice + mot de fin de séance.
+   */
+  async function saveMemberFeedback() {
+    const feedbackRows = buildMemberCommentFeedbackRows(
+      sessionId,
+      expertRecapGroups,
+      expertRecapCommentByExercise,
+    );
+    const { error: deleteError } = await supabase
+      .from("exercise_feedbacks")
+      .delete()
+      .eq("session_id", sessionId);
+    if (deleteError) throw deleteError;
+    if (feedbackRows.length > 0) {
+      const { error: insertError } = await supabase.from("exercise_feedbacks").insert(feedbackRows);
+      if (insertError) throw insertError;
+    }
+    await saveSessionNote();
   }
 
   async function finishExpertRecap() {
@@ -1618,6 +1731,7 @@ export function LiveSession({
       if (insertLogs.error) throw insertLogs.error;
       if (insertFeedbacks.error) throw insertFeedbacks.error;
 
+      await saveSessionNote();
       await onFinish();
       clearSnapshot(sessionId);
     } catch (err) {
@@ -2412,26 +2526,62 @@ export function LiveSession({
                 ))}
               </div>
             ) : (
-              savedList.map((l, i) => (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 <div
-                  key={i}
                   className="cst-mono"
-                  style={{
-                    fontSize: 11,
-                    padding: "6px 10px",
-                    background: "rgba(0,0,0,0.18)",
-                    borderRadius: 4,
-                    opacity: 0.85,
-                  }}
+                  style={{ fontSize: 10, opacity: 0.6, letterSpacing: "0.18em" }}
                 >
-                  {l.exo} — {l.weight ?? "—"}kg × {l.reps ?? "—"} @ RPE {l.rpe ?? "—"}
+                  {t("CE QUE TU AS FAIT · COMMENTAIRE LIBRE PAR EXERCICE")}
                 </div>
-              ))
+                {expertRecapGroups.map((group) => (
+                  <MemberRecapExerciseCard
+                    key={group.exerciseName}
+                    group={group}
+                    comment={expertRecapCommentByExercise[group.exerciseName] ?? ""}
+                    onCommentChange={(value) =>
+                      setExpertRecapCommentByExercise((currentMap) => ({
+                        ...currentMap,
+                        [group.exerciseName]: value,
+                      }))
+                    }
+                  />
+                ))}
+              </div>
             )}
           </div>
           {validationError && (
             <div style={{ fontSize: 12, color: "#ff8a7a" }}>{validationError}</div>
           )}
+
+          {/* Retour global de fin de séance → sessions.member_note (visible par le
+              coach sur la fiche séance et dans sa liste des dernières séances). */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <span
+              className="cst-mono"
+              style={{ fontSize: 10, opacity: 0.6, letterSpacing: "0.18em" }}
+            >
+              {t("UN MOT SUR LA SÉANCE (OPTIONNEL)")}
+            </span>
+            <textarea
+              defaultValue={sessionNote}
+              onChange={(e) => setSessionNote(e.target.value)}
+              placeholder="Fatigue, douleurs, matériel pris, ressenti général…"
+              rows={3}
+              maxLength={1000}
+              style={{
+                width: "100%",
+                resize: "vertical",
+                padding: "10px 12px",
+                fontSize: 13,
+                lineHeight: 1.4,
+                color: "#fff",
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(255,255,255,0.12)",
+                borderRadius: 6,
+                fontFamily: "inherit",
+              }}
+            />
+          </div>
 
           {/* Session-level video share */}
           <SessionMediaUploader sessionId={sessionId} userId={userId} />
@@ -2445,6 +2595,7 @@ export function LiveSession({
                   // Idem : les séries encore en vol doivent être en base avant
                   // que la clôture ne calcule volume et RPE moyen.
                   await writeQueueRef.current;
+                  await saveMemberFeedback();
                   await onFinish();
                   clearSnapshot(sessionId); // seulement si la fin a réussi
                 }
@@ -3110,7 +3261,11 @@ export function LiveSession({
 
   function startLogging() {
     const defaults = computeDefaults(setStep);
-    setLogging(defaults);
+    // Revenir sur une série déjà validée doit rouvrir SON commentaire : sans ça,
+    // re-valider la série écrasait la note déjà envoyée au coach.
+    const alreadySaved = savedByStep[stepIdx]?.note ?? "";
+    setLogging({ ...defaults, note: alreadySaved });
+    setSetNoteOpen(alreadySaved !== "");
     setValidationError(null);
   }
 
@@ -3119,6 +3274,9 @@ export function LiveSession({
   }
   function commitReps(v: string) {
     setLogging((cur) => (cur ? { ...cur, reps: v } : cur));
+  }
+  function commitSetNote(v: string) {
+    setLogging((cur) => (cur ? { ...cur, note: v } : cur));
   }
 
   return (
@@ -3235,7 +3393,9 @@ export function LiveSession({
               setTimedDone(true);
               // Pre-fill the reps field with actual duration for logging
               const defaults = computeDefaults(setStep);
-              setLogging({ ...defaults, reps: String(timedSecs) });
+              const alreadySaved = savedByStep[stepIdx]?.note ?? "";
+              setLogging({ ...defaults, note: alreadySaved, reps: String(timedSecs) });
+              setSetNoteOpen(alreadySaved !== "");
             }}
           />
         )}
@@ -3355,6 +3515,49 @@ export function LiveSession({
                   );
                 })}
               </div>
+            </div>
+
+            {/* Commentaire libre : le RPE seul ne dit pas POURQUOI la série a été
+                dure. Replié par défaut pour ne pas alourdir l'écran de saisie. */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {!setNoteOpen && !logging.note ? (
+                <button
+                  onClick={() => setSetNoteOpen(true)}
+                  className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+                  style={{ width: "100%", borderStyle: "dashed", opacity: 0.9 }}
+                >
+                  💬 Ajouter un commentaire (optionnel)
+                </button>
+              ) : (
+                <>
+                  <span
+                    className="cst-mono"
+                    style={{ fontSize: 10, opacity: 0.6, letterSpacing: "0.18em" }}
+                  >
+                    COMMENTAIRE POUR LE COACH
+                  </span>
+                  <textarea
+                    key={`n-${stepIdx}`}
+                    defaultValue={logging.note}
+                    onChange={(e) => commitSetNote(e.target.value)}
+                    placeholder="Machine prise, gêne au genou, super sensation…"
+                    rows={2}
+                    maxLength={300}
+                    style={{
+                      width: "100%",
+                      resize: "vertical",
+                      padding: "10px 12px",
+                      fontSize: 13,
+                      lineHeight: 1.4,
+                      color: "#fff",
+                      background: "rgba(255,255,255,0.05)",
+                      border: "1px solid rgba(255,255,255,0.12)",
+                      borderRadius: 6,
+                      fontFamily: "inherit",
+                    }}
+                  />
+                </>
+              )}
             </div>
 
             {validationError && (

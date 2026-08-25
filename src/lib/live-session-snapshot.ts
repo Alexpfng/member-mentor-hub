@@ -9,6 +9,8 @@ export type SessionSnapshot = {
   updatedAt: number;
   expertRecapRpeByExercise: Record<string, number | null>;
   expertRecapCommentByExercise: Record<string, string>;
+  /** Mot libre laissé au coach sur l'écran de fin de séance. */
+  sessionNote: string;
 };
 
 export function shouldPersistSessionSnapshot({

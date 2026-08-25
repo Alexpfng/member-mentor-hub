@@ -61,6 +61,8 @@ type Feedback = {
   tooHard: boolean;
   tooEasy: boolean;
   failure: boolean;
+  /** Commentaires libres laissés par le membre pendant / après la séance. */
+  comments?: string[];
 };
 
 const QUICK_RPE_VALUES = Array.from({ length: 21 }, (_, index) => index * 0.5);
@@ -456,6 +458,29 @@ function ExoEditModal({
             }}
           />
         </div>
+
+        {(fb?.comments?.length ?? 0) > 0 && (
+          <div
+            style={{
+              marginBottom: 14,
+              padding: "8px 10px",
+              background: "rgba(90,140,200,0.08)",
+              border: "1px solid rgba(90,140,200,0.25)",
+              borderRadius: 6,
+            }}
+          >
+            <div className="cst-mono" style={{ fontSize: 10, opacity: 0.8, marginBottom: 6 }}>
+              💬 MOT DU MEMBRE
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              {fb?.comments?.map((comment, ci) => (
+                <div key={ci} style={{ fontSize: 12, fontStyle: "italic", opacity: 0.9 }}>
+                  « {comment} »
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {suggestion && (
           <div
@@ -976,7 +1001,7 @@ export default function AdapterSemaine() {
             const hasCoachRpe = str !== "" && !Number.isNaN(Number(str.replace(",", ".")));
             const hasVisibleMemberRpe =
               !ex.member_rpe_hidden &&
-              findExerciseFeedback(ctx?.feedback ?? [], ex.name)?.feedback?.rpe != null;
+              findExerciseFeedback(ctx?.feedback ?? {}, ex.name)?.feedback?.rpe != null;
             return hasCoachRpe || hasVisibleMemberRpe;
           }).length,
         0,
@@ -1925,6 +1950,25 @@ export default function AdapterSemaine() {
                               {fbMatch && !fbMatch.exact && (
                                 <span style={{ display: "block", fontWeight: 400, opacity: 0.65 }}>
                                   sur « {fbMatch.key} »
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          {(fb?.comments?.length ?? 0) > 0 && (
+                            <div
+                              style={{
+                                fontSize: 10,
+                                fontStyle: "italic",
+                                opacity: 0.75,
+                                color: "#8FB4DC",
+                              }}
+                              title={fb?.comments?.join("\n")}
+                            >
+                              💬 « {fb?.comments?.[0]} »
+                              {(fb?.comments?.length ?? 0) > 1 && (
+                                <span style={{ opacity: 0.7 }}>
+                                  {" "}
+                                  +{(fb?.comments?.length ?? 1) - 1}
                                 </span>
                               )}
                             </div>

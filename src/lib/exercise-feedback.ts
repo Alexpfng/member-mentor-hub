@@ -5,6 +5,8 @@ export type ExerciseFeedback = {
   tooEasy: boolean;
   failure: boolean;
   loadLabel?: string | null;
+  /** Commentaires libres du membre (série + bloc), du plus récent au plus ancien. */
+  comments?: string[];
 };
 
 export function normalizeExerciseFeedbackKey(name: string | null | undefined) {

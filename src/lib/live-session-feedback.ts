@@ -43,3 +43,26 @@ export function buildExpertExerciseFeedbackRows(
     };
   });
 }
+
+/**
+ * Mode assisté : le RPE est déjà saisi série par série (set_logs), on ne
+ * réécrit donc PAS de RPE de bloc — seul le commentaire libre du membre est
+ * remonté au coach. Les exercices sans commentaire ne produisent aucune ligne.
+ */
+export function buildMemberCommentFeedbackRows(
+  sessionId: string,
+  groups: ExpertRecapGroupLike[],
+  commentByExercise: Record<string, string>,
+): ExerciseFeedbackInsert[] {
+  return groups
+    .map((group) => ({
+      group,
+      comment: trimOptionalComment(commentByExercise[group.exerciseName]),
+    }))
+    .filter((entry) => entry.comment != null)
+    .map((entry) => ({
+      session_id: sessionId,
+      exercise_name: entry.group.exerciseName,
+      member_comment: entry.comment,
+    }));
+}

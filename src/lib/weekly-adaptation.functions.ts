@@ -153,11 +153,13 @@ async function aggregateFeedback(
     const [{ data: logs }, { data: feedbacks }, { data: pains }] = await Promise.all([
       supabaseAdmin
         .from("set_logs")
-        .select("exercise_name, rpe, reps, weight_kg, completed, logged_at")
+        .select("exercise_name, rpe, reps, weight_kg, completed, note, logged_at")
         .in("session_id", sessionIds),
       supabaseAdmin
         .from("exercise_feedbacks")
-        .select("exercise_name, felt_too_hard, felt_too_easy, could_not_do, rpe, created_at")
+        .select(
+          "exercise_name, felt_too_hard, felt_too_easy, could_not_do, rpe, member_comment, created_at",
+        )
         .in("session_id", sessionIds),
       supabaseAdmin.from("pain_reports").select("exercise_name").in("session_id", sessionIds),
     ]);

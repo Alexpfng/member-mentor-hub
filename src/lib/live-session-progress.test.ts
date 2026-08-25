@@ -21,7 +21,7 @@ describe("groupExpertRecapByExercise", () => {
   it("groups saved expert rows by exercise while preserving auto-derived weight and reps", () => {
     const savedByStep: Record<number, ExpertSavedStep> = {
       0: { exo: "Squat", weight: 80, reps: 8, rpe: null },
-      1: { exo: "Squat", weight: 80, reps: 8, rpe: null },
+      1: { exo: "Squat", weight: 80, reps: 8, rpe: null, note: "genou qui tire" },
       2: { exo: "Row", weight: 42.5, reps: 10, rpe: null },
     };
 
@@ -29,13 +29,20 @@ describe("groupExpertRecapByExercise", () => {
       {
         exerciseName: "Squat",
         rows: [
-          { stepIdx: 0, setNumber: 1, weight: 80, reps: 8, rpe: null },
-          { stepIdx: 1, setNumber: 2, weight: 80, reps: 8, rpe: null },
+          { stepIdx: 0, setNumber: 1, weight: 80, reps: 8, rpe: null, note: null },
+          {
+            stepIdx: 1,
+            setNumber: 2,
+            weight: 80,
+            reps: 8,
+            rpe: null,
+            note: "genou qui tire",
+          },
         ],
       },
       {
         exerciseName: "Row",
-        rows: [{ stepIdx: 2, setNumber: 1, weight: 42.5, reps: 10, rpe: null }],
+        rows: [{ stepIdx: 2, setNumber: 1, weight: 42.5, reps: 10, rpe: null, note: null }],
       },
     ]);
   });
