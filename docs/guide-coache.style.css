@@ -1,7 +1,11 @@
 @page { size: A4; margin: 14mm 13mm 16mm 13mm; }
 * { box-sizing: border-box; }
+/* Fond volontairement TRANSPARENT : c'est build-guide-coache.py qui peint le
+   fond de chaque page, bord à bord. Repeindre aussi ici laissait une couture
+   visible (les deux aplats ne tombent pas exactement sur la même couleur). */
+html, body{ background:transparent; }
 body{
-  margin:0; background:#141C17; color:#E8EDE9;
+  margin:0; color:#E8EDE9;
   font-family:"Helvetica Neue",Arial,sans-serif; font-size:10.4pt; line-height:1.55;
   -webkit-print-color-adjust:exact; print-color-adjust:exact;
 }
@@ -9,8 +13,8 @@ h1,h2,h3,h4{ margin:0; font-weight:800; letter-spacing:-0.01em; }
 .mono{ font-family:"SF Mono",Menlo,Consolas,monospace; letter-spacing:.14em; text-transform:uppercase; }
 
 /* ---------- COUVERTURE ---------- */
-.cover{ height:250mm; display:flex; flex-direction:column; justify-content:center; page-break-after:always;
-  background:linear-gradient(160deg,#1B2A20 0%,#141C17 55%,#101711 100%); padding:0 6mm; }
+.cover{ height:267mm; display:flex; flex-direction:column; justify-content:center; page-break-after:always;
+  padding:0 6mm; }
 .cover .kicker{ font-size:8.5pt; color:#7FB98A; margin-bottom:10mm; }
 .cover h1{ font-size:46pt; line-height:1.02; color:#fff; }
 .cover h1 em{ font-style:normal; color:#6EAB76; display:block; }
