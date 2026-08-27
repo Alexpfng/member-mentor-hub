@@ -115,11 +115,22 @@ export default function ChallengeEditor() {
   }
 
   return (
-    <div className="cst-card-dark" style={{ padding: 14, margin: "0 32px 32px" }}>
+    <div
+      style={{
+        borderRadius: 10,
+        background: "var(--cst-card-bg)",
+        border: "1px solid var(--cst-card-border)",
+        borderLeft: "3px solid var(--cst-mid-green, #3A8A4D)",
+        padding: 16,
+      }}
+    >
       <div
         style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}
       >
-        <div className="cst-mono" style={{ fontSize: 9, letterSpacing: "0.15em", opacity: 0.5 }}>
+        <div
+          className="cst-mono"
+          style={{ fontSize: 9, letterSpacing: "0.15em", color: "var(--cst-text-muted)" }}
+        >
           OBJECTIFS COLLECTIFS
         </div>
         {!form && !loadError && (
@@ -145,7 +156,14 @@ export default function ChallengeEditor() {
       )}
 
       {!loadError && entries.length === 0 && !form && (
-        <p style={{ margin: "8px 0 0", fontSize: 12, opacity: 0.7 }}>
+        <p
+          style={{
+            margin: "8px 0 0",
+            fontSize: 12,
+            color: "var(--cst-text-muted)",
+            lineHeight: 1.5,
+          }}
+        >
           Aucun objectif en cours. Un cap collectif sur le mois donne une direction commune à tes
           membres, sans les comparer entre eux.
         </p>
@@ -196,9 +214,9 @@ export default function ChallengeEditor() {
               </div>
               <div
                 style={{
-                  height: 6,
+                  height: 5,
                   borderRadius: 999,
-                  background: "rgba(255,255,255,0.08)",
+                  background: "var(--cst-hairline)",
                   overflow: "hidden",
                 }}
               >
@@ -210,7 +228,7 @@ export default function ChallengeEditor() {
                   }}
                 />
               </div>
-              <div className="cst-mono" style={{ fontSize: 10.5, opacity: 0.7 }}>
+              <div className="cst-mono" style={{ fontSize: 10.5, color: "var(--cst-text-muted)" }}>
                 {entry.progress.total.toLocaleString("fr-FR")} /{" "}
                 {entry.progress.target.toLocaleString("fr-FR")}{" "}
                 {METRIC_LABEL[entry.challenge.metric]} · {entry.progress.participants} inscrit
@@ -288,7 +306,7 @@ export default function ChallengeEditor() {
               {busy ? "..." : "Enregistrer"}
             </button>
           </div>
-          <span style={{ fontSize: 10.5, opacity: 0.5 }}>
+          <span style={{ fontSize: 10.5, color: "var(--cst-text-muted)" }}>
             L'avancement se calcule depuis les séances des participants — personne n'a rien à
             saisir.
           </span>
