@@ -991,28 +991,24 @@ export default function AdapterSemaine() {
 
   function resetAllRpe() {
     if (!window.confirm("Effacer tous les RPE de cette semaine ?")) return;
-    let count = 0;
-    setStructure((s) => {
-      count = (s.days ?? []).reduce(
-        (total, day) =>
-          total +
-          (day.exercises ?? []).filter((ex) => {
-            const str = String(ex.rpe_target ?? "").trim();
-            const hasCoachRpe = str !== "" && !Number.isNaN(Number(str.replace(",", ".")));
-            const hasVisibleMemberRpe =
-              !ex.member_rpe_hidden &&
-              findExerciseFeedback(ctx?.feedback ?? {}, ex.name)?.feedback?.rpe != null;
-            return hasCoachRpe || hasVisibleMemberRpe;
-          }).length,
-        0,
-      );
-      return resetWeekExerciseRpeTargets(s);
-    });
-    setQuickRpeTarget(null);
-    setTimeout(
-      () => toast.success(`${count > 0 ? count : "Aucun"} RPE réinitialisé${count > 1 ? "s" : ""}`),
-      50,
+    // Count from current state before update (functional updater runs async,
+    // so computing count inside it leads to count=0 in the toast).
+    const count = (structure.days ?? []).reduce(
+      (total, day) =>
+        total +
+        (day.exercises ?? []).filter((ex) => {
+          const str = String(ex.rpe_target ?? "").trim();
+          const hasCoachRpe = str !== "" && !Number.isNaN(Number(str.replace(",", ".")));
+          const hasVisibleMemberRpe =
+            !ex.member_rpe_hidden &&
+            findExerciseFeedback(ctx?.feedback ?? {}, ex.name)?.feedback?.rpe != null;
+          return hasCoachRpe || hasVisibleMemberRpe;
+        }).length,
+      0,
     );
+    setStructure((s) => resetWeekExerciseRpeTargets(s));
+    setQuickRpeTarget(null);
+    toast.success(`${count > 0 ? count : "Aucun"} RPE réinitialisé${count > 1 ? "s" : ""}`);
   }
 
   function applyQuickRpe(dayIdx: number, exoIdx: number, rpe: string | number | null) {

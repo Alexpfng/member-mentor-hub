@@ -410,15 +410,22 @@ function parseWeekSheet(ws: XLSX.WorkSheet, sheetName: string): ImportedWeek | n
   return week;
 }
 
-export async function parseExcelFile(file: File): Promise<ParsedExcel> {
+export async function listExcelSheets(file: File): Promise<string[]> {
+  const buffer = await file.arrayBuffer();
+  const wb = XLSX.read(buffer, { type: "array" });
+  return wb.SheetNames.filter((n) => /^S\d+/i.test(n));
+}
+
+export async function parseExcelFile(file: File, selectedSheets?: string[]): Promise<ParsedExcel> {
   const buffer = await file.arrayBuffer();
   const wb = XLSX.read(buffer, { type: "array", cellStyles: true });
-  const weekSheets = wb.SheetNames.filter((n) => /^S\d+/i.test(n));
+  const allWeekSheets = wb.SheetNames.filter((n) => /^S\d+/i.test(n));
+  const weekSheets = selectedSheets
+    ? allWeekSheets.filter((n) => selectedSheets.includes(n))
+    : allWeekSheets;
   const warnings: string[] = [];
   if (weekSheets.length === 0) {
-    throw new Error(
-      "Aucune semaine détectée. Tes feuilles doivent s'appeler S1, S2, S3…",
-    );
+    throw new Error("Aucune semaine détectée. Tes feuilles doivent s'appeler S1, S2, S3…");
   }
   const metadata = extractMetadata(wb.Sheets[weekSheets[0]]);
   const weeks: ImportedWeek[] = [];

@@ -6,7 +6,12 @@ import { toast } from "sonner";
 import CoachSidebar from "../../components/CoachSidebar";
 import { CSTSectionNum } from "../../components/Atoms";
 import AssignmentTimingFields from "@/components/coach/AssignmentTimingFields";
-import { parseExcelFile, type ParsedExcel, type ImportedExercise } from "@/lib/excel-import/parser";
+import {
+  listExcelSheets,
+  parseExcelFile,
+  type ParsedExcel,
+  type ImportedExercise,
+} from "@/lib/excel-import/parser";
 import { saveProgram, listMembers, assignProgram } from "@/lib/coach.functions";
 import { deriveAssignmentStartDate } from "@/lib/assignment-start";
 
@@ -20,7 +25,7 @@ const COLOR_DOT: Record<string, string> = {
 function nextMondayISO(): string {
   const d = new Date();
   const day = d.getDay(); // 0=Sun
-  const add = ((8 - day) % 7) || 7;
+  const add = (8 - day) % 7 || 7;
   d.setDate(d.getDate() + add);
   return d.toISOString().slice(0, 10);
 }
@@ -62,9 +67,7 @@ function ExerciseRow({ ex }: { ex: ImportedExercise }) {
           {val(ex.recup)} · RPE {val(ex.rpe_target)}
         </span>
         {ex.coach_notes && (
-          <span style={{ fontSize: 11, opacity: 0.75, fontStyle: "italic" }}>
-            {ex.coach_notes}
-          </span>
+          <span style={{ fontSize: 11, opacity: 0.75, fontStyle: "italic" }}>{ex.coach_notes}</span>
         )}
       </div>
       <span
@@ -129,7 +132,9 @@ function Dropzone({ onFile, busy }: { onFile: (f: File) => void; busy: boolean }
       <div className="cst-display" style={{ fontSize: 20, color: "#fff" }}>
         {busy ? "ANALYSE DU FICHIER…" : "GLISSE TON FICHIER EXCEL ICI"}
       </div>
-      <div className="cst-mono" style={{ fontSize: 10, opacity: 0.6 }}>OU</div>
+      <div className="cst-mono" style={{ fontSize: 10, opacity: 0.6 }}>
+        OU
+      </div>
       <button
         className="cst-btn cst-btn-secondary cst-btn-sm"
         disabled={busy}
@@ -236,7 +241,9 @@ function AssignDialog({
         }}
       >
         <CSTSectionNum num={4} label="ASSIGNER" sub={programName.toUpperCase()} />
-        <h3 className="cst-display" style={{ fontSize: 22, margin: 0 }}>UN COACHÉ.</h3>
+        <h3 className="cst-display" style={{ fontSize: 22, margin: 0 }}>
+          UN COACHÉ.
+        </h3>
         <input
           placeholder="Rechercher un coaché…"
           value={query}
@@ -250,7 +257,15 @@ function AssignDialog({
             fontSize: 13,
           }}
         />
-        <div style={{ maxHeight: 260, overflow: "auto", display: "flex", flexDirection: "column", gap: 4 }}>
+        <div
+          style={{
+            maxHeight: 260,
+            overflow: "auto",
+            display: "flex",
+            flexDirection: "column",
+            gap: 4,
+          }}
+        >
           {isLoading && <div style={{ opacity: 0.5, padding: 8 }}>Chargement…</div>}
           {!isLoading && members.length === 0 && (
             <div style={{ opacity: 0.5, padding: 8 }}>Aucun coaché trouvé.</div>
@@ -279,7 +294,9 @@ function AssignDialog({
                 <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                   <span style={{ fontWeight: 600, fontSize: 13 }}>{name}</span>
                   <span className="cst-mono" style={{ fontSize: 9, opacity: 0.6 }}>
-                    {m.program_name ? `Programme actif : ${m.program_name}` : "Aucun programme actif"}
+                    {m.program_name
+                      ? `Programme actif : ${m.program_name}`
+                      : "Aucun programme actif"}
                   </span>
                 </div>
                 {active && <span style={{ color: "var(--cst-mid-green)" }}>✓</span>}
@@ -296,7 +313,11 @@ function AssignDialog({
           effectiveStartDate={effectiveStartDate}
         />
         <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
-          <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" style={{ flex: 1 }} onClick={onClose}>
+          <button
+            className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+            style={{ flex: 1 }}
+            onClick={onClose}
+          >
             ANNULER
           </button>
           <button
@@ -319,34 +340,79 @@ export default function ExcelImport() {
   const saveFn = useServerFn(saveProgram);
   const [file, setFile] = useState<File | null>(null);
   const [parsing, setParsing] = useState(false);
+  const [availableSheets, setAvailableSheets] = useState<string[] | null>(null);
+  const [selectedSheets, setSelectedSheets] = useState<Set<string>>(new Set());
   const [parsed, setParsed] = useState<ParsedExcel | null>(null);
   const [programName, setProgramName] = useState("");
   const [saving, setSaving] = useState(false);
-  const [savedProgram, setSavedProgram] = useState<{ id: string; name: string; durationWeeks: number | null } | null>(null);
+  const [savedProgram, setSavedProgram] = useState<{
+    id: string;
+    name: string;
+    durationWeeks: number | null;
+  } | null>(null);
   const [assignOpen, setAssignOpen] = useState(false);
 
   const handleFile = useCallback(async (f: File) => {
     setFile(f);
     setParsing(true);
     try {
-      const res = await parseExcelFile(f);
-      setParsed(res);
-      setProgramName(f.name.replace(/\.(xlsx|xls|csv)$/i, ""));
-      if (res.warnings.length) res.warnings.forEach((w) => toast.warning(w));
+      const sheets = await listExcelSheets(f);
+      if (sheets.length === 0) {
+        throw new Error("Aucune semaine détectée. Tes feuilles doivent s'appeler S1, S2, S3…");
+      }
+      if (sheets.length === 1) {
+        // Single sheet — parse immediately, no picker needed
+        const res = await parseExcelFile(f, sheets);
+        setParsed(res);
+        setProgramName(f.name.replace(/\.(xlsx|xls|csv)$/i, ""));
+        if (res.warnings.length) res.warnings.forEach((w) => toast.warning(w));
+      } else {
+        // Multiple sheets — show picker, select all by default
+        setAvailableSheets(sheets);
+        setSelectedSheets(new Set(sheets));
+      }
     } catch (e: any) {
       toast.error(e?.message || "Échec du parsing");
       setFile(null);
       setParsed(null);
+      setAvailableSheets(null);
     } finally {
       setParsing(false);
     }
   }, []);
+
+  const handleSheetImport = async () => {
+    if (!file || selectedSheets.size === 0) return;
+    setParsing(true);
+    try {
+      const res = await parseExcelFile(file, [...selectedSheets]);
+      setParsed(res);
+      setProgramName(file.name.replace(/\.(xlsx|xls|csv)$/i, ""));
+      setAvailableSheets(null);
+      if (res.warnings.length) res.warnings.forEach((w) => toast.warning(w));
+    } catch (e: any) {
+      toast.error(e?.message || "Échec du parsing");
+    } finally {
+      setParsing(false);
+    }
+  };
+
+  const toggleSheet = (sheet: string) => {
+    setSelectedSheets((prev) => {
+      const next = new Set(prev);
+      if (next.has(sheet)) next.delete(sheet);
+      else next.add(sheet);
+      return next;
+    });
+  };
 
   const reset = () => {
     setFile(null);
     setParsed(null);
     setProgramName("");
     setSavedProgram(null);
+    setAvailableSheets(null);
+    setSelectedSheets(new Set());
   };
 
   const handleSave = async () => {
@@ -408,12 +474,16 @@ export default function ExcelImport() {
             </div>
           </div>
           <div className="cst-mono" style={{ color: "rgba(255,255,255,0.5)" }}>
-            {parsed ? "ÉTAPE 2/3 · APERÇU" : "ÉTAPE 1/3 · UPLOAD"}
+            {parsed
+              ? "ÉTAPE 3/3 · APERÇU"
+              : availableSheets
+                ? "ÉTAPE 2/3 · SÉLECTION DES FICHES"
+                : "ÉTAPE 1/3 · UPLOAD"}
           </div>
         </div>
 
         {/* STEP 1: Upload */}
-        {!parsed && (
+        {!parsed && !availableSheets && (
           <div
             style={{
               background: "#1F2A22",
@@ -426,7 +496,91 @@ export default function ExcelImport() {
           </div>
         )}
 
-        {/* STEP 2: Preview */}
+        {/* STEP 2: Sheet picker (multi-sheet files only) */}
+        {!parsed && availableSheets && (
+          <div
+            style={{
+              background: "#1F2A22",
+              border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: 12,
+              padding: 24,
+              color: "#fff",
+              display: "flex",
+              flexDirection: "column",
+              gap: 18,
+            }}
+          >
+            <div>
+              <CSTSectionNum
+                num={2}
+                label="CHOISIR LES FICHES"
+                sub="SÉLECTIONNE LES SEMAINES À IMPORTER"
+              />
+              <div className="cst-mono" style={{ fontSize: 10, opacity: 0.55, marginTop: 6 }}>
+                {file?.name} · {availableSheets.length} fiche{availableSheets.length > 1 ? "s" : ""}{" "}
+                détectée{availableSheets.length > 1 ? "s" : ""}
+              </div>
+            </div>
+
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+              {availableSheets.map((sheet) => {
+                const active = selectedSheets.has(sheet);
+                return (
+                  <button
+                    key={sheet}
+                    onClick={() => toggleSheet(sheet)}
+                    className="cst-btn"
+                    style={{
+                      padding: "10px 18px",
+                      borderRadius: 8,
+                      border: `2px solid ${active ? "var(--cst-mid-green)" : "rgba(255,255,255,0.15)"}`,
+                      background: active ? "rgba(45,90,53,0.3)" : "rgba(255,255,255,0.04)",
+                      color: active ? "#fff" : "rgba(255,255,255,0.55)",
+                      fontWeight: 700,
+                      fontSize: 14,
+                      letterSpacing: "0.08em",
+                      cursor: "pointer",
+                      transition: "all 120ms ease",
+                    }}
+                  >
+                    {active ? "✓ " : ""}
+                    {sheet}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+              <button
+                className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+                onClick={() => setSelectedSheets(new Set(availableSheets))}
+              >
+                Tout sélectionner
+              </button>
+              <button
+                className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+                onClick={() => setSelectedSheets(new Set())}
+              >
+                Tout désélectionner
+              </button>
+              <div style={{ flex: 1 }} />
+              <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" onClick={reset}>
+                ← RECOMMENCER
+              </button>
+              <button
+                className="cst-btn cst-btn-primary"
+                onClick={handleSheetImport}
+                disabled={selectedSheets.size === 0 || parsing}
+              >
+                {parsing
+                  ? "ANALYSE…"
+                  : `IMPORTER ${selectedSheets.size} FICHE${selectedSheets.size > 1 ? "S" : ""} →`}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 3: Preview */}
         {parsed && (
           <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
             {/* Recap */}
@@ -455,9 +609,7 @@ export default function ExcelImport() {
                 </button>
               </div>
 
-              <label
-                style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 14 }}
-              >
+              <label style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 14 }}>
                 <span className="cst-mono" style={{ fontSize: 10, opacity: 0.6 }}>
                   NOM DU PROGRAMME
                 </span>
@@ -500,7 +652,9 @@ export default function ExcelImport() {
                       border: "1px solid rgba(255,255,255,0.06)",
                     }}
                   >
-                    <div className="cst-mono" style={{ fontSize: 9, opacity: 0.55 }}>{k}</div>
+                    <div className="cst-mono" style={{ fontSize: 9, opacity: 0.55 }}>
+                      {k}
+                    </div>
                     <div style={{ fontSize: 14, fontWeight: 600, marginTop: 2 }}>{v}</div>
                   </div>
                 ))}
@@ -626,11 +780,7 @@ export default function ExcelImport() {
                 ← RECOMMENCER
               </button>
               {!savedProgram && (
-                <button
-                  className="cst-btn cst-btn-primary"
-                  onClick={handleSave}
-                  disabled={saving}
-                >
+                <button className="cst-btn cst-btn-primary" onClick={handleSave} disabled={saving}>
                   {saving ? "ENREGISTREMENT…" : "CONVERTIR ET ENREGISTRER →"}
                 </button>
               )}
@@ -644,10 +794,7 @@ export default function ExcelImport() {
                   >
                     MODIFIER DANS LE BUILDER
                   </button>
-                  <button
-                    className="cst-btn cst-btn-primary"
-                    onClick={() => setAssignOpen(true)}
-                  >
+                  <button className="cst-btn cst-btn-primary" onClick={() => setAssignOpen(true)}>
                     ASSIGNER À UN COACHÉ →
                   </button>
                 </>
