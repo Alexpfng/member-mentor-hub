@@ -26,6 +26,7 @@ COVER_GRADIENT_MID = 0.55
 GRADIENT_STEPS = 1024
 
 CHROME_CANDIDATES = [
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
     "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
     "/opt/pw-browsers/chromium/chrome-linux/chrome",
     "chromium",
