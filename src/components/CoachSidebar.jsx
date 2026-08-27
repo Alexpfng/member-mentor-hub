@@ -2,12 +2,19 @@ import { useState } from "react";
 import { useNavigate, useLocation } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { SUPABASE_ENABLED } from "@/lib/app-mode";
+import { useAuth } from "@/hooks/use-auth";
 import { CSTLogo, CSTAvatar } from "./Atoms";
 import ThemeToggle from "./ThemeToggle";
 import NotificationBell from "./coach/NotificationBell";
 
 const items = [
-  { id: "membres", label: "Membres", icon: "○", path: "/coach", match: (p) => p === "/coach" || p.startsWith("/coach/membre") },
+  {
+    id: "membres",
+    label: "Membres",
+    icon: "○",
+    path: "/coach",
+    match: (p) => p === "/coach" || p.startsWith("/coach/membre"),
+  },
   { id: "planning", label: "Planning", icon: "▦", path: "/coach/planning" },
   { id: "exercices", label: "Bibliothèque", icon: "❖", path: "/coach/exercices" },
   { id: "programmes", label: "Programmes", icon: "◤", path: "/coach/programmes" },
@@ -65,6 +72,8 @@ export default function CoachSidebar() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const { roles, switchRole } = useAuth();
+  const hasMemberRole = roles.includes("member");
 
   async function handleSignOut() {
     if (SUPABASE_ENABLED) {
@@ -74,9 +83,8 @@ export default function CoachSidebar() {
   }
 
   const activeId =
-    items.find((it) =>
-      it.match ? it.match(pathname) : pathname.startsWith(it.path),
-    )?.id || "membres";
+    items.find((it) => (it.match ? it.match(pathname) : pathname.startsWith(it.path)))?.id ||
+    "membres";
 
   const userBlock = (
     <div
@@ -94,7 +102,9 @@ export default function CoachSidebar() {
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <CSTAvatar initials="LC" size={32} />
         <div className="cst-col" style={{ minWidth: 0, flex: 1 }}>
-          <div style={{ fontSize: 12, fontWeight: 600, color: "var(--cst-text)" }}>Léo Colognesi</div>
+          <div style={{ fontSize: 12, fontWeight: 600, color: "var(--cst-text)" }}>
+            Léo Colognesi
+          </div>
           <div className="cst-mono" style={{ fontSize: 9 }}>
             COACH · ADMIN
           </div>
@@ -117,10 +127,38 @@ export default function CoachSidebar() {
           ⎋
         </button>
       </div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+      <div
+        style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}
+      >
         <ThemeToggle variant="pill" />
         <NotificationBell />
       </div>
+      {hasMemberRole && (
+        <button
+          onClick={() => {
+            switchRole("member");
+            navigate({ to: "/membre" });
+          }}
+          style={{
+            marginTop: 8,
+            width: "100%",
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            color: "rgba(255,255,255,0.55)",
+            borderRadius: 6,
+            padding: "7px 10px",
+            fontSize: 10,
+            cursor: "pointer",
+            fontFamily: "var(--cst-mono)",
+            letterSpacing: "0.12em",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+          }}
+        >
+          <span style={{ opacity: 0.7 }}>◉</span> VUE COACHÉ
+        </button>
+      )}
     </div>
   );
 

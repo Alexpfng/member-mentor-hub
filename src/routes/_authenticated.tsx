@@ -43,26 +43,27 @@ function AuthenticatedLayout() {
         const user = sessionData.session?.user;
         if (cancelled || !user) return;
 
-        const { data: roleRow, error: roleErr } = await supabase
+        const { data: roleRows, error: roleErr } = await supabase
           .from("user_roles")
           .select("role")
-          .eq("user_id", user.id)
-          .maybeSingle();
+          .eq("user_id", user.id);
         if (cancelled) return;
 
-        // Only redirect on a DEFINITE role mismatch. If the role lookup failed
-        // or returned nothing, do NOT bounce — server functions still enforce
-        // access, and a transient null role must never kick a coach off /coach.
-        const role = roleErr ? null : (roleRow?.role as "coach" | "member" | null);
-        if (!role) return;
+        // Fetch ALL roles — a user can have both coach and member.
+        // Only redirect when the user genuinely lacks the role for the current
+        // path (e.g. a pure member trying to reach /coach). Never redirect a
+        // dual-role user: they choose their active space themselves.
+        if (roleErr || !roleRows) return;
+        const allRoles = roleRows.map((r) => r.role as string);
+        if (!allRoles.length) return;
         const path = router.state.location.pathname;
 
-        if (role === "coach" && path.startsWith("/membre")) {
-          setRedirecting(true);
-          router.navigate({ to: "/coach" });
-        } else if (role === "member" && path.startsWith("/coach")) {
+        if (path.startsWith("/coach") && !allRoles.includes("coach")) {
           setRedirecting(true);
           router.navigate({ to: "/membre" });
+        } else if (path.startsWith("/membre") && !allRoles.includes("member")) {
+          setRedirecting(true);
+          router.navigate({ to: "/coach" });
         }
       } catch (err) {
         console.error("[_authenticated] role check failed", err);

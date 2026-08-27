@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { getUnreadCount } from "@/lib/coach.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 import { useI18n } from "@/lib/i18n";
 
 const items = [
@@ -20,6 +21,8 @@ export default function MemberNav({ unreadCount: unreadProp = undefined } = {}) 
   const navigate = useNavigate();
   const { t } = useI18n();
   const { pathname } = useLocation();
+  const { roles, switchRole } = useAuth();
+  const hasCoachRole = roles.includes("coach");
   const unreadFn = useServerFn(getUnreadCount);
   const [unread, setUnread] = useState(unreadProp ?? 0);
 
@@ -60,6 +63,35 @@ export default function MemberNav({ unreadCount: unreadProp = undefined } = {}) 
 
   return (
     <>
+      {hasCoachRole && (
+        <button
+          onClick={() => {
+            switchRole("coach");
+            navigate({ to: "/coach" });
+          }}
+          style={{
+            position: "fixed",
+            bottom: 72,
+            right: 16,
+            zIndex: 50,
+            background: "var(--cst-mid-green, #2d5a35)",
+            color: "#fff",
+            border: "none",
+            borderRadius: 20,
+            padding: "6px 14px",
+            fontSize: 10,
+            fontFamily: "var(--cst-mono, monospace)",
+            letterSpacing: "0.12em",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+          }}
+        >
+          <span>◎</span> VUE COACH
+        </button>
+      )}
       <nav className="bottom-nav" role="navigation" aria-label="Navigation principale">
         {items.map((it) => {
           const on = it.id === activeId;
