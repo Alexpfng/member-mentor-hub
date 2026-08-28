@@ -7,7 +7,7 @@
  *
  * Écran coach : pas d'i18n (l'espace coach reste en français).
  */
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import {
   LineChart,
   Line,
@@ -171,6 +171,13 @@ export default function MemberTrackingPanel({
       return { ym, days, monthAvg: avgOf(days), weekAvgs };
     });
   }, [dailySteps, stepsByDate]);
+
+  // Positionne la frise sur les jours les plus récents à l'ouverture (stable via
+  // useCallback : un ref inline serait rappelé à chaque render et écraserait le
+  // scroll manuel du coach).
+  const scrollToEnd = useCallback((el: HTMLDivElement | null) => {
+    if (el) el.scrollLeft = el.scrollWidth;
+  }, []);
 
   const stepsGoal = goals.steps ?? null;
   const weeksChart = useMemo(
@@ -399,7 +406,7 @@ export default function MemberTrackingPanel({
                       </span>
                     </span>
                   </div>
-                  <div style={{ overflowX: "auto", paddingBottom: 4 }}>
+                  <div ref={scrollToEnd} style={{ overflowX: "auto", paddingBottom: 4 }}>
                     <div style={{ display: "flex", gap: 3, minWidth: "min-content" }}>
                       {m.days.map((d) => (
                         <div

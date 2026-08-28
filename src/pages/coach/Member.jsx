@@ -5,11 +5,7 @@ import { deriveAssignmentStartDate } from "@/lib/assignment-start";
 import { localDateISO } from "@/lib/local-date";
 
 function normalize(s) {
-  return (s || "")
-    .toString()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "");
+  return (s || "").toString().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 }
 
 function todayISO() {
@@ -1005,11 +1001,14 @@ export default function CoachMember() {
           style={{
             padding: "24px 32px",
             display: "grid",
-            gridTemplateColumns: "1.4fr 1fr",
+            // minmax(0, …) : sans lui, une colonne grid ne peut pas être plus
+            // étroite que son contenu (min-width auto) — la frise des pas
+            // élargissait la colonne au lieu de scroller horizontalement.
+            gridTemplateColumns: "minmax(0, 1.4fr) minmax(0, 1fr)",
             gap: 24,
           }}
         >
-          <div>
+          <div style={{ minWidth: 0 }}>
             {activeTab === 1 && (
               <>
                 <MemberTrackingPanel
