@@ -35,10 +35,9 @@ bun run format    # prettier --write .
 
 Les programmes/séances ne sont PAS des tables relationnelles classiques : la structure vit en **JSONB** dans `programs.structure` et `assignment_weeks.structure`, au format `weeks[].days[].exercises[]`. Quand tu manipules des séances, raisonne sur ce JSON imbriqué, pas sur des jointures.
 
-## Supabase — prod HORS MCP (important)
+## Supabase — prod SUR le MCP
 
-- **Prod** : project ref `lupqpeqvtxnohjpolhna`. Il **n'est PAS** sur le MCP Supabase connecté (le projet MCP `colosmartraining` = `wvcfiimxudedppmolsic` est **inactif**).
-- ⟹ Pour toute migration/requête prod : **fournir du SQL prêt à coller** (Alex l'exécute dans le dashboard), ne pas supposer un accès MCP.
+- **Prod** : project ref `wvcfiimxudedppmolsic` — **SUR le MCP connecté** → migrations et requêtes exécutables directement via MCP Supabase.
 - Migrations locales versionnées dans `supabase/migrations/` (timestamp).
 
 ## Déploiement (Vercel — Lovable abandonné depuis 2026-08-10)
