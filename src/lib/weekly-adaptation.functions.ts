@@ -11,6 +11,7 @@ import {
 } from "@/lib/adapter-feedback-source";
 import { buildCoachExerciseFeedback } from "@/lib/coach-rpe-feedback";
 import { normalizeProgramStructure, normalizeWeekStructure } from "@/lib/week-structure-normalizer";
+import { clearFulfilledFilmRequests, filmedExerciseKeys } from "@/lib/film-requests";
 
 /**
  * Adaptation hebdomadaire des programmes (coach).
@@ -73,6 +74,29 @@ function structurePatch(week: WeekRowLike, structure: unknown) {
     : { draft_structure: structure as unknown as never };
 }
 
+/**
+ * Exercices que le membre a réellement filmés pendant une semaine donnée.
+ * Sert à ne remettre à zéro que les demandes de vidéo effectivement honorées.
+ */
+async function filmedKeysForWeek(
+  memberId: string,
+  weekNumber: number | null,
+): Promise<Set<string>> {
+  if (weekNumber == null) return new Set();
+  const { data: sessions } = await supabaseAdmin
+    .from("sessions")
+    .select("id")
+    .eq("member_id", memberId)
+    .eq("week_number", weekNumber);
+  const sessionIds = (sessions ?? []).map((session) => session.id);
+  if (sessionIds.length === 0) return new Set();
+  const { data: videos } = await supabaseAdmin
+    .from("technique_videos")
+    .select("exercise_name")
+    .in("session_id", sessionIds);
+  return filmedExerciseKeys(videos ?? []);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Resolve the source week structure for a member at a given week number.
 // Priority: latest published assignment_weeks for that week, else program.structure.
@@ -80,6 +104,7 @@ function structurePatch(week: WeekRowLike, structure: unknown) {
 async function resolveSourceWeek(
   assignmentId: string,
   weekNumber: number,
+  memberId: string,
 ): Promise<{ structure: WeekStructure; basedOn: number | null }> {
   // Try previous published assignment_week
   const { data: prev } = await supabaseAdmin
@@ -92,7 +117,14 @@ async function resolveSourceWeek(
     .limit(1)
     .maybeSingle();
   if (prev && prev.structure) {
-    return { structure: prev.structure as WeekStructure, basedOn: prev.week_number };
+    // La demande de vidéo ne se réarme pas toute seule : on ne décoche que les
+    // exercices dont la vidéo est bien arrivée sur la semaine copiée. Les
+    // autres restent cochés pour que le coach continue de relancer.
+    const filmed = await filmedKeysForWeek(memberId, prev.week_number);
+    return {
+      structure: clearFulfilledFilmRequests(prev.structure as WeekStructure, filmed),
+      basedOn: prev.week_number,
+    };
   }
 
   // Fallback: program structure
@@ -293,7 +325,7 @@ export const getMemberWeekContext = createServerFn({ method: "POST" })
     if (!weekRow) {
       if (!assignment)
         throw new Error("Aucun programme actif pour ce membre. Assigne d'abord un programme.");
-      const src = await resolveSourceWeek(assignment.id, targetWeek);
+      const src = await resolveSourceWeek(assignment.id, targetWeek, data.memberId);
       const { data: created, error } = await supabaseAdmin
         .from("assignment_weeks")
         .insert({
@@ -317,7 +349,7 @@ export const getMemberWeekContext = createServerFn({ method: "POST" })
         (d) => (d.exercises ?? []).length > 0,
       );
       if (!hasContent && assignment && weekRow.status === "draft") {
-        const src = await resolveSourceWeek(assignment.id, targetWeek);
+        const src = await resolveSourceWeek(assignment.id, targetWeek, data.memberId);
         if ((src.structure.days ?? []).some((d) => (d.exercises ?? []).length > 0)) {
           await supabaseAdmin
             .from("assignment_weeks")
@@ -717,11 +749,18 @@ export const duplicateWeekTo = createServerFn({ method: "POST" })
     const lastIdx = sorted.length - 1;
     const out: Array<{ weekNumber: number; id: string }> = [];
 
+    // Même règle que la copie de semaine en semaine : une demande de vidéo déjà
+    // honorée ne se reporte pas, une demande restée sans réponse si.
+    const filmed = await filmedKeysForWeek(week.member_id, week.week_number);
+
     for (let i = 0; i < sorted.length; i++) {
       const tw = sorted[i];
       // Duplique la version en cours d'édition (brouillon de révision inclus).
-      const structure = normalizeWeekStructure(
-        JSON.parse(JSON.stringify(effectiveStructure(week))) as WeekStructure,
+      const structure = clearFulfilledFilmRequests(
+        normalizeWeekStructure(
+          JSON.parse(JSON.stringify(effectiveStructure(week))) as WeekStructure,
+        ),
+        filmed,
       );
       let factor = 1;
       if (data.progression === "plus5_cumulative") factor = 1 + 0.05 * (i + 1);
