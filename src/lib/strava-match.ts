@@ -1,4 +1,4 @@
-const RUNNING_RE = /course|run|endurance|c[oô]tes|fractionn|sortie|footing|trail/i;
+import { isRunningSessionLabel } from "./running-session-detect";
 
 export type StravaSessionCandidate = {
   id: string;
@@ -22,7 +22,7 @@ function activityDateISO(activityStartedAt: string): string | null {
 
 function isRunningSession(session: StravaSessionCandidate): boolean {
   if ((session.sessionType ?? "program") === "free") return false;
-  return RUNNING_RE.test(session.sessionLabel ?? "");
+  return isRunningSessionLabel(session.sessionLabel);
 }
 
 export function matchStravaActivityToSession(input: {

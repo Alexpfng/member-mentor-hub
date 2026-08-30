@@ -10,14 +10,7 @@ import { RunComparisonCard } from "./RunComparisonCard";
 import { finishRunningSession } from "@/lib/run.functions";
 import { formValuesToMetrics, type RunExtraction, type RunMetrics } from "@/lib/run-stats";
 import { useI18n } from "@/lib/i18n";
-
-const RUNNING_RE = /course|run|endurance|côtes|cotes|fractionn|sortie|footing/i;
-
-export function isRunningSession(label?: string | null, exercises?: ProgExercise[]): boolean {
-  if (label && RUNNING_RE.test(label)) return true;
-  if (exercises?.length && exercises.every((e) => RUNNING_RE.test(e.name))) return true;
-  return false;
-}
+export { isRunningSession } from "@/lib/running-session-detect";
 
 type Phase = "view" | "report" | "result";
 
