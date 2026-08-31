@@ -9,6 +9,7 @@ import {
   planningWeekBounds,
   weekWindowLabel,
 } from "@/lib/planning-weeks";
+import { attachStravaActivityCardsToSessions } from "@/lib/strava-activity-card";
 
 const dateStr = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
@@ -80,11 +81,9 @@ export const listWeekPlan = createServerFn({ method: "GET" })
     }
 
     const weekStartsOn = normalizeWeekStartsOn(profile?.planning_week_start_day);
-    const currentWeekNumber = currentPlanningWeekNumber(
-      assignment.start_date,
-      undefined,
-      { weekStartsOn },
-    );
+    const currentWeekNumber = currentPlanningWeekNumber(assignment.start_date, undefined, {
+      weekStartsOn,
+    });
     const weekNumber = data.weekNumber ?? currentWeekNumber;
     const weekIdx = weekNumber - 1;
 
@@ -131,6 +130,15 @@ export const listWeekPlan = createServerFn({ method: "GET" })
       .eq("member_id", context.userId)
       .gte("date", startISO)
       .lte("date", endISO);
+    const sessionIds = (sessions ?? []).map((session) => session.id).filter(Boolean);
+    const { data: stravaActivities } = sessionIds.length
+      ? await supabaseAdmin
+          .from("member_strava_activities")
+          .select(
+            "session_id, strava_activity_id, activity_type, name, started_at, distance_m, moving_time_s, elapsed_time_s, elevation_gain_m, average_heartrate, average_speed_mps, raw_payload",
+          )
+          .in("session_id", sessionIds)
+      : { data: [] };
 
     return {
       weekNumber,
@@ -141,7 +149,7 @@ export const listWeekPlan = createServerFn({ method: "GET" })
       assignment,
       dayDefs,
       planned: planned ?? [],
-      sessions: sessions ?? [],
+      sessions: attachStravaActivityCardsToSessions(sessions ?? [], stravaActivities ?? []),
     };
   });
 

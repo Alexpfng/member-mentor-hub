@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner";
 import { localDateISO } from "@/lib/local-date";
 import MemberNav from "../../components/MemberNav";
+import { StravaRunCard } from "@/components/cst/StravaRunCard";
 import {
   listWeekPlan,
   upsertPlannedSession,
@@ -721,14 +722,22 @@ export default function MemberPlanning() {
                     label={t(weekdayShortISO(date))}
                     isToday={date === todayISO}
                   >
-                    {doneSessions.map((session: any) => (
-                      <div
-                        key={session.id ?? `${date}-${session.session_label}`}
-                        className="rounded-md px-2 py-1 text-xs bg-emerald-600 text-white break-words"
-                      >
-                        ✓ {session.session_label ?? t("Séance")}
-                      </div>
-                    ))}
+                    {doneSessions.map((session: any) =>
+                      session.strava ? (
+                        <StravaRunCard
+                          key={session.id ?? `${date}-${session.session_label}`}
+                          activity={session.strava}
+                          compact
+                        />
+                      ) : (
+                        <div
+                          key={session.id ?? `${date}-${session.session_label}`}
+                          className="rounded-md px-2 py-1 text-xs bg-emerald-600 text-white break-words"
+                        >
+                          ✓ {session.session_label ?? t("Séance")}
+                        </div>
+                      ),
+                    )}
                     {runningSessions.map((sess: any) => (
                       <button
                         key={sess.id ?? `${date}-${sess.session_label}`}

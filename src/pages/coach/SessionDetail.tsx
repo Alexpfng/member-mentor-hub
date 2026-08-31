@@ -18,6 +18,8 @@ import { getCoachMetricLabel, getCoachMetricValue } from "@/lib/session-prescrip
 import { supabase } from "@/integrations/supabase/client";
 import { RunComparisonCard } from "@/components/cst/RunComparisonCard";
 import type { RunMetrics } from "@/lib/run-stats";
+import { StravaRunCard } from "@/components/cst/StravaRunCard";
+import type { StravaActivityCardData } from "@/lib/strava-activity-card";
 
 type ProgExo = {
   code?: string;
@@ -169,6 +171,7 @@ export default function CoachSessionDetail() {
   const freeCategory = (s as any).free_category as string | null;
   const runStats = (data as any).runStats as RunMetrics | null;
   const runPrevious = (data as any).runPrevious as RunMetrics | null;
+  const stravaActivity = (data as any).stravaActivity as StravaActivityCardData | null;
   const catIcon =
     freeCategory === "course"
       ? "🏃"
@@ -317,6 +320,18 @@ export default function CoachSessionDetail() {
                 📊 STATS DE COURSE
               </div>
               <RunComparisonCard previous={runPrevious} current={runStats} />
+            </div>
+          )}
+
+          {stravaActivity && (
+            <div>
+              <div
+                className="cst-mono"
+                style={{ fontSize: 10, opacity: 0.55, letterSpacing: "0.18em", marginBottom: 10 }}
+              >
+                TRACE STRAVA
+              </div>
+              <StravaRunCard activity={stravaActivity} />
             </div>
           )}
 
