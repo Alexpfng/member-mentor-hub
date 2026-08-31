@@ -74,7 +74,9 @@ function activityDateISO(activity: StravaActivityLike): string | null {
   return d.toISOString().slice(0, 10);
 }
 
-export function isSupportedStravaActivity(activity: Pick<StravaActivityLike, "sport_type" | "type">): boolean {
+export function isSupportedStravaActivity(
+  activity: Pick<StravaActivityLike, "sport_type" | "type">,
+): boolean {
   const sport = activity.sport_type ?? activity.type ?? "";
   return STRAVA_SUPPORTED_SPORTS.has(sport);
 }
@@ -84,7 +86,9 @@ export function mapStravaActivityToRunMetrics(activity: StravaActivityLike): Run
     activity.distance != null ? Math.round((Number(activity.distance) / 1000) * 100) / 100 : null;
   const durationSec = activity.moving_time != null ? Number(activity.moving_time) : null;
   const elevationM =
-    activity.total_elevation_gain != null ? Math.round(Number(activity.total_elevation_gain)) : null;
+    activity.total_elevation_gain != null
+      ? Math.round(Number(activity.total_elevation_gain))
+      : null;
   const avgHr =
     activity.average_heartrate != null ? Math.round(Number(activity.average_heartrate)) : null;
 
@@ -111,7 +115,10 @@ function signState(memberId: string, issuedAtMs: number): string {
   return Buffer.from(`${payload}.${signature}`).toString("base64url");
 }
 
-export function verifyStateToken(token: string, maxAgeMs = 1000 * 60 * 15): { memberId: string } | null {
+export function verifyStateToken(
+  token: string,
+  maxAgeMs = 1000 * 60 * 15,
+): { memberId: string } | null {
   try {
     const decoded = Buffer.from(token, "base64url").toString("utf8");
     const [memberId, issuedAtStr, signature] = decoded.split(".");
@@ -181,6 +188,23 @@ export async function fetchStravaActivity(accessToken: string, activityId: numbe
   return (await res.json()) as StravaActivityLike;
 }
 
+export async function fetchRecentStravaActivities(
+  accessToken: string,
+  input: { after: number; before: number; perPage?: number },
+) {
+  const url = new URL("https://www.strava.com/api/v3/athlete/activities");
+  url.searchParams.set("after", String(input.after));
+  url.searchParams.set("before", String(input.before));
+  url.searchParams.set("per_page", String(input.perPage ?? 30));
+  url.searchParams.set("page", "1");
+
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!res.ok) throw new Error("Lecture activités Strava récentes impossible");
+  return (await res.json()) as Array<StravaActivityLike & { id?: number | null }>;
+}
+
 async function upsertMemberStravaConnection(input: {
   memberId: string;
   athleteId: number;
@@ -234,6 +258,36 @@ async function getFreshConnectionByAthleteId(athleteId: number) {
   };
 }
 
+async function getFreshConnectionByMemberId(memberId: string) {
+  const { data, error } = await supabaseAdmin
+    .from("member_strava_connections")
+    .select("*")
+    .eq("member_id", memberId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+
+  const expiresAtMs = new Date(data.expires_at).getTime();
+  if (expiresAtMs > Date.now() + 60_000) return data;
+
+  const refreshed = await refreshStravaToken(data.refresh_token);
+  await upsertMemberStravaConnection({
+    memberId: data.member_id,
+    athleteId: data.strava_athlete_id,
+    accessToken: refreshed.access_token,
+    refreshToken: refreshed.refresh_token,
+    expiresAt: refreshed.expires_at,
+    scope: (refreshed.scope ?? "").split(",").filter(Boolean),
+  });
+
+  return {
+    ...data,
+    access_token: refreshed.access_token,
+    refresh_token: refreshed.refresh_token,
+    expires_at: new Date(refreshed.expires_at * 1000).toISOString(),
+  };
+}
+
 async function collectSessionCandidates(memberId: string, activityDate: string) {
   const [{ data: sessions }, { data: planned }, { data: runStats }] = await Promise.all([
     supabaseAdmin
@@ -246,10 +300,7 @@ async function collectSessionCandidates(memberId: string, activityDate: string) 
       .select("id, program_id, week_number, day_label, planned_date, session_id, status")
       .eq("member_id", memberId)
       .eq("planned_date", activityDate),
-    supabaseAdmin
-      .from("run_stats")
-      .select("session_id")
-      .eq("member_id", memberId),
+    supabaseAdmin.from("run_stats").select("session_id").eq("member_id", memberId),
   ]);
 
   const runStatIds = new Set((runStats ?? []).map((row) => row.session_id));
@@ -363,7 +414,9 @@ async function createCompletedSessionFromPlanned(input: {
       started_at: input.activity.start_date ?? new Date(`${date}T12:00:00.000Z`).toISOString(),
       ended_at:
         input.activity.start_date && input.metrics.durationSec != null
-          ? new Date(new Date(input.activity.start_date).getTime() + input.metrics.durationSec * 1000).toISOString()
+          ? new Date(
+              new Date(input.activity.start_date).getTime() + input.metrics.durationSec * 1000,
+            ).toISOString()
           : new Date().toISOString(),
       status: "completed",
       session_label: input.candidate.dayLabel ?? input.activity.name ?? "Séance course",
@@ -422,18 +475,25 @@ async function upsertStravaActivityRecord(input: {
   if (error) throw new Error(error.message);
 }
 
-async function markConnectionWebhook(memberId: string) {
+async function markConnectionSync(memberId: string, input: { webhook: boolean }) {
+  const now = new Date().toISOString();
+  const patch: Record<string, string> = {
+    last_sync_at: now,
+    updated_at: now,
+  };
+  if (input.webhook) patch.last_webhook_at = now;
+
   await supabaseAdmin
     .from("member_strava_connections")
-    .update({
-      last_webhook_at: new Date().toISOString(),
-      last_sync_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    } as never)
+    .update(patch as never)
     .eq("member_id", memberId);
 }
 
-export async function syncStravaActivityForAthlete(athleteId: number, activityId: number) {
+export async function syncStravaActivityForAthlete(
+  athleteId: number,
+  activityId: number,
+  options: { markWebhook?: boolean } = {},
+) {
   const connection = await getFreshConnectionByAthleteId(athleteId);
   if (!connection) return { ok: false, reason: "connection_not_found" as const };
 
@@ -472,7 +532,8 @@ export async function syncStravaActivityForAthlete(athleteId: number, activityId
   let sessionId: string | null = null;
 
   if (match.status === "matched") {
-    const matchedCandidate = candidates.find((candidate) => candidate.id === match.sessionId) ?? null;
+    const matchedCandidate =
+      candidates.find((candidate) => candidate.id === match.sessionId) ?? null;
     if (matchedCandidate?.kind === "planned") {
       sessionId = await createCompletedSessionFromPlanned({
         memberId: connection.member_id,
@@ -499,13 +560,85 @@ export async function syncStravaActivityForAthlete(athleteId: number, activityId
     memberId: connection.member_id,
     activity: activity as StravaActivityLike & { id: number },
     sessionId,
-    syncStatus: match.status === "matched" ? "matched" : match.status === "ambiguous" ? "ambiguous" : "imported",
+    syncStatus:
+      match.status === "matched"
+        ? "matched"
+        : match.status === "ambiguous"
+          ? "ambiguous"
+          : "imported",
     syncError: match.status === "ambiguous" ? match.reason : null,
   });
-  await markConnectionWebhook(connection.member_id);
+  await markConnectionSync(connection.member_id, { webhook: options.markWebhook ?? true });
 
   return { ok: true, match, sessionId };
 }
+
+export const syncRecentStravaActivities = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        daysBack: z.number().int().min(1).max(14).default(7),
+      })
+      .parse(d ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    const connection = await getFreshConnectionByMemberId(context.userId);
+    if (!connection) throw new Error("Compte Strava non connecté");
+
+    const before = Math.floor(Date.now() / 1000);
+    const after = Math.floor((Date.now() - data.daysBack * 24 * 60 * 60 * 1000) / 1000);
+    const activities = await fetchRecentStravaActivities(connection.access_token, {
+      after,
+      before,
+      perPage: 30,
+    });
+
+    const summary = {
+      scanned: activities.length,
+      matched: 0,
+      imported: 0,
+      ignored: 0,
+      ambiguous: 0,
+      failed: 0,
+      lastSyncAt: new Date().toISOString(),
+    };
+
+    for (const activity of activities) {
+      if (!activity.id) {
+        summary.ignored += 1;
+        continue;
+      }
+      try {
+        const result = await syncStravaActivityForAthlete(
+          connection.strava_athlete_id,
+          activity.id,
+          {
+            markWebhook: false,
+          },
+        );
+        if (!result.ok) {
+          summary.ignored += 1;
+        } else if (result.match.status === "matched") {
+          summary.matched += 1;
+        } else if (result.match.status === "ambiguous") {
+          summary.ambiguous += 1;
+        } else {
+          summary.imported += 1;
+        }
+      } catch (error) {
+        summary.failed += 1;
+        console.error("[strava/manual-sync] activity sync failed", {
+          activityId: activity.id,
+          error,
+        });
+      }
+    }
+
+    await markConnectionSync(context.userId, { webhook: false });
+
+    return summary;
+  });
 
 export const getStravaConnectionStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -551,10 +684,7 @@ export const disconnectStrava = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-export async function storeStravaOAuthConnection(input: {
-  memberId: string;
-  code: string;
-}) {
+export async function storeStravaOAuthConnection(input: { memberId: string; code: string }) {
   const token = await exchangeStravaCode(input.code);
   await upsertMemberStravaConnection({
     memberId: input.memberId,

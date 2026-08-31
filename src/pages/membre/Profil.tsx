@@ -20,6 +20,7 @@ import {
   disconnectStrava,
   getStravaConnectUrl,
   getStravaConnectionStatus,
+  syncRecentStravaActivities,
 } from "@/lib/strava.functions";
 import { useI18n } from "@/lib/i18n";
 
@@ -47,6 +48,7 @@ export default function MemberProfil() {
   const getStravaStatus = useServerFn(getStravaConnectionStatus);
   const getConnectUrl = useServerFn(getStravaConnectUrl);
   const disconnectStravaFn = useServerFn(disconnectStrava);
+  const syncStravaNow = useServerFn(syncRecentStravaActivities);
   const [prefs, setPrefs] = useState<any>(null);
   const [planningWeekStartDay, setPlanningWeekStartDay] = useState(1);
   const [planningBusy, setPlanningBusy] = useState(false);
@@ -57,6 +59,7 @@ export default function MemberProfil() {
     athleteId: number | null;
     expiresAt: string | null;
     lastSyncAt: string | null;
+    lastWebhookAt: string | null;
   } | null>(null);
   const [stravaBusy, setStravaBusy] = useState(false);
   const [info, setInfo] = useState({
@@ -99,6 +102,7 @@ export default function MemberProfil() {
             athleteId: status.athleteId,
             expiresAt: status.expiresAt,
             lastSyncAt: status.lastSyncAt,
+            lastWebhookAt: status.lastWebhookAt,
           });
         }
       } catch (e) {
@@ -168,10 +172,49 @@ export default function MemberProfil() {
     setStravaBusy(true);
     try {
       await disconnectStravaFn();
-      setStrava({ connected: false, athleteId: null, expiresAt: null, lastSyncAt: null });
+      setStrava({
+        connected: false,
+        athleteId: null,
+        expiresAt: null,
+        lastSyncAt: null,
+        lastWebhookAt: null,
+      });
       toast.success(t("Strava déconnecté"));
     } catch (e: any) {
       toast.error(e?.message ?? t("Déconnexion Strava impossible"));
+    } finally {
+      setStravaBusy(false);
+    }
+  };
+
+  const handleSyncStrava = async () => {
+    setStravaBusy(true);
+    try {
+      const result = await syncStravaNow({ data: { daysBack: 7 } });
+      const status = await getStravaStatus();
+      setStrava({
+        connected: status.connected,
+        athleteId: status.athleteId,
+        expiresAt: status.expiresAt,
+        lastSyncAt: status.lastSyncAt,
+        lastWebhookAt: status.lastWebhookAt,
+      });
+
+      if (result.matched > 0) {
+        toast.success(t("Course Strava rattachée à ta séance"));
+      } else if (result.imported > 0 || result.ambiguous > 0) {
+        toast.message(
+          t(
+            "Activité Strava importée, mais aucune séance course unique n'a été trouvée ce jour-là.",
+          ),
+        );
+      } else if (result.scanned === 0) {
+        toast.message(t("Aucune activité Strava récente trouvée"));
+      } else {
+        toast.message(t("Aucune nouvelle course à rattacher"));
+      }
+    } catch (e: any) {
+      toast.error(e?.message ?? t("Synchronisation Strava impossible"));
     } finally {
       setStravaBusy(false);
     }
@@ -486,12 +529,18 @@ export default function MemberProfil() {
                     {strava.lastSyncAt ? new Date(strava.lastSyncAt).toLocaleString("fr-FR") : "—"}
                   </div>
                   <div>
+                    {t("Dernier webhook :")}{" "}
+                    {strava.lastWebhookAt
+                      ? new Date(strava.lastWebhookAt).toLocaleString("fr-FR")
+                      : "—"}
+                  </div>
+                  <div>
                     {t("Expiration token :")}{" "}
                     {strava.expiresAt ? new Date(strava.expiresAt).toLocaleString("fr-FR") : "—"}
                   </div>
                 </div>
               )}
-              <div className="flex gap-2 pt-1">
+              <div className="flex flex-col sm:flex-row gap-2 pt-1">
                 {!strava?.connected ? (
                   <button
                     className="w-full py-3 rounded border border-border text-sm"
@@ -507,6 +556,15 @@ export default function MemberProfil() {
                     onClick={handleDisconnectStrava}
                   >
                     {stravaBusy ? t("Déconnexion...") : t("Déconnecter Strava")}
+                  </button>
+                )}
+                {strava?.connected && (
+                  <button
+                    className="w-full py-3 rounded bg-primary text-primary-foreground text-sm disabled:opacity-60"
+                    disabled={stravaBusy}
+                    onClick={handleSyncStrava}
+                  >
+                    {stravaBusy ? t("Synchronisation...") : t("Synchroniser les sorties Strava")}
                   </button>
                 )}
               </div>

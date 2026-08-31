@@ -1,5 +1,15 @@
-import { describe, expect, it } from "bun:test";
-import { isSupportedStravaActivity, mapStravaActivityToRunMetrics } from "./strava.functions";
+import { afterEach, describe, expect, it, mock } from "bun:test";
+import {
+  fetchRecentStravaActivities,
+  isSupportedStravaActivity,
+  mapStravaActivityToRunMetrics,
+} from "./strava.functions";
+
+const originalFetch = globalThis.fetch;
+
+afterEach(() => {
+  globalThis.fetch = originalFetch;
+});
 
 describe("isSupportedStravaActivity", () => {
   it("accepts a Strava run", () => {
@@ -47,5 +57,26 @@ describe("mapStravaActivityToRunMetrics", () => {
       paceSecPerKm: null,
       rpe: null,
     });
+  });
+});
+
+describe("fetchRecentStravaActivities", () => {
+  it("requests the athlete activity feed with the requested date window", async () => {
+    const fetchMock = mock(async () => Response.json([{ id: 123, sport_type: "Run" }]));
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    const activities = await fetchRecentStravaActivities("token-123", {
+      after: 1788048000,
+      before: 1788652800,
+      perPage: 12,
+    });
+
+    expect(activities).toEqual([{ id: 123, sport_type: "Run" }]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(String(url)).toBe(
+      "https://www.strava.com/api/v3/athlete/activities?after=1788048000&before=1788652800&per_page=12&page=1",
+    );
+    expect(init).toEqual({ headers: { Authorization: "Bearer token-123" } });
   });
 });
