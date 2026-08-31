@@ -308,7 +308,6 @@ function parseWeekSheet(ws: XLSX.WorkSheet, sheetName: string): ImportedWeek | n
   const week: ImportedWeek = { number: weekNum, sheet: sheetName, days: [] };
   let currentDay: ImportedDay | null = null;
   let dayIndex = 0;
-  let skippingAuxiliarySection = false;
 
   for (let r = layout.headerRow + 1; r <= range.e.r; r++) {
     const nameCell = getCell(ws, r, layout.nameCol);
@@ -338,20 +337,12 @@ function parseWeekSheet(ws: XLSX.WorkSheet, sheetName: string): ImportedWeek | n
 
     const hasData = !!(series || reps || charge || rpe);
     const exMatch = name.match(EX_CODE_RE);
-    const isSessionTitle = SESSION_RE.test(name) && !hasData && !exMatch && name.length < 90;
-
-    if (skippingAuxiliarySection) {
-      if (isSessionTitle) {
-        skippingAuxiliarySection = false;
-      } else {
-        continue;
-      }
-    }
-
-    if (AUXILIARY_SECTION_RE.test(name) && !hasData && !exMatch) {
-      skippingAuxiliarySection = true;
-      continue;
-    }
+    const isAuxiliarySessionTitle = AUXILIARY_SECTION_RE.test(name) && !hasData && !exMatch;
+    const isSessionTitle =
+      (SESSION_RE.test(name) || isAuxiliarySessionTitle) &&
+      !hasData &&
+      !exMatch &&
+      name.length < 90;
 
     if (isSessionTitle) {
       dayIndex++;

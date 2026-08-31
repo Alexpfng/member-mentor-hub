@@ -222,13 +222,17 @@ describe("import Excel — muscu (non-régression)", () => {
     expect(squat?.coach_notes ?? "").toContain("dos droit");
   });
 
-  it("n'importe pas un répertoire rehab placé sous la séance comme des exercices du jour", async () => {
+  it("importe un répertoire rehab placé sous la séance comme une séance distincte", async () => {
     const parsed = await parseExcelFile(makeFile(MUSCU_WITH_REHAB_REPERTOIRE));
-    expect(parsed.weeks[0].days).toHaveLength(1);
+    expect(parsed.weeks[0].days).toHaveLength(2);
 
     const names = parsed.weeks[0].days[0].exercises.map((e) => e.name);
     expect(names).toEqual(["Extensions triceps à la corde", "Star plank"]);
-    expect(names).not.toContain("Elevations du soléaire avec poids");
-    expect(names).not.toContain("Foot circle");
+
+    expect(parsed.weeks[0].days[1].label).toBe("Répertoire exercices rehab tendon d'achille");
+    expect(parsed.weeks[0].days[1].exercises.map((e) => e.name)).toEqual([
+      "Elevations du soléaire avec poids",
+      "Foot circle",
+    ]);
   });
 });
