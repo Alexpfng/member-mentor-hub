@@ -23,7 +23,7 @@ import {
 } from "@/lib/planning.functions";
 import { createFreeSession } from "@/lib/free-session.functions";
 import { useI18n } from "@/lib/i18n";
-import { applyPlannedSessionToWeekPlan } from "@/lib/planning-local-state";
+import { applyPlannedSessionToWeekPlan, groupSessionsByDate } from "@/lib/planning-local-state";
 
 // Libellé du jour déduit de la DATE réelle (et non de la position dans la grille).
 // Le programme peut démarrer un autre jour que lundi ; la case doit afficher le vrai
@@ -263,11 +263,11 @@ function DayChoiceList({
           ? t(" · actuel")
           : unavailable
             ? t(" · indisponible")
-          : occupied
-            ? t(" · occupé")
-            : date === todayISO
-              ? t(" · aujourd'hui")
-              : "";
+            : occupied
+              ? t(" · occupé")
+              : date === todayISO
+                ? t(" · aujourd'hui")
+                : "";
         return (
           <SheetBtn
             key={date}
@@ -346,13 +346,7 @@ export default function MemberPlanning() {
     return map;
   }, [data]);
 
-  const sessionByDate = useMemo(() => {
-    const map = new Map<string, any>();
-    (data?.sessions ?? []).forEach((s: any) => {
-      if (s.date) map.set(s.date, s);
-    });
-    return map;
-  }, [data]);
+  const sessionsByDate = useMemo(() => groupSessionsByDate(data?.sessions ?? []), [data]);
 
   // Une séance planifiée n'est visible que si sa date tombe dans la fenêtre
   // affichée. Une ligne sans date, ou datée hors de cette fenêtre, n'apparaissait
@@ -361,9 +355,7 @@ export default function MemberPlanning() {
   const weekDateSet = useMemo(() => new Set(weekDates), [weekDates]);
   const strandedPlanned = useMemo(
     () =>
-      (data?.planned ?? []).filter(
-        (p: any) => !p.planned_date || !weekDateSet.has(p.planned_date),
-      ),
+      (data?.planned ?? []).filter((p: any) => !p.planned_date || !weekDateSet.has(p.planned_date)),
     [data, weekDateSet],
   );
 
@@ -413,8 +405,10 @@ export default function MemberPlanning() {
   // séance planifiée. On le signale sans l'interdire — le membre reste maître
   // de son planning (deux séances le même jour, ça arrive).
   const isDayOccupied = (date: string) => {
-    const sess = sessionByDate.get(date);
-    const taken = sess?.status === "completed" || sess?.status === "in_progress";
+    const sessions = sessionsByDate.get(date) ?? [];
+    const taken = sessions.some(
+      (session: any) => session.status === "completed" || session.status === "in_progress",
+    );
     return taken || plannedByDate.has(date);
   };
 
@@ -698,22 +692,27 @@ export default function MemberPlanning() {
 
             <div className="flex flex-col gap-2 sm:grid sm:grid-cols-7">
               {weekDates.map((date) => {
-                const sess = sessionByDate.get(date);
+                const sessions = sessionsByDate.get(date) ?? [];
                 const planned = plannedByDate.get(date);
                 // Seules une séance faite ou en cours occupent réellement le jour.
                 // Tout autre statut (abandonnée, valeur inattendue) ne doit PAS
                 // bloquer la case : sinon elle n'affiche ni carte ni bouton +,
                 // et la séance devient irrécupérable depuis le planning.
-                const isDone = sess?.status === "completed";
-                const isRunning = sess?.status === "in_progress";
-                const dayTaken = isDone || isRunning;
+                const doneSessions = sessions.filter(
+                  (session: any) => session.status === "completed",
+                );
+                const runningSessions = sessions.filter(
+                  (session: any) => session.status === "in_progress",
+                );
+                const dayTaken = doneSessions.length > 0 || runningSessions.length > 0;
                 // Une séance faite ce jour-là ne solde la carte planifiée que si
                 // c'est LA MÊME séance. Sinon (le membre en a fait une autre à la
                 // place), la carte restait masquée derrière le ✓ tout en
                 // consommant sa pastille « À planifier » : elle n'existait plus
                 // nulle part et ne pouvait plus être replacée.
                 const plannedAlreadyDone =
-                  !!planned && !!sess && planned.day_label === sess.session_label;
+                  !!planned &&
+                  doneSessions.some((session: any) => planned.day_label === session.session_label);
                 const showPlanned = !!planned && !plannedAlreadyDone;
                 return (
                   <DroppableDay
@@ -722,20 +721,24 @@ export default function MemberPlanning() {
                     label={t(weekdayShortISO(date))}
                     isToday={date === todayISO}
                   >
-                    {isDone && (
-                      <div className="rounded-md px-2 py-1 text-xs bg-emerald-600 text-white break-words">
-                        ✓ {sess.session_label ?? t("Séance")}
+                    {doneSessions.map((session: any) => (
+                      <div
+                        key={session.id ?? `${date}-${session.session_label}`}
+                        className="rounded-md px-2 py-1 text-xs bg-emerald-600 text-white break-words"
+                      >
+                        ✓ {session.session_label ?? t("Séance")}
                       </div>
-                    )}
-                    {isRunning && (
+                    ))}
+                    {runningSessions.map((sess: any) => (
                       <button
+                        key={sess.id ?? `${date}-${sess.session_label}`}
                         onClick={() => setModal({ kind: "running", date, sess })}
                         className="text-left rounded-md px-2 py-1 text-xs break-words bg-amber-500/20 text-amber-500 border border-amber-500/50"
                       >
                         ▶ {sess.session_label ?? t("Séance")}
                         {t(" · en cours")}
                       </button>
-                    )}
+                    ))}
                     {showPlanned && (
                       <DraggableSession
                         id={`plan-${planned.id}`}
@@ -917,9 +920,7 @@ export default function MemberPlanning() {
 
       {modal?.kind === "running" && (
         <BottomSheet>
-          <ModalTitle
-            text={`${modal.sess.session_label ?? t("Séance")} · ${frDate(modal.date)}`}
-          />
+          <ModalTitle text={`${modal.sess.session_label ?? t("Séance")} · ${frDate(modal.date)}`} />
           <div
             className="font-mono"
             style={{

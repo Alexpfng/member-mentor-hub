@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 
-import { applyPlannedSessionToWeekPlan } from "./planning-local-state";
+import { applyPlannedSessionToWeekPlan, groupSessionsByDate } from "./planning-local-state";
 
 describe("applyPlannedSessionToWeekPlan", () => {
   it("adds the saved planned session immediately to the current planning state", () => {
@@ -27,5 +27,18 @@ describe("applyPlannedSessionToWeekPlan", () => {
     expect(applyPlannedSessionToWeekPlan({ planned: [oldRow] }, newRow)).toEqual({
       planned: [newRow],
     });
+  });
+});
+
+describe("groupSessionsByDate", () => {
+  it("keeps multiple visible sessions on the same day instead of overwriting one", () => {
+    const grouped = groupSessionsByDate([
+      { id: "run-1", date: "2026-08-30", status: "completed" },
+      { id: "run-2", date: "2026-08-30", status: "completed" },
+      { id: "run-3", date: "2026-08-31", status: "completed" },
+    ]);
+
+    expect(grouped.get("2026-08-30")?.map((session) => session.id)).toEqual(["run-1", "run-2"]);
+    expect(grouped.get("2026-08-31")?.map((session) => session.id)).toEqual(["run-3"]);
   });
 });

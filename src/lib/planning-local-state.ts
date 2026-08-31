@@ -3,6 +3,7 @@ type WeekPlanLike = {
 };
 
 type PlannedSessionLike = Record<string, unknown> & { id?: string | null };
+type SessionWithDateLike = Record<string, unknown> & { date?: string | null };
 
 export function applyPlannedSessionToWeekPlan<T extends WeekPlanLike>(
   state: T | null,
@@ -20,4 +21,18 @@ export function applyPlannedSessionToWeekPlan<T extends WeekPlanLike>(
       : [...planned, plannedSession];
 
   return { ...state, planned: nextPlanned };
+}
+
+export function groupSessionsByDate<T extends SessionWithDateLike>(
+  sessions: T[] | null | undefined,
+): Map<string, T[]> {
+  const grouped = new Map<string, T[]>();
+
+  for (const session of sessions ?? []) {
+    if (!session.date) continue;
+    const existing = grouped.get(session.date) ?? [];
+    grouped.set(session.date, [...existing, session]);
+  }
+
+  return grouped;
 }
