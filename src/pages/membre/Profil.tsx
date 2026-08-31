@@ -200,7 +200,9 @@ export default function MemberProfil() {
         lastWebhookAt: status.lastWebhookAt,
       });
 
-      if (result.matched > 0) {
+      if (result.created > 0) {
+        toast.success(t("Course Strava ajoutée à ton planning"));
+      } else if (result.matched > 0) {
         toast.success(t("Course Strava rattachée à ta séance"));
       } else if (result.imported > 0 || result.ambiguous > 0) {
         toast.message(
@@ -209,7 +211,11 @@ export default function MemberProfil() {
           ),
         );
       } else if (result.scanned === 0) {
-        toast.message(t("Aucune activité Strava récente trouvée"));
+        toast.message(
+          t(
+            "Aucune activité Strava récente trouvée. Si ta course est privée, reconnecte Strava pour autoriser toutes les activités.",
+          ),
+        );
       } else {
         toast.message(t("Aucune nouvelle course à rattacher"));
       }

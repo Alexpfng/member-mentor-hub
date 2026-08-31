@@ -10,7 +10,15 @@ export type StravaSessionCandidate = {
 };
 
 export type StravaMatchResult =
-  | { status: "matched"; sessionId: string; reason: "in_progress_same_day" | "planned_same_day" | "completed_without_stats_same_day" }
+  | {
+      status: "matched";
+      sessionId: string;
+      reason:
+        | "existing_strava_link"
+        | "in_progress_same_day"
+        | "planned_same_day"
+        | "completed_without_stats_same_day";
+    }
   | { status: "ambiguous"; reason: "multiple_same_priority_candidates"; sessionIds: string[] }
   | { status: "none"; reason: "no_candidate" };
 

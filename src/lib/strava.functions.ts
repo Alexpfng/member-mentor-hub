@@ -109,6 +109,41 @@ export function mapStravaActivityToRunMetrics(activity: StravaActivityLike): Run
   };
 }
 
+export function buildStravaFreeRunSessionInsert(input: {
+  memberId: string;
+  activity: StravaActivityLike;
+  metrics: RunMetrics;
+}) {
+  const date = activityDateISO(input.activity);
+  if (!date) throw new Error("Date activité Strava introuvable");
+
+  const label = input.activity.name?.trim() || "Course Strava";
+  const startedAt = input.activity.start_date ?? new Date(`${date}T12:00:00.000Z`).toISOString();
+  const endedAt =
+    input.metrics.durationSec != null
+      ? new Date(new Date(startedAt).getTime() + input.metrics.durationSec * 1000).toISOString()
+      : startedAt;
+  const durationMin =
+    input.metrics.durationSec != null ? Math.round(input.metrics.durationSec / 60) : null;
+
+  return {
+    member_id: input.memberId,
+    program_id: null,
+    session_type: "free",
+    free_category: "course",
+    free_title: label,
+    session_label: label,
+    date,
+    started_at: startedAt,
+    ended_at: endedAt,
+    status: "completed",
+    week_number: null,
+    day_number: null,
+    duration_minutes: durationMin,
+    average_rpe: null,
+  };
+}
+
 function signState(memberId: string, issuedAtMs: number): string {
   const payload = `${memberId}.${issuedAtMs}`;
   const signature = Bun.CryptoHasher.hash("sha256", `${payload}.${stateSecret()}`, "hex");
@@ -431,6 +466,20 @@ async function createCompletedSessionFromPlanned(input: {
   return data.id;
 }
 
+async function createCompletedFreeRunSessionFromStrava(input: {
+  memberId: string;
+  activity: StravaActivityLike;
+  metrics: RunMetrics;
+}) {
+  const { data, error } = await supabaseAdmin
+    .from("sessions")
+    .insert(buildStravaFreeRunSessionInsert(input) as never)
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+  return data.id;
+}
+
 async function linkPlannedSessionToCompletedSession(plannedId: string, sessionId: string) {
   const { error } = await supabaseAdmin
     .from("planned_sessions")
@@ -473,6 +522,17 @@ async function upsertStravaActivityRecord(input: {
     { onConflict: "strava_activity_id" },
   );
   if (error) throw new Error(error.message);
+}
+
+async function getLinkedStravaSessionId(input: { memberId: string; activityId: number }) {
+  const { data, error } = await supabaseAdmin
+    .from("member_strava_activities")
+    .select("session_id")
+    .eq("member_id", input.memberId)
+    .eq("strava_activity_id", input.activityId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data?.session_id ?? null;
 }
 
 async function markConnectionSync(memberId: string, input: { webhook: boolean }) {
@@ -523,13 +583,47 @@ export async function syncStravaActivityForAthlete(
   }
 
   const candidates = await collectSessionCandidates(connection.member_id, date);
+  const metrics = mapStravaActivityToRunMetrics(activity);
+  const existingSessionId = await getLinkedStravaSessionId({
+    memberId: connection.member_id,
+    activityId: activity.id,
+  });
+  if (existingSessionId) {
+    await upsertRunStats({
+      sessionId: existingSessionId,
+      memberId: connection.member_id,
+      metrics,
+      source: "strava",
+      rawExtraction: activity,
+    });
+    await upsertStravaActivityRecord({
+      memberId: connection.member_id,
+      activity: activity as StravaActivityLike & { id: number },
+      sessionId: existingSessionId,
+      syncStatus: "matched",
+      syncError: null,
+    });
+    await markConnectionSync(connection.member_id, { webhook: options.markWebhook ?? true });
+
+    return {
+      ok: true,
+      match: {
+        status: "matched",
+        sessionId: existingSessionId,
+        reason: "existing_strava_link",
+      } as const,
+      sessionId: existingSessionId,
+      createdSession: false,
+    };
+  }
+
   const match = matchStravaActivityToSession({
     activityStartedAt: activity.start_date_local ?? activity.start_date ?? `${date}T12:00:00.000Z`,
     sessions: candidates,
   });
 
-  const metrics = mapStravaActivityToRunMetrics(activity);
   let sessionId: string | null = null;
+  let createdSession = false;
 
   if (match.status === "matched") {
     const matchedCandidate =
@@ -554,6 +648,20 @@ export async function syncStravaActivityForAthlete(
       source: "strava",
       rawExtraction: activity,
     });
+  } else if (match.status === "none") {
+    sessionId = await createCompletedFreeRunSessionFromStrava({
+      memberId: connection.member_id,
+      activity,
+      metrics,
+    });
+    createdSession = true;
+    await upsertRunStats({
+      sessionId,
+      memberId: connection.member_id,
+      metrics,
+      source: "strava",
+      rawExtraction: activity,
+    });
   }
 
   await upsertStravaActivityRecord({
@@ -561,7 +669,7 @@ export async function syncStravaActivityForAthlete(
     activity: activity as StravaActivityLike & { id: number },
     sessionId,
     syncStatus:
-      match.status === "matched"
+      match.status === "matched" || createdSession
         ? "matched"
         : match.status === "ambiguous"
           ? "ambiguous"
@@ -570,7 +678,7 @@ export async function syncStravaActivityForAthlete(
   });
   await markConnectionSync(connection.member_id, { webhook: options.markWebhook ?? true });
 
-  return { ok: true, match, sessionId };
+  return { ok: true, match, sessionId, createdSession };
 }
 
 export const syncRecentStravaActivities = createServerFn({ method: "POST" })
@@ -597,6 +705,7 @@ export const syncRecentStravaActivities = createServerFn({ method: "POST" })
     const summary = {
       scanned: activities.length,
       matched: 0,
+      created: 0,
       imported: 0,
       ignored: 0,
       ambiguous: 0,
@@ -619,6 +728,8 @@ export const syncRecentStravaActivities = createServerFn({ method: "POST" })
         );
         if (!result.ok) {
           summary.ignored += 1;
+        } else if (result.createdSession) {
+          summary.created += 1;
         } else if (result.match.status === "matched") {
           summary.matched += 1;
         } else if (result.match.status === "ambiguous") {

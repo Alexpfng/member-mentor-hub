@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, mock } from "bun:test";
 import {
+  buildStravaFreeRunSessionInsert,
   fetchRecentStravaActivities,
   isSupportedStravaActivity,
   mapStravaActivityToRunMetrics,
@@ -78,5 +79,42 @@ describe("fetchRecentStravaActivities", () => {
       "https://www.strava.com/api/v3/athlete/activities?after=1788048000&before=1788652800&per_page=12&page=1",
     );
     expect(init).toEqual({ headers: { Authorization: "Bearer token-123" } });
+  });
+});
+
+describe("buildStravaFreeRunSessionInsert", () => {
+  it("turns an unmatched Strava run into a completed free running session", () => {
+    const metrics = mapStravaActivityToRunMetrics({
+      distance: 10420,
+      moving_time: 3150,
+      average_speed: 3.31,
+    });
+
+    const payload = buildStravaFreeRunSessionInsert({
+      memberId: "member-123",
+      activity: {
+        name: "Sortie dimanche",
+        start_date: "2026-08-30T08:12:00Z",
+        start_date_local: "2026-08-30T10:12:00+02:00",
+      },
+      metrics,
+    });
+
+    expect(payload).toEqual({
+      member_id: "member-123",
+      program_id: null,
+      session_type: "free",
+      free_category: "course",
+      free_title: "Sortie dimanche",
+      session_label: "Sortie dimanche",
+      date: "2026-08-30",
+      started_at: "2026-08-30T08:12:00Z",
+      ended_at: "2026-08-30T09:04:30.000Z",
+      status: "completed",
+      week_number: null,
+      day_number: null,
+      duration_minutes: 53,
+      average_rpe: null,
+    });
   });
 });
