@@ -81,6 +81,8 @@ const COLOR_MAP: Record<string, string[]> = {
 
 const SESSION_RE =
   /(full[\s-]?body|lower|upper|push|pull|legs?|jambe|séance|seance|course|cardio|côtes|cotes|fractionn|endurance|renfo|mobilité|sortie|hiit|circuit|bloc)/i;
+const AUXILIARY_SECTION_RE =
+  /^(répertoire|repertoire|biblioth[eè]que|exercices?\s+rehab|rehab\b|routine\s+rehab)/i;
 const EX_CODE_RE = /^([A-H]\d*)[.)]\s*(.*)/i;
 const JUNK_RE =
   /^(objectif|obj\.|important|consigne|remarque|note|attention|rappel|\(|on cherche|on peut|pour |~|\d+\s*(min|km|m))/i;
@@ -306,6 +308,7 @@ function parseWeekSheet(ws: XLSX.WorkSheet, sheetName: string): ImportedWeek | n
   const week: ImportedWeek = { number: weekNum, sheet: sheetName, days: [] };
   let currentDay: ImportedDay | null = null;
   let dayIndex = 0;
+  let skippingAuxiliarySection = false;
 
   for (let r = layout.headerRow + 1; r <= range.e.r; r++) {
     const nameCell = getCell(ws, r, layout.nameCol);
@@ -335,8 +338,22 @@ function parseWeekSheet(ws: XLSX.WorkSheet, sheetName: string): ImportedWeek | n
 
     const hasData = !!(series || reps || charge || rpe);
     const exMatch = name.match(EX_CODE_RE);
+    const isSessionTitle = SESSION_RE.test(name) && !hasData && !exMatch && name.length < 90;
 
-    if (SESSION_RE.test(name) && !hasData && !exMatch && name.length < 90) {
+    if (skippingAuxiliarySection) {
+      if (isSessionTitle) {
+        skippingAuxiliarySection = false;
+      } else {
+        continue;
+      }
+    }
+
+    if (AUXILIARY_SECTION_RE.test(name) && !hasData && !exMatch) {
+      skippingAuxiliarySection = true;
+      continue;
+    }
+
+    if (isSessionTitle) {
       dayIndex++;
       currentDay = { number: dayIndex, label: name, exercises: [] };
       week.days.push(currentDay);
@@ -357,8 +374,7 @@ function parseWeekSheet(ws: XLSX.WorkSheet, sheetName: string): ImportedWeek | n
     // un vrai exercice peut s'appeler « développé couché ».
     const isConsigneLabel = JUNK_RE.test(name);
     const looksLikeConsigne =
-      !exMatch &&
-      (isConsigneLabel || (!hasNumericData && /^[a-zàâäéèêëîïôöùûüç]/.test(name)));
+      !exMatch && (isConsigneLabel || (!hasNumericData && /^[a-zàâäéèêëîïôöùûüç]/.test(name)));
     if (looksLikeConsigne) {
       const prev = currentDay?.exercises[currentDay.exercises.length - 1];
       if (prev) {
@@ -397,7 +413,8 @@ function parseWeekSheet(ws: XLSX.WorkSheet, sheetName: string): ImportedWeek | n
       tempo,
       recup,
       rpe_target: rpe,
-      coach_notes: [cellStr(ws, r, layout.notesCol), ...leftovers].filter(Boolean).join("\n") || null,
+      coach_notes:
+        [cellStr(ws, r, layout.notesCol), ...leftovers].filter(Boolean).join("\n") || null,
       color: detectColor(nameCell),
       youtube_url: url,
       youtube_id: extractYoutubeId(url),

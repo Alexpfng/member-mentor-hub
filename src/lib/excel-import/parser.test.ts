@@ -65,6 +65,46 @@ const MUSCU = [
   ["B. Leg curl", "3", "12", "40kg", "2010", "90s", "7", null],
 ];
 
+/** Le coach ajoute parfois un répertoire annexe sous la séance dans le même onglet. */
+const MUSCU_WITH_REHAB_REPERTOIRE = [
+  ["Full-body 3 (Durée : ~70min)"],
+  ["Exercice", "Série(s)", "Reps", "Charge (kg)", "Tempo (s)", "Récup", "RPE", "Notes"],
+  [
+    "E2. Extensions triceps à la corde",
+    "3",
+    "10 - 8",
+    "40 - 50",
+    "2110",
+    null,
+    null,
+    "Rotation externe",
+  ],
+  ["F. Star plank", "2", "20s/côté", "pdc", "iso", "2'", null, "Garde la hanche orientée"],
+  [],
+  ["Répertoire exercices rehab tendon d'achille"],
+  ["Exercice", "Série(s)", "Reps", "Charge (kg)", "Tempo (s)", "Récup", "RPE", "Notes"],
+  [
+    "A1. Elevations du soléaire avec poids",
+    "2",
+    "12 / jambes",
+    "disque 20kg",
+    "21X0",
+    "1'",
+    null,
+    "Plan incliné",
+  ],
+  [
+    "A2. Foot circle",
+    "2",
+    "3 tours / pied",
+    "pdc",
+    "iso",
+    "1'",
+    null,
+    "Ton talon doit plus ou moins toucher",
+  ],
+];
+
 describe("import Excel — séances de course à pied", () => {
   it("reconnaît l'en-tête « Exercise » en anglais", async () => {
     const parsed = await parseExcelFile(makeFile(COURSE_EN));
@@ -180,5 +220,15 @@ describe("import Excel — muscu (non-régression)", () => {
     expect(squat?.recup).toBe("2'");
     expect(squat?.rpe_target).toBe("8");
     expect(squat?.coach_notes ?? "").toContain("dos droit");
+  });
+
+  it("n'importe pas un répertoire rehab placé sous la séance comme des exercices du jour", async () => {
+    const parsed = await parseExcelFile(makeFile(MUSCU_WITH_REHAB_REPERTOIRE));
+    expect(parsed.weeks[0].days).toHaveLength(1);
+
+    const names = parsed.weeks[0].days[0].exercises.map((e) => e.name);
+    expect(names).toEqual(["Extensions triceps à la corde", "Star plank"]);
+    expect(names).not.toContain("Elevations du soléaire avec poids");
+    expect(names).not.toContain("Foot circle");
   });
 });
