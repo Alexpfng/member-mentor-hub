@@ -6,6 +6,7 @@ import { mergeAssignmentWeeks } from "@/lib/program-weeks";
 import { localDateISO } from "@/lib/local-date";
 import { normalizeWeekStartsOn } from "@/lib/planning-weeks";
 import { normalizeProgramStructure } from "@/lib/week-structure-normalizer";
+import { preserveAssignmentSessionMode } from "@/lib/assignment-session-mode";
 import type { Json } from "@/integrations/supabase/types";
 
 async function assertCoach(userId: string) {
@@ -182,6 +183,16 @@ export const assignProgram = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => assignSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertCoach(context.userId);
+    const { data: previousAssignment } = await supabaseAdmin
+      .from("assignments")
+      .select("session_mode")
+      .eq("member_id", data.member_id)
+      .order("active", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const sessionMode = preserveAssignmentSessionMode(previousAssignment?.session_mode);
+
     // Deactivate previous assignments for this member
     await supabaseAdmin
       .from("assignments")
@@ -194,6 +205,7 @@ export const assignProgram = createServerFn({ method: "POST" })
         member_id: data.member_id,
         program_id: data.program_id,
         active: true,
+        session_mode: sessionMode,
         start_date: data.start_date ?? localDateISO(),
       })
       .select()

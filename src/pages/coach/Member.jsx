@@ -223,6 +223,81 @@ function AssignProgramModal({ program, busy, defaultWeek, onClose, onConfirm }) 
     </div>
   );
 }
+
+function SessionModeConfirmModal({ memberName, nextMode, busy, onClose, onConfirm }) {
+  const [typed, setTyped] = useState("");
+  const canConfirm = typed.trim() === "OUI";
+  const nextLabel =
+    nextMode === "expert" ? "EXPÉRIMENTÉ — SANS SAISIE" : "SUIVI — AVEC POIDS & REPS";
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.68)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 130,
+        padding: 16,
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="cst-screen cst-hatch"
+        style={{
+          width: 460,
+          padding: 24,
+          borderRadius: 12,
+          display: "flex",
+          flexDirection: "column",
+          gap: 14,
+        }}
+      >
+        <div className="cst-display" style={{ fontSize: 22 }}>
+          CHANGER LE PROFIL ?
+        </div>
+        <p style={{ margin: 0, fontSize: 13, lineHeight: 1.55, opacity: 0.78 }}>
+          Êtes-vous sûr de vouloir changer le profil du coaché{" "}
+          <strong>{memberName || "ce membre"}</strong> vers le mode{" "}
+          <span className="cst-mono">{nextLabel}</span> ?
+        </p>
+        <label className="cst-mono" style={{ fontSize: 10, opacity: 0.65 }}>
+          TAPE OUI POUR CONFIRMER
+        </label>
+        <input
+          className="cst-input"
+          autoFocus
+          value={typed}
+          onChange={(event) => setTyped(event.target.value)}
+          placeholder="OUI"
+          style={{ textTransform: "uppercase" }}
+        />
+        <div style={{ display: "flex", gap: 8 }}>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={busy}
+            className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+            style={{ flex: 1 }}
+          >
+            ANNULER
+          </button>
+          <button
+            type="button"
+            disabled={busy || !canConfirm}
+            onClick={onConfirm}
+            className="cst-btn cst-btn-primary cst-btn-sm"
+            style={{ flex: 1, opacity: busy || !canConfirm ? 0.5 : 1 }}
+          >
+            {busy ? "CHANGEMENT…" : "VALIDER"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 import { useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import CoachSidebar from "../../components/CoachSidebar";
@@ -419,6 +494,7 @@ export default function CoachMember() {
   const [formSaved, setFormSaved] = useState(false);
   const [logWeight, setLogWeight] = useState(false);
   const [sessionModeBusy, setSessionModeBusy] = useState(false);
+  const [sessionModeConfirm, setSessionModeConfirm] = useState(null);
   const [activity, setActivity] = useState(null);
   const [tracking, setTracking] = useState(null);
   const [goalSteps, setGoalSteps] = useState("");
@@ -718,6 +794,21 @@ export default function CoachMember() {
     return daysBetween(new Date(data.profile.created_at), new Date());
   }, [data]);
 
+  async function confirmSessionModeChange() {
+    if (!sessionModeConfirm) return;
+    const next = sessionModeConfirm.nextMode;
+    setSessionModeBusy(true);
+    try {
+      await setModeFn({ data: { member_id: memberId, session_mode: next } });
+      setData((d) => (d ? { ...d, assignment: { ...d.assignment, session_mode: next } } : d));
+      setSessionModeConfirm(null);
+    } catch (ex) {
+      alert(ex?.message || "Erreur");
+    } finally {
+      setSessionModeBusy(false);
+    }
+  }
+
   const currentWeek = useMemo(() => {
     // Use the actual highest week_number from assignment_weeks (authoritative)
     // Falls back to date-based calculation only if no weeks exist yet
@@ -826,6 +917,15 @@ export default function CoachMember() {
           defaultWeek={assignProgramChoice.defaultWeek}
           onClose={() => setAssignProgramChoice(null)}
           onConfirm={confirmAssign}
+        />
+      )}
+      {sessionModeConfirm && (
+        <SessionModeConfirmModal
+          memberName={fullName}
+          nextMode={sessionModeConfirm.nextMode}
+          busy={sessionModeBusy}
+          onClose={() => setSessionModeConfirm(null)}
+          onConfirm={confirmSessionModeChange}
         />
       )}
       <div ref={scrollContainerRef} className="cst-col cst-scroll" style={{ flex: 1, minWidth: 0 }}>
@@ -1188,19 +1288,9 @@ export default function CoachMember() {
                     {data.assignment &&
                       (() => {
                         const currentMode = data.assignment.session_mode || "debutant";
-                        async function toggleMode() {
+                        function requestModeChange() {
                           const next = currentMode === "expert" ? "debutant" : "expert";
-                          setSessionModeBusy(true);
-                          try {
-                            await setModeFn({ data: { member_id: memberId, session_mode: next } });
-                            setData((d) =>
-                              d ? { ...d, assignment: { ...d.assignment, session_mode: next } } : d,
-                            );
-                          } catch {
-                            /* ignore */
-                          } finally {
-                            setSessionModeBusy(false);
-                          }
+                          setSessionModeConfirm({ nextMode: next });
                         }
                         return (
                           <div
@@ -1226,7 +1316,7 @@ export default function CoachMember() {
                               </div>
                             </div>
                             <button
-                              onClick={toggleMode}
+                              onClick={requestModeChange}
                               disabled={sessionModeBusy}
                               className="cst-btn cst-btn-ghost-dark cst-btn-sm"
                               style={{ fontSize: 10, opacity: sessionModeBusy ? 0.5 : 1 }}

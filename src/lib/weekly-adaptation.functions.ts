@@ -12,6 +12,7 @@ import {
 import { buildCoachExerciseFeedback } from "@/lib/coach-rpe-feedback";
 import { normalizeProgramStructure, normalizeWeekStructure } from "@/lib/week-structure-normalizer";
 import { clearFulfilledFilmRequests, filmedExerciseKeys } from "@/lib/film-requests";
+import { preserveAssignmentSessionMode } from "@/lib/assignment-session-mode";
 
 /**
  * Adaptation hebdomadaire des programmes (coach).
@@ -133,8 +134,8 @@ async function resolveSourceWeek(
     .select("program_id, programs(structure)")
     .eq("id", assignmentId)
     .maybeSingle();
-  const rawStructure = (assignment as { programs?: { structure?: ProgramStructure } } | null)?.programs
-    ?.structure;
+  const rawStructure = (assignment as { programs?: { structure?: ProgramStructure } } | null)
+    ?.programs?.structure;
   const structure = normalizeProgramStructure(rawStructure ?? { weeks: [] });
   const fallbackWeek = structure?.weeks?.[Math.max(0, weekNumber - 1)] ??
     structure?.weeks?.[0] ?? { days: [] };
@@ -482,7 +483,12 @@ export const getMemberWeekContext = createServerFn({ method: "POST" })
           "Membre",
       },
       feedback,
-      sourceSummary: { adherence, avgRpe, painCount, weekNumber: feedbackContext?.weekNumber ?? null },
+      sourceSummary: {
+        adherence,
+        avgRpe,
+        painCount,
+        weekNumber: feedbackContext?.weekNumber ?? null,
+      },
       maxWeekNumber,
     };
   });
@@ -831,6 +837,16 @@ export const duplicateProgramForMember = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
 
+    const { data: previousAssignment } = await supabaseAdmin
+      .from("assignments")
+      .select("session_mode")
+      .eq("member_id", data.memberId)
+      .order("active", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const sessionMode = preserveAssignmentSessionMode(previousAssignment?.session_mode);
+
     // Deactivate other assignments for that member
     await supabaseAdmin
       .from("assignments")
@@ -843,6 +859,7 @@ export const duplicateProgramForMember = createServerFn({ method: "POST" })
         member_id: data.memberId,
         program_id: created.id,
         active: true,
+        session_mode: sessionMode,
         start_date: localDateISO(),
       })
       .select("id")
