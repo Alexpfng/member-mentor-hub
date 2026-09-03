@@ -1,8 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
 import {
+  buildEarlyFinishMemberNote,
   buildExpertExerciseFeedbackRows,
   buildMemberCommentFeedbackRows,
+  buildSkippedPainFeedbackRows,
   normalizeExpertRpeForStorage,
   trimOptionalComment,
 } from "./live-session-feedback";
@@ -108,5 +110,56 @@ describe("buildMemberCommentFeedbackRows", () => {
 
   test("ne produit rien quand aucun commentaire n'est saisi", () => {
     expect(buildMemberCommentFeedbackRows("session-2", groups, {})).toEqual([]);
+  });
+});
+
+describe("buildSkippedPainFeedbackRows", () => {
+  test("creates one could-not-do feedback per pain-skipped exercise", () => {
+    expect(
+      buildSkippedPainFeedbackRows("session-3", {
+        0: {
+          exo: "Fentes bulgares",
+          weight: null,
+          reps: null,
+          rpe: null,
+          skipped: "pain",
+          note: "Tendon d'Achille",
+        },
+        1: {
+          exo: "Fentes bulgares",
+          weight: null,
+          reps: null,
+          rpe: null,
+          skipped: "pain",
+          note: "Tendon d'Achille",
+        },
+        2: { exo: "Rowing", weight: 40, reps: 10, rpe: 8 },
+      }),
+    ).toEqual([
+      {
+        session_id: "session-3",
+        exercise_name: "Fentes bulgares",
+        rpe: null,
+        could_not_do: true,
+        felt_too_hard: true,
+        member_comment: "Douleur signalée : Tendon d'Achille",
+      },
+    ]);
+  });
+});
+
+describe("buildEarlyFinishMemberNote", () => {
+  test("adds the unfinished exercise list and member reason", () => {
+    expect(
+      buildEarlyFinishMemberNote("Fatigue générale", ["Tractions", "Presse"], "Trop mal au tendon"),
+    ).toBe(
+      "Fatigue générale\n\nSéance terminée avant la fin. Exercices non faits : Tractions, Presse. Raison : Trop mal au tendon",
+    );
+  });
+
+  test("works without an existing session note", () => {
+    expect(buildEarlyFinishMemberNote("", ["Tractions"], "Plus le temps")).toBe(
+      "Séance terminée avant la fin. Exercices non faits : Tractions. Raison : Plus le temps",
+    );
   });
 });

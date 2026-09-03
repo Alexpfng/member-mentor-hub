@@ -5,6 +5,8 @@ export type ExpertSavedStep = {
   rpe: number | null;
   /** Commentaire libre laissé par le membre au moment de valider la série. */
   note?: string | null;
+  /** L'exercice est résolu sans stats, par exemple quand une douleur empêche de le faire. */
+  skipped?: "pain" | null;
 };
 
 export type SessionProgressStep = {
@@ -15,10 +17,14 @@ export type SessionProgressStep = {
 
 export type ExerciseOverviewRow = {
   exerciseName: string;
-  state: "done" | "current" | "todo";
+  state: "done" | "current" | "todo" | "skipped";
   completedSteps: number;
   totalSteps: number;
 };
+
+function isSkippedStep(step: ExpertSavedStep | undefined): boolean {
+  return step?.skipped === "pain";
+}
 
 export function groupExpertRecapByExercise(savedByStep: Record<number, ExpertSavedStep>) {
   const groups = new Map<
@@ -40,6 +46,7 @@ export function groupExpertRecapByExercise(savedByStep: Record<number, ExpertSav
     .map(([stepIdx, row]) => ({ stepIdx: Number(stepIdx), row }))
     .sort((a, b) => a.stepIdx - b.stepIdx)
     .forEach(({ stepIdx, row }) => {
+      if (isSkippedStep(row)) return;
       const existing = groups.get(row.exo) ?? {
         exerciseName: row.exo,
         rows: [],
@@ -78,7 +85,33 @@ export function isExerciseDone(
     .filter((step) => step.exerciseName === exerciseName)
     .map((step) => step.index);
   if (workStepIdxs.length === 0) return false;
-  return workStepIdxs.every((index) => savedByStep[index] != null);
+  return workStepIdxs.every(
+    (index) => savedByStep[index] != null && !isSkippedStep(savedByStep[index]),
+  );
+}
+
+function isExerciseSkippedForPain(
+  exerciseName: string,
+  steps: SessionProgressStep[],
+  savedByStep: Record<number, ExpertSavedStep>,
+): boolean {
+  const workStepIdxs = steps
+    .filter((step) => step.exerciseName === exerciseName)
+    .map((step) => step.index);
+  return (
+    workStepIdxs.length > 0 && workStepIdxs.every((index) => isSkippedStep(savedByStep[index]))
+  );
+}
+
+function isExerciseResolved(
+  exerciseName: string,
+  steps: SessionProgressStep[],
+  savedByStep: Record<number, ExpertSavedStep>,
+): boolean {
+  return (
+    isExerciseDone(exerciseName, steps, savedByStep) ||
+    isExerciseSkippedForPain(exerciseName, steps, savedByStep)
+  );
 }
 
 /**
@@ -92,7 +125,7 @@ export function allExercisesDone(
   savedByStep: Record<number, ExpertSavedStep>,
 ): boolean {
   const toLog = exerciseNames.filter((name) => hasWorkStep(name, steps));
-  return toLog.length > 0 && toLog.every((name) => isExerciseDone(name, steps, savedByStep));
+  return toLog.length > 0 && toLog.every((name) => isExerciseResolved(name, steps, savedByStep));
 }
 
 /**
@@ -116,7 +149,7 @@ export function nextUndoneExerciseName(
   // On repart juste après l'exercice courant, puis on reboucle jusqu'à lui inclus.
   const order = [...exerciseNames.slice(currentPos + 1), ...exerciseNames.slice(0, currentPos + 1)];
   for (const name of order) {
-    if (hasWorkStep(name, steps) && !isExerciseDone(name, steps, savedByStep)) return name;
+    if (hasWorkStep(name, steps) && !isExerciseResolved(name, steps, savedByStep)) return name;
   }
   return null;
 }
@@ -132,12 +165,17 @@ export function buildExerciseOverview(
       .filter((step) => step.exerciseName === exerciseName)
       .map((step) => step.index);
 
-    const completedSteps = stepIndexes.filter((stepIdx) => savedByStep[stepIdx]).length;
+    const completedSteps = stepIndexes.filter(
+      (stepIdx) => savedByStep[stepIdx] && !isSkippedStep(savedByStep[stepIdx]),
+    ).length;
     const totalSteps = stepIndexes.length;
     const includesCurrent = stepIndexes.includes(currentStepIdx);
+    const skipped =
+      totalSteps > 0 && stepIndexes.every((stepIdx) => isSkippedStep(savedByStep[stepIdx]));
 
     let state: ExerciseOverviewRow["state"] = "todo";
-    if (totalSteps > 0 && completedSteps === totalSteps) state = "done";
+    if (skipped) state = "skipped";
+    else if (totalSteps > 0 && completedSteps === totalSteps) state = "done";
     else if (includesCurrent || completedSteps > 0) state = "current";
 
     return {
@@ -147,4 +185,27 @@ export function buildExerciseOverview(
       totalSteps,
     };
   });
+}
+
+export function markExerciseSkippedForPain(
+  savedByStep: Record<number, ExpertSavedStep>,
+  steps: SessionProgressStep[],
+  exerciseName: string,
+  reason: string,
+): Record<number, ExpertSavedStep> {
+  const next = { ...savedByStep };
+  const note = reason.trim() || "Douleur signalée";
+  steps
+    .filter((step) => step.exerciseName === exerciseName)
+    .forEach((step) => {
+      next[step.index] = {
+        exo: exerciseName,
+        weight: null,
+        reps: null,
+        rpe: null,
+        skipped: "pain",
+        note,
+      };
+    });
+  return next;
 }

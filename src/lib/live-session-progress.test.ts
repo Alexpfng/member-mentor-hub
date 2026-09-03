@@ -5,6 +5,7 @@ import {
   buildExerciseOverview,
   groupExpertRecapByExercise,
   isExerciseDone,
+  markExerciseSkippedForPain,
   nextUndoneExerciseName,
   type ExpertSavedStep,
   type SessionProgressStep,
@@ -46,6 +47,22 @@ describe("groupExpertRecapByExercise", () => {
       },
     ]);
   });
+
+  it("excludes pain-skipped exercises from the stat/RPE recap", () => {
+    const savedByStep: Record<number, ExpertSavedStep> = {
+      0: { exo: "Squat", weight: 80, reps: 8, rpe: null },
+      1: { exo: "Squat", weight: null, reps: null, rpe: null, skipped: "pain" },
+      2: { exo: "Row", weight: 42.5, reps: 10, rpe: null },
+    };
+
+    expect(groupExpertRecapByExercise(savedByStep).map((group) => group.exerciseName)).toEqual([
+      "Squat",
+      "Row",
+    ]);
+    expect(groupExpertRecapByExercise(savedByStep)[0].rows).toEqual([
+      { stepIdx: 0, setNumber: 1, weight: 80, reps: 8, rpe: null, note: null },
+    ]);
+  });
 });
 
 describe("buildExerciseOverview", () => {
@@ -70,6 +87,15 @@ describe("buildExerciseOverview", () => {
     expect(buildExerciseOverview(["Squat", "Row"], steps, savedByStep, 1)).toEqual([
       { exerciseName: "Squat", state: "current", completedSteps: 1, totalSteps: 2 },
       { exerciseName: "Row", state: "todo", completedSteps: 0, totalSteps: 1 },
+    ]);
+  });
+
+  it("shows a pain-skipped exercise separately from a completed one", () => {
+    const savedByStep = markExerciseSkippedForPain({}, steps, "Squat", "Tendon d'Achille");
+
+    expect(buildExerciseOverview(["Squat", "Row"], steps, savedByStep, 2)).toEqual([
+      { exerciseName: "Squat", state: "skipped", completedSteps: 0, totalSteps: 2 },
+      { exerciseName: "Row", state: "current", completedSteps: 0, totalSteps: 1 },
     ]);
   });
 });
@@ -99,6 +125,11 @@ describe("nextUndoneExerciseName", () => {
     expect(nextUndoneExerciseName(names, steps, done(0, 1, 2, 3), "Gainage")).toBeNull();
   });
 
+  it("does not send the member back to an exercise skipped because of pain", () => {
+    const savedByStep = markExerciseSkippedForPain(done(2), steps, "Squat", "Douleur genou");
+    expect(nextUndoneExerciseName(names, steps, savedByStep, "Row")).toBe("Gainage");
+  });
+
   it("counts an exercise done only when ALL its steps are saved", () => {
     // Row et Gainage faits, on finit sur Gainage ; Squat n'a qu'une de ses deux
     // séries saisies → il reste à faire, on y revient.
@@ -122,6 +153,13 @@ describe("isExerciseDone / allExercisesDone", () => {
     expect(isExerciseDone("Row", steps, done(2))).toBe(true);
   });
 
+  it("does not count a pain-skipped exercise as done, but lets the session end", () => {
+    const savedByStep = markExerciseSkippedForPain(done(2, 3), steps, "Squat", "Douleur");
+
+    expect(isExerciseDone("Squat", steps, savedByStep)).toBe(false);
+    expect(allExercisesDone(names, steps, savedByStep)).toBe(true);
+  });
+
   it("never counts an exercise with no work step as done", () => {
     expect(isExerciseDone("Échauffement", steps, done(0, 1, 2, 3))).toBe(false);
   });
@@ -136,5 +174,34 @@ describe("isExerciseDone / allExercisesDone", () => {
   it("ignores ghost exercises (no work step) when deciding the session is over", () => {
     const withGhost = [...names, "Échauffement"];
     expect(allExercisesDone(withGhost, steps, done(0, 1, 2, 3))).toBe(true);
+  });
+});
+
+describe("markExerciseSkippedForPain", () => {
+  it("replaces existing entries for that exercise with pain-skip entries", () => {
+    const savedByStep: Record<number, ExpertSavedStep> = {
+      0: { exo: "Squat", weight: 80, reps: 8, rpe: 7 },
+      2: { exo: "Row", weight: 42.5, reps: 10, rpe: 8 },
+    };
+
+    expect(markExerciseSkippedForPain(savedByStep, steps, "Squat", "Tendon douloureux")).toEqual({
+      0: {
+        exo: "Squat",
+        weight: null,
+        reps: null,
+        rpe: null,
+        skipped: "pain",
+        note: "Tendon douloureux",
+      },
+      1: {
+        exo: "Squat",
+        weight: null,
+        reps: null,
+        rpe: null,
+        skipped: "pain",
+        note: "Tendon douloureux",
+      },
+      2: { exo: "Row", weight: 42.5, reps: 10, rpe: 8 },
+    });
   });
 });

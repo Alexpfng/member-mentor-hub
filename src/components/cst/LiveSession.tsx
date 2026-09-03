@@ -12,6 +12,7 @@ import {
   buildExerciseOverview,
   groupExpertRecapByExercise,
   isExerciseDone,
+  markExerciseSkippedForPain,
   nextUndoneExerciseName,
   type ExpertSavedStep,
   type SessionProgressStep,
@@ -22,8 +23,10 @@ import {
   type SessionSnapshot,
 } from "@/lib/live-session-snapshot";
 import {
+  buildEarlyFinishMemberNote,
   buildExpertExerciseFeedbackRows,
   buildMemberCommentFeedbackRows,
+  buildSkippedPainFeedbackRows,
   normalizeExpertRpeForStorage,
   trimOptionalComment,
 } from "@/lib/live-session-feedback";
@@ -1232,6 +1235,8 @@ export function LiveSession({
   const [showVideo, setShowVideo] = useState<ProgExercise | null>(null);
   const [showCues, setShowCues] = useState<ProgExercise | null>(null);
   const [showQuitConfirm, setShowQuitConfirm] = useState(false);
+  const [showEarlyFinishReason, setShowEarlyFinishReason] = useState(false);
+  const [earlyFinishReason, setEarlyFinishReason] = useState("");
   const [resetting, setResetting] = useState(false);
   const [showResumeNotice, setShowResumeNotice] = useState(
     !!snap && Object.keys(snap.savedByStep).length > 0,
@@ -1372,10 +1377,20 @@ export function LiveSession({
   // Une étape peut porter plusieurs entrées (circuit : une par exercice, avec
   // une clé décimale) — on compte les étapes, pas les lignes, sinon la
   // progression dépasse 100 % dès qu'un circuit est validé.
-  const completedWorkSets = useMemo(
+  const resolvedWorkSets = useMemo(
     () => new Set(Object.keys(savedByStep).map((key) => Math.floor(Number(key)))).size,
     [savedByStep],
   );
+  const completedWorkSets = useMemo(
+    () =>
+      new Set(
+        Object.entries(savedByStep)
+          .filter(([, row]) => row.skipped !== "pain")
+          .map(([key]) => Math.floor(Number(key))),
+      ).size,
+    [savedByStep],
+  );
+  const skippedWorkSets = Math.max(0, resolvedWorkSets - completedWorkSets);
   const progressSteps = useMemo<SessionProgressStep[]>(
     () =>
       steps.flatMap((step, index): SessionProgressStep[] => {
@@ -1399,6 +1414,13 @@ export function LiveSession({
   const overviewRows = useMemo(
     () => buildExerciseOverview(exerciseNames, progressSteps, savedByStep, stepIdx),
     [exerciseNames, progressSteps, savedByStep, stepIdx],
+  );
+  const unfinishedExerciseNames = useMemo(
+    () =>
+      overviewRows
+        .filter((row) => row.state !== "done" && row.state !== "skipped")
+        .map((row) => row.exerciseName),
+    [overviewRows],
   );
   const expertRecapGroups = useMemo(() => groupExpertRecapByExercise(savedByStep), [savedByStep]);
 
@@ -1645,10 +1667,10 @@ export function LiveSession({
   }
 
   /** Écrit le mot de fin de séance sur la séance (visible côté coach). */
-  async function saveSessionNote() {
+  async function saveSessionNote(noteOverride?: string) {
     const { error } = await supabase
       .from("sessions")
-      .update({ member_note: trimOptionalComment(sessionNote) })
+      .update({ member_note: trimOptionalComment(noteOverride ?? sessionNote) })
       .eq("id", sessionId);
     if (error) throw error;
   }
@@ -1657,12 +1679,11 @@ export function LiveSession({
    * Mode assisté : les séries sont déjà en base au fil de l'eau, il ne reste
    * que les retours libres — commentaire par exercice + mot de fin de séance.
    */
-  async function saveMemberFeedback() {
-    const feedbackRows = buildMemberCommentFeedbackRows(
-      sessionId,
-      expertRecapGroups,
-      expertRecapCommentByExercise,
-    );
+  async function saveMemberFeedback(noteOverride?: string) {
+    const feedbackRows = [
+      ...buildMemberCommentFeedbackRows(sessionId, expertRecapGroups, expertRecapCommentByExercise),
+      ...buildSkippedPainFeedbackRows(sessionId, savedByStep),
+    ];
     const { error: deleteError } = await supabase
       .from("exercise_feedbacks")
       .delete()
@@ -1672,10 +1693,59 @@ export function LiveSession({
       const { error: insertError } = await supabase.from("exercise_feedbacks").insert(feedbackRows);
       if (insertError) throw insertError;
     }
-    await saveSessionNote();
+    await saveSessionNote(noteOverride);
   }
 
-  async function finishExpertRecap() {
+  async function skipExerciseBecausePain({
+    exerciseName,
+    reason,
+  }: {
+    exerciseName: string;
+    reason: string;
+  }) {
+    await writeQueueRef.current;
+    const [deleteLogs, deleteFeedbacks] = await Promise.all([
+      supabase
+        .from("set_logs")
+        .delete()
+        .eq("session_id", sessionId)
+        .eq("exercise_name", exerciseName),
+      supabase
+        .from("exercise_feedbacks")
+        .delete()
+        .eq("session_id", sessionId)
+        .eq("exercise_name", exerciseName),
+    ]);
+    if (deleteLogs.error) throw deleteLogs.error;
+    if (deleteFeedbacks.error) throw deleteFeedbacks.error;
+
+    const nextSaved = markExerciseSkippedForPain(savedByStep, progressSteps, exerciseName, reason);
+    setSavedByStep(nextSaved);
+    setExpertRecapRpeByExercise((currentMap) => {
+      const next = { ...currentMap };
+      delete next[exerciseName];
+      return next;
+    });
+    setExpertRecapCommentByExercise((currentMap) => {
+      const next = { ...currentMap };
+      delete next[exerciseName];
+      return next;
+    });
+    setLogging(null);
+    setValidationError(null);
+    setTimedDone(false);
+
+    const nextName = nextUndoneExerciseName(exerciseNames, progressSteps, nextSaved, exerciseName);
+    const target = nextName != null ? entryStepIndexFor(nextName) : -1;
+    if (nextName == null || target < 0) {
+      setPhase("recap");
+      return;
+    }
+    setStepIdx(target);
+    setPhase("step");
+  }
+
+  async function finishExpertRecap(noteOverride?: string) {
     const missingExercise = expertRecapGroups.find(
       (group) => expertRecapRpeByExercise[group.exerciseName] == null,
     );
@@ -1704,12 +1774,15 @@ export function LiveSession({
         })),
       );
 
-      const feedbackRows = buildExpertExerciseFeedbackRows(
-        sessionId,
-        expertRecapGroups,
-        expertRecapRpeByExercise,
-        expertRecapCommentByExercise,
-      );
+      const feedbackRows = [
+        ...buildExpertExerciseFeedbackRows(
+          sessionId,
+          expertRecapGroups,
+          expertRecapRpeByExercise,
+          expertRecapCommentByExercise,
+        ),
+        ...buildSkippedPainFeedbackRows(sessionId, savedByStep),
+      ];
 
       // Les écritures de séance partaient en tâche de fond : on les laisse
       // atterrir avant de recalculer les totaux, sinon volume et RPE moyen sont
@@ -1735,7 +1808,7 @@ export function LiveSession({
       if (insertLogs.error) throw insertLogs.error;
       if (insertFeedbacks.error) throw insertFeedbacks.error;
 
-      await saveSessionNote();
+      await saveSessionNote(noteOverride);
       await onFinish();
       clearSnapshot(sessionId);
     } catch (err) {
@@ -1754,6 +1827,44 @@ export function LiveSession({
     } finally {
       setExpertFinishing(false);
     }
+  }
+
+  async function finalizeSession(noteOverride?: string) {
+    try {
+      if (sessionMode === "expert") {
+        await finishExpertRecap(noteOverride);
+      } else {
+        // Les séries encore en vol doivent être en base avant que la clôture ne
+        // calcule volume et RPE moyen.
+        await writeQueueRef.current;
+        await saveMemberFeedback(noteOverride);
+        await onFinish();
+        clearSnapshot(sessionId);
+      }
+    } catch {
+      /* échec déjà signalé (toast) ; on garde le snapshot pour réessayer */
+    }
+  }
+
+  function requestFinishSession() {
+    if (unfinishedExerciseNames.length > 0) {
+      setShowEarlyFinishReason(true);
+      return;
+    }
+    void finalizeSession();
+  }
+
+  async function submitEarlyFinishReason() {
+    const reason = earlyFinishReason.trim();
+    if (!reason) {
+      toast.error("Explique rapidement pourquoi tu termines avant la fin.");
+      return;
+    }
+    const note = buildEarlyFinishMemberNote(sessionNote, unfinishedExerciseNames, reason);
+    setSessionNote(note);
+    setShowEarlyFinishReason(false);
+    setEarlyFinishReason("");
+    await finalizeSession(note);
   }
 
   /** Calcule les valeurs pré-remplies pour un set donné. */
@@ -1806,9 +1917,10 @@ export function LiveSession({
   }
 
   function renderHeader() {
-    const pct = totalWorkSets ? (completedWorkSets / totalWorkSets) * 100 : 0;
+    const pct = totalWorkSets ? (resolvedWorkSets / totalWorkSets) * 100 : 0;
     const doneExercises = overviewRows.filter((row) => row.state === "done").length;
-    const remainingExercises = Math.max(0, overviewRows.length - doneExercises);
+    const skippedExercises = overviewRows.filter((row) => row.state === "skipped").length;
+    const remainingExercises = Math.max(0, overviewRows.length - doneExercises - skippedExercises);
     return (
       <div style={{ padding: "16px 18px 8px", display: "flex", flexDirection: "column", gap: 8 }}>
         {showResumeNotice && (
@@ -1882,10 +1994,13 @@ export function LiveSession({
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span className="cst-mono" style={{ fontSize: 10, opacity: 0.6 }}>
               {completedWorkSets}/{totalWorkSets}
+              {skippedWorkSets > 0 ? ` · ${skippedWorkSets} skip` : ""}
             </span>
             {overviewRows.length > 0 && (
               <span className="cst-mono" style={{ fontSize: 10, opacity: 0.6 }}>
-                {doneExercises} faits · {remainingExercises} restants
+                {doneExercises} faits
+                {skippedExercises > 0 ? ` · ${skippedExercises} skippés` : ""} ·{" "}
+                {remainingExercises} restants
               </span>
             )}
             <button
@@ -2036,17 +2151,27 @@ export function LiveSession({
                     const tone =
                       row.state === "done"
                         ? "#6EAB76"
-                        : row.state === "current"
-                          ? "#D4A53B"
-                          : "rgba(255,255,255,0.45)";
+                        : row.state === "skipped"
+                          ? "#ff8a7a"
+                          : row.state === "current"
+                            ? "#D4A53B"
+                            : "rgba(255,255,255,0.45)";
                     const label =
                       row.state === "done"
                         ? t("FAIT")
-                        : row.state === "current"
-                          ? t("EN COURS")
-                          : t("À FAIRE");
+                        : row.state === "skipped"
+                          ? "SKIPPÉ DOULEUR"
+                          : row.state === "current"
+                            ? t("EN COURS")
+                            : t("À FAIRE");
                     const statusIcon =
-                      row.state === "done" ? "✓" : row.state === "current" ? "…" : "□";
+                      row.state === "done"
+                        ? "✓"
+                        : row.state === "skipped"
+                          ? "!"
+                          : row.state === "current"
+                            ? "…"
+                            : "□";
                     // Toujours cliquable : toucher un exo y renvoie directement (machine prise → autre exo),
                     // en mode expert comme en mode assisté.
                     const isClickable = true;
@@ -2230,7 +2355,101 @@ export function LiveSession({
           onClose={() => setPainFor(null)}
           sessionId={sessionId}
           exerciseName={painFor || ""}
+          onSkipExercise={({ exerciseName, reason }) =>
+            skipExerciseBecausePain({ exerciseName, reason })
+          }
         />
+        {showEarlyFinishReason && (
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0,0,0,0.85)",
+              backdropFilter: "blur(4px)",
+              zIndex: 320,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 16,
+            }}
+          >
+            <div
+              className="cst-hatch"
+              style={{
+                width: "100%",
+                maxWidth: 420,
+                background: "#1c2620",
+                border: "1px solid rgba(255,255,255,0.12)",
+                borderRadius: 14,
+                padding: 22,
+                display: "flex",
+                flexDirection: "column",
+                gap: 12,
+                color: "#fff",
+              }}
+            >
+              <div>
+                <span
+                  className="cst-mono"
+                  style={{ fontSize: 10, opacity: 0.55, letterSpacing: "0.18em" }}
+                >
+                  FIN ANTICIPÉE
+                </span>
+                <h3 className="cst-display" style={{ margin: "6px 0 0", fontSize: 22 }}>
+                  POURQUOI TU ARRÊTES ?
+                </h3>
+              </div>
+              <p style={{ margin: 0, fontSize: 13, opacity: 0.75, lineHeight: 1.45 }}>
+                Il reste {unfinishedExerciseNames.length} exercice
+                {unfinishedExerciseNames.length > 1 ? "s" : ""} non terminé
+                {unfinishedExerciseNames.length > 1 ? "s" : ""}. Explique brièvement à Léo ce qui
+                t'empêche de finir.
+              </p>
+              <textarea
+                value={earlyFinishReason}
+                onChange={(event) => setEarlyFinishReason(event.target.value)}
+                placeholder="ex. douleur tendon d'Achille, plus de temps, fatigue trop haute..."
+                rows={4}
+                maxLength={1000}
+                autoFocus
+                style={{
+                  width: "100%",
+                  resize: "vertical",
+                  padding: "12px 14px",
+                  fontSize: 14,
+                  lineHeight: 1.4,
+                  color: "#fff",
+                  background: "rgba(255,255,255,0.08)",
+                  border: "1px solid rgba(255,255,255,0.16)",
+                  borderRadius: 8,
+                  fontFamily: "inherit",
+                }}
+              />
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  onClick={() => setShowEarlyFinishReason(false)}
+                  className="cst-btn cst-btn-ghost-dark"
+                  style={{ flex: 1, padding: "13px 0", fontSize: 12 }}
+                >
+                  CONTINUER
+                </button>
+                <button
+                  onClick={submitEarlyFinishReason}
+                  disabled={finishing || expertFinishing}
+                  className="cst-btn cst-btn-primary"
+                  style={{
+                    flex: 1.4,
+                    padding: "13px 0",
+                    fontSize: 12,
+                    opacity: finishing || expertFinishing ? 0.6 : 1,
+                  }}
+                >
+                  ENVOYER ET TERMINER
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         {showQuitConfirm && (
           <div
             style={{
@@ -2273,10 +2492,9 @@ export function LiveSession({
                 </button>
                 {/* Option 2 — Séance terminée */}
                 <button
-                  onClick={async () => {
+                  onClick={() => {
                     setShowQuitConfirm(false);
-                    await writeQueueRef.current;
-                    await onFinish();
+                    requestFinishSession();
                   }}
                   className="cst-btn"
                   style={{
@@ -2591,22 +2809,7 @@ export function LiveSession({
           <SessionMediaUploader sessionId={sessionId} userId={userId} />
 
           <button
-            onClick={async () => {
-              try {
-                if (sessionMode === "expert") {
-                  await finishExpertRecap();
-                } else {
-                  // Idem : les séries encore en vol doivent être en base avant
-                  // que la clôture ne calcule volume et RPE moyen.
-                  await writeQueueRef.current;
-                  await saveMemberFeedback();
-                  await onFinish();
-                  clearSnapshot(sessionId); // seulement si la fin a réussi
-                }
-              } catch {
-                /* échec déjà signalé (toast) ; on garde le snapshot pour réessayer */
-              }
-            }}
+            onClick={requestFinishSession}
             disabled={finishing || expertFinishing}
             className="cst-btn cst-btn-primary"
             style={{

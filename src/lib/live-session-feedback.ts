@@ -1,4 +1,5 @@
 import type { Database } from "@/integrations/supabase/types";
+import type { ExpertSavedStep } from "./live-session-progress";
 
 type ExerciseFeedbackInsert = Database["public"]["Tables"]["exercise_feedbacks"]["Insert"];
 
@@ -65,4 +66,39 @@ export function buildMemberCommentFeedbackRows(
       exercise_name: entry.group.exerciseName,
       member_comment: entry.comment,
     }));
+}
+
+export function buildSkippedPainFeedbackRows(
+  sessionId: string,
+  savedByStep: Record<number, ExpertSavedStep>,
+): ExerciseFeedbackInsert[] {
+  const byExercise = new Map<string, string | null>();
+
+  Object.values(savedByStep).forEach((row) => {
+    if (row.skipped !== "pain") return;
+    if (byExercise.has(row.exo)) return;
+    byExercise.set(row.exo, trimOptionalComment(row.note));
+  });
+
+  return Array.from(byExercise.entries()).map(([exerciseName, note]) => ({
+    session_id: sessionId,
+    exercise_name: exerciseName,
+    rpe: null,
+    could_not_do: true,
+    felt_too_hard: true,
+    member_comment: note ? `Douleur signalée : ${note}` : "Douleur signalée : exercice non fait",
+  }));
+}
+
+export function buildEarlyFinishMemberNote(
+  existingNote: string | null | undefined,
+  unfinishedExerciseNames: string[],
+  reason: string,
+): string {
+  const current = trimOptionalComment(existingNote);
+  const names = unfinishedExerciseNames.length
+    ? unfinishedExerciseNames.join(", ")
+    : "non précisés";
+  const finishNote = `Séance terminée avant la fin. Exercices non faits : ${names}. Raison : ${reason.trim()}`;
+  return current ? `${current}\n\n${finishNote}` : finishNote;
 }
