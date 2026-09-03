@@ -1,8 +1,15 @@
 /* ColosmartTraining · L'Espace · Design tokens (themed) */
-*, *::before, *::after { box-sizing: border-box; }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 
-html, body, #root {
-  margin: 0; padding: 0;
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
   height: 100%;
   background: var(--cst-bg);
   color: var(--cst-text);
@@ -11,21 +18,21 @@ html, body, #root {
 
 /* ---- Brand palette (constant across themes) ---- */
 :root {
-  --cst-dark-green:   #1B2E1F;
-  --cst-mid-green:    #2D5A35;
-  --cst-light-green:  #3A6B42;
-  --cst-cream:        #EDE8D8;
-  --cst-warm-white:   #F5F2EA;
+  --cst-dark-green: #1b2e1f;
+  --cst-mid-green: #2d5a35;
+  --cst-light-green: #3a6b42;
+  --cst-cream: #ede8d8;
+  --cst-warm-white: #f5f2ea;
 
-  --cst-success: #3A6B42;
-  --cst-warning: #B5830A;
-  --cst-danger:  #8B2318;
-  --cst-info:    #1B4E6B;
+  --cst-success: #3a6b42;
+  --cst-warning: #b5830a;
+  --cst-danger: #8b2318;
+  --cst-info: #1b4e6b;
 
   --cst-display: "Barlow Condensed", "Oswald", "Arial Narrow", sans-serif;
-  --cst-serif:   "Playfair Display", "Libre Baskerville", Georgia, serif;
-  --cst-ui:      "Inter", "DM Sans", -apple-system, system-ui, sans-serif;
-  --cst-mono:    "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+  --cst-serif: "Playfair Display", "Libre Baskerville", Georgia, serif;
+  --cst-ui: "Inter", "DM Sans", -apple-system, system-ui, sans-serif;
+  --cst-mono: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
 }
 
 /* ---- DEFAULT = DARK (brand) ---- */
@@ -36,89 +43,91 @@ html.theme-dark {
      vert foncé en page noire avec cartes inversées en blanc. Safari n'a pas ce
      mode → « ça marche sur iPhone/Mac, pas sur Google ». En l'annonçant, on
      désactive cette inversion. */
-  color-scheme:             dark;
-  --cst-bg:                 #19291C;
-  --cst-bg-elev:            #142118;
-  --cst-text:               #FFFFFF;
-  --cst-text-strong:        #FFFFFF;
-  --cst-text-soft:          rgba(255,255,255,0.86);
-  --cst-text-muted:         #B2C3B8;
-  --cst-text-accent:        #93CB9B;
+  color-scheme: dark;
+  --cst-bg: #19291c;
+  --cst-bg-elev: #142118;
+  --cst-text: #ffffff;
+  --cst-text-strong: #ffffff;
+  --cst-text-soft: rgba(255, 255, 255, 0.86);
+  --cst-text-muted: #b2c3b8;
+  --cst-text-accent: #93cb9b;
 
-  --cst-card-bg:            #2A382F;
-  --cst-card-border:        rgba(255,255,255,0.16);
-  --cst-hairline:           rgba(255,255,255,0.10);
+  --cst-card-bg: #2a382f;
+  --cst-card-border: rgba(255, 255, 255, 0.16);
+  --cst-hairline: rgba(255, 255, 255, 0.1);
 
-  --cst-input-bg:           rgba(0,0,0,0.22);
-  --cst-input-border:       rgba(255,255,255,0.22);
-  --cst-input-placeholder:  rgba(255,255,255,0.48);
+  --cst-input-bg: rgba(0, 0, 0, 0.22);
+  --cst-input-border: rgba(255, 255, 255, 0.22);
+  --cst-input-placeholder: rgba(255, 255, 255, 0.48);
 
-  --cst-btn-ghost-border:   rgba(255,255,255,0.42);
-  --cst-btn-ghost-color:    #FFFFFF;
+  --cst-btn-ghost-border: rgba(255, 255, 255, 0.42);
+  --cst-btn-ghost-color: #ffffff;
 
-  --cst-hatch-color:        rgba(255,255,255,0.035);
-  --cst-overlay:            rgba(0,0,0,0.5);
+  --cst-hatch-color: rgba(255, 255, 255, 0.035);
+  --cst-overlay: rgba(0, 0, 0, 0.5);
 
-  --cst-shadow-card:        0 1px 2px rgba(0,0,0,0.25);
-  --cst-tag-bg:             rgba(255,255,255,0.10);
-  --cst-tag-text:           rgba(255,255,255,0.85);
-  --cst-accent-bg:          rgba(45,90,53,0.22);
+  --cst-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --cst-tag-bg: rgba(255, 255, 255, 0.1);
+  --cst-tag-text: rgba(255, 255, 255, 0.85);
+  --cst-accent-bg: rgba(45, 90, 53, 0.22);
 }
 
 /* ---- LIGHT ---- */
 html.theme-light {
-  color-scheme:             light;
-  --cst-bg:                 #F5F2EA;
-  --cst-bg-elev:            #EDE8D8;
-  --cst-text:               #1A1A18;
-  --cst-text-strong:        #0E1F12;
-  --cst-text-soft:          rgba(26,26,24,0.72);
-  --cst-text-muted:         #6B7B6E;
-  --cst-text-accent:        #2D5A35;
+  color-scheme: light;
+  --cst-bg: #f5f2ea;
+  --cst-bg-elev: #ede8d8;
+  --cst-text: #1a1a18;
+  --cst-text-strong: #0e1f12;
+  --cst-text-soft: rgba(26, 26, 24, 0.72);
+  --cst-text-muted: #6b7b6e;
+  --cst-text-accent: #2d5a35;
 
-  --cst-card-bg:            #FFFFFF;
-  --cst-card-border:        rgba(26,26,24,0.12);
-  --cst-hairline:           rgba(26,26,24,0.08);
+  --cst-card-bg: #ffffff;
+  --cst-card-border: rgba(26, 26, 24, 0.12);
+  --cst-hairline: rgba(26, 26, 24, 0.08);
 
-  --cst-input-bg:           #FFFFFF;
-  --cst-input-border:       rgba(26,26,24,0.14);
-  --cst-input-placeholder:  rgba(26,26,24,0.40);
+  --cst-input-bg: #ffffff;
+  --cst-input-border: rgba(26, 26, 24, 0.14);
+  --cst-input-placeholder: rgba(26, 26, 24, 0.4);
 
-  --cst-btn-ghost-border:   rgba(26,26,24,0.22);
-  --cst-btn-ghost-color:    #1A1A18;
+  --cst-btn-ghost-border: rgba(26, 26, 24, 0.22);
+  --cst-btn-ghost-color: #1a1a18;
 
-  --cst-hatch-color:        rgba(0,0,0,0.04);
-  --cst-overlay:            rgba(26,46,31,0.30);
+  --cst-hatch-color: rgba(0, 0, 0, 0.04);
+  --cst-overlay: rgba(26, 46, 31, 0.3);
 
-  --cst-shadow-card:        0 1px 3px rgba(0,0,0,0.08);
-  --cst-tag-bg:             rgba(26,26,24,0.06);
-  --cst-tag-text:           rgba(26,26,24,0.68);
-  --cst-accent-bg:          rgba(45,90,53,0.10);
+  --cst-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --cst-tag-bg: rgba(26, 26, 24, 0.06);
+  --cst-tag-text: rgba(26, 26, 24, 0.68);
+  --cst-accent-bg: rgba(45, 90, 53, 0.1);
 }
 
 /* Back-compat aliases used by inline styles in pages */
 :root {
-  --cst-text-white:   var(--cst-text);
-  --cst-text-dark:    #1A1A18;
-  --cst-card-dark:    var(--cst-card-bg);
-  --cst-card-light:   #FFFFFF;
-  --cst-border-dark:  var(--cst-card-border);
-  --cst-border-light: rgba(26,26,24,0.12);
+  --cst-text-white: var(--cst-text);
+  --cst-text-dark: #1a1a18;
+  --cst-card-dark: var(--cst-card-bg);
+  --cst-card-light: #ffffff;
+  --cst-border-dark: var(--cst-card-border);
+  --cst-border-light: rgba(26, 26, 24, 0.12);
   --cst-hairline-dark: var(--cst-hairline);
 }
 
 /* ---- Hatch (decorative texture) ---- */
 .cst-hatch {
-  background-image:
-    repeating-linear-gradient(135deg,
-      var(--cst-hatch-color) 0 1px,
-      transparent 1px 9px);
+  background-image: repeating-linear-gradient(
+    135deg,
+    var(--cst-hatch-color) 0 1px,
+    transparent 1px 9px
+  );
 }
 .cst-hatch-light {
-  background-image:
-    repeating-linear-gradient(135deg,
-      rgba(0,0,0,0.04) 0 1px,
-      transparent 1px 9px);
+  background-image: repeating-linear-gradient(
+    135deg,
+    rgba(0, 0, 0, 0.04) 0 1px,
+    transparent 1px 9px
+  );
 }
 
 /* ---- shared atoms ---- */
@@ -135,7 +144,7 @@ html.theme-light {
 }
 .cst-screen.cst-light {
   background: var(--cst-warm-white);
-  color: #1A1A18;
+  color: #1a1a18;
 }
 
 .cst-display {
@@ -171,7 +180,8 @@ html.theme-light {
 }
 .cst-section-num::before {
   content: "";
-  width: 32px; height: 1px;
+  width: 32px;
+  height: 1px;
   background: currentColor;
   opacity: 0.6;
   display: inline-block;
@@ -179,7 +189,10 @@ html.theme-light {
 
 /* Buttons */
 .cst-btn {
-  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   border-radius: 100px;
   padding: 12px 26px;
   font-family: var(--cst-ui);
@@ -189,25 +202,48 @@ html.theme-light {
   text-transform: uppercase;
   border: 1.5px solid transparent;
   cursor: pointer;
-  transition: all .15s ease;
+  transition: all 0.15s ease;
   white-space: nowrap;
 }
-.cst-btn-primary { background: var(--cst-mid-green); color: #fff; }
-.cst-btn-primary:hover { background: var(--cst-light-green); }
-.cst-btn-secondary { background: transparent; border-color: var(--cst-mid-green); color: var(--cst-mid-green); }
+.cst-btn-primary {
+  background: var(--cst-mid-green);
+  color: #fff;
+}
+.cst-btn-primary:hover {
+  background: var(--cst-light-green);
+}
+.cst-btn-secondary {
+  background: transparent;
+  border-color: var(--cst-mid-green);
+  color: var(--cst-mid-green);
+}
 .cst-btn-ghost-dark,
 .cst-btn-ghost {
   background: transparent;
   border-color: var(--cst-btn-ghost-border);
   color: var(--cst-btn-ghost-color);
 }
-.cst-btn-ghost-light { background: transparent; border-color: rgba(0,0,0,0.18); color: #1A1A18; }
-.cst-btn-danger { background: transparent; border-color: var(--cst-danger); color: var(--cst-danger); }
-.cst-btn-sm { padding: 8px 16px; font-size: 10px; letter-spacing: 0.12em; }
+.cst-btn-ghost-light {
+  background: transparent;
+  border-color: rgba(0, 0, 0, 0.18);
+  color: #1a1a18;
+}
+.cst-btn-danger {
+  background: transparent;
+  border-color: var(--cst-danger);
+  color: var(--cst-danger);
+}
+.cst-btn-sm {
+  padding: 8px 16px;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+}
 
 /* Tags */
 .cst-tag {
-  display: inline-flex; align-items: center; gap: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 4px 10px;
   border-radius: 4px;
   background: var(--cst-accent-bg);
@@ -217,10 +253,22 @@ html.theme-light {
   letter-spacing: 0.16em;
   text-transform: uppercase;
 }
-.cst-tag-dark { background: var(--cst-tag-bg); color: var(--cst-tag-text); }
-.cst-tag-warn { background: rgba(181,131,10,0.18); color: #D4A53B; }
-.cst-tag-success { background: rgba(58,107,66,0.22); color: #6EAB76; }
-.cst-tag-danger { background: rgba(139,35,24,0.18); color: #C56A60; }
+.cst-tag-dark {
+  background: var(--cst-tag-bg);
+  color: var(--cst-tag-text);
+}
+.cst-tag-warn {
+  background: rgba(181, 131, 10, 0.18);
+  color: #d4a53b;
+}
+.cst-tag-success {
+  background: rgba(58, 107, 66, 0.22);
+  color: #6eab76;
+}
+.cst-tag-danger {
+  background: rgba(139, 35, 24, 0.18);
+  color: #c56a60;
+}
 
 /* Cards */
 .cst-card-dark {
@@ -234,9 +282,9 @@ html.theme-light {
   box-shadow: var(--cst-shadow-card);
 }
 .cst-card-light {
-  background: #FFFFFF;
-  color: #1A1A18;
-  border: 1px solid rgba(26,26,24,0.12);
+  background: #ffffff;
+  color: #1a1a18;
+  border: 1px solid rgba(26, 26, 24, 0.12);
   border-radius: 12px;
   padding: 24px;
 }
@@ -252,16 +300,25 @@ html.theme-light {
   font-family: var(--cst-ui);
   font-size: 14px;
   outline: none;
-  transition: border-color .15s, box-shadow .15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 }
-.cst-input::placeholder { color: var(--cst-input-placeholder); }
-.cst-input:focus { border-color: var(--cst-mid-green); box-shadow: 0 0 0 3px rgba(45,90,53,0.25); }
+.cst-input::placeholder {
+  color: var(--cst-input-placeholder);
+}
+.cst-input:focus {
+  border-color: var(--cst-mid-green);
+  box-shadow: 0 0 0 3px rgba(45, 90, 53, 0.25);
+}
 .cst-input-light {
   background: #fff;
-  border-color: rgba(0,0,0,0.12);
-  color: #1A1A18;
+  border-color: rgba(0, 0, 0, 0.12);
+  color: #1a1a18;
 }
-.cst-input-light::placeholder { color: rgba(0,0,0,0.35); }
+.cst-input-light::placeholder {
+  color: rgba(0, 0, 0, 0.35);
+}
 
 .cst-label {
   font-family: var(--cst-mono);
@@ -274,20 +331,28 @@ html.theme-light {
 }
 
 .cst-logo {
-  display: inline-flex; align-items: center; gap: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   font-family: var(--cst-display);
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.02em;
   font-size: 16px;
 }
-.cst-logo .cst-star { color: var(--cst-mid-green); font-size: 14px; }
+.cst-logo .cst-star {
+  color: var(--cst-mid-green);
+  font-size: 14px;
+}
 
 .cst-avatar {
-  width: 36px; height: 36px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #3A6B42, #1B2E1F);
-  display: inline-flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #3a6b42, #1b2e1f);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-family: var(--cst-display);
   font-size: 13px;
   color: #fff;
@@ -296,57 +361,151 @@ html.theme-light {
 }
 
 /* Helpers */
-.cst-flex { display: flex; }
-.cst-col  { display: flex; flex-direction: column; }
-.cst-gap-4 { gap: 4px; } .cst-gap-6 { gap: 6px; } .cst-gap-8 { gap: 8px; }
-.cst-gap-12 { gap: 12px; } .cst-gap-16 { gap: 16px; } .cst-gap-20 { gap: 20px; }
-.cst-gap-24 { gap: 24px; } .cst-gap-32 { gap: 32px; }
+.cst-flex {
+  display: flex;
+}
+.cst-col {
+  display: flex;
+  flex-direction: column;
+}
+.cst-gap-4 {
+  gap: 4px;
+}
+.cst-gap-6 {
+  gap: 6px;
+}
+.cst-gap-8 {
+  gap: 8px;
+}
+.cst-gap-12 {
+  gap: 12px;
+}
+.cst-gap-16 {
+  gap: 16px;
+}
+.cst-gap-20 {
+  gap: 20px;
+}
+.cst-gap-24 {
+  gap: 24px;
+}
+.cst-gap-32 {
+  gap: 32px;
+}
 
-.cst-scroll { overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; scrollbar-color: rgba(45,90,53,0.6) rgba(255,255,255,0.04); }
-.cst-scroll::-webkit-scrollbar { width: 7px; }
-.cst-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); border-radius: 4px; }
-.cst-scroll::-webkit-scrollbar-thumb { background: rgba(45,90,53,0.6); border-radius: 4px; }
-.cst-scroll::-webkit-scrollbar-thumb:hover { background: var(--cst-mid-green); }
+.cst-scroll {
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(45, 90, 53, 0.6) rgba(255, 255, 255, 0.04);
+}
+.cst-scroll::-webkit-scrollbar {
+  width: 7px;
+}
+.cst-scroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+}
+.cst-scroll::-webkit-scrollbar-thumb {
+  background: rgba(45, 90, 53, 0.6);
+  border-radius: 4px;
+}
+.cst-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--cst-mid-green);
+}
 
 /* Visible scrollbars for desktop non-Mac (builder, large grids) */
-.cst-scroll-visible { overflow: auto; scrollbar-width: thin; scrollbar-color: rgba(45,90,53,0.7) rgba(255,255,255,0.05); }
-.cst-scroll-visible::-webkit-scrollbar { width: 8px; height: 8px; }
-.cst-scroll-visible::-webkit-scrollbar-track { background: rgba(255,255,255,0.04); border-radius: 4px; }
-.cst-scroll-visible::-webkit-scrollbar-thumb { background: rgba(45,90,53,0.7); border-radius: 4px; }
-.cst-scroll-visible::-webkit-scrollbar-thumb:hover { background: var(--cst-mid-green); }
-.cst-scroll-visible::-webkit-scrollbar-corner { background: transparent; }
+.cst-scroll-visible {
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(45, 90, 53, 0.7) rgba(255, 255, 255, 0.05);
+}
+.cst-scroll-visible::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.cst-scroll-visible::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 4px;
+}
+.cst-scroll-visible::-webkit-scrollbar-thumb {
+  background: rgba(45, 90, 53, 0.7);
+  border-radius: 4px;
+}
+.cst-scroll-visible::-webkit-scrollbar-thumb:hover {
+  background: var(--cst-mid-green);
+}
+.cst-scroll-visible::-webkit-scrollbar-corner {
+  background: transparent;
+}
 
 /* ============================================================
    RESPONSIVE OVERLAY — adapts the fixed phone-frame mockups and
    the fixed coach sidebar to fluid sizes without touching the DA.
    ============================================================ */
 
-html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
-body { overflow-x: hidden; min-height: 100vh; min-height: 100dvh; }
-img, video, svg, canvas { max-width: 100%; height: auto; }
-button, [role="button"], a { touch-action: manipulation; }
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+body {
+  overflow-x: hidden;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+img,
+video,
+svg,
+canvas {
+  max-width: 100%;
+  height: auto;
+}
+button,
+[role="button"],
+a {
+  touch-action: manipulation;
+}
 
 /* Prevent iOS auto-zoom on focus */
 @media (max-width: 640px) {
-  input, select, textarea, .cst-input { font-size: 16px !important; }
+  input,
+  select,
+  textarea,
+  .cst-input {
+    font-size: 16px !important;
+  }
 }
 
 /* Tactile target size */
-.cst-btn { min-height: 40px; }
-@media (max-width: 640px) {
-  .cst-btn { min-height: 44px; padding: 12px 20px; }
-  .cst-btn-sm { min-height: 36px; padding: 8px 14px; }
+.cst-btn {
+  min-height: 40px;
 }
-.cst-btn:active { transform: scale(0.97); }
+@media (max-width: 640px) {
+  .cst-btn {
+    min-height: 44px;
+    padding: 12px 20px;
+  }
+  .cst-btn-sm {
+    min-height: 36px;
+    padding: 8px 14px;
+  }
+}
+.cst-btn:active {
+  transform: scale(0.97);
+}
 
 /* Disable sticky hover on touch */
 @media (hover: none) {
-  .cst-btn-primary:hover { background: var(--cst-mid-green); }
+  .cst-btn-primary:hover {
+    background: var(--cst-mid-green);
+  }
 }
 
 /* Respect reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -384,7 +543,9 @@ div[style*="width: 390px"][style*="min-height: 100vh"] {
 }
 
 @media (min-width: 1024px) {
-  div[style*="width: 390px"] { max-width: 880px !important; }
+  div[style*="width: 390px"] {
+    max-width: 880px !important;
+  }
 }
 
 /* Login / reset cards stay phone-sized for focus */
@@ -393,7 +554,9 @@ div[style*="width: 390px"][style*="min-height: 100vh"] {
   max-width: 480px !important;
 }
 @media (min-width: 769px) {
-  .cst-screen[style*="width: 390px"] { max-width: 440px !important; }
+  .cst-screen[style*="width: 390px"] {
+    max-width: 440px !important;
+  }
 }
 
 /* Inner .cst-screen fills phone wrapper */
@@ -445,13 +608,17 @@ aside[style*="width: 240px"] {
     top: 0 !important;
     z-index: 50 !important;
   }
-  aside[style*="width: 240px"]::-webkit-scrollbar { display: none !important; }
+  aside[style*="width: 240px"]::-webkit-scrollbar {
+    display: none !important;
+  }
   aside[style*="width: 240px"] > div:first-child {
     padding: 0 8px 0 0 !important;
     flex: 0 0 auto !important;
     border-right: 1px solid var(--cst-hairline);
   }
-  aside[style*="width: 240px"] > div:first-child > div { display: none !important; }
+  aside[style*="width: 240px"] > div:first-child > div {
+    display: none !important;
+  }
   aside[style*="width: 240px"] > nav {
     flex-direction: row !important;
     flex: 1 1 auto !important;
@@ -459,7 +626,9 @@ aside[style*="width: 240px"] {
     overflow-x: auto !important;
     scrollbar-width: none !important;
   }
-  aside[style*="width: 240px"] > nav::-webkit-scrollbar { display: none !important; }
+  aside[style*="width: 240px"] > nav::-webkit-scrollbar {
+    display: none !important;
+  }
   aside[style*="width: 240px"] > nav > div {
     padding: 8px 10px !important;
     font-size: 11px !important;
@@ -474,12 +643,17 @@ aside[style*="width: 240px"] {
     background: transparent !important;
     border: none !important;
   }
-  aside[style*="width: 240px"] > div:last-child > div.cst-col { display: none !important; }
+  aside[style*="width: 240px"] > div:last-child > div.cst-col {
+    display: none !important;
+  }
 }
 
 /* Coach content area: tighter padding on mobile */
 @media (max-width: 768px) {
-  .cst-screen > .cst-col { min-width: 0 !important; width: 100% !important; }
+  .cst-screen > .cst-col {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
   div[style*="padding: 24px 32px"],
   div[style*="padding: 32px 32px"],
   div[style*="padding: 8px 32px"],
@@ -515,29 +689,54 @@ aside[style*="width: 240px"] {
 
 /* ---- Cap oversized display numbers on mobile ---- */
 @media (max-width: 640px) {
-  [style*="font-size: 80px"] { font-size: 44px !important; }
-  [style*="font-size: 64px"] { font-size: 40px !important; }
-  [style*="font-size: 56px"] { font-size: 36px !important; }
-  [style*="font-size: 48px"] { font-size: 32px !important; }
-  [style*="font-size: 42px"] { font-size: 28px !important; }
-  [style*="font-size: 38px"] { font-size: 26px !important; }
-  [style*="font-size: 30px"] { font-size: 22px !important; }
-  [style*="font-size: 28px"] { font-size: 22px !important; }
+  [style*="font-size: 80px"] {
+    font-size: 44px !important;
+  }
+  [style*="font-size: 64px"] {
+    font-size: 40px !important;
+  }
+  [style*="font-size: 56px"] {
+    font-size: 36px !important;
+  }
+  [style*="font-size: 48px"] {
+    font-size: 32px !important;
+  }
+  [style*="font-size: 42px"] {
+    font-size: 28px !important;
+  }
+  [style*="font-size: 38px"] {
+    font-size: 26px !important;
+  }
+  [style*="font-size: 30px"] {
+    font-size: 22px !important;
+  }
+  [style*="font-size: 28px"] {
+    font-size: 22px !important;
+  }
 }
 
 /* ---- Tables: allow horizontal scroll on small screens ---- */
 @media (max-width: 1023px) {
-  table { display: block; overflow-x: auto; white-space: nowrap; max-width: 100%; }
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    max-width: 100%;
+  }
 }
 
 /* ---- Display titles never overflow on tiny screens ---- */
 @media (max-width: 380px) {
-  .cst-display { font-size: clamp(20px, 9vw, 38px) !important; }
+  .cst-display {
+    font-size: clamp(20px, 9vw, 38px) !important;
+  }
 }
 
 /* Allow week-grid to shrink */
 @media (max-width: 380px) {
-  div[style*="grid-template-columns: repeat(7"] { gap: 3px !important; }
+  div[style*="grid-template-columns: repeat(7"] {
+    gap: 3px !important;
+  }
 }
 
 /* Smooth scroll on phone-frame inner scroll area */
@@ -546,14 +745,20 @@ div[style*="width: 390px"] .cst-scroll {
 }
 
 /* Prevent leftover horizontal overflow */
-.cst-screen, .cst-card-dark, .cst-card-light { max-width: 100%; }
+.cst-screen,
+.cst-card-dark,
+.cst-card-light {
+  max-width: 100%;
+}
 
 /* ===================================================
    LIGHT MODE — image / overlay polish to ensure no
    stray dark hex from inline styles in pages crashes
    the readability. Soft retargeting only.
    =================================================== */
-html.theme-light .cst-mono { color: var(--cst-text-muted); }
+html.theme-light .cst-mono {
+  color: var(--cst-text-muted);
+}
 
 /* Inline-styled dark backgrounds inside pages: keep them dark only
    in dark mode, soften to neutral surface in light mode. */
@@ -600,8 +805,12 @@ html.theme-light [style*="color: rgb(255, 255, 255)"] {
   color: var(--cst-text) !important;
 }
 /* Keep primary green button text white in both themes */
-html.theme-light .cst-btn-primary { color: #fff !important; }
-html.theme-light .cst-avatar { color: #fff !important; }
+html.theme-light .cst-btn-primary {
+  color: #fff !important;
+}
+html.theme-light .cst-avatar {
+  color: #fff !important;
+}
 
 /* Borders that used translucent white → translucent ink */
 html.theme-light [style*="border: 1px solid rgba(255, 255, 255"],
@@ -614,14 +823,14 @@ html.theme-light [style*="border-right: 1px solid rgba(255, 255, 255"],
 html.theme-light [style*="border-right: 1px solid rgba(255,255,255"],
 html.theme-light [style*="border-left: 1px solid rgba(255, 255, 255"],
 html.theme-light [style*="border-left: 1px solid rgba(255,255,255"] {
-  border-color: rgba(26, 46, 31, 0.10) !important;
+  border-color: rgba(26, 46, 31, 0.1) !important;
 }
 
 /* Hairline dividers inline — themed */
 html.theme-light [style*="background: rgba(255, 255, 255, 0.08)"][style*="height: 1px"],
 html.theme-light [style*="background: rgba(255,255,255,0.08)"][style*="height: 1px"],
 html.theme-light [style*="background: rgba(255, 255, 255, 0.1)"][style*="height: 1px"] {
-  background: rgba(26, 46, 31, 0.10) !important;
+  background: rgba(26, 46, 31, 0.1) !important;
 }
 
 /* Bottom-nav background in light mode handled inline by component */
@@ -751,7 +960,7 @@ html.theme-light [style*="background: rgba(255, 255, 255, 0.04)"][style*="height
 html.theme-light [style*="background: rgba(255,255,255,0.04)"][style*="height: 1px"],
 html.theme-light [style*="background: rgba(255, 255, 255, 0.12)"][style*="height: 1px"],
 html.theme-light [style*="background: rgba(255,255,255,0.12)"][style*="height: 1px"] {
-  background: rgba(26, 46, 31, 0.10) !important;
+  background: rgba(26, 46, 31, 0.1) !important;
 }
 
 /* --- Mid-green tints (used for accent rows / active states) — soften in light --- */
@@ -759,7 +968,7 @@ html.theme-light [style*="background: rgba(45, 90, 53, 0.18)"],
 html.theme-light [style*="background: rgba(45,90,53,0.18)"],
 html.theme-light [style*="background: rgba(45, 90, 53, 0.15)"],
 html.theme-light [style*="background: rgba(45,90,53,0.15)"] {
-  background: rgba(45, 90, 53, 0.10) !important;
+  background: rgba(45, 90, 53, 0.1) !important;
 }
 
 /* --- Catch CoachSidebar "panel" backgrounds and other elev rgba --- */
@@ -787,3 +996,35 @@ html.theme-light svg [fill="#FFF"][stroke] {
   stroke: var(--cst-text) !important;
 }
 
+/* Expert member RPE popovers intentionally stay dark in light mode;
+   otherwise global light-theme inline overrides make the comment field unreadable. */
+html.theme-light .cst-expert-rpe-picker {
+  background: rgba(20, 32, 24, 0.98) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+html.theme-light .cst-expert-rpe-picker .cst-mono {
+  color: rgba(255, 255, 255, 0.76) !important;
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.76) !important;
+}
+
+html.theme-light .cst-expert-rpe-comment {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff !important;
+}
+
+html.theme-light .cst-expert-rpe-comment::placeholder {
+  color: rgba(255, 255, 255, 0.54) !important;
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.54) !important;
+}
+
+html.theme-light .cst-expert-rpe-clear {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  color: rgba(255, 255, 255, 0.86) !important;
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.86) !important;
+}

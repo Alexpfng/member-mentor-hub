@@ -507,6 +507,7 @@ function ExpertRecapRpeBadge({
       </div>
       {open && (
         <div
+          className="cst-expert-rpe-picker"
           style={{
             display: "flex",
             flexDirection: "column",
@@ -575,6 +576,7 @@ function ExpertRecapRpeBadge({
               COMMENTAIRE (OPTIONNEL)
             </span>
             <textarea
+              className="cst-expert-rpe-comment"
               value={comment}
               onChange={(event) => onCommentChange(event.target.value)}
               placeholder="ex. trop dur aujourd'hui, douleur, bonne sensation..."
@@ -595,7 +597,7 @@ function ExpertRecapRpeBadge({
           <button
             type="button"
             onClick={onClear}
-            className="cst-mono"
+            className="cst-expert-rpe-clear cst-mono"
             style={{
               padding: "12px 14px",
               borderRadius: 8,
@@ -657,6 +659,7 @@ function ExpertOverviewRpeBadge({
       </button>
       {open && (
         <div
+          className="cst-expert-rpe-picker"
           style={{
             position: "absolute",
             top: "calc(100% + 8px)",
@@ -731,6 +734,7 @@ function ExpertOverviewRpeBadge({
               COMMENTAIRE (OPTIONNEL)
             </span>
             <textarea
+              className="cst-expert-rpe-comment"
               value={comment}
               onChange={(event) => onCommentChange(event.target.value)}
               placeholder="ex. trop dur aujourd'hui, douleur, bonne sensation..."
@@ -751,7 +755,7 @@ function ExpertOverviewRpeBadge({
           <button
             type="button"
             onClick={onClear}
-            className="cst-mono"
+            className="cst-expert-rpe-clear cst-mono"
             style={{
               padding: "11px 12px",
               borderRadius: 8,
