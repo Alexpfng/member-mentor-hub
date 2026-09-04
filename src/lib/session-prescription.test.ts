@@ -37,6 +37,15 @@ describe("getExpertEmomLoggedValue", () => {
   test("computes total prescribed reps for alternating emom blocks", () => {
     expect(getExpertEmomLoggedValue({ series: "10", reps: "3/4", block_type: "emom" }, 10)).toBe(35);
   });
+
+  test("keeps Sheet imported EMOM total-reps notation in the right direction", () => {
+    expect(
+      getExpertEmomLoggedValue(
+        { name: "Tractions pronation EMOM3'", series: "EMOM3'", reps: "30 en tout", block_type: "emom" },
+        10,
+      ),
+    ).toBe(30);
+  });
 });
 
 describe("coach metric display", () => {

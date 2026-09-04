@@ -31,6 +31,22 @@ describe("parseEmom — EMOM écrit dans le nom", () => {
   });
 });
 
+describe("parseEmom — import Sheet avec total de reps", () => {
+  it("corrige EMOM3' + 30 en tout en 10 minutes à 3 reps/min", () => {
+    expect(parseEmom("EMOM3'", "30 en tout", "Tractions pronation")).toEqual({
+      durationMin: 10,
+      repsPerMin: 3,
+    });
+  });
+
+  it("garde EMOM10' + 30 en tout comme 10 minutes à 3 reps/min", () => {
+    expect(parseEmom("EMOM10'", "30 en tout", "Tractions pronation")).toEqual({
+      durationMin: 10,
+      repsPerMin: 3,
+    });
+  });
+});
+
 describe("parseEmom — le champ Reps fait foi sur « EMOM n » écrit dans Séries", () => {
   it("ne prend plus le nombre de Séries pour des reps", () => {
     // Régression : « EMOM 10 » (Séries) + « 1 » (Reps) donnait 10 reps/min.

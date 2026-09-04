@@ -1,3 +1,5 @@
+import { alternatingRepsCycle, parseEmom } from "./emom";
+
 type ExerciseLike = {
   name?: string | null;
   reps?: string | number | null;
@@ -61,37 +63,6 @@ function isTimedByName(name?: string | null, tempo?: string | null) {
   return /gainage|plank|planche|iso\b|isometr|hold|tenir|maintien|floating/.test(merged);
 }
 
-function parseEmom(series: string | null, reps: string | null): { durationMin: number; repsPerMin: number | null; alternating: [number, number] | null } {
-  const src = `${series ?? ""} ${reps ?? ""}`.toLowerCase().replace(/[‘’ʼ]/g, "'");
-  const combinedMatch = src.match(/emom\s*(\d+)\s*[x×\/]\s*(\d+)\s*(?:'|min\b|m\b)/);
-  if (combinedMatch) {
-    return {
-      durationMin: parseInt(combinedMatch[2], 10),
-      repsPerMin: parseInt(combinedMatch[1], 10),
-      alternating: null,
-    };
-  }
-  const durMatch = src.match(/emom\s*(\d+)\s*(?:'|min\b|m\b)/);
-  if (durMatch) {
-    const alternating = reps?.match(/^\s*(\d+)\s*\/\s*(\d+)\s*$/);
-    const repsVal = reps?.match(/^(\d+)$/)?.[1] ?? reps?.match(/emom\s*(\d+)\s*reps?/i)?.[1];
-    return {
-      durationMin: parseInt(durMatch[1], 10),
-      repsPerMin: repsVal ? parseInt(repsVal, 10) : alternating ? parseInt(alternating[1], 10) : null,
-      alternating: alternating ? [parseInt(alternating[1], 10), parseInt(alternating[2], 10)] : null,
-    };
-  }
-  const alternating = reps?.match(/^\s*(\d+)\s*\/\s*(\d+)\s*$/);
-  const repsFromSeries = series?.match(/emom\s*(\d+)/i)?.[1];
-  const repsFromReps = reps?.match(/^(\d+)$/)?.[1] ?? reps?.match(/emom\s*(\d+)\s*reps?/i)?.[1];
-  const durFromSeries = series?.match(/^\s*(\d+)\s*(?:'|min|m)?\s*$/i)?.[1];
-  return {
-    durationMin: durFromSeries ? parseInt(durFromSeries, 10) : 10,
-    repsPerMin: repsFromSeries ? parseInt(repsFromSeries, 10) : repsFromReps ? parseInt(repsFromReps, 10) : alternating ? parseInt(alternating[1], 10) : null,
-    alternating: alternating ? [parseInt(alternating[1], 10), parseInt(alternating[2], 10)] : null,
-  };
-}
-
 export function getExpertSetLoggedValue(exercise: ExerciseLike, totalSets: number, setNumber: number): { value: number | null; kind: MetricKind } {
   const repTarget = parseRepsPerSet(exercise.reps, totalSets)[setNumber - 1] || (exercise.reps ? String(exercise.reps) : "");
   const durationValue = isDurationReps(repTarget) ? parseDurationSeconds(repTarget) : null;
@@ -103,10 +74,12 @@ export function getExpertSetLoggedValue(exercise: ExerciseLike, totalSets: numbe
 }
 
 export function getExpertEmomLoggedValue(exercise: ExerciseLike, durationMin: number): number | null {
-  const { repsPerMin, alternating } = parseEmom(
+  const { repsPerMin } = parseEmom(
     exercise.series != null ? String(exercise.series) : null,
     exercise.reps != null ? String(exercise.reps) : null,
+    exercise.name ?? null,
   );
+  const alternating = alternatingRepsCycle(exercise.reps != null ? String(exercise.reps) : null);
   if (alternating) {
     let total = 0;
     for (let index = 0; index < durationMin; index += 1) {

@@ -105,6 +105,24 @@ const MUSCU_WITH_REHAB_REPERTOIRE = [
   ],
 ];
 
+const MUSCU_WITH_SPECIAL_FORMATS = [
+  ["Circuit training sans matériel"],
+  ["Exercice", "Série(s)", "Reps", "Charge (kg)", "Tempo (s)", "Récup", "RPE", "Notes"],
+  [
+    "B. Tractions pronation EMOM3'",
+    "EMOM3'",
+    "30 en tout",
+    "pdc",
+    "312",
+    "1'",
+    null,
+    "Travail d'endurance, 3 reps / min, toutes les minutes sur 10min",
+  ],
+  ["C1. Pompes en tempo", "3", "10", "pdc", "21X0", null, "8", "Circuit sans matériel"],
+  ["C2. Squat jumps", "3", "12", "pdc", "explosif", null, "8", "Circuit sans matériel"],
+  ["D. AMRAP gainage", "12", "max", "pdc", "iso", null, null, "AMRAP 12 minutes"],
+];
+
 describe("import Excel — séances de course à pied", () => {
   it("reconnaît l'en-tête « Exercise » en anglais", async () => {
     const parsed = await parseExcelFile(makeFile(COURSE_EN));
@@ -234,5 +252,22 @@ describe("import Excel — muscu (non-régression)", () => {
       "Elevations du soléaire avec poids",
       "Foot circle",
     ]);
+  });
+
+  it("normalise les formats EMOM, Circuit et AMRAP depuis la fiche Sheet", async () => {
+    const parsed = await parseExcelFile(makeFile(MUSCU_WITH_SPECIAL_FORMATS));
+    const exos = parsed.weeks[0].days.flatMap((d) => d.exercises);
+
+    const emom = exos.find((e) => e.name.includes("Tractions pronation"));
+    expect(emom?.name).toBe("Tractions pronation");
+    expect(emom?.block_type).toBe("emom");
+    expect(emom?.series).toBe("10");
+    expect(emom?.reps).toBe("3");
+
+    const circuit = exos.filter((e) => e.code?.startsWith("C"));
+    expect(circuit.map((e) => e.block_type)).toEqual(["circuit", "circuit"]);
+
+    const amrap = exos.find((e) => e.name.includes("gainage"));
+    expect(amrap?.block_type).toBe("amrap");
   });
 });

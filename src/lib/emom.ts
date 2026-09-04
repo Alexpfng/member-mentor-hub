@@ -28,6 +28,15 @@ function fixSwappedDurationAndReps(parsed: EmomParams): EmomParams {
   return parsed;
 }
 
+function parseTotalReps(reps: string | null | undefined): number | null {
+  const raw = String(reps ?? "").toLowerCase();
+  if (!/\b(en\s+tout|total|au\s+total)\b/.test(raw)) return null;
+  const match = raw.match(/\d+/);
+  if (!match) return null;
+  const value = parseInt(match[0], 10);
+  return Number.isFinite(value) && value > 0 ? value : null;
+}
+
 export function parseEmom(
   series: string | null,
   reps: string | null,
@@ -51,10 +60,24 @@ export function parseEmom(
   // Duration-only: "EMOM15'" or "EMOM15min" or "EMOM15m"
   const durMatch = src.match(/emom\s*(\d+)\s*(?:'|min\b|m\b)/);
   if (durMatch) {
+    const token = parseInt(durMatch[1], 10);
+    const totalReps = parseTotalReps(reps);
+    if (totalReps != null) {
+      // Dans les Sheets du coach, « EMOM3' » peut signifier 3 reps/min et le
+      // champ Reps porte alors le total (« 30 en tout »). Si le nombre est petit,
+      // on le traite comme une fréquence ; sinon comme une durée explicite.
+      if (token <= 6 && totalReps % token === 0) {
+        return { durationMin: totalReps / token, repsPerMin: token };
+      }
+      return {
+        durationMin: token,
+        repsPerMin: Math.max(1, Math.round(totalReps / token)),
+      };
+    }
     // Reps may come from separate reps field
     const repsVal = reps?.match(/^(\d+)$/)?.[1] ?? reps?.match(/emom\s*(\d+)\s*reps?/i)?.[1];
     return fixSwappedDurationAndReps({
-      durationMin: parseInt(durMatch[1], 10),
+      durationMin: token,
       repsPerMin: repsVal ? parseInt(repsVal, 10) : null,
     });
   }

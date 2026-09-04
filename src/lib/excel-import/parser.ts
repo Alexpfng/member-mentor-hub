@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as XLSX from "xlsx";
+import { parseEmom } from "@/lib/emom";
 
 export type ImportedExercise = {
   code: string | null;
@@ -253,17 +254,36 @@ function detectBlockType(
   series: string | null,
   reps: string | null,
   tempo: string | null,
+  name: string | null = null,
+  dayLabel: string | null = null,
+  notes: string | null = null,
 ): ImportedExercise["block_type"] {
-  const s = (series || "").toLowerCase();
-  const rp = (reps || "").toLowerCase();
-  const t = (tempo || "").toLowerCase();
-  if (/emom/.test(s) || /emom/.test(rp)) return "emom";
-  if (/ladder/.test(s)) return "ladder";
-  if (/amrap/.test(s) || /amrap/.test(rp)) return "amrap";
-  if (/dropset/.test(s)) return "dropset";
-  if (/iso/.test(t)) return "iso";
-  if (/round|circuit/.test(s)) return "circuit";
+  const src = `${dayLabel ?? ""} ${name ?? ""} ${series ?? ""} ${reps ?? ""} ${tempo ?? ""} ${notes ?? ""}`
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "");
+  if (/emom/.test(src)) return "emom";
+  if (/ladder/.test(src)) return "ladder";
+  if (/amrap/.test(src)) return "amrap";
+  if (/dropset/.test(src)) return "dropset";
+  if (/\biso\b|isometr/.test(src)) return "iso";
+  if (/round|circuit|tours?\s+de\s+circuit/.test(src)) return "circuit";
   return "standard";
+}
+
+function cleanExerciseNameForBlockType(
+  name: string,
+  blockType: ImportedExercise["block_type"],
+): string {
+  if (blockType === "emom") {
+    return name
+      .replace(/\bemom\s*\d+\s*[x×/]\s*\d+\s*(?:'|min\b|m\b)?/gi, "")
+      .replace(/\bemom\s*\d+\s*(?:'|min\b|m\b)?/gi, "")
+      .replace(/\s{2,}/g, " ")
+      .replace(/\s+[-–—:]\s*$/g, "")
+      .trim();
+  }
+  return name.trim();
 }
 
 function extractMetadata(ws: XLSX.WorkSheet): ImportedMetadata {
@@ -394,22 +414,39 @@ function parseWeekSheet(ws: XLSX.WorkSheet, sheetName: string): ImportedWeek | n
     const code = exMatch ? exMatch[1].toUpperCase() : null;
     const exName = (exMatch ? exMatch[2] : name).trim() || name;
     const url = getYoutubeUrl(ws, r, layout.youtubeCol);
+    const coachNotes =
+      [cellStr(ws, r, layout.notesCol), ...leftovers].filter(Boolean).join("\n") || null;
+    const blockType = detectBlockType(
+      series,
+      reps,
+      tempo,
+      exName,
+      currentDay.label,
+      coachNotes,
+    );
+    const normalizedName = cleanExerciseNameForBlockType(exName, blockType) || exName;
+    let normalizedSeries = series;
+    let normalizedReps = reps;
+    if (blockType === "emom") {
+      const parsed = parseEmom(series, reps, exName);
+      normalizedSeries = String(parsed.durationMin);
+      normalizedReps = parsed.repsPerMin != null ? String(parsed.repsPerMin) : reps;
+    }
 
     currentDay.exercises.push({
       code,
-      name: exName,
-      series,
-      reps,
+      name: normalizedName,
+      series: normalizedSeries,
+      reps: normalizedReps,
       charge,
       tempo,
       recup,
       rpe_target: rpe,
-      coach_notes:
-        [cellStr(ws, r, layout.notesCol), ...leftovers].filter(Boolean).join("\n") || null,
+      coach_notes: coachNotes,
       color: detectColor(nameCell),
       youtube_url: url,
       youtube_id: extractYoutubeId(url),
-      block_type: detectBlockType(series, reps, tempo),
+      block_type: blockType,
     });
   }
 

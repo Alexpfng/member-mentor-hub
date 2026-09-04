@@ -68,6 +68,16 @@ type Feedback = {
 const QUICK_RPE_VALUES = Array.from({ length: 21 }, (_, index) => index * 0.5);
 const QUICK_RPE_POPOVER_WIDTH = 264;
 const QUICK_RPE_POPOVER_HEIGHT = 340;
+const BLOCK_TYPE_OPTIONS = [
+  { value: "standard", label: "Standard" },
+  { value: "emom", label: "EMOM" },
+  { value: "circuit", label: "Circuit" },
+  { value: "amrap", label: "AMRAP" },
+  { value: "ladder", label: "Ladder" },
+  { value: "dropset", label: "Dropset" },
+  { value: "iso", label: "Isométrie" },
+  { value: "cardio", label: "Cardio" },
+];
 
 function formatRpeValue(value: number) {
   return Number.isInteger(value) ? String(value) : String(value).replace(".", ",");
@@ -422,6 +432,17 @@ function ExoEditModal({
       {node}
     </label>
   );
+  const blockType = String(ex.block_type ?? "standard").toLowerCase();
+  const isMinuteBased = blockType === "emom" || blockType === "ladder" || blockType === "amrap";
+  const seriesLabel = blockType === "circuit" ? "TOURS" : isMinuteBased ? "DURÉE (min)" : "SÉRIES";
+  const repsLabel =
+    blockType === "emom" || blockType === "ladder"
+      ? "REPS/MIN"
+      : blockType === "circuit"
+        ? "REPS / STATION"
+        : blockType === "amrap"
+          ? "OBJECTIF"
+          : "REPS";
   return (
     <div
       onMouseDown={(e) => {
@@ -526,14 +547,44 @@ function ExoEditModal({
 
         <div style={{ marginBottom: 12 }}>
           {field(
-            "CODE (superset)",
+            "TYPE DE BLOC",
+            <select
+              value={blockType}
+              onChange={(e) => {
+                const value = e.target.value;
+                onChange((x) => ({ ...x, block_type: value === "standard" ? null : value }));
+              }}
+              className="cst-input"
+            >
+              {BLOCK_TYPE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>,
+          )}
+          <div
+            className="cst-mono"
+            style={{
+              fontSize: 9,
+              opacity: 0.5,
+              marginTop: 5,
+              letterSpacing: "0.06em",
+              lineHeight: 1.4,
+            }}
+          >
+            Circuit : mets la même lettre de code (C1, C2...) sur les stations. AMRAP : indique
+            la durée dans le premier champ.
+          </div>
+        </div>
+
+        <div style={{ marginBottom: 12 }}>
+          {field(
+            "CODE LETTRE / BLOC",
             <input
               value={ex.code ?? ""}
               onChange={(e) => {
-                // Le superset se pilote par la lettre du code : deux exercices d'une même
-                // séance qui partagent la lettre (B1, B2…) sont enchaînés. On garde donc ce
-                // champ éditable pour que le coach puisse créer / corriger un enchaînement
-                // sans passer par un import. Majuscule + sans espace pour rester canonique.
+                // Même lettre = même bloc (superset, circuit, AMRAP multi-exos).
                 const raw = e.target.value.toUpperCase().replace(/\s+/g, "");
                 onChange((x) => ({ ...x, code: raw || null }));
               }}
@@ -552,37 +603,25 @@ function ExoEditModal({
               lineHeight: 1.4,
             }}
           >
-            Même lettre = superset : donne « B1 » et « B2 » à deux exercices pour les enchaîner.
+            Même lettre = bloc : donne « C1 », « C2 »... à plusieurs exercices pour les enchaîner.
             Laisse vide pour un exercice seul.
           </div>
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
-          {ex.block_type === "emom"
-            ? field(
-                "DURÉE (min)",
-                <input
-                  type="number"
-                  min={1}
-                  max={60}
-                  value={String(ex.series ?? "").replace(/[^0-9]/g, "") || "10"}
-                  onChange={(e) => {
-                    const v = parseInt(e.target.value, 10);
-                    if (!isNaN(v) && v > 0) onChange((x) => ({ ...x, series: `EMOM${v}'` }));
-                  }}
-                  className="cst-input"
-                />,
-              )
-            : field(
-                "SÉRIES",
-                <input
-                  value={String(ex.series ?? "")}
-                  onChange={(e) => onChange((x) => ({ ...x, series: e.target.value }))}
-                  className="cst-input"
-                />,
-              )}
           {field(
-            ex.block_type === "emom" ? "REPS/MIN" : "REPS",
+            seriesLabel,
+            <input
+              type={blockType === "standard" || blockType === "dropset" || blockType === "iso" ? "text" : "number"}
+              min={1}
+              max={120}
+              value={String(ex.series ?? "")}
+              onChange={(e) => onChange((x) => ({ ...x, series: e.target.value || null }))}
+              className="cst-input"
+            />,
+          )}
+          {field(
+            repsLabel,
             <input
               value={String(ex.reps ?? "")}
               onChange={(e) => onChange((x) => ({ ...x, reps: e.target.value }))}

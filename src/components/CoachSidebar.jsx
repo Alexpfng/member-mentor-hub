@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "@tanstack/react-router";
-import { supabase } from "@/integrations/supabase/client";
 import { SUPABASE_ENABLED } from "@/lib/app-mode";
 import { useAuth } from "@/hooks/use-auth";
 import { CSTLogo, CSTAvatar } from "./Atoms";
@@ -72,14 +71,30 @@ export default function CoachSidebar() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const { roles, switchRole } = useAuth();
+  const [signingOut, setSigningOut] = useState(false);
+  const { roles, switchRole, signOut, user } = useAuth();
   const hasMemberRole = roles.includes("member");
 
   async function handleSignOut() {
-    if (SUPABASE_ENABLED) {
-      await supabase.auth.signOut();
+    if (signingOut) return;
+    setSigningOut(true);
+    try {
+      if (user?.id) {
+        localStorage.removeItem(`cst_active_role_${user.id}`);
+      }
+      if (SUPABASE_ENABLED) {
+        await signOut();
+      }
+    } catch (error) {
+      console.warn("[CoachSidebar] Sign-out failed, forcing login redirect", error);
+    } finally {
+      setDrawerOpen(false);
+      navigate({ to: "/login" });
+      window.setTimeout(() => {
+        if (window.location.pathname !== "/login") window.location.assign("/login");
+      }, 100);
+      setSigningOut(false);
     }
-    navigate({ to: "/login" });
   }
 
   const activeId =
@@ -111,7 +126,8 @@ export default function CoachSidebar() {
         </div>
         <button
           onClick={handleSignOut}
-          title="Déconnexion"
+          disabled={signingOut}
+          title={signingOut ? "Déconnexion..." : "Déconnexion"}
           aria-label="Déconnexion"
           style={{
             background: "transparent",
@@ -120,11 +136,12 @@ export default function CoachSidebar() {
             borderRadius: 6,
             padding: "4px 8px",
             fontSize: 10,
-            cursor: "pointer",
+            cursor: signingOut ? "wait" : "pointer",
+            opacity: signingOut ? 0.65 : 1,
             fontFamily: "var(--cst-mono)",
           }}
         >
-          ⎋
+          {signingOut ? "..." : "⎋"}
         </button>
       </div>
       <div
@@ -210,6 +227,7 @@ export default function CoachSidebar() {
           <ThemeToggle variant="icon" />
           <button
             onClick={handleSignOut}
+            disabled={signingOut}
             aria-label="Déconnexion"
             style={{
               background: "transparent",
@@ -218,12 +236,13 @@ export default function CoachSidebar() {
               borderRadius: 6,
               padding: "6px 10px",
               fontSize: 10,
-              cursor: "pointer",
+              cursor: signingOut ? "wait" : "pointer",
+              opacity: signingOut ? 0.65 : 1,
               fontFamily: "var(--cst-mono)",
               minHeight: 36,
             }}
           >
-            ⎋
+            {signingOut ? "..." : "⎋"}
           </button>
         </div>
       </div>

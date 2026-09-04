@@ -272,6 +272,16 @@ function QuickConfig({ ex, onChange, onClose, canChain }: PopoverProps) {
   const [ytError, setYtError] = useState('');
 
   const set = (k: keyof ProgramExercise, v: any) => setLocal(p => ({ ...p, [k]: v }));
+  const specialFields =
+    local.block_type === 'emom'
+      ? [['Durée (min)', 'sets', 'number', ''], ['Reps / min', 'reps', 'text', 'ex. 1  ou  1/2'], ['Charge', 'weight', 'text', '']]
+      : local.block_type === 'ladder'
+      ? [['Durée (min)', 'sets', 'number', ''], ['Reps / min', 'reps', 'text', 'ex. 3/4/5'], ['Charge', 'weight', 'text', '']]
+      : local.block_type === 'circuit'
+      ? [['Tours', 'sets', 'number', ''], ['Reps / station', 'reps', 'text', 'ex. 10 ou 30s'], ['Charge', 'weight', 'text', '']]
+      : local.block_type === 'amrap'
+      ? [['Durée (min)', 'sets', 'number', ''], ['Objectif', 'reps', 'text', 'ex. max ou 8-12'], ['Charge', 'weight', 'text', '']]
+      : [['Séries', 'sets', 'number', ''], ['Reps', 'reps', 'text', ''], ['Charge', 'weight', 'text', '']];
 
   const handleYT = (url: string) => {
     set('youtube_url', url);
@@ -328,12 +338,7 @@ function QuickConfig({ ex, onChange, onClose, canChain }: PopoverProps) {
                 « Séries » = durée totale en minutes, « Reps » = répétitions par
                 minute (l'échelle pour un Ladder). On renomme les libellés en
                 conséquence pour éviter la confusion. */}
-            {(local.block_type === 'emom'
-              ? [['Durée (min)', 'sets', 'number', ''], ['Reps / min', 'reps', 'text', 'ex. 1  ou  1/2'], ['Charge', 'weight', 'text', '']]
-              : local.block_type === 'ladder'
-              ? [['Durée (min)', 'sets', 'number', ''], ['Reps / min', 'reps', 'text', 'ex. 3/4/5'], ['Charge', 'weight', 'text', '']]
-              : [['Séries', 'sets', 'number', ''], ['Reps', 'reps', 'text', ''], ['Charge', 'weight', 'text', '']]
-            ).map(([label, key, type, ph]) => (
+            {specialFields.map(([label, key, type, ph]) => (
               <div key={key}>
                 <label style={{ fontFamily: 'var(--cst-mono)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--cst-text-muted)', marginBottom: 4, display: 'block' }}>{label}</label>
                 <input className="cst-input" type={type} value={(local as any)[key]} placeholder={ph || undefined}
@@ -425,6 +430,16 @@ function QuickConfig({ ex, onChange, onClose, canChain }: PopoverProps) {
           {local.block_type === 'ladder' && (
             <p style={{ margin: '6px 0 0', fontSize: 10, color: 'var(--cst-text-muted)', fontFamily: 'var(--cst-mono)', letterSpacing: '0.05em' }}>
               DURÉE (MIN) = durée totale · REPS / MIN = l'échelle : montante « 3/4/5 » (ou « 3-5 »), ou descendante « 5/4/3 ». Elle monte puis redescend, en boucle : 3, 4, 5, 4, 3, 4…
+            </p>
+          )}
+          {local.block_type === 'circuit' && (
+            <p style={{ margin: '6px 0 0', fontSize: 10, color: 'var(--cst-text-muted)', fontFamily: 'var(--cst-mono)', letterSpacing: '0.05em' }}>
+              TOURS = nombre de tours du circuit · chaque station dure 1 minute. Coche « Enchaîner » sur les exercices suivants pour créer C1, C2, C3…
+            </p>
+          )}
+          {local.block_type === 'amrap' && (
+            <p style={{ margin: '6px 0 0', fontSize: 10, color: 'var(--cst-text-muted)', fontFamily: 'var(--cst-mono)', letterSpacing: '0.05em' }}>
+              DURÉE (MIN) = temps total · OBJECTIF = max, repère de reps ou consigne du bloc.
             </p>
           )}
         </div>

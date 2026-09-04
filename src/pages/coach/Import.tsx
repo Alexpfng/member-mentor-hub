@@ -35,6 +35,19 @@ function val(v: string | null | undefined): string {
   return String(v);
 }
 
+function prescriptionLabel(ex: ImportedExercise): string {
+  if (ex.block_type === "emom") {
+    return `EMOM ${val(ex.series)} min · ${val(ex.reps)} reps/min`;
+  }
+  if (ex.block_type === "circuit") {
+    return `CIRCUIT · ${val(ex.series)} tours · ${val(ex.reps)} par station`;
+  }
+  if (ex.block_type === "amrap") {
+    return `AMRAP ${val(ex.series)} min · objectif ${val(ex.reps)}`;
+  }
+  return `${val(ex.series)} × ${val(ex.reps)}`;
+}
+
 function ExerciseRow({ ex }: { ex: ImportedExercise }) {
   return (
     <div
@@ -63,8 +76,8 @@ function ExerciseRow({ ex }: { ex: ImportedExercise }) {
       <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
         <span style={{ fontWeight: 600, fontSize: 13 }}>{ex.name}</span>
         <span className="cst-mono" style={{ fontSize: 10, opacity: 0.7 }}>
-          {val(ex.series)} × {val(ex.reps)} · {val(ex.charge)} · TEMPO {val(ex.tempo)} · RÉCUP{" "}
-          {val(ex.recup)} · RPE {val(ex.rpe_target)}
+          {prescriptionLabel(ex)} · {val(ex.charge)} · TEMPO {val(ex.tempo)} · RÉCUP {val(ex.recup)} ·
+          RPE {val(ex.rpe_target)}
         </span>
         {ex.coach_notes && (
           <span style={{ fontSize: 11, opacity: 0.75, fontStyle: "italic" }}>{ex.coach_notes}</span>

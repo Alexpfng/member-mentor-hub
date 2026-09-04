@@ -939,6 +939,7 @@ type EmomBlock = {
 
 type CircuitBlock = {
   kind: "circuit";
+  mode: "circuit" | "amrap";
   blockIdx: number;
   blockLetter?: string;
   exercises: ProgExercise[];
@@ -1011,16 +1012,21 @@ function buildSteps(exercises: ProgExercise[]): Step[] {
       return;
     }
 
-    // Circuit blocks get a dedicated multi-station timer — no brief, no sets
-    if (blockType === "circuit" && !isSuperset) {
+    // Circuit / AMRAP blocks get a dedicated timer. A real circuit is often
+    // encoded as C1/C2/C3, donc `isSuperset` peut être vrai : le type explicite
+    // doit gagner sur l'ancien comportement superset.
+    if (blockType === "circuit" || blockType === "amrap") {
+      const roundsOrMinutes = Math.max(1, parseSeriesCount(b.exercises[0]?.series));
       steps.push({
         kind: "circuit",
+        mode: blockType === "amrap" ? "amrap" : "circuit",
         blockIdx,
         blockLetter: b.letter,
         exercises: b.exercises,
-        defaultTotalMin: 20,
+        defaultTotalMin:
+          blockType === "circuit" ? Math.max(1, roundsOrMinutes * b.exercises.length) : roundsOrMinutes,
         workSecPerStation: 60,
-        restSecBetween: restSec > 0 ? restSec : 0,
+        restSecBetween: 0,
       });
       return;
     }
@@ -2935,6 +2941,7 @@ export function LiveSession({
         {renderHeader()}
         <CircuitScreen
           key={`circuit-${stepIdx}`}
+          mode={current.mode}
           exercises={current.exercises}
           defaultTotalMin={current.defaultTotalMin}
           workSecPerStation={current.workSecPerStation}
@@ -4597,6 +4604,7 @@ function EmomScreen({
 /* ───────── Circuit screen — multi-station auto-cycling timer ───────── */
 
 function CircuitScreen({
+  mode,
   exercises,
   defaultTotalMin,
   workSecPerStation,
@@ -4605,6 +4613,7 @@ function CircuitScreen({
   onFinish,
   onPain,
 }: {
+  mode: "circuit" | "amrap";
   exercises: ProgExercise[];
   defaultTotalMin: number;
   workSecPerStation: number;
@@ -4616,6 +4625,7 @@ function CircuitScreen({
   onPain: () => void;
 }) {
   const { t } = useI18n();
+  const modeLabel = mode === "amrap" ? "AMRAP" : "CIRCUIT";
   const [totalMin, setTotalMin] = React.useState(defaultTotalMin);
   const [elapsed, setElapsed] = React.useState(0);
   const [running, setRunning] = React.useState(false);
@@ -4710,7 +4720,7 @@ function CircuitScreen({
             className="cst-mono"
             style={{ fontSize: 10, opacity: 0.55, letterSpacing: "0.22em" }}
           >
-            CIRCUIT {blockLetter ? `· BLOC ${blockLetter} ` : ""}· {n} STATIONS · {totalMin} MIN
+            {modeLabel} {blockLetter ? `· BLOC ${blockLetter} ` : ""}· {n} STATIONS · {totalMin} MIN
           </span>
         </div>
 
@@ -4973,7 +4983,7 @@ function CircuitScreen({
     >
       <div>
         <span className="cst-mono" style={{ fontSize: 10, opacity: 0.55, letterSpacing: "0.22em" }}>
-          ✓ CIRCUIT TERMINÉ
+          ✓ {modeLabel} TERMINÉ
         </span>
         <h2
           className="cst-display"
@@ -4988,7 +4998,7 @@ function CircuitScreen({
 
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span className="cst-mono" style={{ fontSize: 10, opacity: 0.6, letterSpacing: "0.18em" }}>
-          RPE GLOBAL SUR CE CIRCUIT
+          RPE GLOBAL SUR CE {modeLabel}
         </span>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 4 }}>
           {RPE_PICKER_VALUES.filter((value) => value > 0).map((v) => {
@@ -5023,7 +5033,7 @@ function CircuitScreen({
         className="cst-btn cst-btn-primary"
         style={{ width: "100%", padding: "16px 0", fontSize: 14, opacity: rpe == null ? 0.5 : 1 }}
       >
-        VALIDER LE CIRCUIT →
+        VALIDER LE {modeLabel} →
       </button>
     </div>
   );
