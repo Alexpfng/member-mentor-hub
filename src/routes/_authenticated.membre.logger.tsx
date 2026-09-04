@@ -1,10 +1,12 @@
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { mergeAssignmentWeeks } from "@/lib/program-weeks";
 import { localDateISO } from "@/lib/local-date";
 import { currentPlanningWeekNumber, normalizeWeekStartsOn } from "@/lib/planning-weeks";
+import { trackMemberAppEvent } from "@/lib/member-app-events.functions";
 
 const searchSchema = z.object({
   day: z.string().min(1).max(120).optional(),
@@ -32,8 +34,29 @@ type ProgramStructure = {
 function SessionLauncher() {
   const navigate = useNavigate();
   const search = useSearch({ from: Route.id }) as { day?: string; week?: number };
+  const track = useServerFn(trackMemberAppEvent);
   const [error, setError] = useState<string | null>(null);
   const ran = useRef(false);
+
+  function trackSessionStart(input: {
+    sessionId: string;
+    sessionLabel: string | null;
+    source: "created" | "resumed" | "realigned";
+  }) {
+    track({
+      data: {
+        eventName: "session_start",
+        path: "/membre/logger",
+        sessionId: input.sessionId,
+        metadata: {
+          sessionLabel: input.sessionLabel,
+          source: input.source,
+          requestedDay: search.day ?? null,
+          requestedWeek: search.week ?? null,
+        },
+      },
+    }).catch((error) => console.warn("[member-app-events] session_start failed", error));
+  }
 
   useEffect(() => {
     if (ran.current) return;
@@ -167,6 +190,11 @@ function SessionLauncher() {
               })
               .eq("id", existing.id)
               .eq("member_id", uid);
+            trackSessionStart({
+              sessionId: existing.id,
+              sessionLabel,
+              source: isDifferentSession ? "realigned" : "resumed",
+            });
             navigate({ to: "/membre/seance/$sessionId", params: { sessionId: existing.id } });
             return;
           }
@@ -187,6 +215,11 @@ function SessionLauncher() {
             .select("id")
             .single();
           if (err) throw err;
+          trackSessionStart({
+            sessionId: created.id,
+            sessionLabel,
+            source: "created",
+          });
           navigate({ to: "/membre/seance/$sessionId", params: { sessionId: created.id } });
           return;
         }
@@ -194,6 +227,11 @@ function SessionLauncher() {
 
         // Case B: no explicit choice → resume in-progress if any, else go to choice screen.
         if (existing?.id) {
+          trackSessionStart({
+            sessionId: existing.id,
+            sessionLabel: existing.session_label,
+            source: "resumed",
+          });
           navigate({ to: "/membre/seance/$sessionId", params: { sessionId: existing.id } });
           return;
         }
@@ -204,7 +242,7 @@ function SessionLauncher() {
         setError((e as Error).message);
       }
     })();
-  }, [navigate, search.day, search.week]);
+  }, [navigate, search.day, search.week, track]);
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--cst-dark-green)", color: "rgba(255,255,255,0.6)" }}>

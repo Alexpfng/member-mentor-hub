@@ -6,6 +6,7 @@ import type { RunMetrics } from "@/lib/run-stats";
 import { upsertRunStats } from "@/lib/run.functions";
 import { mergeAssignmentWeeks } from "@/lib/program-weeks";
 import { matchStravaActivityToSession, type StravaSessionCandidate } from "./strava-match";
+import { recordMemberAppEvent } from "@/lib/member-app-events.functions";
 
 type StravaActivityLike = {
   id?: number | null;
@@ -549,6 +550,27 @@ async function markConnectionSync(memberId: string, input: { webhook: boolean })
     .eq("member_id", memberId);
 }
 
+async function recordStravaAppEvent(input: {
+  memberId: string;
+  eventName: string;
+  activity?: StravaActivityLike & { id?: number | null };
+  sessionId?: string | null;
+  metadata?: Record<string, unknown>;
+}) {
+  await recordMemberAppEvent({
+    memberId: input.memberId,
+    actorRole: "system",
+    eventName: input.eventName,
+    sessionId: input.sessionId ?? null,
+    metadata: {
+      activityId: input.activity?.id ?? null,
+      activityName: input.activity?.name ?? null,
+      activityType: input.activity?.sport_type ?? input.activity?.type ?? null,
+      ...input.metadata,
+    },
+  });
+}
+
 export async function syncStravaActivityForAthlete(
   athleteId: number,
   activityId: number,
@@ -556,6 +578,14 @@ export async function syncStravaActivityForAthlete(
 ) {
   const connection = await getFreshConnectionByAthleteId(athleteId);
   if (!connection) return { ok: false, reason: "connection_not_found" as const };
+
+  if (options.markWebhook ?? true) {
+    await recordStravaAppEvent({
+      memberId: connection.member_id,
+      eventName: "strava_webhook_received",
+      metadata: { athleteId, activityId },
+    });
+  }
 
   const activity = await fetchStravaActivity(connection.access_token, activityId);
   if (!activity || !activity.id) return { ok: false, reason: "activity_not_found" as const };
@@ -566,6 +596,12 @@ export async function syncStravaActivityForAthlete(
       sessionId: null,
       syncStatus: "ignored",
       syncError: "unsupported_activity_type",
+    });
+    await recordStravaAppEvent({
+      memberId: connection.member_id,
+      eventName: "strava_activity_ignored",
+      activity,
+      metadata: { reason: "unsupported_activity_type" },
     });
     return { ok: false, reason: "unsupported_activity_type" as const };
   }
@@ -578,6 +614,12 @@ export async function syncStravaActivityForAthlete(
       sessionId: null,
       syncStatus: "ignored",
       syncError: "missing_activity_date",
+    });
+    await recordStravaAppEvent({
+      memberId: connection.member_id,
+      eventName: "strava_activity_ignored",
+      activity: activity as StravaActivityLike & { id: number },
+      metadata: { reason: "missing_activity_date" },
     });
     return { ok: false, reason: "missing_activity_date" as const };
   }
@@ -602,6 +644,13 @@ export async function syncStravaActivityForAthlete(
       sessionId: existingSessionId,
       syncStatus: "matched",
       syncError: null,
+    });
+    await recordStravaAppEvent({
+      memberId: connection.member_id,
+      eventName: "strava_activity_matched",
+      activity: activity as StravaActivityLike & { id: number },
+      sessionId: existingSessionId,
+      metadata: { reason: "existing_strava_link" },
     });
     await markConnectionSync(connection.member_id, { webhook: options.markWebhook ?? true });
 
@@ -676,6 +725,22 @@ export async function syncStravaActivityForAthlete(
           : "imported",
     syncError: match.status === "ambiguous" ? match.reason : null,
   });
+  await recordStravaAppEvent({
+    memberId: connection.member_id,
+    eventName:
+      match.status === "ambiguous"
+        ? "strava_activity_ambiguous"
+        : createdSession
+          ? "strava_activity_created"
+          : "strava_activity_matched",
+    activity: activity as StravaActivityLike & { id: number },
+    sessionId,
+    metadata: {
+      matchStatus: match.status,
+      matchReason: "reason" in match ? match.reason : null,
+      createdSession,
+    },
+  });
   await markConnectionSync(connection.member_id, { webhook: options.markWebhook ?? true });
 
   return { ok: true, match, sessionId, createdSession };
@@ -693,6 +758,15 @@ export const syncRecentStravaActivities = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const connection = await getFreshConnectionByMemberId(context.userId);
     if (!connection) throw new Error("Compte Strava non connecté");
+
+    await recordMemberAppEvent({
+      memberId: context.userId,
+      actorUserId: context.userId,
+      actorRole: "member",
+      eventName: "strava_manual_sync",
+      path: "/membre/profil",
+      metadata: { daysBack: data.daysBack },
+    });
 
     const before = Math.floor(Date.now() / 1000);
     const after = Math.floor((Date.now() - data.daysBack * 24 * 60 * 60 * 1000) / 1000);

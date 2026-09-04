@@ -2,6 +2,7 @@ import { createFileRoute, Outlet, redirect, useRouter } from "@tanstack/react-ro
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SUPABASE_ENABLED } from "@/lib/app-mode";
+import { useMemberAppTracking } from "@/hooks/use-member-app-tracking";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -30,6 +31,7 @@ export const Route = createFileRoute("/_authenticated")({
 
 function AuthenticatedLayout() {
   const router = useRouter();
+  useMemberAppTracking();
   // role-vs-path check is non-blocking — render children immediately.
   const [redirecting, setRedirecting] = useState(false);
 

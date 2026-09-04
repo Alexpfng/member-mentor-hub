@@ -13,6 +13,7 @@ import { computeSessionDurationMin } from "@/lib/format";
 import { resolveMemberSessionExercises } from "@/lib/program-weeks";
 import { listLibraryForMember } from "@/lib/member-stats.functions";
 import { enrichVideosFromLibrary } from "@/lib/enrich-videos";
+import { trackMemberAppEvent } from "@/lib/member-app-events.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/membre/seance/$sessionId")({
@@ -46,6 +47,7 @@ function SeancePage() {
   const navigate = useNavigate();
   const notifyCoach = useServerFn(notifyCoachComposedSession);
   const fetchLibrary = useServerFn(listLibraryForMember);
+  const track = useServerFn(trackMemberAppEvent);
   const [session, setSession] = useState<SessionRow | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [exercises, setExercises] = useState<ProgExercise[]>([]);
@@ -55,6 +57,7 @@ function SeancePage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [sessionMode, setSessionMode] = useState<"expert" | "debutant">("debutant");
   const quitRef = useRef<(() => void) | null>(null);
+  const trackedOpenRef = useRef<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -167,6 +170,24 @@ function SeancePage() {
     })();
   }, [sessionId]);
 
+  useEffect(() => {
+    if (!session || trackedOpenRef.current === session.id) return;
+    trackedOpenRef.current = session.id;
+    track({
+      data: {
+        eventName: "session_open",
+        path: `/membre/seance/${session.id}`,
+        sessionId: session.id,
+        metadata: {
+          sessionLabel: session.session_label,
+          status: session.status,
+          weekNumber: session.week_number,
+          dayNumber: session.day_number,
+        },
+      },
+    }).catch((error) => console.warn("[member-app-events] session_open failed", error));
+  }, [session, track]);
+
   async function resetSession() {
     // Supprime les logs + remet la séance à "non commencée" → le coach ne voit plus "en cours"
     await supabase.from("set_logs").delete().eq("session_id", sessionId);
@@ -229,6 +250,20 @@ function SeancePage() {
         })
         .eq("id", sessionId);
       if (updateErr) throw new Error(updateErr.message);
+
+      await track({
+        data: {
+          eventName: "session_finish",
+          path: `/membre/seance/${sessionId}`,
+          sessionId,
+          metadata: {
+            sessionLabel: session?.session_label,
+            durationMinutes: duration,
+            averageRpe: rpeCount ? Math.round((rpeSum / rpeCount) * 10) / 10 : null,
+            setLogCount: logs?.length ?? 0,
+          },
+        },
+      }).catch((error) => console.warn("[member-app-events] session_finish failed", error));
 
       // Séance auto-composée : prévenir le coach (non-bloquant).
       if (session?.session_type === "self") {

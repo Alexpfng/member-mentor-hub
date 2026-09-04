@@ -747,6 +747,70 @@ export type Database = {
           },
         ]
       }
+      member_app_events: {
+        Row: {
+          actor_role: string
+          actor_user_id: string | null
+          created_at: string
+          event_name: string
+          id: string
+          member_id: string
+          metadata: Json
+          path: string | null
+          session_id: string | null
+          surface: string
+          user_agent: string | null
+        }
+        Insert: {
+          actor_role?: string
+          actor_user_id?: string | null
+          created_at?: string
+          event_name: string
+          id?: string
+          member_id: string
+          metadata?: Json
+          path?: string | null
+          session_id?: string | null
+          surface?: string
+          user_agent?: string | null
+        }
+        Update: {
+          actor_role?: string
+          actor_user_id?: string | null
+          created_at?: string
+          event_name?: string
+          id?: string
+          member_id?: string
+          metadata?: Json
+          path?: string | null
+          session_id?: string | null
+          surface?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_app_events_actor_user_id_fkey"
+            columns: ["actor_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_app_events_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_app_events_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       member_strava_activities: {
         Row: {
           activity_type: string

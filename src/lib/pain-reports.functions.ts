@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { recordMemberAppEvent } from "@/lib/member-app-events.functions";
 
 const createSchema = z.object({
   session_id: z.string().uuid().nullable().optional(),
@@ -28,6 +29,19 @@ export const createPainReport = createServerFn({ method: "POST" })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
+    await recordMemberAppEvent({
+      memberId: context.userId,
+      actorUserId: context.userId,
+      actorRole: "member",
+      eventName: "pain_skip",
+      sessionId: data.session_id ?? null,
+      metadata: {
+        sessionLabel: data.exercise_name,
+        exerciseName: data.exercise_name,
+        zone: data.zone,
+        intensity: data.intensity,
+      },
+    });
     return { id: row.id };
   });
 
