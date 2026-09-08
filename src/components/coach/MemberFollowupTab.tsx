@@ -10,6 +10,7 @@ import AdherenceChart from "./AdherenceChart";
 import RpeChart from "./RpeChart";
 import ExerciseProgressionChart from "./ExerciseProgressionChart";
 import { toast } from "sonner";
+import { getFollowupSessionsAccessCopy } from "@/lib/coach-session-flags";
 
 const kpiCard: React.CSSProperties = {
   background: "#1F2D24", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10,
@@ -58,6 +59,7 @@ export default function MemberFollowupTab({ memberId }: { memberId: string }) {
 
   if (isLoading || !followup) return <div className="cst-card-dark" style={{ padding: 20, opacity: 0.6 }}>Chargement…</div>;
   const k = followup.kpis;
+  const sessionsAccess = getFollowupSessionsAccessCopy(followup.recentSessions.length);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
@@ -76,6 +78,129 @@ export default function MemberFollowupTab({ memberId }: { memberId: string }) {
           ADAPTER S+1 →
         </button>
       </div>
+
+      {/* Direct session access: kept high in the follow-up tab so desktop mirrors mobile. */}
+      <div
+        className="cst-card-dark"
+        style={{
+          padding: 16,
+          border: "1px solid rgba(90,168,90,0.32)",
+          boxShadow: "0 0 0 1px rgba(90,168,90,0.08)",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "baseline",
+            justifyContent: "space-between",
+            gap: 12,
+            flexWrap: "wrap",
+            marginBottom: 12,
+          }}
+        >
+          <div>
+            <div
+              className="cst-mono"
+              style={{ fontSize: 10, letterSpacing: "0.18em", opacity: 0.7 }}
+            >
+              SUIVI
+            </div>
+            <div className="cst-display" style={{ fontSize: 20, marginTop: 2 }}>
+              {sessionsAccess.title}
+            </div>
+          </div>
+          <span className="cst-mono" style={{ fontSize: 10, color: "#5BA85A" }}>
+            {sessionsAccess.subtitle}
+          </span>
+        </div>
+        {sessionsAccess.empty ? (
+          <div style={{ fontSize: 13, opacity: 0.65 }}>
+            Dès qu'une séance sera terminée, Léo pourra l'ouvrir directement ici.
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {followup.recentSessions.map((s) => {
+              const title = s.label || `S${s.week ?? "-"} · J${s.day ?? "-"}`;
+              const isFree = s.sessionType === "free";
+              const freeLabel = s.freeTitle || "Séance libre";
+              return (
+                <div
+                  key={s.id}
+                  className="cst-card-dark"
+                  role="button"
+                  tabIndex={0}
+                  style={{
+                    width: "100%",
+                    padding: "12px 14px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    border: "1px solid rgba(255,255,255,0.09)",
+                    cursor: "pointer",
+                    textAlign: "left",
+                    color: "inherit",
+                    background: "rgba(255,255,255,0.025)",
+                  }}
+                  onClick={() =>
+                    navigate({ to: "/coach/seance/$sessionId", params: { sessionId: s.id } })
+                  }
+                  onKeyDown={(event) => {
+                    if (event.key !== "Enter" && event.key !== " ") return;
+                    event.preventDefault();
+                    navigate({ to: "/coach/seance/$sessionId", params: { sessionId: s.id } });
+                  }}
+                >
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13 }}>
+                      <strong>{isFree ? freeLabel : title}</strong>
+                      {!s.coachSeen && (
+                        <span
+                          className="cst-mono"
+                          style={{
+                            marginLeft: 8,
+                            fontSize: 9,
+                            padding: "1px 5px",
+                            background: "#E07B39",
+                            color: "#fff",
+                            borderRadius: 3,
+                          }}
+                        >
+                          NOUVEAU
+                        </span>
+                      )}
+                    </div>
+                    <span className="cst-mono" style={{ fontSize: 10, opacity: 0.55 }}>
+                      {timeAgo(s.endedAt)} · RPE{" "}
+                      {s.averageRpe != null ? Number(s.averageRpe).toFixed(1) : "—"}
+                      {isFree ? " · LIBRE" : ""}
+                    </span>
+                  </div>
+                  <span
+                    className="cst-btn cst-btn-primary cst-btn-sm"
+                    style={{ pointerEvents: "none", whiteSpace: "nowrap" }}
+                  >
+                    VOIR LA SÉANCE →
+                  </span>
+                  {!s.coachSeen && (
+                    <button
+                      type="button"
+                      className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+                      style={{ whiteSpace: "nowrap" }}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        void onMarkSeen(s.id);
+                      }}
+                    >
+                      ✓ VU
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       {/* KPIs */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
         <div style={kpiCard}>
@@ -164,28 +289,6 @@ export default function MemberFollowupTab({ memberId }: { memberId: string }) {
       )}
 
       <ExerciseProgressionChart memberId={memberId} />
-
-      {/* Recent sessions */}
-      {followup.recentSessions.length > 0 && (
-        <div className="cst-card-dark" style={{ padding: 16 }}>
-          <div className="cst-mono" style={{ fontSize: 10, letterSpacing: "0.18em", opacity: 0.7, marginBottom: 10 }}>SÉANCES RÉCENTES</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {followup.recentSessions.map((s) => (
-              <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13 }}>
-                    <strong>{s.label || `S${s.week ?? "-"} · J${s.day ?? "-"}`}</strong>
-                    {!s.coachSeen && <span className="cst-mono" style={{ marginLeft: 8, fontSize: 9, padding: "1px 5px", background: "#E07B39", color: "#fff", borderRadius: 3 }}>NOUVEAU</span>}
-                  </div>
-                  <span className="cst-mono" style={{ fontSize: 10, opacity: 0.55 }}>{timeAgo(s.endedAt)} · RPE {s.averageRpe != null ? Number(s.averageRpe).toFixed(1) : "—"}</span>
-                </div>
-                <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" onClick={() => navigate({ to: "/coach/seance/$sessionId", params: { sessionId: s.id } })}>VOIR</button>
-                {!s.coachSeen && <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" onClick={() => onMarkSeen(s.id)}>✓ VU</button>}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

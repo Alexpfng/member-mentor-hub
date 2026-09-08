@@ -20,7 +20,11 @@ import { RunComparisonCard } from "@/components/cst/RunComparisonCard";
 import type { RunMetrics } from "@/lib/run-stats";
 import { StravaRunCard } from "@/components/cst/StravaRunCard";
 import type { StravaActivityCardData } from "@/lib/strava-activity-card";
-import { cleanCoachForcedCompletionNote, isCoachForcedIncompleteSession } from "@/lib/coach-session-flags";
+import {
+  buildCoachForcedCompletionConfirmText,
+  cleanCoachForcedCompletionNote,
+  isCoachForcedIncompleteSession,
+} from "@/lib/coach-session-flags";
 
 type ProgExo = {
   code?: string;
@@ -56,7 +60,6 @@ export default function CoachSessionDetail() {
   const [coachNote, setCoachNote] = useState("");
   const [savingNote, setSavingNote] = useState(false);
   const [forcingComplete, setForcingComplete] = useState(false);
-  const [forceConfirming, setForceConfirming] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["coach", "session", sessionId],
@@ -97,7 +100,6 @@ export default function CoachSessionDetail() {
     try {
       await forceCompleteFn({ data: { session_id: sessionId } });
       toast.success("Séance marquée comme terminée");
-      setForceConfirming(false);
       qc.invalidateQueries({ queryKey: ["coach", "session", sessionId] });
       qc.invalidateQueries({ queryKey: ["coach"] });
     } catch (e) {
@@ -105,6 +107,20 @@ export default function CoachSessionDetail() {
     } finally {
       setForcingComplete(false);
     }
+  }
+
+  function requestForceComplete() {
+    if (forcingComplete || !data?.session) return;
+
+    const confirmed = window.confirm(
+      buildCoachForcedCompletionConfirmText({
+        memberName: data.member.name,
+        sessionLabel: data.session.session_label,
+      }),
+    );
+    if (!confirmed) return;
+
+    void handleForceComplete();
   }
 
   const blockForExo = useMemo(() => {
@@ -744,45 +760,22 @@ export default function CoachSessionDetail() {
               >
                 ⚠ SÉANCE EN COURS — membre n'a pas appuyé sur « Terminer »
               </span>
-              {!forceConfirming ? (
-                <button
-                  className="cst-btn cst-btn-sm"
-                  style={{
-                    background: "rgba(224,123,57,0.25)",
-                    color: "#E07B39",
-                    border: "1px solid rgba(224,123,57,0.5)",
-                  }}
-                  onClick={() => setForceConfirming(true)}
-                  disabled={forcingComplete}
-                >
-                  Forcer la fin de séance
-                </button>
-              ) : (
-                <>
-                  <span style={{ fontSize: 12, opacity: 0.85 }}>
-                    Confirmer ? La séance sera envoyée dans les retours comme incomplète.
-                  </span>
-                  <button
-                    className="cst-btn cst-btn-ghost-dark cst-btn-sm"
-                    onClick={() => setForceConfirming(false)}
-                    disabled={forcingComplete}
-                  >
-                    Annuler
-                  </button>
-                  <button
-                    className="cst-btn cst-btn-sm"
-                    style={{
-                      background: "rgba(224,123,57,0.25)",
-                      color: "#E07B39",
-                      border: "1px solid rgba(224,123,57,0.5)",
-                    }}
-                    onClick={handleForceComplete}
-                    disabled={forcingComplete}
-                  >
-                    {forcingComplete ? "…" : "Oui, clôturer"}
-                  </button>
-                </>
-              )}
+              <button
+                type="button"
+                className="cst-btn cst-btn-sm"
+                style={{
+                  background: "rgba(224,123,57,0.25)",
+                  color: "#E07B39",
+                  border: "1px solid rgba(224,123,57,0.5)",
+                  cursor: forcingComplete ? "default" : "pointer",
+                  minHeight: 42,
+                  touchAction: "manipulation",
+                }}
+                onClick={requestForceComplete}
+                disabled={forcingComplete}
+              >
+                {forcingComplete ? "Clôture en cours…" : "Forcer la clôture de séance"}
+              </button>
             </div>
           )}
 

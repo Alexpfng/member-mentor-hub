@@ -25,6 +25,37 @@ export function buildCoachForcedCompletionNote(
   return current ? `${current}\n\n${forcedNote}` : forcedNote;
 }
 
+export function buildCoachForcedCompletionConfirmText(input: {
+  memberName?: string | null;
+  sessionLabel?: string | null;
+}): string {
+  const sessionLabel = input.sessionLabel?.trim() || "cette séance";
+  const memberName = input.memberName?.trim() || "ce coaché";
+
+  return `Forcer la clôture de la séance « ${sessionLabel} » de ${memberName} ?\n\nElle passera en retours comme séance incomplète, avec une alerte visible pour Léo.`;
+}
+
+export function getFollowupSessionsAccessCopy(count: number): {
+  title: string;
+  subtitle: string;
+  empty: boolean;
+} {
+  const safeCount = Math.max(0, Math.floor(count));
+  if (safeCount === 0) {
+    return {
+      title: "ACCÈS AUX SÉANCES",
+      subtitle: "Aucune séance terminée sur les 30 derniers jours",
+      empty: true,
+    };
+  }
+
+  return {
+    title: "ACCÈS AUX SÉANCES",
+    subtitle: `${safeCount} séance${safeCount > 1 ? "s" : ""} disponible${safeCount > 1 ? "s" : ""} depuis le suivi`,
+    empty: false,
+  };
+}
+
 export function countCoachNotifications(input: {
   unresolvedPain?: number | null;
   unreadMessages?: number | null;

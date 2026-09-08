@@ -2,8 +2,10 @@ import { describe, expect, it } from "bun:test";
 
 import {
   buildCoachForcedCompletionNote,
+  buildCoachForcedCompletionConfirmText,
   cleanCoachForcedCompletionNote,
   countCoachNotifications,
+  getFollowupSessionsAccessCopy,
   isCoachForcedIncompleteSession,
 } from "./coach-session-flags";
 
@@ -31,6 +33,17 @@ describe("coach forced completion flags", () => {
     expect(cleanCoachForcedCompletionNote(note)).not.toContain("[coach_forced_completion]");
     expect(cleanCoachForcedCompletionNote(note)).toContain("Séance clôturée par le coach");
   });
+
+  it("builds a clear native confirmation text before forcing a session closed", () => {
+    expect(
+      buildCoachForcedCompletionConfirmText({
+        memberName: "Teddy Morin",
+        sessionLabel: "Upper body focus push",
+      }),
+    ).toBe(
+      "Forcer la clôture de la séance « Upper body focus push » de Teddy Morin ?\n\nElle passera en retours comme séance incomplète, avec une alerte visible pour Léo.",
+    );
+  });
 });
 
 describe("countCoachNotifications", () => {
@@ -43,5 +56,23 @@ describe("countCoachNotifications", () => {
         forcedIncompleteSessions: 4,
       }),
     ).toBe(10);
+  });
+});
+
+describe("getFollowupSessionsAccessCopy", () => {
+  it("keeps the coach follow-up session access explicit when sessions exist", () => {
+    expect(getFollowupSessionsAccessCopy(3)).toEqual({
+      title: "ACCÈS AUX SÉANCES",
+      subtitle: "3 séances disponibles depuis le suivi",
+      empty: false,
+    });
+  });
+
+  it("keeps an empty state visible from the follow-up tab", () => {
+    expect(getFollowupSessionsAccessCopy(0)).toEqual({
+      title: "ACCÈS AUX SÉANCES",
+      subtitle: "Aucune séance terminée sur les 30 derniers jours",
+      empty: true,
+    });
   });
 });
