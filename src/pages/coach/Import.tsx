@@ -12,7 +12,12 @@ import {
   type ParsedExcel,
   type ImportedExercise,
 } from "@/lib/excel-import/parser";
-import { saveProgram, listMembers, assignProgram } from "@/lib/coach.functions";
+import {
+  saveProgram,
+  listMembers,
+  assignProgram,
+  updateActiveAssignmentWeeksFromImport,
+} from "@/lib/coach.functions";
 import { deriveAssignmentStartDate } from "@/lib/assignment-start";
 
 const COLOR_DOT: Record<string, string> = {
@@ -347,6 +352,161 @@ function AssignDialog({
   );
 }
 
+function PatchWeeksDialog({
+  weeks,
+  onClose,
+}: {
+  weeks: ParsedExcel["weeks"];
+  onClose: () => void;
+}) {
+  const listMembersFn = useServerFn(listMembers);
+  const patchWeeksFn = useServerFn(updateActiveAssignmentWeeksFromImport);
+  const { data, isLoading } = useQuery({
+    queryKey: ["coach-members"],
+    queryFn: () => listMembersFn({}),
+  });
+  const [query, setQuery] = useState("");
+  const [selected, setSelected] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const members = useMemo(() => {
+    const arr = data?.members ?? [];
+    const q = query.trim().toLowerCase();
+    if (!q) return arr;
+    return arr.filter((m: any) =>
+      `${m.first_name || ""} ${m.last_name || ""} ${m.email || ""}`.toLowerCase().includes(q),
+    );
+  }, [data, query]);
+
+  const weekLabel = weeks
+    .map((week) => `S${week.number}`)
+    .sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)))
+    .join(", ");
+
+  const confirm = async () => {
+    if (!selected) {
+      toast.error("Sélectionne un coaché.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await patchWeeksFn({
+        data: {
+          member_id: selected,
+          weeks: weeks.map((week) => ({ number: week.number, days: week.days })),
+        },
+      });
+      toast.success(`Mise à jour ${res.updated_weeks.map((n: number) => `S${n}`).join(", ")} appliquée.`);
+      onClose();
+    } catch (e: any) {
+      toast.error(e?.message || "Échec de la mise à jour");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.7)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 200,
+        padding: 16,
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: "#1F2A22",
+          border: "1px solid rgba(255,255,255,0.1)",
+          borderRadius: 12,
+          width: "min(620px, 100%)",
+          padding: 24,
+          color: "#fff",
+          display: "flex",
+          flexDirection: "column",
+          gap: 14,
+        }}
+      >
+        <CSTSectionNum num={4} label="MISE À JOUR" sub={`${weekLabel} · PROGRAMME ACTIF`} />
+        <h3 className="cst-display" style={{ fontSize: 22, margin: 0 }}>
+          REMPLACER UNIQUEMENT CES SEMAINES.
+        </h3>
+        <p style={{ margin: 0, fontSize: 13, lineHeight: 1.55, color: "rgba(255,255,255,0.68)" }}>
+          Cette action garde le programme actif du coaché et met seulement à jour {weekLabel}. Les
+          autres semaines déjà présentes ne sont pas supprimées.
+        </p>
+        <input
+          className="cst-input"
+          placeholder="Rechercher un coaché…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+        <div
+          style={{
+            maxHeight: 280,
+            overflow: "auto",
+            display: "flex",
+            flexDirection: "column",
+            gap: 6,
+          }}
+        >
+          {isLoading && <div style={{ opacity: 0.6, fontSize: 13 }}>Chargement…</div>}
+          {!isLoading &&
+            members.map((m: any) => {
+              const canPatch = Boolean(m.program_id);
+              return (
+                <button
+                  key={m.id}
+                  onClick={() => {
+                    if (canPatch) setSelected(m.id);
+                  }}
+                  disabled={!canPatch}
+                  className="cst-card-dark"
+                  style={{
+                    padding: 12,
+                    textAlign: "left",
+                    cursor: canPatch ? "pointer" : "not-allowed",
+                    opacity: canPatch ? 1 : 0.55,
+                    border:
+                      selected === m.id
+                        ? "1px solid var(--cst-mid-green)"
+                        : "1px solid rgba(255,255,255,0.08)",
+                  }}
+                >
+                  <div style={{ fontWeight: 600 }}>
+                    {[m.first_name, m.last_name].filter(Boolean).join(" ") || m.email}
+                  </div>
+                  <div className="cst-mono" style={{ fontSize: 10, opacity: 0.55, marginTop: 4 }}>
+                    {m.program_name
+                      ? `PROGRAMME ACTIF · ${m.program_name}`
+                      : "AUCUN PROGRAMME ACTIF"}
+                  </div>
+                </button>
+              );
+            })}
+        </div>
+        <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+          <button className="cst-btn cst-btn-ghost-dark" onClick={onClose} disabled={saving}>
+            ANNULER
+          </button>
+          <button
+            className="cst-btn cst-btn-primary"
+            onClick={confirm}
+            disabled={saving || !selected}
+          >
+            {saving ? "MISE À JOUR…" : `METTRE À JOUR ${weekLabel} →`}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── PAGE ────────────────────────────────────────────────────────────────────
 export default function ExcelImport() {
   const navigate = useNavigate();
@@ -364,6 +524,7 @@ export default function ExcelImport() {
     durationWeeks: number | null;
   } | null>(null);
   const [assignOpen, setAssignOpen] = useState(false);
+  const [patchOpen, setPatchOpen] = useState(false);
 
   const handleFile = useCallback(async (f: File) => {
     setFile(f);
@@ -792,6 +953,14 @@ export default function ExcelImport() {
               <button className="cst-btn cst-btn-ghost-dark" onClick={reset} disabled={saving}>
                 ← RECOMMENCER
               </button>
+              <button
+                className="cst-btn cst-btn-secondary"
+                onClick={() => setPatchOpen(true)}
+                disabled={saving}
+                title="Met à jour uniquement les semaines importées du programme actif d'un coaché"
+              >
+                METTRE À JOUR UN COACHÉ →
+              </button>
               {!savedProgram && (
                 <button className="cst-btn cst-btn-primary" onClick={handleSave} disabled={saving}>
                   {saving ? "ENREGISTREMENT…" : "CONVERTIR ET ENREGISTRER →"}
@@ -824,6 +993,9 @@ export default function ExcelImport() {
           durationWeeks={savedProgram.durationWeeks}
           onClose={() => setAssignOpen(false)}
         />
+      )}
+      {patchOpen && parsed && (
+        <PatchWeeksDialog weeks={parsed.weeks} onClose={() => setPatchOpen(false)} />
       )}
     </div>
   );

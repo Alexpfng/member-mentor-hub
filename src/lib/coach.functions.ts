@@ -7,6 +7,10 @@ import { localDateISO } from "@/lib/local-date";
 import { normalizeWeekStartsOn } from "@/lib/planning-weeks";
 import { normalizeProgramStructure } from "@/lib/week-structure-normalizer";
 import { preserveAssignmentSessionMode } from "@/lib/assignment-session-mode";
+import {
+  mergeImportedWeeksIntoProgramStructure,
+  normalizeImportedWeekPatches,
+} from "@/lib/imported-week-patch";
 import type { Json } from "@/integrations/supabase/types";
 
 async function assertCoach(userId: string) {
@@ -229,6 +233,103 @@ export const assignProgram = createServerFn({ method: "POST" })
       .eq("status", "in_progress")
       .neq("program_id", data.program_id);
     return { assignment: row };
+  });
+
+const importedWeekPatchSchema = z.object({
+  member_id: z.string().uuid(),
+  weeks: z
+    .array(
+      z.object({
+        number: z.number().int().min(1).max(52),
+        days: z.array(z.any()).optional().default([]),
+      }),
+    )
+    .min(1),
+});
+
+export const updateActiveAssignmentWeeksFromImport = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => importedWeekPatchSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertCoach(context.userId);
+
+    const { data: assignment, error: assignmentError } = await supabaseAdmin
+      .from("assignments")
+      .select("id, member_id, program_id, programs(duration_weeks, structure)")
+      .eq("member_id", data.member_id)
+      .eq("active", true)
+      .order("start_date", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (assignmentError) throw new Error(assignmentError.message);
+    if (!assignment) {
+      throw new Error("Ce coaché n'a pas de programme actif à mettre à jour.");
+    }
+
+    const patches = normalizeImportedWeekPatches(data.weeks);
+    if (patches.length === 0) throw new Error("Aucune semaine valide à importer.");
+
+    const now = new Date().toISOString();
+    const summary = {
+      source: "excel_partial_import",
+      imported_by: context.userId,
+      imported_at: now,
+      weeks: patches.map((patch) => patch.number),
+    };
+
+    for (const patch of patches) {
+      const payload = {
+        member_id: data.member_id,
+        program_id: assignment.program_id,
+        structure: patch.structure as Json,
+        draft_structure: null,
+        status: "published",
+        published_at: now,
+        changes_summary: summary as Json,
+        updated_at: now,
+        created_by: context.userId,
+      };
+
+      const { data: updatedRows, error: updateError } = await supabaseAdmin
+        .from("assignment_weeks")
+        .update(payload)
+        .eq("assignment_id", assignment.id)
+        .eq("week_number", patch.number)
+        .select("id");
+      if (updateError) throw new Error(updateError.message);
+
+      if ((updatedRows ?? []).length === 0) {
+        const { error: insertError } = await supabaseAdmin.from("assignment_weeks").insert({
+          ...payload,
+          assignment_id: assignment.id,
+          week_number: patch.number,
+          based_on_week: null,
+          created_at: now,
+        });
+        if (insertError) throw new Error(insertError.message);
+      }
+    }
+
+    const program = Array.isArray((assignment as any).programs)
+      ? (assignment as any).programs[0]
+      : (assignment as any).programs;
+    const merged = mergeImportedWeeksIntoProgramStructure(program?.structure, data.weeks);
+    const nextDuration = Math.max(program?.duration_weeks ?? 0, merged.weeks?.length ?? 0);
+
+    if (nextDuration > (program?.duration_weeks ?? 0)) {
+      const { error: durationError } = await supabaseAdmin
+        .from("programs")
+        .update({ duration_weeks: nextDuration })
+        .eq("id", assignment.program_id);
+      if (durationError) throw new Error(durationError.message);
+    }
+
+    return {
+      ok: true,
+      assignment_id: assignment.id,
+      updated_weeks: patches.map((patch) => patch.number),
+      duration_weeks: nextDuration || null,
+    };
   });
 
 const removeProgramSchema = z.object({ member_id: z.string().uuid() });
