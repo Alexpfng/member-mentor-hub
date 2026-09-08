@@ -44,16 +44,25 @@ export function getFollowupSessionsAccessCopy(count: number): {
   if (safeCount === 0) {
     return {
       title: "ACCÈS AUX SÉANCES",
-      subtitle: "Aucune séance terminée sur les 30 derniers jours",
+      subtitle: "Aucune séance accessible sur les 30 derniers jours",
       empty: true,
     };
   }
 
   return {
     title: "ACCÈS AUX SÉANCES",
-    subtitle: `${safeCount} séance${safeCount > 1 ? "s" : ""} disponible${safeCount > 1 ? "s" : ""} depuis le suivi`,
+    subtitle: `${safeCount} séance${safeCount > 1 ? "s" : ""} accessible${safeCount > 1 ? "s" : ""} depuis le suivi`,
     empty: false,
   };
+}
+
+export function getFollowupAccessibleSessions<T extends { status?: string | null }>(
+  sessions: T[],
+  limit = 8,
+): T[] {
+  return sessions
+    .filter((session) => session.status === "completed" || session.status === "in_progress")
+    .slice(0, Math.max(0, limit));
 }
 
 export function getHistorySessionAccessCopy(): { cta: string; ariaLabel: string } {

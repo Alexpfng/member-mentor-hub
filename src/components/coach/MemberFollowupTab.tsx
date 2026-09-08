@@ -115,7 +115,7 @@ export default function MemberFollowupTab({ memberId }: { memberId: string }) {
         </div>
         {sessionsAccess.empty ? (
           <div style={{ fontSize: 13, opacity: 0.65 }}>
-            Dès qu'une séance sera terminée, Léo pourra l'ouvrir directement ici.
+            Dès qu'une séance sera lancée ou terminée, Léo pourra l'ouvrir directement ici.
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -123,6 +123,7 @@ export default function MemberFollowupTab({ memberId }: { memberId: string }) {
               const title = s.label || `S${s.week ?? "-"} · J${s.day ?? "-"}`;
               const isFree = s.sessionType === "free";
               const freeLabel = s.freeTitle || "Séance libre";
+              const isInProgress = s.status === "in_progress";
               return (
                 <div
                   key={s.id}
@@ -170,7 +171,7 @@ export default function MemberFollowupTab({ memberId }: { memberId: string }) {
                       )}
                     </div>
                     <span className="cst-mono" style={{ fontSize: 10, opacity: 0.55 }}>
-                      {timeAgo(s.endedAt)} · RPE{" "}
+                      {isInProgress ? "EN COURS" : timeAgo(s.endedAt ?? s.startedAt)} · RPE{" "}
                       {s.averageRpe != null ? Number(s.averageRpe).toFixed(1) : "—"}
                       {isFree ? " · LIBRE" : ""}
                     </span>

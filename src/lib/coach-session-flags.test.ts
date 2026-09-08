@@ -5,6 +5,7 @@ import {
   buildCoachForcedCompletionConfirmText,
   cleanCoachForcedCompletionNote,
   countCoachNotifications,
+  getFollowupAccessibleSessions,
   getFollowupSessionsAccessCopy,
   getHistorySessionAccessCopy,
   isCoachForcedIncompleteSession,
@@ -64,7 +65,7 @@ describe("getFollowupSessionsAccessCopy", () => {
   it("keeps the coach follow-up session access explicit when sessions exist", () => {
     expect(getFollowupSessionsAccessCopy(3)).toEqual({
       title: "ACCÈS AUX SÉANCES",
-      subtitle: "3 séances disponibles depuis le suivi",
+      subtitle: "3 séances accessibles depuis le suivi",
       empty: false,
     });
   });
@@ -72,9 +73,25 @@ describe("getFollowupSessionsAccessCopy", () => {
   it("keeps an empty state visible from the follow-up tab", () => {
     expect(getFollowupSessionsAccessCopy(0)).toEqual({
       title: "ACCÈS AUX SÉANCES",
-      subtitle: "Aucune séance terminée sur les 30 derniers jours",
+      subtitle: "Aucune séance accessible sur les 30 derniers jours",
       empty: true,
     });
+  });
+});
+
+describe("getFollowupAccessibleSessions", () => {
+  it("keeps in-progress sessions accessible from the coach follow-up tab", () => {
+    const sessions = [
+      { id: "scheduled", status: "scheduled" },
+      { id: "in-progress", status: "in_progress" },
+      { id: "completed", status: "completed" },
+      { id: "rest", status: "rest" },
+    ];
+
+    expect(getFollowupAccessibleSessions(sessions).map((session) => session.id)).toEqual([
+      "in-progress",
+      "completed",
+    ]);
   });
 });
 

@@ -8,6 +8,7 @@ import { normalizeStravaActivityCard } from "@/lib/strava-activity-card";
 import {
   COACH_FORCED_COMPLETION_MARKER,
   countCoachNotifications,
+  getFollowupAccessibleSessions,
 } from "@/lib/coach-session-flags";
 
 async function assertCoach(userId: string) {
@@ -1141,11 +1142,13 @@ export const getMemberFollowup = createServerFn({ method: "GET" })
       openPains,
       pastPains: (painsR.data ?? []).filter((p) => p.resolved_at).slice(0, 10),
       watchList,
-      recentSessions: completed.slice(0, 8).map((s) => ({
+      recentSessions: getFollowupAccessibleSessions(sessions).map((s) => ({
         id: s.id,
+        status: s.status,
         label: s.session_label,
         week: s.week_number,
         day: s.day_number,
+        startedAt: s.started_at,
         endedAt: s.ended_at,
         averageRpe: s.average_rpe,
         coachSeen: s.coach_seen,
