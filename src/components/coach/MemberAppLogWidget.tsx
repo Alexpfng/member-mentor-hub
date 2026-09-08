@@ -15,7 +15,7 @@ function eventTone(eventName: string) {
 export default function MemberAppLogWidget({ maxSummaries = 6 }: { maxSummaries?: number } = {}) {
   const navigate = useNavigate();
   const fetchLogs = useServerFn(getCoachMemberAppEventFeed);
-  const { data, isLoading } = useQuery({
+  const { data, error, isError, isLoading } = useQuery({
     queryKey: ["coach", "member-app-events"],
     queryFn: () => fetchLogs({ data: { limit: 80 } }),
     refetchInterval: 45_000,
@@ -39,18 +39,28 @@ export default function MemberAppLogWidget({ maxSummaries = 6 }: { maxSummaries?
 
       {isLoading && <div style={{ fontSize: 13, opacity: 0.65 }}>Chargement des logs…</div>}
 
+      {!isLoading && isError && (
+        <div style={{ fontSize: 13, color: "#ff8a7a", lineHeight: 1.5 }}>
+          Impossible de charger les logs :{" "}
+          {error instanceof Error ? error.message : "erreur Supabase inconnue"}.
+        </div>
+      )}
+
       {!isLoading && data?.migrationMissing && (
         <div style={{ fontSize: 13, opacity: 0.75, color: "#D4A82E" }}>
           Logs prêts côté app. Migration Supabase à appliquer pour commencer l'enregistrement.
         </div>
       )}
 
-      {!isLoading && !data?.migrationMissing && (!data?.summaries || data.summaries.length === 0) && (
-        <div style={{ fontSize: 13, opacity: 0.7 }}>
-          Aucun mouvement enregistré pour l'instant. Les prochains passages dans l'espace membre
-          apparaîtront ici.
-        </div>
-      )}
+      {!isLoading &&
+        !isError &&
+        !data?.migrationMissing &&
+        (!data?.summaries || data.summaries.length === 0) && (
+          <div style={{ fontSize: 13, opacity: 0.7 }}>
+            Aucun mouvement enregistré pour l'instant. Les prochains passages dans l'espace membre
+            apparaîtront ici.
+          </div>
+        )}
 
       <div style={{ display: "grid", gap: 10 }}>
         {(data?.summaries ?? []).slice(0, maxSummaries).map((summary) => (

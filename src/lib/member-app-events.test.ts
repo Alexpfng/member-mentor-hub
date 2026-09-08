@@ -1,10 +1,20 @@
 import { describe, expect, it } from "bun:test";
 import {
+  COACH_MEMBER_APP_EVENTS_SELECT,
   formatMemberAppEventLabel,
   normalizeMemberAppEventRows,
   summarizeMemberAppEvents,
   type MemberAppEvent,
 } from "./member-app-events";
+
+describe("COACH_MEMBER_APP_EVENTS_SELECT", () => {
+  it("uses the member_id profile relation explicitly for Supabase embeds", () => {
+    expect(COACH_MEMBER_APP_EVENTS_SELECT).toContain(
+      "member_profile:profiles!member_app_events_member_id_fkey",
+    );
+    expect(COACH_MEMBER_APP_EVENTS_SELECT).not.toContain("metadata, profiles(");
+  });
+});
 
 describe("formatMemberAppEventLabel", () => {
   it("turns known event names into coach-friendly labels", () => {
@@ -136,5 +146,20 @@ describe("normalizeMemberAppEventRows", () => {
         metadata: {},
       },
     ]);
+  });
+
+  it("accepts the explicit member_profile relation returned by the coach feed", () => {
+    const rows = normalizeMemberAppEventRows([
+      {
+        id: "evt-1",
+        member_id: "member-a",
+        event_name: "page_view",
+        created_at: "2026-09-04T09:00:00.000Z",
+        metadata: { path: "/membre" },
+        member_profile: { first_name: "Alex", last_name: "Durand", email: "alex@example.com" },
+      },
+    ]);
+
+    expect(rows[0]?.memberName).toBe("Alex Durand");
   });
 });

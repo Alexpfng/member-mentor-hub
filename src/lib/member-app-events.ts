@@ -21,6 +21,9 @@ export type MemberAppEventSummary = {
   }>;
 };
 
+export const COACH_MEMBER_APP_EVENTS_SELECT =
+  "id, member_id, event_name, created_at, metadata, member_profile:profiles!member_app_events_member_id_fkey(first_name, last_name, email)";
+
 type MemberAppEventRow = {
   id: string;
   member_id: string;
@@ -28,6 +31,11 @@ type MemberAppEventRow = {
   created_at: string;
   metadata?: Record<string, unknown> | null;
   profiles?: {
+    first_name?: string | null;
+    last_name?: string | null;
+    email?: string | null;
+  } | null;
+  member_profile?: {
     first_name?: string | null;
     last_name?: string | null;
     email?: string | null;
@@ -47,7 +55,7 @@ export function normalizeMemberAppEventRows(rows: MemberAppEventRow[]): MemberAp
   return rows.map((row) => ({
     id: row.id,
     memberId: row.member_id,
-    memberName: memberName(row.profiles),
+    memberName: memberName(row.member_profile ?? row.profiles),
     eventName: row.event_name,
     eventAt: row.created_at,
     metadata: row.metadata ?? {},

@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useI18n } from "@/lib/i18n";
 
-const baseItems = [
+const items = [
   { id: "home", icon: "🏠", label: "Accueil", path: "/membre" },
   { id: "prog", icon: "📋", label: "Programme", path: "/membre/programme" },
   { id: "plan", icon: "📅", label: "Planning", path: "/membre/planning" },
@@ -23,13 +23,6 @@ export default function MemberNav({ unreadCount: unreadProp = undefined } = {}) 
   const { pathname } = useLocation();
   const { roles, switchRole } = useAuth();
   const hasCoachRole = roles.includes("coach");
-  const items = hasCoachRole
-    ? [
-        ...baseItems.slice(0, -1),
-        { id: "logs", icon: "◈", label: "Suivi Logs", path: "/coach/logs" },
-        baseItems[baseItems.length - 1],
-      ]
-    : baseItems;
   const unreadFn = useServerFn(getUnreadCount);
   const [unread, setUnread] = useState(unreadProp ?? 0);
 

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import {
+  COACH_MEMBER_APP_EVENTS_SELECT,
   normalizeMemberAppEventRows,
   summarizeMemberAppEvents,
 } from "@/lib/member-app-events";
@@ -99,7 +100,7 @@ export const getCoachMemberAppEventFeed = createServerFn({ method: "GET" })
 
     const { data: rows, error } = await supabaseAdmin
       .from("member_app_events")
-      .select("id, member_id, event_name, created_at, metadata, profiles(first_name, last_name, email)")
+      .select(COACH_MEMBER_APP_EVENTS_SELECT)
       .order("created_at", { ascending: false })
       .limit(data.limit);
 
