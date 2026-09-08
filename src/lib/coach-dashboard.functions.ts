@@ -5,6 +5,10 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { filterRecentSessionsForCoach } from "@/lib/coach-recent-sessions";
 import type { RunMetrics } from "@/lib/run-stats";
 import { normalizeStravaActivityCard } from "@/lib/strava-activity-card";
+import {
+  COACH_FORCED_COMPLETION_MARKER,
+  countCoachNotifications,
+} from "@/lib/coach-session-flags";
 
 async function assertCoach(userId: string) {
   const { data } = await supabaseAdmin
@@ -73,8 +77,15 @@ export const getDashboardMetrics = createServerFn({ method: "GET" })
 
     const weekStartISO = startOfWeek().toISOString().slice(0, 10);
 
-    const [sessionsWeek, painUnresolved, msgsUnread, videosUnreviewed, weekPlanned, weekCompleted] =
-      await Promise.all([
+    const [
+      sessionsWeek,
+      painUnresolved,
+      msgsUnread,
+      videosUnreviewed,
+      forcedIncomplete,
+      weekPlanned,
+      weekCompleted,
+    ] = await Promise.all([
         // Scopé aux membres du coach, et seules les séances utiles comptent
         // (les abandonnées/skipped gonflaient le compteur).
         memberIds.length > 0
@@ -98,6 +109,16 @@ export const getDashboardMetrics = createServerFn({ method: "GET" })
           .from("technique_videos")
           .select("id", { count: "exact", head: true })
           .eq("coach_reviewed", false),
+        memberIds.length > 0
+          ? supabaseAdmin
+              .from("sessions")
+              .select("id", { count: "exact", head: true })
+              .in("member_id", memberIds)
+              .eq("status", "completed")
+              .eq("coach_seen", false)
+              .is("coach_hidden_at", null)
+              .ilike("member_note", `%${COACH_FORCED_COMPLETION_MARKER}%`)
+          : Promise.resolve({ count: 0 }),
         // Séances planifiées depuis le début de la semaine (planning des membres)
         memberIds.length > 0
           ? supabaseAdmin
@@ -120,8 +141,12 @@ export const getDashboardMetrics = createServerFn({ method: "GET" })
 
     // « À traiter » = seulement les vraies alertes (la colonne priorité ne liste plus
     // les séances terminées, qui vivent dans « SÉANCES TERMINÉES »).
-    const toTreat =
-      (painUnresolved.count || 0) + (msgsUnread.count || 0) + (videosUnreviewed.count || 0);
+    const toTreat = countCoachNotifications({
+      unresolvedPain: painUnresolved.count,
+      unreadMessages: msgsUnread.count,
+      unreviewedVideos: videosUnreviewed.count,
+      forcedIncompleteSessions: forcedIncomplete.count,
+    });
 
     return {
       activeMembers: memberIds.length,
@@ -268,10 +293,10 @@ export const getPriorityFeed = createServerFn({ method: "GET" })
       ]),
     );
 
-    // Les séances terminées « à voir » ne sont plus listées ici : elles vivent dans
-    // la colonne « SÉANCES TERMINÉES ». Cette colonne ne garde que les vraies alertes
-    // (douleur, RPE élevé, vidéo à revoir, message non lu).
-    const [pains, videos, msgs, highRpe, draftWeeks] = await Promise.all([
+    // Cette colonne garde les vraies alertes : douleur, RPE élevé, vidéo à revoir,
+    // message non lu, semaine invisible et séance clôturée manuellement par le coach.
+    const [pains, videos, msgs, highRpe, forcedIncompleteSessions, draftWeeks] =
+      await Promise.all([
       supabaseAdmin
         .from("pain_reports")
         .select("id, member_id, session_id, exercise_name, zone, intensity, comment, created_at")
@@ -303,6 +328,18 @@ export const getPriorityFeed = createServerFn({ method: "GET" })
         .is("sessions.coach_hidden_at", null)
         .order("created_at", { ascending: false })
         .limit(30),
+      memberIds.length > 0
+        ? supabaseAdmin
+            .from("sessions")
+            .select("id, member_id, session_label, week_number, day_number, ended_at, member_note")
+            .in("member_id", memberIds)
+            .eq("status", "completed")
+            .eq("coach_seen", false)
+            .is("coach_hidden_at", null)
+            .ilike("member_note", `%${COACH_FORCED_COMPLETION_MARKER}%`)
+            .order("ended_at", { ascending: false, nullsFirst: false })
+            .limit(20)
+        : Promise.resolve({ data: [] }),
       // Semaine laissée en brouillon alors qu'elle a déjà commencé : le membre
       // ne voit RIEN et rien ne le signale (cas Pierre Pratil, semaine 6 restée
       // en brouillon — il a failli quitter l'app pour revenir à son tableur).
@@ -356,6 +393,19 @@ export const getPriorityFeed = createServerFn({ method: "GET" })
           memberId: string;
           memberName: string;
           content: string;
+          createdAt: string;
+        }
+      | {
+          type: "forced_finish";
+          id: string;
+          priority: number;
+          memberId: string;
+          memberName: string;
+          sessionId: string;
+          label: string | null;
+          week: number | null;
+          day: number | null;
+          note: string | null;
           createdAt: string;
         }
       | {
@@ -429,6 +479,20 @@ export const getPriorityFeed = createServerFn({ method: "GET" })
         memberName: nameOf.get(m.from_id) || "Membre",
         content: m.content,
         createdAt: m.created_at ?? new Date().toISOString(),
+      });
+    for (const s of forcedIncompleteSessions.data ?? [])
+      items.push({
+        type: "forced_finish",
+        id: `forced-${s.id}`,
+        priority: 95,
+        memberId: s.member_id,
+        memberName: nameOf.get(s.member_id) || "Membre",
+        sessionId: s.id,
+        label: s.session_label,
+        week: s.week_number,
+        day: s.day_number,
+        note: s.member_note,
+        createdAt: s.ended_at ?? new Date().toISOString(),
       });
 
     const todayISO = new Date().toISOString().slice(0, 10);

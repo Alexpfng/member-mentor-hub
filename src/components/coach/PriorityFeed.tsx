@@ -251,6 +251,29 @@ export default function PriorityFeed() {
             </div>
           );
         }
+        if (it.type === "forced_finish") {
+          return (
+            <div key={it.id} style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 8, ...common }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ fontSize: 18 }}>⏹</span>
+                <span className="cst-mono" style={{ fontSize: 10, letterSpacing: "0.18em", color: "#E07B39" }}>SÉANCE CLÔTURÉE PAR LÉO</span>
+                <span className="cst-mono" style={{ fontSize: 10, opacity: 0.55, marginLeft: "auto" }}>{timeAgo(it.createdAt)}</span>
+              </div>
+              <div style={{ fontSize: 13 }}>
+                <strong>{it.memberName}</strong> · {it.label || "Séance"}
+                {it.week ? ` · S${it.week}` : ""}
+                {it.day ? ` J${it.day}` : ""}
+              </div>
+              <div style={{ fontSize: 12, opacity: 0.8 }}>
+                Le membre n'a pas terminé lui-même : à vérifier dans les retours avant adaptation.
+              </div>
+              <div style={{ display: "flex", gap: 6 }}>
+                <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" onClick={() => navigate({ to: "/coach/seance/$sessionId", params: { sessionId: it.sessionId } })}>Voir la séance</button>
+                <button className="cst-btn cst-btn-ghost-dark cst-btn-sm" onClick={() => navigate({ to: "/coach/membre/$memberId", params: { memberId: it.memberId } })}>Fiche membre</button>
+              </div>
+            </div>
+          );
+        }
         if (it.type === "draft_week") {
           const weekNumber = (it as unknown as { weekNumber: number }).weekNumber;
           return (

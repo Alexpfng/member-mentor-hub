@@ -19,6 +19,7 @@ import { listWeekPlan, upsertPlannedSession } from "@/lib/planning.functions";
 import { sanitizeDurationMin } from "@/lib/format";
 import { localDateISO, addDaysISO } from "@/lib/local-date";
 import { useI18n } from "@/lib/i18n";
+import { useAuth } from "@/hooks/use-auth";
 
 const todayISO = localDateISO();
 const today = new Date(); // affichage uniquement (salutation, date du jour)
@@ -37,6 +38,8 @@ export default function MemberDashboard() {
   const navigate = useNavigate();
   const tsNavigate = useTsNavigate();
   const { locale, t } = useI18n();
+  const { roles } = useAuth();
+  const hasCoachRole = roles.includes("coach");
   const [profile, setProfile] = useState(null);
   const [weekSessions, setWeekSessions] = useState([]);
   const [plan, setPlan] = useState(null); // { planned, sessions, dayDefs, weekNumber, assignment }
@@ -259,6 +262,7 @@ export default function MemberDashboard() {
     { icon: "🏃", label: "Trail & Run", path: "/membre/running" },
     { icon: "📚", label: "Bibliothèque", path: "/membre/bibliotheque" },
     { icon: "💬", label: "Messages", path: "/membre/messages" },
+    ...(hasCoachRole ? [{ icon: "◈", label: "Suivi Logs", path: "/coach/logs" }] : []),
     { icon: "⚙️", label: "Réglages", path: "/membre/profil" },
   ];
 

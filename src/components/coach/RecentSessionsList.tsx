@@ -5,6 +5,10 @@ import { getRecentSessions, hideSessionFromCoachDashboard } from "@/lib/coach-da
 import { timeAgo, sanitizeDurationMin } from "@/lib/format";
 import { CSTAvatar } from "@/components/Atoms";
 import { toast } from "sonner";
+import {
+  cleanCoachForcedCompletionNote,
+  isCoachForcedIncompleteSession,
+} from "@/lib/coach-session-flags";
 
 export default function RecentSessionsList() {
   const navigate = useNavigate();
@@ -44,6 +48,8 @@ export default function RecentSessionsList() {
         const label = isFree
           ? `${catIcon} ${s.freeTitle || "Séance libre"}`
           : `${s.label || "Séance"}${s.week ? ` · Sem ${s.week}` : ""}${s.day ? ` J${s.day}` : ""}`;
+        const forcedIncomplete = isCoachForcedIncompleteSession(s.memberNote);
+        const memberNote = cleanCoachForcedCompletionNote(s.memberNote);
         return (
           <div key={s.id} className="cst-card-dark" style={{ padding: 14, display: "flex", gap: 14, alignItems: "flex-start", cursor: "pointer", borderLeft: s.status === "in_progress" ? "2px solid #6EAB76" : undefined }}
             onClick={() => navigate({ to: "/coach/seance/$sessionId", params: { sessionId: s.id } })}>
@@ -52,6 +58,7 @@ export default function RecentSessionsList() {
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                 <strong style={{ fontSize: 14 }}>{s.memberName.toUpperCase()}</strong>
                 {s.status === "in_progress" && <span className="cst-mono" style={{ fontSize: 9, padding: "2px 6px", background: "#6EAB76", color: "#0a0a0a", borderRadius: 3, letterSpacing: "0.15em" }}>EN COURS</span>}
+                {forcedIncomplete && <span className="cst-mono" style={{ fontSize: 9, padding: "2px 6px", background: "rgba(224,123,57,0.22)", color: "#E07B39", border: "1px solid rgba(224,123,57,0.35)", borderRadius: 3, letterSpacing: "0.15em" }}>INCOMPLÈTE</span>}
                 {isFree && <span className="cst-mono" style={{ fontSize: 9, padding: "2px 6px", background: "#2DBE9A", color: "#0a0a0a", borderRadius: 3, letterSpacing: "0.15em" }}>LIBRE</span>}
                 {!s.coachSeen && s.status === "completed" && <span className="cst-mono" style={{ fontSize: 9, padding: "2px 6px", background: "#E07B39", color: "#fff", borderRadius: 3, letterSpacing: "0.15em" }}>NOUVEAU</span>}
                 <span style={{ fontSize: 12, opacity: 0.7 }}>{label}</span>
@@ -62,7 +69,7 @@ export default function RecentSessionsList() {
                 <span>⚡ RPE {s.averageRpe != null ? Number(s.averageRpe).toFixed(1) : "—"}</span>
                 {s.painCount > 0 && <span style={{ color: "#ff8a7a" }}>🔴 {s.painCount} douleur{s.painCount > 1 ? "s" : ""}</span>}
               </div>
-              {s.memberNote && <div style={{ marginTop: 6, fontSize: 12, opacity: 0.75, fontStyle: "italic" }}>« {s.memberNote.slice(0, 140)}{s.memberNote.length > 140 ? "…" : ""} »</div>}
+              {memberNote && <div style={{ marginTop: 6, fontSize: 12, opacity: 0.75, fontStyle: "italic" }}>« {memberNote.slice(0, 140)}{memberNote.length > 140 ? "…" : ""} »</div>}
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, alignSelf: "stretch" }}>
               <button

@@ -16,6 +16,8 @@ describe("formatMemberAppEventLabel", () => {
     );
     expect(formatMemberAppEventLabel("strava_activity_matched", { activityName: "Sortie longue" }))
       .toBe("Strava rattaché : Sortie longue");
+    expect(formatMemberAppEventLabel("session_force_completed", { sessionLabel: "Upper Push" }))
+      .toBe("Léo a forcé la fin : Upper Push");
   });
 
   it("keeps a readable fallback for future events", () => {

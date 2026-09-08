@@ -11,6 +11,8 @@ import {
   mergeImportedWeeksIntoProgramStructure,
   normalizeImportedWeekPatches,
 } from "@/lib/imported-week-patch";
+import { buildCoachForcedCompletionNote } from "@/lib/coach-session-flags";
+import { recordMemberAppEvent } from "@/lib/member-app-events.functions";
 import type { Json } from "@/integrations/supabase/types";
 
 async function assertCoach(userId: string) {
@@ -1188,11 +1190,13 @@ export const forceCompleteSession = createServerFn({ method: "POST" })
       });
     }
 
-    const { data: session } = await supabaseAdmin
+    const { data: session, error: sessionError } = await supabaseAdmin
       .from("sessions")
-      .select("started_at")
+      .select("id, member_id, session_label, started_at, member_note, status")
       .eq("id", data.session_id)
-      .single();
+      .maybeSingle();
+    if (sessionError) throw new Error(sessionError.message);
+    if (!session) throw new Error("Séance introuvable");
 
     const now = new Date().toISOString();
     let durationMinutes: number | null = null;
@@ -1202,7 +1206,9 @@ export const forceCompleteSession = createServerFn({ method: "POST" })
       durationMinutes = diffMin > 0 && diffMin < 240 ? diffMin : null;
     }
 
-    const { error } = await supabaseAdmin
+    const forcedNote = buildCoachForcedCompletionNote(session.member_note, { coachName: "Léo" });
+
+    const { data: updatedRows, error } = await supabaseAdmin
       .from("sessions")
       .update({
         status: "completed",
@@ -1210,10 +1216,30 @@ export const forceCompleteSession = createServerFn({ method: "POST" })
         total_volume_kg: totalVol > 0 ? totalVol : null,
         average_rpe: rpeCount > 0 ? Math.round((rpeSum / rpeCount) * 10) / 10 : null,
         duration_minutes: durationMinutes,
+        member_note: forcedNote,
+        coach_seen: false,
       })
       .eq("id", data.session_id)
-      .eq("status", "in_progress");
+      .select("id");
 
     if (error) throw new Error(error.message);
+    if ((updatedRows ?? []).length === 0) throw new Error("Impossible de clôturer cette séance");
+
+    await recordMemberAppEvent({
+      memberId: session.member_id,
+      actorUserId: context.userId,
+      actorRole: "coach",
+      eventName: "session_force_completed",
+      path: `/coach/seance/${data.session_id}`,
+      sessionId: data.session_id,
+      metadata: {
+        sessionLabel: session.session_label,
+        previousStatus: session.status,
+        durationMinutes,
+        setLogCount: logs?.length ?? 0,
+        averageRpe: rpeCount > 0 ? Math.round((rpeSum / rpeCount) * 10) / 10 : null,
+      },
+    });
+
     return { ok: true };
   });

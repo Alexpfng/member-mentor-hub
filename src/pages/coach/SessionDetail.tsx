@@ -20,6 +20,7 @@ import { RunComparisonCard } from "@/components/cst/RunComparisonCard";
 import type { RunMetrics } from "@/lib/run-stats";
 import { StravaRunCard } from "@/components/cst/StravaRunCard";
 import type { StravaActivityCardData } from "@/lib/strava-activity-card";
+import { cleanCoachForcedCompletionNote, isCoachForcedIncompleteSession } from "@/lib/coach-session-flags";
 
 type ProgExo = {
   code?: string;
@@ -55,6 +56,7 @@ export default function CoachSessionDetail() {
   const [coachNote, setCoachNote] = useState("");
   const [savingNote, setSavingNote] = useState(false);
   const [forcingComplete, setForcingComplete] = useState(false);
+  const [forceConfirming, setForceConfirming] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["coach", "session", sessionId],
@@ -91,16 +93,11 @@ export default function CoachSessionDetail() {
   }
 
   async function handleForceComplete() {
-    if (
-      !window.confirm(
-        "Forcer la fin de cette séance ? Le RPE et le volume seront calculés depuis les séries enregistrées.",
-      )
-    )
-      return;
     setForcingComplete(true);
     try {
       await forceCompleteFn({ data: { session_id: sessionId } });
       toast.success("Séance marquée comme terminée");
+      setForceConfirming(false);
       qc.invalidateQueries({ queryKey: ["coach", "session", sessionId] });
       qc.invalidateQueries({ queryKey: ["coach"] });
     } catch (e) {
@@ -140,6 +137,8 @@ export default function CoachSessionDetail() {
   }
 
   const s = data.session;
+  const sessionNote = cleanCoachForcedCompletionNote(s.member_note);
+  const forcedIncomplete = isCoachForcedIncompleteSession(s.member_note);
   // Group set logs by exercise
   const byExo = new Map<string, typeof data.setLogs>();
   for (const l of data.setLogs) {
@@ -335,16 +334,16 @@ export default function CoachSessionDetail() {
             </div>
           )}
 
-          {s.member_note && (
+          {sessionNote && (
             <div className="cst-card-dark" style={{ padding: 16 }}>
               <div
                 className="cst-mono"
                 style={{ fontSize: 10, opacity: 0.55, letterSpacing: "0.18em", marginBottom: 6 }}
               >
-                NOTE DU MEMBRE
+                {forcedIncomplete ? "NOTE / FIN FORCÉE" : "NOTE DU MEMBRE"}
               </div>
               <div style={{ fontSize: 13, fontStyle: "italic", opacity: 0.9 }}>
-                « {s.member_note} »
+                « {sessionNote} »
               </div>
             </div>
           )}
@@ -745,18 +744,45 @@ export default function CoachSessionDetail() {
               >
                 ⚠ SÉANCE EN COURS — membre n'a pas appuyé sur « Terminer »
               </span>
-              <button
-                className="cst-btn cst-btn-sm"
-                style={{
-                  background: "rgba(224,123,57,0.25)",
-                  color: "#E07B39",
-                  border: "1px solid rgba(224,123,57,0.5)",
-                }}
-                onClick={handleForceComplete}
-                disabled={forcingComplete}
-              >
-                {forcingComplete ? "…" : "Forcer la fin de séance"}
-              </button>
+              {!forceConfirming ? (
+                <button
+                  className="cst-btn cst-btn-sm"
+                  style={{
+                    background: "rgba(224,123,57,0.25)",
+                    color: "#E07B39",
+                    border: "1px solid rgba(224,123,57,0.5)",
+                  }}
+                  onClick={() => setForceConfirming(true)}
+                  disabled={forcingComplete}
+                >
+                  Forcer la fin de séance
+                </button>
+              ) : (
+                <>
+                  <span style={{ fontSize: 12, opacity: 0.85 }}>
+                    Confirmer ? La séance sera envoyée dans les retours comme incomplète.
+                  </span>
+                  <button
+                    className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+                    onClick={() => setForceConfirming(false)}
+                    disabled={forcingComplete}
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    className="cst-btn cst-btn-sm"
+                    style={{
+                      background: "rgba(224,123,57,0.25)",
+                      color: "#E07B39",
+                      border: "1px solid rgba(224,123,57,0.5)",
+                    }}
+                    onClick={handleForceComplete}
+                    disabled={forcingComplete}
+                  >
+                    {forcingComplete ? "…" : "Oui, clôturer"}
+                  </button>
+                </>
+              )}
             </div>
           )}
 

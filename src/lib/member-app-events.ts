@@ -84,6 +84,8 @@ export function formatMemberAppEventLabel(
       return `A démarré ${sessionLabel}`;
     case "session_finish":
       return `A terminé ${sessionLabel}`;
+    case "session_force_completed":
+      return `Léo a forcé la fin : ${sessionLabel}`;
     case "session_exit":
       return `A quitté ${sessionLabel}`;
     case "strava_manual_sync":

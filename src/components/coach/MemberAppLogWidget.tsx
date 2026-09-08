@@ -12,7 +12,7 @@ function eventTone(eventName: string) {
   return "rgba(255,255,255,0.65)";
 }
 
-export default function MemberAppLogWidget() {
+export default function MemberAppLogWidget({ maxSummaries = 6 }: { maxSummaries?: number } = {}) {
   const navigate = useNavigate();
   const fetchLogs = useServerFn(getCoachMemberAppEventFeed);
   const { data, isLoading } = useQuery({
@@ -53,7 +53,7 @@ export default function MemberAppLogWidget() {
       )}
 
       <div style={{ display: "grid", gap: 10 }}>
-        {(data?.summaries ?? []).slice(0, 6).map((summary) => (
+        {(data?.summaries ?? []).slice(0, maxSummaries).map((summary) => (
           <button
             key={summary.memberId}
             type="button"
