@@ -9,7 +9,6 @@ import { createInvitation } from "@/lib/invitations.functions";
 import { seedColosmartData } from "@/lib/seed.functions";
 import { getDashboardMetrics } from "@/lib/coach-dashboard.functions";
 import ChallengeEditor from "@/components/coach/ChallengeEditor";
-import MemberAppLogWidget from "@/components/coach/MemberAppLogWidget";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -484,10 +483,6 @@ function CoachDashboardInner() {
               {todayCompleted > 1 ? "S" : ""} CETTE SEMAINE →
             </button>
           )}
-        </div>
-
-        <div style={{ padding: "0 32px 24px" }}>
-          <MemberAppLogWidget />
         </div>
 
         {programs.length === 0 && (

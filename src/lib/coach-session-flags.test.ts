@@ -6,6 +6,7 @@ import {
   cleanCoachForcedCompletionNote,
   countCoachNotifications,
   getFollowupSessionsAccessCopy,
+  getHistorySessionAccessCopy,
   isCoachForcedIncompleteSession,
 } from "./coach-session-flags";
 
@@ -73,6 +74,15 @@ describe("getFollowupSessionsAccessCopy", () => {
       title: "ACCÈS AUX SÉANCES",
       subtitle: "Aucune séance terminée sur les 30 derniers jours",
       empty: true,
+    });
+  });
+});
+
+describe("getHistorySessionAccessCopy", () => {
+  it("keeps the coach history session access explicit", () => {
+    expect(getHistorySessionAccessCopy()).toEqual({
+      cta: "VOIR LA SÉANCE →",
+      ariaLabel: "Ouvrir le détail de la séance",
     });
   });
 });

@@ -56,6 +56,13 @@ export function getFollowupSessionsAccessCopy(count: number): {
   };
 }
 
+export function getHistorySessionAccessCopy(): { cta: string; ariaLabel: string } {
+  return {
+    cta: "VOIR LA SÉANCE →",
+    ariaLabel: "Ouvrir le détail de la séance",
+  };
+}
+
 export function countCoachNotifications(input: {
   unresolvedPain?: number | null;
   unreadMessages?: number | null;

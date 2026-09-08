@@ -327,6 +327,7 @@ import WeeksManagerPanel from "../../components/coach/WeeksManagerPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { getMemberTabsDockPosition } from "@/lib/member-tabs-docking";
 import { sanitizeDurationMin } from "@/lib/format";
+import { getHistorySessionAccessCopy } from "@/lib/coach-session-flags";
 import {
   currentPlanningWeekNumber,
   normalizeWeekStartsOn,
@@ -1437,36 +1438,59 @@ export default function CoachMember() {
                       Aucune séance enregistrée.
                     </div>
                   )}
-                  {data.sessions.map((s) => (
-                    <div
-                      key={s.id}
-                      className="cst-card-dark"
-                      style={{
-                        padding: "14px 18px",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 18,
-                      }}
-                    >
-                      <div className="cst-mono" style={{ width: 90, fontSize: 10 }}>
-                        {shortDateFR(s.date)}
-                      </div>
-                      <div className="cst-col" style={{ flex: 1, gap: 2 }}>
-                        <span className="cst-display" style={{ fontSize: 15 }}>
-                          {(
-                            s.session_label || `S${s.week_number || "-"} · J${s.day_number || "-"}`
-                          ).toUpperCase()}
+                  {data.sessions.map((s) => {
+                    const sessionAccess = getHistorySessionAccessCopy();
+                    const openSession = () =>
+                      navigate({ to: "/coach/seance/$sessionId", params: { sessionId: s.id } });
+
+                    return (
+                      <div
+                        key={s.id}
+                        className="cst-card-dark"
+                        role="button"
+                        tabIndex={0}
+                        aria-label={sessionAccess.ariaLabel}
+                        onClick={openSession}
+                        onKeyDown={(event) => {
+                          if (event.key !== "Enter" && event.key !== " ") return;
+                          event.preventDefault();
+                          openSession();
+                        }}
+                        style={{
+                          padding: "14px 18px",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 18,
+                          cursor: "pointer",
+                        }}
+                      >
+                        <div className="cst-mono" style={{ width: 90, fontSize: 10 }}>
+                          {shortDateFR(s.date)}
+                        </div>
+                        <div className="cst-col" style={{ flex: 1, gap: 2 }}>
+                          <span className="cst-display" style={{ fontSize: 15 }}>
+                            {(
+                              s.session_label ||
+                              `S${s.week_number || "-"} · J${s.day_number || "-"}`
+                            ).toUpperCase()}
+                          </span>
+                          <span style={{ fontSize: 11, opacity: 0.55 }}>
+                            {sanitizeDurationMin(s.duration_minutes)
+                              ? `${sanitizeDurationMin(s.duration_minutes)} min`
+                              : "—"}
+                            {s.average_rpe ? ` · RPE ${Number(s.average_rpe).toFixed(1)}` : ""}
+                          </span>
+                        </div>
+                        <CSTStatus kind={statusKind(s.status)} />
+                        <span
+                          className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+                          style={{ pointerEvents: "none", whiteSpace: "nowrap" }}
+                        >
+                          {sessionAccess.cta}
                         </span>
-                        <span style={{ fontSize: 11, opacity: 0.55 }}>
-                          {sanitizeDurationMin(s.duration_minutes)
-                            ? `${sanitizeDurationMin(s.duration_minutes)} min`
-                            : "—"}
-                          {s.average_rpe ? ` · RPE ${Number(s.average_rpe).toFixed(1)}` : ""}
-                        </span>
                       </div>
-                      <CSTStatus kind={statusKind(s.status)} />
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </>
             )}
