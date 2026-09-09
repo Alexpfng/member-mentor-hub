@@ -1,10 +1,12 @@
 import { describe, expect, it } from "bun:test";
 
 import {
+  buildAthleteCoachSummary,
   buildCoachForcedCompletionNote,
   buildCoachForcedCompletionConfirmText,
   cleanCoachForcedCompletionNote,
   countCoachNotifications,
+  findPainExercisesInProgram,
   getFollowupAccessibleSessions,
   getFollowupSessionsAccessCopy,
   getHistorySessionAccessCopy,
@@ -100,6 +102,78 @@ describe("getHistorySessionAccessCopy", () => {
     expect(getHistorySessionAccessCopy()).toEqual({
       cta: "VOIR LA SÉANCE →",
       ariaLabel: "Ouvrir le détail de la séance",
+    });
+  });
+});
+
+describe("findPainExercisesInProgram", () => {
+  it("shows where painful exercises still exist in the active program", () => {
+    const result = findPainExercisesInProgram({
+      pains: [
+        {
+          exercise_name: "Fentes bulgares",
+          zone: "Tendon d'Achille",
+          intensity: 4,
+          comment: "impossible",
+          created_at: "2026-09-01T08:00:00Z",
+          resolved_at: null,
+        },
+      ],
+      programStructure: {
+        weeks: [
+          {
+            days: [
+              {
+                label: "Lower",
+                exercises: [{ name: "Fentes bulgares" }, { name: "Rowing" }],
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    expect(result).toEqual([
+      {
+        exerciseName: "Fentes bulgares",
+        zone: "Tendon d'Achille",
+        maxIntensity: 4,
+        reportCount: 1,
+        latestComment: "impossible",
+        latestAt: "2026-09-01T08:00:00Z",
+        locations: ["S1 · J1 Lower"],
+      },
+    ]);
+  });
+});
+
+describe("buildAthleteCoachSummary", () => {
+  it("turns follow-up metrics into a compact coach profile", () => {
+    expect(
+      buildAthleteCoachSummary({
+        adherence: 82,
+        avgRpe: 6.4,
+        openPainsCount: 1,
+        freeSessions30: 2,
+        watchList: [{ name: "Squat", tooHard: 2, couldNot: 0, highRpe: 0, total: 3 }],
+        painProgramAlerts: [{ exerciseName: "Fentes bulgares", locations: ["S1 · J1"] }],
+      }),
+    ).toEqual({
+      tone: "À protéger",
+      strengths: [
+        "Bonne régularité sur 30 jours",
+        "Charge ressentie maîtrisée",
+        "Ajoute du travail libre en autonomie",
+      ],
+      watchPoints: [
+        "1 douleur ouverte à traiter",
+        "Fentes bulgares est encore présent dans le programme actif",
+        "Squat revient dans les exos à surveiller",
+      ],
+      coachMoves: [
+        "Remplacer ou alléger les exos douloureux avant la prochaine séance",
+        "Garder un objectif simple et valorisant sur la prochaine semaine",
+      ],
     });
   });
 });

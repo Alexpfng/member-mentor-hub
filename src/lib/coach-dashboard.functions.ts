@@ -6,8 +6,10 @@ import { filterRecentSessionsForCoach } from "@/lib/coach-recent-sessions";
 import type { RunMetrics } from "@/lib/run-stats";
 import { normalizeStravaActivityCard } from "@/lib/strava-activity-card";
 import {
+  buildAthleteCoachSummary,
   COACH_FORCED_COMPLETION_MARKER,
   countCoachNotifications,
+  findPainExercisesInProgram,
   getFollowupAccessibleSessions,
 } from "@/lib/coach-session-flags";
 
@@ -1127,6 +1129,19 @@ export const getMemberFollowup = createServerFn({ method: "GET" })
       .filter((e) => e.tooHard >= 2 || e.couldNot >= 1 || e.highRpe >= 2)
       .sort((a, b) => b.couldNot + b.tooHard + b.highRpe - (a.couldNot + a.tooHard + a.highRpe))
       .slice(0, 6);
+    const painProgramAlerts = findPainExercisesInProgram({
+      pains: painsR.data ?? [],
+      programStructure: prog?.structure ?? null,
+    }).slice(0, 8);
+    const roundedAvgRpe = avgRpe != null ? Math.round(avgRpe * 10) / 10 : null;
+    const athleteSummary = buildAthleteCoachSummary({
+      adherence,
+      avgRpe: roundedAvgRpe,
+      openPainsCount: openPains.length,
+      freeSessions30: free30,
+      watchList,
+      painProgramAlerts,
+    });
 
     return {
       currentWeek,
@@ -1135,12 +1150,14 @@ export const getMemberFollowup = createServerFn({ method: "GET" })
         sessionsPlanned: planned30,
         adherence,
         freeSessions30: free30,
-        avgRpe: avgRpe != null ? Math.round(avgRpe * 10) / 10 : null,
+        avgRpe: roundedAvgRpe,
         openPainsCount: openPains.length,
         unseenSessionsCount: unseenCount,
       },
       openPains,
       pastPains: (painsR.data ?? []).filter((p) => p.resolved_at).slice(0, 10),
+      painProgramAlerts,
+      athleteSummary,
       watchList,
       recentSessions: getFollowupAccessibleSessions(sessions).map((s) => ({
         id: s.id,

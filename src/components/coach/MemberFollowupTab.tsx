@@ -226,6 +226,133 @@ export default function MemberFollowupTab({ memberId }: { memberId: string }) {
         </div>
       </div>
 
+      {/* Profil coach */}
+      {followup.athleteSummary && (
+        <div className="cst-card-dark" style={{ padding: 16 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "baseline",
+              justifyContent: "space-between",
+              gap: 12,
+              flexWrap: "wrap",
+              marginBottom: 12,
+            }}
+          >
+            <div>
+              <div className="cst-mono" style={{ fontSize: 10, letterSpacing: "0.18em", opacity: 0.7 }}>
+                PROFIL ATHLÈTE
+              </div>
+              <div className="cst-display" style={{ fontSize: 20, marginTop: 2 }}>
+                {followup.athleteSummary.tone}
+              </div>
+            </div>
+            <span className="cst-mono" style={{ fontSize: 10, color: "#5BA85A" }}>
+              résumé coach
+            </span>
+          </div>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
+              gap: 12,
+            }}
+          >
+            <div>
+              <div className="cst-mono" style={{ fontSize: 10, color: "#5BA85A", marginBottom: 6 }}>
+                FORCES
+              </div>
+              <ul style={{ margin: 0, paddingLeft: 16, fontSize: 13, lineHeight: 1.55, opacity: 0.84 }}>
+                {followup.athleteSummary.strengths.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <div className="cst-mono" style={{ fontSize: 10, color: "#E07B39", marginBottom: 6 }}>
+                POINTS À SURVEILLER
+              </div>
+              <ul style={{ margin: 0, paddingLeft: 16, fontSize: 13, lineHeight: 1.55, opacity: 0.84 }}>
+                {followup.athleteSummary.watchPoints.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <div className="cst-mono" style={{ fontSize: 10, color: "#D9B45A", marginBottom: 6 }}>
+                PISTES LÉO
+              </div>
+              <ul style={{ margin: 0, paddingLeft: 16, fontSize: 13, lineHeight: 1.55, opacity: 0.84 }}>
+                {followup.athleteSummary.coachMoves.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Douleurs encore presentes dans le programme actif */}
+      {followup.painProgramAlerts.length > 0 && (
+        <div
+          className="cst-card-dark"
+          style={{
+            padding: 16,
+            border: "1px solid rgba(192,57,43,0.35)",
+            boxShadow: "0 0 0 1px rgba(192,57,43,0.08)",
+          }}
+        >
+          <div className="cst-mono" style={{ fontSize: 10, letterSpacing: "0.18em", color: "#ff8a7a", marginBottom: 10 }}>
+            EXOS DOULOUREUX ENCORE AU PROGRAMME
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {followup.painProgramAlerts.map((alert) => (
+              <div
+                key={alert.exerciseName}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "minmax(0, 1fr) auto",
+                  gap: 12,
+                  alignItems: "start",
+                  borderBottom: "1px solid rgba(255,255,255,0.06)",
+                  paddingBottom: 10,
+                }}
+              >
+                <div style={{ minWidth: 0 }}>
+                  <strong style={{ fontSize: 13 }}>{alert.exerciseName}</strong>
+                  <div style={{ fontSize: 12, opacity: 0.75, marginTop: 4 }}>
+                    {alert.zone || "Zone non précisée"} · {alert.reportCount} signalement
+                    {alert.reportCount > 1 ? "s" : ""} · max {alert.maxIntensity}/5
+                  </div>
+                  <div className="cst-mono" style={{ fontSize: 10, opacity: 0.62, marginTop: 5 }}>
+                    {alert.locations.join(" · ")}
+                  </div>
+                  {alert.latestComment && (
+                    <div style={{ fontSize: 12, opacity: 0.76, fontStyle: "italic", marginTop: 5 }}>
+                      « {alert.latestComment} »
+                    </div>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+                  style={{ whiteSpace: "nowrap" }}
+                  onClick={() =>
+                    navigate({
+                      to: "/coach/membre/$memberId/adapter",
+                      params: { memberId },
+                      search: followup.currentWeek != null ? { week: followup.currentWeek } : {},
+                    })
+                  }
+                >
+                  ADAPTER →
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Douleurs */}
       {followup.openPains.length > 0 && (
         <div className="cst-card-dark" style={{ padding: 16 }}>
