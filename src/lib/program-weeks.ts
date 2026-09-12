@@ -50,6 +50,20 @@ export function displayProgramDayLabel(day: WeekDay | null | undefined, index: n
   return firstNonEmpty(day?.label, explicit) ?? `Séance ${index + 1}`;
 }
 
+export function displayProgramSessionLabel(
+  weeks: WeekLike[] | null | undefined,
+  weekNumber: number | null | undefined,
+  dayNumber: number | null | undefined,
+  storedLabel?: string | null,
+): string {
+  const weekIdx = Math.max(0, (weekNumber ?? 1) - 1);
+  const dayIdx = Math.max(0, (dayNumber ?? 1) - 1);
+  const day = weeks?.[weekIdx]?.days?.[dayIdx];
+  const programLabel = day ? displayProgramDayLabel(day, dayIdx) : null;
+  if (programLabel && !isGenericSessionLabel(programLabel)) return programLabel;
+  return firstNonEmpty(storedLabel, programLabel) ?? `Séance ${dayIdx + 1}`;
+}
+
 export function shouldShowWeekRpeResetButton(): boolean {
   return false;
 }

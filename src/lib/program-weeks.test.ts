@@ -2,6 +2,7 @@ import { describe, expect, it } from "bun:test";
 
 import {
   displayProgramDayLabel,
+  displayProgramSessionLabel,
   resolveMemberSessionExercises,
   resolveSessionExercises,
   shouldShowWeekRpeResetButton,
@@ -28,6 +29,30 @@ describe("displayProgramDayLabel", () => {
 
   it("keeps a custom label when it is already the real session name", () => {
     expect(displayProgramDayLabel({ label: "Full-body 3" }, 2)).toBe("Full-body 3");
+  });
+});
+
+describe("displayProgramSessionLabel", () => {
+  it("uses the published program day name for old generic completed session labels", () => {
+    expect(
+      displayProgramSessionLabel(
+        [
+          {
+            days: [
+              { label: "Séance 1", name: "Full-body 1" },
+              { label: "Séance 2", name: "Full-body 2 (Durée : ~70min)" },
+            ],
+          },
+        ],
+        1,
+        2,
+        "Séance 2",
+      ),
+    ).toBe("Full-body 2 (Durée : ~70min)");
+  });
+
+  it("keeps the stored label when no matching program day exists", () => {
+    expect(displayProgramSessionLabel([], 3, 1, "Séance libre")).toBe("Séance libre");
   });
 });
 

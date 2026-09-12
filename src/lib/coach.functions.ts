@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { mergeAssignmentWeeks } from "@/lib/program-weeks";
+import { displayProgramSessionLabel, mergeAssignmentWeeks } from "@/lib/program-weeks";
 import { localDateISO } from "@/lib/local-date";
 import { normalizeWeekStartsOn } from "@/lib/planning-weeks";
 import { normalizeProgramStructure } from "@/lib/week-structure-normalizer";
@@ -740,7 +740,7 @@ export const getMemberDetail = createServerFn({ method: "GET" })
 
     const lastWeight = (weightLogs ?? [])[0]?.weight_kg ?? memberProfile?.weight_kg ?? null;
 
-    const [{ data: coachNotesRow }, { data: latestWeekRow }] = await Promise.all([
+    const [{ data: coachNotesRow }, { data: assignmentWeekRows }] = await Promise.all([
       supabaseAdmin
         .from("member_coach_notes")
         .select("notes")
@@ -749,14 +749,22 @@ export const getMemberDetail = createServerFn({ method: "GET" })
       assignment?.id
         ? supabaseAdmin
             .from("assignment_weeks")
-            .select("week_number")
+            .select("week_number, structure")
             .eq("member_id", memberId)
             .eq("assignment_id", assignment.id)
+            .in("status", ["published", "in_progress", "done"])
             .order("week_number", { ascending: false })
-            .limit(1)
-            .maybeSingle()
-        : Promise.resolve({ data: null }),
+        : Promise.resolve({ data: [] }),
     ]);
+
+    if (program && assignmentWeekRows && assignmentWeekRows.length > 0) {
+      const base = (program.structure as object | null) ?? {};
+      const merged = mergeAssignmentWeeks(base as never, assignmentWeekRows);
+      program.structure = { ...base, weeks: merged } as typeof program.structure;
+    }
+    const programWeeks = Array.isArray((program?.structure as { weeks?: unknown[] } | null)?.weeks)
+      ? ((program?.structure as { weeks?: never[] }).weeks ?? [])
+      : [];
 
     return {
       profile,
@@ -767,13 +775,19 @@ export const getMemberDetail = createServerFn({ method: "GET" })
       program,
       sessions: (sessions ?? []).map((s) => ({
         ...s,
+        session_label: displayProgramSessionLabel(
+          programWeeks,
+          s.week_number,
+          s.day_number,
+          s.session_label,
+        ),
         average_rpe: s.average_rpe ?? feedbackRpeBySession.get(s.id) ?? null,
       })),
       set_logs: setLogs,
       weight_logs: weightLogs ?? [],
       unread_messages_count: unreadCount ?? 0,
       last_weight_kg: lastWeight,
-      current_week_number: latestWeekRow?.week_number ?? null,
+      current_week_number: assignmentWeekRows?.[0]?.week_number ?? null,
     };
   });
 
