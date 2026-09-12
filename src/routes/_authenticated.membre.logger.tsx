@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
-import { mergeAssignmentWeeks } from "@/lib/program-weeks";
+import { displayProgramDayLabel, mergeAssignmentWeeks } from "@/lib/program-weeks";
 import { localDateISO } from "@/lib/local-date";
 import { currentPlanningWeekNumber, normalizeWeekStartsOn } from "@/lib/planning-weeks";
 import { trackMemberAppEvent } from "@/lib/member-app-events.functions";
@@ -134,10 +134,14 @@ function SessionLauncher() {
         const weekDays = weeks[weekIndex]?.days ?? null;
         if (search.day && weekDays) {
           const target = normalize(search.day);
-          const idx = weekDays.findIndex((d) => normalize(d?.label ?? "") === target);
+          const idx = weekDays.findIndex(
+            (d, dayIndex) =>
+              normalize(displayProgramDayLabel(d, dayIndex)) === target ||
+              normalize(d?.label ?? "") === target,
+          );
           if (idx >= 0) {
             dayNumber = idx + 1;
-            sessionLabel = weekDays[idx].label ?? search.day;
+            sessionLabel = displayProgramDayLabel(weekDays[idx], idx);
           }
         }
 

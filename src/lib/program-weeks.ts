@@ -12,6 +12,10 @@ import { normalizeProgramStructure, normalizeWeekStructure } from "@/lib/week-st
 
 export type WeekDay = {
   label?: string | null;
+  name?: string | null;
+  session_label?: string | null;
+  sessionLabel?: string | null;
+  title?: string | null;
   type?: string | null;
   exercises?: unknown[] | null;
 };
@@ -26,6 +30,28 @@ function normalizeDayLabel(label: string | null | undefined) {
     .replace(/\s+/g, " ")
     .trim()
     .toLowerCase();
+}
+
+function isGenericSessionLabel(label: string | null | undefined) {
+  const normalized = normalizeDayLabel(label);
+  return /^seance\s*\d+$/.test(normalized);
+}
+
+function firstNonEmpty(...values: Array<unknown>) {
+  for (const value of values) {
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return null;
+}
+
+export function displayProgramDayLabel(day: WeekDay | null | undefined, index: number): string {
+  const explicit = firstNonEmpty(day?.session_label, day?.sessionLabel, day?.name, day?.title);
+  if (explicit && isGenericSessionLabel(day?.label)) return explicit;
+  return firstNonEmpty(day?.label, explicit) ?? `Séance ${index + 1}`;
+}
+
+export function shouldShowWeekRpeResetButton(): boolean {
+  return false;
 }
 
 

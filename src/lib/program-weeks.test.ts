@@ -1,6 +1,35 @@
 import { describe, expect, it } from "bun:test";
 
-import { resolveMemberSessionExercises, resolveSessionExercises } from "./program-weeks";
+import {
+  displayProgramDayLabel,
+  resolveMemberSessionExercises,
+  resolveSessionExercises,
+  shouldShowWeekRpeResetButton,
+} from "./program-weeks";
+
+describe("coach week controls", () => {
+  it("keeps the week RPE reset action hidden while preserving the code path", () => {
+    expect(shouldShowWeekRpeResetButton()).toBe(false);
+  });
+});
+
+describe("displayProgramDayLabel", () => {
+  it("prefers the real imported session name over generic séance labels", () => {
+    expect(
+      displayProgramDayLabel(
+        {
+          label: "Séance 1",
+          name: "Upper body focus push",
+        },
+        0,
+      ),
+    ).toBe("Upper body focus push");
+  });
+
+  it("keeps a custom label when it is already the real session name", () => {
+    expect(displayProgramDayLabel({ label: "Full-body 3" }, 2)).toBe("Full-body 3");
+  });
+});
 
 describe("resolveSessionExercises", () => {
   it("prefers adapted week exercises over the base program structure", () => {

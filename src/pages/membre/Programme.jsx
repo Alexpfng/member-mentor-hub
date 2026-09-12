@@ -10,6 +10,7 @@ import { ProgramBlocks } from '../../components/cst/ProgramBlocks';
 import { supabase } from '@/integrations/supabase/client';
 import { SUPABASE_ENABLED } from '@/lib/app-mode';
 import { currentPlanningWeekNumber, normalizeWeekStartsOn, weekWindowLabel } from '@/lib/planning-weeks';
+import { displayProgramDayLabel } from '@/lib/program-weeks';
 import { useI18n } from '@/lib/i18n';
 
 function diffDays(a, b) {
@@ -196,10 +197,13 @@ export default function MemberProgramme() {
                           <div className="cst-col" style={{ padding: '10px 14px 14px', gap: 14 }}>
                             {(w.days || []).map((d, di) => {
                               const dayNum = d.number ?? di + 1;
-                              const dayLabel = d.label || String(dayNum);
+                              const dayLabel = displayProgramDayLabel(d, di);
                               const isDayOpen = openDayIndex === di;
                               const sess = sessionsByKey[`${weekNum}-${dayNum}`] || sessionsByKey[`${i + 1}-${di + 1}`];
-                              const plannedDate = plannedByKey[`${weekNum}-J${dayNum}`] || plannedByKey[`${weekNum}-${d.label}`];
+                              const plannedDate =
+                                plannedByKey[`${weekNum}-J${dayNum}`] ||
+                                plannedByKey[`${weekNum}-${dayLabel}`] ||
+                                plannedByKey[`${weekNum}-${d.label}`];
                               const isDone = sess?.status === 'completed';
                               const isInProgress = sess?.status === 'in_progress';
                               const icon = d.type === 'Repos' ? '🛌' : isDone ? '✓' : isInProgress ? '⏱' : plannedDate ? '◐' : '○';
@@ -216,7 +220,7 @@ export default function MemberProgramme() {
                                       <span style={{ fontSize: 14, color: iconColor }}>{icon}</span>
                                       <div className="cst-col" style={{ gap: 2, minWidth: 0 }}>
                                         <span className="cst-display" style={{ fontSize: 13 }}>
-                                          J{dayNum} · {(d.label || t('Séance')).toUpperCase()}
+                                          J{dayNum} · {dayLabel.toUpperCase()}
                                         </span>
                                         {plannedDate && (
                                           <span className="cst-mono" style={{ fontSize: 9, opacity: 0.6 }}>

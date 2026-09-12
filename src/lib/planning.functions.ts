@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { mergeAssignmentWeeks } from "@/lib/program-weeks";
+import { displayProgramDayLabel, mergeAssignmentWeeks } from "@/lib/program-weeks";
 import {
   currentPlanningWeekNumber,
   normalizeWeekStartsOn,
@@ -106,10 +106,16 @@ export const listWeekPlan = createServerFn({ method: "GET" })
     const weeks = mergeAssignmentWeeks(program?.structure, adaptedWeeks ?? []);
     const weekDef = weeks[weekIdx] ?? null;
     // Les écrans ne consomment que label/type : payload épuré et sérialisable.
-    const dayDefs = (weekDef?.days ?? []).map((d) => ({
-      label: d?.label ?? null,
+    const dayDefs = (weekDef?.days ?? []).map((d, index) => ({
+      label: displayProgramDayLabel(d, index),
+      sourceLabel: d?.label ?? null,
       type: d?.type ?? null,
     }));
+    const displayLabelBySource = new Map<string, string>();
+    dayDefs.forEach((day) => {
+      if (day.sourceLabel) displayLabelBySource.set(day.sourceLabel, day.label);
+      displayLabelBySource.set(day.label, day.label);
+    });
 
     // Existing planned_sessions for that week — scopé au programme actif pour
     // éviter que le planning d'un ancien programme « fuite » (on garde les nulls par compat).
@@ -118,10 +124,15 @@ export const listWeekPlan = createServerFn({ method: "GET" })
       .select("*")
       .eq("member_id", context.userId)
       .or(`program_id.eq.${assignment.program_id},program_id.is.null`);
-    const planned = (allPlanned ?? []).filter((row: any) => {
-      if (row.planned_date) return row.planned_date >= startISO && row.planned_date <= endISO;
-      return row.week_number === weekNumber;
-    });
+    const planned = (allPlanned ?? [])
+      .filter((row: any) => {
+        if (row.planned_date) return row.planned_date >= startISO && row.planned_date <= endISO;
+        return row.week_number === weekNumber;
+      })
+      .map((row: any) => ({
+        ...row,
+        day_label: displayLabelBySource.get(row.day_label) ?? row.day_label,
+      }));
 
     // Completed sessions for the week
     const { data: sessions } = await supabaseAdmin
@@ -149,7 +160,16 @@ export const listWeekPlan = createServerFn({ method: "GET" })
       assignment,
       dayDefs,
       planned: planned ?? [],
-      sessions: attachStravaActivityCardsToSessions(sessions ?? [], stravaActivities ?? []),
+      sessions: attachStravaActivityCardsToSessions(sessions ?? [], stravaActivities ?? []).map(
+        (session: any) => {
+          const dayIndex = Number(session.day_number ?? 0) - 1;
+          const displayLabel = dayIndex >= 0 ? dayDefs[dayIndex]?.label : null;
+          return {
+            ...session,
+            session_label: displayLabel ?? session.session_label,
+          };
+        },
+      ),
     };
   });
 

@@ -23,6 +23,7 @@ import { getCoachRpeBadgeLabel } from "@/lib/adapter-week-rpe-visuals";
 import { parseRpeCell } from "@/lib/rpe-cell";
 import { getQuickRpePopoverPlacement } from "@/lib/coach-rpe-feedback";
 import { sanitizeLibraryExerciseNotes } from "@/lib/library-exercise-payload";
+import { shouldShowWeekRpeResetButton } from "@/lib/program-weeks";
 
 type LibExercise = {
   id: string;
@@ -2181,13 +2182,15 @@ export default function AdapterSemaine() {
               : "—"}
           </div>
           <div style={{ display: "flex", gap: 10 }}>
-            <button
-              onClick={resetAllRpe}
-              className="cst-btn cst-btn-ghost-dark"
-              title="Effacer tous les RPE de la semaine"
-            >
-              Réinitialiser les RPE
-            </button>
+            {shouldShowWeekRpeResetButton() && (
+              <button
+                onClick={resetAllRpe}
+                className="cst-btn cst-btn-ghost-dark"
+                title="Effacer tous les RPE de la semaine"
+              >
+                Réinitialiser les RPE
+              </button>
+            )}
             <button onClick={() => setShowDuplicate(true)} className="cst-btn cst-btn-ghost-dark">
               Dupliquer vers…
             </button>
