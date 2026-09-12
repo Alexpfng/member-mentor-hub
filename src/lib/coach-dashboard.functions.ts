@@ -6,6 +6,7 @@ import { filterRecentSessionsForCoach } from "@/lib/coach-recent-sessions";
 import type { RunMetrics } from "@/lib/run-stats";
 import { normalizeStravaActivityCard } from "@/lib/strava-activity-card";
 import {
+  buildEffectivePainProgramStructure,
   buildAthleteCoachSummary,
   COACH_FORCED_COMPLETION_MARKER,
   countCoachNotifications,
@@ -1040,7 +1041,7 @@ export const getMemberFollowup = createServerFn({ method: "GET" })
         .gte("sessions.ended_at", thirtyDaysAgo),
       supabaseAdmin
         .from("assignments")
-        .select("program_id, start_date, programs(structure, duration_weeks)")
+        .select("id, program_id, start_date, programs(structure, duration_weeks)")
         .eq("member_id", memberId)
         .eq("active", true)
         .maybeSingle(),
@@ -1083,6 +1084,19 @@ export const getMemberFollowup = createServerFn({ method: "GET" })
     const prog = Array.isArray(assignTyped?.programs)
       ? assignTyped?.programs[0]
       : assignTyped?.programs;
+    const activeAssignmentId =
+      assignR.data && "id" in assignR.data ? String(assignR.data.id ?? "") : "";
+    const { data: adaptedWeeks } = activeAssignmentId
+      ? await supabaseAdmin
+          .from("assignment_weeks")
+          .select("week_number, structure")
+          .eq("assignment_id", activeAssignmentId)
+          .not("structure", "is", null)
+      : { data: [] };
+    const effectiveProgramStructure = buildEffectivePainProgramStructure({
+      programStructure: prog?.structure ?? null,
+      adaptedWeeks: adaptedWeeks ?? [],
+    });
     const weeks = prog?.structure?.weeks;
     if (weeks && weeks.length > 0) {
       const days = weeks[0]?.days ?? [];
@@ -1131,7 +1145,7 @@ export const getMemberFollowup = createServerFn({ method: "GET" })
       .slice(0, 6);
     const painProgramAlerts = findPainExercisesInProgram({
       pains: painsR.data ?? [],
-      programStructure: prog?.structure ?? null,
+      programStructure: effectiveProgramStructure,
     }).slice(0, 8);
     const roundedAvgRpe = avgRpe != null ? Math.round(avgRpe * 10) / 10 : null;
     const athleteSummary = buildAthleteCoachSummary({

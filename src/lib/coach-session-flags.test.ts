@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 
 import {
+  buildEffectivePainProgramStructure,
   buildAthleteCoachSummary,
   buildCoachForcedCompletionNote,
   buildCoachForcedCompletionConfirmText,
@@ -103,6 +104,51 @@ describe("getHistorySessionAccessCopy", () => {
       cta: "VOIR LA SÉANCE →",
       ariaLabel: "Ouvrir le détail de la séance",
     });
+  });
+});
+
+describe("buildEffectivePainProgramStructure", () => {
+  it("includes adapted assignment weeks before looking for painful exercises", () => {
+    const structure = buildEffectivePainProgramStructure({
+      programStructure: {
+        weeks: [
+          {
+            days: [
+              {
+                label: "Lower",
+                exercises: [{ name: "Squat" }],
+              },
+            ],
+          },
+        ],
+      },
+      adaptedWeeks: [
+        {
+          week_number: 1,
+          structure: {
+            days: [
+              {
+                label: "Lower adapté",
+                exercises: [{ name: "Fentes bulgares" }],
+              },
+            ],
+          },
+        },
+      ],
+    });
+
+    expect(
+      findPainExercisesInProgram({
+        pains: [
+          {
+            exercise_name: "Fentes bulgares",
+            zone: "Tendon d'Achille",
+            intensity: 4,
+          },
+        ],
+        programStructure: structure,
+      }).map((alert) => alert.locations),
+    ).toEqual([["S1 · J1 Lower adapté"]]);
   });
 });
 

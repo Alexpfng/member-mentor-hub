@@ -1,3 +1,5 @@
+import { mergeAssignmentWeeks, type AdaptedWeek } from "@/lib/program-weeks";
+
 export const COACH_FORCED_COMPLETION_MARKER = "[coach_forced_completion]";
 
 export function isCoachForcedIncompleteSession(note: string | null | undefined): boolean {
@@ -104,6 +106,16 @@ export type ProgramPainAlert = {
   latestAt: string | null;
   locations: string[];
 };
+
+export function buildEffectivePainProgramStructure(input: {
+  programStructure: unknown;
+  adaptedWeeks?: AdaptedWeek[] | null;
+}): { weeks: unknown[] } | null {
+  if (!input.programStructure && !(input.adaptedWeeks ?? []).length) return null;
+  return {
+    weeks: mergeAssignmentWeeks(input.programStructure as never, input.adaptedWeeks ?? []),
+  };
+}
 
 type ProgramExerciseLocation = {
   exerciseName: string;
