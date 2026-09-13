@@ -24,6 +24,7 @@ import { parseRpeCell } from "@/lib/rpe-cell";
 import { getQuickRpePopoverPlacement } from "@/lib/coach-rpe-feedback";
 import { sanitizeLibraryExerciseNotes } from "@/lib/library-exercise-payload";
 import { shouldShowWeekRpeResetButton } from "@/lib/program-weeks";
+import { adapterWeekHorizontalScrollWidth } from "@/lib/adapter-week-horizontal-scroll";
 
 type LibExercise = {
   id: string;
@@ -840,6 +841,13 @@ export default function AdapterSemaine() {
   } | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const quickRpePopoverRef = useRef<HTMLDivElement | null>(null);
+  const topWeekScrollRef = useRef<HTMLDivElement | null>(null);
+  const weekBoardScrollRef = useRef<HTMLDivElement | null>(null);
+
+  function syncWeekHorizontalScroll(source: "top" | "board", scrollLeft: number) {
+    const target = source === "top" ? weekBoardScrollRef.current : topWeekScrollRef.current;
+    if (target && target.scrollLeft !== scrollLeft) target.scrollLeft = scrollLeft;
+  }
 
   async function load() {
     setLoading(true);
@@ -1125,6 +1133,9 @@ export default function AdapterSemaine() {
       </Shell>
     );
 
+  const dayCount = structure.days?.length ?? 0;
+  const weekScrollWidth = adapterWeekHorizontalScrollWidth({ dayCount });
+
   return (
     <Shell>
       <div style={{ padding: 20, maxWidth: 1100 }}>
@@ -1361,30 +1372,52 @@ export default function AdapterSemaine() {
 
         {/* Jours en colonnes (builder léger) */}
         {(structure.days ?? []).length > 0 && (
-          <div
-            style={{
-              display: "flex",
-              gap: 14,
-              overflowX: "auto",
-              paddingBottom: 14,
-              marginBottom: 16,
-              alignItems: "flex-start",
-            }}
-          >
-            {(structure.days ?? []).map((day, di) => (
-              <div
-                key={di}
-                className="cst-card-dark"
-                style={{
-                  padding: 14,
-                  width: 360,
-                  minWidth: 360,
-                  flexShrink: 0,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 10,
-                }}
-              >
+          <>
+            <div
+              ref={topWeekScrollRef}
+              aria-label="Défilement horizontal des séances"
+              onScroll={(event) =>
+                syncWeekHorizontalScroll("top", event.currentTarget.scrollLeft)
+              }
+              style={{
+                overflowX: "auto",
+                overflowY: "hidden",
+                marginBottom: 10,
+                paddingBottom: 4,
+                WebkitOverflowScrolling: "touch",
+              }}
+            >
+              <div style={{ width: weekScrollWidth, height: 1 }} />
+            </div>
+            <div
+              ref={weekBoardScrollRef}
+              onScroll={(event) =>
+                syncWeekHorizontalScroll("board", event.currentTarget.scrollLeft)
+              }
+              style={{
+                display: "flex",
+                gap: 14,
+                overflowX: "auto",
+                paddingBottom: 14,
+                marginBottom: 16,
+                alignItems: "flex-start",
+                WebkitOverflowScrolling: "touch",
+              }}
+            >
+              {(structure.days ?? []).map((day, di) => (
+                <div
+                  key={di}
+                  className="cst-card-dark"
+                  style={{
+                    padding: 14,
+                    width: 360,
+                    minWidth: 360,
+                    flexShrink: 0,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 10,
+                  }}
+                >
                 {/* En-tête colonne jour */}
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <input
@@ -2132,31 +2165,32 @@ export default function AdapterSemaine() {
                 >
                   + exercice
                 </button>
-              </div>
-            ))}
+                </div>
+              ))}
 
-            {/* Colonne « ajouter une séance » */}
-            <button
-              onClick={addDay}
-              className="cst-card-dark"
-              style={{
-                width: 140,
-                flexShrink: 0,
-                minHeight: 90,
-                border: "1px dashed rgba(255,255,255,0.18)",
-                background: "transparent",
-                color: "var(--cst-text-soft)",
-                borderRadius: 12,
-                cursor: "pointer",
-                fontSize: 13,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              + Séance
-            </button>
-          </div>
+              {/* Colonne « ajouter une séance » */}
+              <button
+                onClick={addDay}
+                className="cst-card-dark"
+                style={{
+                  width: 140,
+                  flexShrink: 0,
+                  minHeight: 90,
+                  border: "1px dashed rgba(255,255,255,0.18)",
+                  background: "transparent",
+                  color: "var(--cst-text-soft)",
+                  borderRadius: 12,
+                  cursor: "pointer",
+                  fontSize: 13,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                + Séance
+              </button>
+            </div>
+          </>
         )}
 
         {/* Footer actions */}
