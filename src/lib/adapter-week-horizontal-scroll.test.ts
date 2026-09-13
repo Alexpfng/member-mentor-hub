@@ -1,6 +1,9 @@
 import { describe, expect, it } from "bun:test";
 
-import { adapterWeekHorizontalScrollWidth } from "./adapter-week-horizontal-scroll";
+import {
+  adapterWeekHorizontalScrollLimit,
+  adapterWeekHorizontalScrollWidth,
+} from "./adapter-week-horizontal-scroll";
 
 describe("adapterWeekHorizontalScrollWidth", () => {
   it("matches the adaptation board width including the add-session column", () => {
@@ -16,5 +19,15 @@ describe("adapterWeekHorizontalScrollWidth", () => {
 
   it("returns zero when there is no day board", () => {
     expect(adapterWeekHorizontalScrollWidth({ dayCount: 0 })).toBe(0);
+  });
+});
+
+describe("adapterWeekHorizontalScrollLimit", () => {
+  it("returns the positive scrollable distance", () => {
+    expect(adapterWeekHorizontalScrollLimit({ scrollWidth: 1262, clientWidth: 1036 })).toBe(226);
+  });
+
+  it("never returns a negative distance", () => {
+    expect(adapterWeekHorizontalScrollLimit({ scrollWidth: 900, clientWidth: 1036 })).toBe(0);
   });
 });

@@ -24,7 +24,9 @@ import { parseRpeCell } from "@/lib/rpe-cell";
 import { getQuickRpePopoverPlacement } from "@/lib/coach-rpe-feedback";
 import { sanitizeLibraryExerciseNotes } from "@/lib/library-exercise-payload";
 import { shouldShowWeekRpeResetButton } from "@/lib/program-weeks";
-import { adapterWeekHorizontalScrollWidth } from "@/lib/adapter-week-horizontal-scroll";
+import {
+  adapterWeekHorizontalScrollLimit,
+} from "@/lib/adapter-week-horizontal-scroll";
 
 type LibExercise = {
   id: string;
@@ -841,12 +843,25 @@ export default function AdapterSemaine() {
   } | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const quickRpePopoverRef = useRef<HTMLDivElement | null>(null);
-  const topWeekScrollRef = useRef<HTMLDivElement | null>(null);
   const weekBoardScrollRef = useRef<HTMLDivElement | null>(null);
+  const [weekScrollLeft, setWeekScrollLeft] = useState(0);
+  const [weekScrollMax, setWeekScrollMax] = useState(0);
 
-  function syncWeekHorizontalScroll(source: "top" | "board", scrollLeft: number) {
-    const target = source === "top" ? weekBoardScrollRef.current : topWeekScrollRef.current;
-    if (target && target.scrollLeft !== scrollLeft) target.scrollLeft = scrollLeft;
+  function syncWeekHorizontalScroll(scrollLeft: number) {
+    const board = weekBoardScrollRef.current;
+    if (board && board.scrollLeft !== scrollLeft) board.scrollLeft = scrollLeft;
+    setWeekScrollLeft(scrollLeft);
+  }
+
+  function updateWeekScrollMetrics() {
+    const board = weekBoardScrollRef.current;
+    if (!board) return;
+    const max = adapterWeekHorizontalScrollLimit({
+      scrollWidth: board.scrollWidth,
+      clientWidth: board.clientWidth,
+    });
+    setWeekScrollMax(max);
+    setWeekScrollLeft(Math.min(Math.round(board.scrollLeft), max));
   }
 
   async function load() {
@@ -873,6 +888,15 @@ export default function AdapterSemaine() {
   useEffect(() => {
     load(); /* eslint-disable-next-line */
   }, [memberId, search.week, safeWeekId]);
+
+  useEffect(() => {
+    const raf = window.requestAnimationFrame(updateWeekScrollMetrics);
+    window.addEventListener("resize", updateWeekScrollMetrics);
+    return () => {
+      window.cancelAnimationFrame(raf);
+      window.removeEventListener("resize", updateWeekScrollMetrics);
+    };
+  }, [structure.days?.length]);
 
   useEffect(() => {
     function onPointerDown(event: MouseEvent) {
@@ -1133,9 +1157,6 @@ export default function AdapterSemaine() {
       </Shell>
     );
 
-  const dayCount = structure.days?.length ?? 0;
-  const weekScrollWidth = adapterWeekHorizontalScrollWidth({ dayCount });
-
   return (
     <Shell>
       <div style={{ padding: 20, maxWidth: 1100 }}>
@@ -1374,32 +1395,17 @@ export default function AdapterSemaine() {
         {(structure.days ?? []).length > 0 && (
           <>
             <div
-              ref={topWeekScrollRef}
-              aria-label="Défilement horizontal des séances"
-              onScroll={(event) =>
-                syncWeekHorizontalScroll("top", event.currentTarget.scrollLeft)
-              }
-              style={{
-                overflowX: "auto",
-                overflowY: "hidden",
-                marginBottom: 10,
-                paddingBottom: 4,
-                WebkitOverflowScrolling: "touch",
-              }}
-            >
-              <div style={{ width: weekScrollWidth, height: 1 }} />
-            </div>
-            <div
               ref={weekBoardScrollRef}
-              onScroll={(event) =>
-                syncWeekHorizontalScroll("board", event.currentTarget.scrollLeft)
-              }
+              onScroll={(event) => {
+                setWeekScrollLeft(Math.round(event.currentTarget.scrollLeft));
+                updateWeekScrollMetrics();
+              }}
               style={{
                 display: "flex",
                 gap: 14,
                 overflowX: "auto",
-                paddingBottom: 14,
-                marginBottom: 16,
+                paddingBottom: 8,
+                marginBottom: 10,
                 alignItems: "flex-start",
                 WebkitOverflowScrolling: "touch",
               }}
@@ -2190,6 +2196,30 @@ export default function AdapterSemaine() {
                 + Séance
               </button>
             </div>
+            {weekScrollMax > 0 && (
+              <div
+                style={{
+                  position: "sticky",
+                  bottom: 74,
+                  zIndex: 8,
+                  padding: "10px 0 12px",
+                  marginBottom: 4,
+                  background:
+                    "linear-gradient(180deg, rgba(11, 31, 18, 0), var(--cst-dark-green) 28%)",
+                }}
+              >
+                <input
+                  type="range"
+                  min={0}
+                  max={weekScrollMax}
+                  value={Math.min(weekScrollLeft, weekScrollMax)}
+                  aria-label="Défilement horizontal des séances"
+                  className="adapter-week-scroll-range"
+                  onChange={(event) => syncWeekHorizontalScroll(Number(event.currentTarget.value))}
+                  style={{ width: "100%" }}
+                />
+              </div>
+            )}
           </>
         )}
 

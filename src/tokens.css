@@ -439,6 +439,49 @@ html.theme-light {
   background: transparent;
 }
 
+.adapter-week-scroll-range {
+  appearance: none;
+  -webkit-appearance: none;
+  height: 26px;
+  accent-color: var(--cst-mid-green);
+  background: transparent;
+  cursor: grab;
+}
+.adapter-week-scroll-range:active {
+  cursor: grabbing;
+}
+.adapter-week-scroll-range::-webkit-slider-runnable-track {
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+.adapter-week-scroll-range::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 92px;
+  height: 18px;
+  margin-top: -4px;
+  border-radius: 999px;
+  background: var(--cst-mid-green);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+.adapter-week-scroll-range::-moz-range-track {
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+.adapter-week-scroll-range::-moz-range-thumb {
+  width: 92px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--cst-mid-green);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+
 /* ============================================================
    RESPONSIVE OVERLAY — adapts the fixed phone-frame mockups and
    the fixed coach sidebar to fluid sizes without touching the DA.

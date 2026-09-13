@@ -14,3 +14,15 @@ export function adapterWeekHorizontalScrollWidth({
   if (dayCount <= 0) return 0;
   return dayCount * dayWidth + addDayWidth + dayCount * gap;
 }
+
+type AdapterWeekHorizontalScrollLimitInput = {
+  scrollWidth: number;
+  clientWidth: number;
+};
+
+export function adapterWeekHorizontalScrollLimit({
+  scrollWidth,
+  clientWidth,
+}: AdapterWeekHorizontalScrollLimitInput): number {
+  return Math.max(0, Math.round(scrollWidth - clientWidth));
+}
