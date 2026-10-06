@@ -10,6 +10,7 @@ import ThemeToggle from "../../components/ThemeToggle";
 import { WeightLogDialog } from "../../components/cst/WeightLogDialog";
 import { ActivityLogDialog } from "../../components/cst/ActivityLogDialog";
 import { DailyHabitCard } from "../../components/cst/DailyHabitCard";
+import { MemberWeekOverview as MemberWeekOverviewCard } from "../../components/cst/MemberWeekOverview";
 import { GuidedTour, hasSeenTour } from "../../components/cst/GuidedTour";
 import { usePRConfetti } from "@/hooks/usePRConfetti";
 import { getMemberDashboard } from "@/lib/member-stats.functions";
@@ -19,6 +20,7 @@ import { listWeekPlan, upsertPlannedSession } from "@/lib/planning.functions";
 import { sanitizeDurationMin } from "@/lib/format";
 import { localDateISO, addDaysISO } from "@/lib/local-date";
 import { useI18n } from "@/lib/i18n";
+import { buildMemberWeekOverview } from "@/lib/member-week-overview";
 
 const todayISO = localDateISO();
 const today = new Date(); // affichage uniquement (salutation, date du jour)
@@ -160,17 +162,9 @@ export default function MemberDashboard() {
   const weekDates = getWeekDates();
   const dayLabels = ["LUN", "MAR", "MER", "JEU", "VEN", "SAM", "DIM"];
 
-  // Adhérence : séances PROGRAMME terminées / séances prévues cette semaine
-  // (les séances libres ne comptent pas, et le dénominateur suit le programme —
-  // un plan 3×/semaine complété doit afficher 100 %, pas 60 %).
+  // La cible hebdomadaire suit le programme, sans compter les jours de repos.
   const dayDefs = (plan?.dayDefs ?? []).filter((d) => d?.type !== "Repos");
-  const doneSessions = weekSessions.filter(
-    (s) => s.status === "completed" && (s.session_type ?? "program") === "program",
-  ).length;
   const plannedPerWeek = dayDefs.length || 5;
-  const adherencePct = weekDates.length
-    ? Math.min(100, Math.round((doneSessions / plannedPerWeek) * 100))
-    : 0;
 
   const todaySession = weekSessions.find((s) => s.date === todayISO);
   const inProgress = weekSessions.find((s) => s.status === "in_progress");
@@ -181,6 +175,15 @@ export default function MemberDashboard() {
     if (p.planned_date) plannedByDate.set(p.planned_date, p);
   });
   const todayPlanned = plannedByDate.get(todayISO) ?? null;
+  const memberWeekOverview = buildMemberWeekOverview({
+    weekDates,
+    today: todayISO,
+    sessionTarget: plannedPerWeek,
+    sessions: weekSessions,
+    planned: plan?.planned ?? [],
+    activity: activity?.list ?? [],
+    stepsGoal: activity?.goals?.steps ?? null,
+  });
 
   // « À faire » : exclut le planifié, le terminé ET l'en-cours (sinon une séance
   // commencée réapparaît comme à faire alors qu'elle est reprise ailleurs).
@@ -828,146 +831,23 @@ export default function MemberDashboard() {
                 {t("📚 BIBLIOTHÈQUE D'EXERCICES →")}
               </button>
 
-              {/* Week strip */}
-              <div style={{ marginTop: 22 }}>
-                <CSTSectionNum
-                  num={2}
-                  label={t("MA SEMAINE")}
-                  sub={`${doneSessions} / ${plannedPerWeek} ${t("SÉANCES")}`}
-                />
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
-                    gap: 6,
-                    marginTop: 12,
-                  }}
-                >
-                  {weekDates.map((date, i) => {
-                    const daySessions = weekSessions.filter((s) => s.date === date);
-                    // Séance « principale » pour l'icône : en cours > terminée > 1re.
-                    // (Avant : .find() masquait les séances multiples d'un même jour,
-                    // ex. renfo + course → une seule visible.)
-                    const sess =
-                      daySessions.find((s) => s.status === "in_progress") ??
-                      daySessions.find((s) => s.status === "completed") ??
-                      daySessions[0] ??
-                      null;
-                    const extraCount = daySessions.length > 1 ? daySessions.length - 1 : 0;
-                    const planned = plannedByDate.get(date);
-                    const isToday = date === todayISO;
-                    const isDone = sess?.status === "completed";
-                    const isInProgress = sess?.status === "in_progress";
-                    const label = sess?.session_label ?? planned?.day_label ?? null;
-                    const clickable = !!(sess || planned);
-                    return (
-                      <div
-                        key={date}
-                        style={{
-                          padding: "10px 4px",
-                          minWidth: 0,
-                          overflow: "hidden",
-                          textAlign: "center",
-                          borderRadius: 8,
-                          background: isToday ? "var(--cst-mid-green)" : "rgba(255,255,255,0.03)",
-                          border: isToday ? "none" : "1px solid rgba(255,255,255,0.06)",
-                          cursor: clickable ? "pointer" : "default",
-                        }}
-                        onClick={() => {
-                          if (isInProgress) navigate(`/membre/seance/${sess.id}`);
-                          else if (isDone) navigate("/membre/historique");
-                          else if (planned && isToday) startSession(planned.day_label);
-                          else if (planned || sess) navigate("/membre/planning");
-                        }}
-                      >
-                        <div
-                          className="cst-mono"
-                          style={{
-                            fontSize: 8,
-                            color: isToday ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.45)",
-                          }}
-                        >
-                          {t(dayLabels[i])}
-                        </div>
-                        <div
-                          style={{
-                            marginTop: 6,
-                            fontSize: 14,
-                            color: isToday
-                              ? "#fff"
-                              : isDone
-                                ? "var(--cst-mid-green)"
-                                : isInProgress
-                                  ? "#F5A623"
-                                  : planned
-                                    ? "rgba(255,255,255,0.85)"
-                                    : "rgba(255,255,255,0.5)",
-                          }}
-                        >
-                          {isDone ? "✓" : isInProgress ? "⏱" : planned ? "●" : isToday ? "●" : "○"}
-                        </div>
-                        {extraCount > 0 && (
-                          <div
-                            className="cst-mono"
-                            style={{
-                              fontSize: 7,
-                              marginTop: 1,
-                              color: isToday ? "rgba(255,255,255,0.9)" : "var(--cst-mid-green)",
-                            }}
-                            title={`${daySessions.length} ${t("séances ce jour")}`}
-                          >
-                            +{extraCount}
-                          </div>
-                        )}
-                        {label && (
-                          <div
-                            className="cst-mono"
-                            style={{
-                              marginTop: 4,
-                              fontSize: 7,
-                              lineHeight: 1.1,
-                              color: isToday ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.55)",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                            }}
-                            title={label}
-                          >
-                            {label}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+              <MemberWeekOverviewCard
+                overview={memberWeekOverview}
+                stepsGoal={activity?.goals?.steps ?? null}
+                today={todayISO}
+                dayLabels={dayLabels}
+                onOpenPlanning={() => navigate("/membre/planning")}
+              />
 
               {/* Stats */}
               <div
                 style={{
                   marginTop: 18,
                   display: "grid",
-                  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                  gridTemplateColumns: "minmax(0, 1fr)",
                   gap: 8,
                 }}
               >
-                <div className="cst-card-dark" style={{ padding: 14 }}>
-                  <span className="cst-mono" style={{ fontSize: 9 }}>
-                    {t("ADHÉRENCE · SEMAINE")}
-                  </span>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginTop: 6 }}>
-                    <span className="cst-display" style={{ fontSize: 28 }}>
-                      {doneSessions}
-                      <span style={{ opacity: 0.4 }}>/{plannedPerWeek}</span>
-                    </span>
-                    <span
-                      className="cst-mono"
-                      style={{ fontSize: 10, color: "var(--cst-mid-green)" }}
-                    >
-                      {adherencePct}%
-                    </span>
-                  </div>
-                </div>
                 <div className="cst-card-dark" style={{ padding: 14 }}>
                   <span className="cst-mono" style={{ fontSize: 9 }}>
                     {t("DERNIER PR")}
