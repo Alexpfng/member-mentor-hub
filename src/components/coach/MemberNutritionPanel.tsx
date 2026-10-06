@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 
 import { CSTSectionNum } from "@/components/Atoms";
+import NutritionDetailDisclosure from "@/components/cst/NutritionDetailDisclosure";
 import { getMemberNutrition, setMemberNutritionGoal } from "@/lib/nutrition.functions";
 import { localDateISO } from "@/lib/local-date";
 
@@ -42,7 +43,10 @@ export default function MemberNutritionPanel({ memberId }: Props) {
   async function handleSave() {
     const trimmed = goal.trim();
     const parsed = trimmed === "" ? null : Number(trimmed.replace(/\s/g, ""));
-    if (parsed !== null && (!Number.isFinite(parsed) || parsed < 0 || parsed > 10000 || !Number.isInteger(parsed))) {
+    if (
+      parsed !== null &&
+      (!Number.isFinite(parsed) || parsed < 0 || parsed > 10000 || !Number.isInteger(parsed))
+    ) {
       toast.error("Objectif nutrition invalide");
       return;
     }
@@ -56,7 +60,13 @@ export default function MemberNutritionPanel({ memberId }: Props) {
         },
       });
       setNutrition((current: any) =>
-        current ? { ...current, goal: nextGoal, summary: { ...current.summary, goalKcal: nextGoal.dailyKcal } } : current,
+        current
+          ? {
+              ...current,
+              goal: nextGoal,
+              summary: { ...current.summary, goalKcal: nextGoal.dailyKcal },
+            }
+          : current,
       );
       setSaved(true);
       setTimeout(() => setSaved(false), 1500);
@@ -116,7 +126,11 @@ export default function MemberNutritionPanel({ memberId }: Props) {
           />
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <button className="cst-btn cst-btn-primary cst-btn-sm" disabled={busy} onClick={handleSave}>
+          <button
+            className="cst-btn cst-btn-primary cst-btn-sm"
+            disabled={busy}
+            onClick={handleSave}
+          >
             {busy ? "..." : "ENREGISTRER"}
           </button>
           {saved && <span style={{ color: "var(--cst-success)", fontSize: 11 }}>✓ Enregistré</span>}
@@ -125,6 +139,10 @@ export default function MemberNutritionPanel({ memberId }: Props) {
           Objectif alimentaire. Ne modifie pas les calories d'activité.
         </span>
       </div>
+      <NutritionDetailDisclosure
+        summary={nutrition?.summary}
+        macroComparison={nutrition?.macroComparison}
+      />
     </div>
   );
 }

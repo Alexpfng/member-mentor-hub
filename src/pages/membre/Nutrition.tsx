@@ -4,6 +4,7 @@ import { toast } from "sonner";
 
 import MemberNav from "../../components/MemberNav";
 import MemberDesktopNav from "../../components/MemberDesktopNav";
+import NutritionDetailDisclosure from "@/components/cst/NutritionDetailDisclosure";
 import {
   addNutritionEntry,
   createNutritionFood,
@@ -416,69 +417,11 @@ export default function MembreNutrition() {
           </div>
         </section>
 
-        <section
-          style={{
-            marginTop: 16,
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-            gap: 12,
-          }}
-        >
-          {MEAL_ORDER.map((slot) => {
-            const mealSummary = summary?.meals?.[slot];
-            return (
-              <div key={slot} className="cst-card-dark" style={{ padding: 16, minHeight: 170 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-                  <h2 className="cst-display" style={{ fontSize: 20, margin: 0 }}>
-                    {MEAL_LABELS[slot]}
-                  </h2>
-                  <span
-                    className="cst-mono"
-                    style={{ fontSize: 11, color: "var(--cst-mid-green)" }}
-                  >
-                    {formatKcal(mealSummary?.totalKcal)}
-                  </span>
-                </div>
-                <div style={{ marginTop: 12, display: "grid", gap: 8 }}>
-                  {(mealSummary?.entries ?? []).length === 0 && (
-                    <div style={{ fontSize: 13, opacity: 0.5 }}>Aucun aliment</div>
-                  )}
-                  {(mealSummary?.entries ?? []).map((entry: any) => (
-                    <div
-                      key={entry.id}
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "1fr auto auto",
-                        alignItems: "center",
-                        gap: 8,
-                        padding: "9px 0",
-                        borderTop: "1px solid rgba(255,255,255,0.08)",
-                      }}
-                    >
-                      <div>
-                        <strong style={{ fontSize: 14 }}>{entry.foodName}</strong>
-                        <div className="cst-mono" style={{ fontSize: 9, opacity: 0.5 }}>
-                          {entry.grams}g · {entry.kcalPer100g} kcal/100g
-                        </div>
-                      </div>
-                      <span className="cst-mono" style={{ fontSize: 11 }}>
-                        {kcalForPortion(entry)} kcal
-                      </span>
-                      <button
-                        className="cst-btn cst-btn-ghost-dark"
-                        style={{ minWidth: 34, padding: "6px 8px" }}
-                        onClick={() => handleDelete(entry.id)}
-                        aria-label={`Supprimer ${entry.foodName}`}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </section>
+        <NutritionDetailDisclosure
+          summary={summary}
+          macroComparison={data?.macroComparison}
+          onDeleteEntry={handleDelete}
+        />
       </main>
       <MemberNav />
     </div>

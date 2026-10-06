@@ -5,7 +5,10 @@ const functionsSource = () => readFileSync("src/lib/nutrition.functions.ts", "ut
 const migrationSource = () =>
   readFileSync("supabase/migrations/20261004120000_add_nutrition_module.sql", "utf8");
 const permissionsMigrationSource = () =>
-  readFileSync("supabase/migrations/20261005102155_fix_nutrition_permissions_and_custom_foods.sql", "utf8");
+  readFileSync(
+    "supabase/migrations/20261005102155_fix_nutrition_permissions_and_custom_foods.sql",
+    "utf8",
+  );
 
 describe("nutrition server module", () => {
   it("utilise des tables nutrition dediees et pas les calories d'activite", () => {
@@ -27,6 +30,9 @@ describe("nutrition server module", () => {
     expect(source).toContain("deleteNutritionEntry");
     expect(source).toContain("getMemberNutrition");
     expect(source).toContain("setMemberNutritionGoal");
+    expect(source).toContain("buildNutritionMacroComparison");
+    expect(source).toContain("protein_per_100g, carbs_per_100g, fat_per_100g");
+    expect(source).toContain("await assertCoach(context.userId)");
   });
 
   it("fusionne la base d'aliments par defaut avec la base commune SQL", () => {
@@ -53,8 +59,12 @@ describe("nutrition migration", () => {
   it("corrige les droits Data API et autorise l'ajout d'aliments communs", () => {
     const sql = permissionsMigrationSource();
 
-    expect(sql).toContain("grant select, insert, update, delete on table public.nutrition_entries to authenticated, service_role");
-    expect(sql).toContain("grant select, insert on table public.nutrition_foods to authenticated, service_role");
+    expect(sql).toContain(
+      "grant select, insert, update, delete on table public.nutrition_entries to authenticated, service_role",
+    );
+    expect(sql).toContain(
+      "grant select, insert on table public.nutrition_foods to authenticated, service_role",
+    );
     expect(sql).toContain("Users create nutrition foods");
   });
 });

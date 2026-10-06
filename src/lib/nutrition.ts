@@ -41,6 +41,32 @@ export type NutritionDaySummary = {
   status: NutritionGoalStatus;
 };
 
+export type NutritionMacroAxisKey = "protein" | "carbs" | "fat";
+
+export type NutritionMacroAxis = {
+  key: NutritionMacroAxisKey;
+  label: string;
+  todayGrams: number | null;
+  previousAverageGrams: number | null;
+  previousDays: number;
+  missingEntries: number;
+  previousMissingEntries: number;
+};
+
+export type NutritionMacroComparison = {
+  date: string;
+  todayEntryCount: number;
+  previousEntryCount: number;
+  todayIncompleteEntryCount: number;
+  previousIncompleteEntryCount: number;
+  axes: NutritionMacroAxis[];
+};
+
+export type NutritionMacroEntry = Pick<
+  NutritionEntry,
+  "date" | "grams" | "proteinPer100g" | "carbsPer100g" | "fatPer100g"
+>;
+
 export type NutritionGoalStatus = {
   progress: number | null;
   deltaKcal: number | null;
@@ -215,6 +241,95 @@ export function kcalForPortion(input: { grams: number; kcalPer100g: number }): n
   return Math.round((grams * kcalPer100g) / 100);
 }
 
+const MACRO_AXES: Array<{
+  key: NutritionMacroAxisKey;
+  label: string;
+  field: "proteinPer100g" | "carbsPer100g" | "fatPer100g";
+}> = [
+  { key: "protein", label: "Protéines", field: "proteinPer100g" },
+  { key: "carbs", label: "Glucides", field: "carbsPer100g" },
+  { key: "fat", label: "Lipides", field: "fatPer100g" },
+];
+
+function portionMacroGrams(
+  entry: NutritionMacroEntry,
+  field: (typeof MACRO_AXES)[number]["field"],
+) {
+  const per100g = entry[field];
+  return typeof per100g === "number" && Number.isFinite(per100g)
+    ? (Math.max(0, entry.grams) * Math.max(0, per100g)) / 100
+    : null;
+}
+
+function roundMacroGrams(grams: number) {
+  return Math.round(grams * 10) / 10;
+}
+
+export function buildNutritionMacroComparison(
+  date: string,
+  entries: NutritionMacroEntry[],
+): NutritionMacroComparison {
+  const selectedDay = new Date(`${date}T00:00:00.000Z`);
+  const previousStart = new Date(selectedDay);
+  previousStart.setUTCDate(previousStart.getUTCDate() - 6);
+  const previousStartISO = previousStart.toISOString().slice(0, 10);
+  const todayEntries = entries.filter((entry) => entry.date === date);
+  const previousEntries = entries.filter(
+    (entry) => entry.date >= previousStartISO && entry.date < date,
+  );
+
+  const axes = MACRO_AXES.map(({ key, label, field }) => {
+    const todayValues = todayEntries.map((entry) => portionMacroGrams(entry, field));
+    const knownTodayValues = todayValues.filter((value): value is number => value !== null);
+    const dailyHistory = new Map<string, { total: number; knownCount: number }>();
+    let previousMissingEntries = 0;
+
+    for (const entry of previousEntries) {
+      const value = portionMacroGrams(entry, field);
+      const daily = dailyHistory.get(entry.date) ?? { total: 0, knownCount: 0 };
+      if (value === null) {
+        previousMissingEntries += 1;
+      } else {
+        daily.total += value;
+        daily.knownCount += 1;
+      }
+      dailyHistory.set(entry.date, daily);
+    }
+
+    const knownDays = [...dailyHistory.values()].filter((day) => day.knownCount > 0);
+    const previousAverage =
+      knownDays.length > 0
+        ? knownDays.reduce((sum, day) => sum + day.total, 0) / knownDays.length
+        : null;
+
+    return {
+      key,
+      label,
+      todayGrams:
+        knownTodayValues.length > 0 || todayEntries.length === 0
+          ? roundMacroGrams(knownTodayValues.reduce((sum, value) => sum + value, 0))
+          : null,
+      previousAverageGrams: previousAverage == null ? null : roundMacroGrams(previousAverage),
+      previousDays: knownDays.length,
+      missingEntries: todayValues.length - knownTodayValues.length,
+      previousMissingEntries,
+    };
+  });
+
+  return {
+    date,
+    todayEntryCount: todayEntries.length,
+    previousEntryCount: previousEntries.length,
+    todayIncompleteEntryCount: todayEntries.filter((entry) =>
+      MACRO_AXES.some(({ field }) => portionMacroGrams(entry, field) === null),
+    ).length,
+    previousIncompleteEntryCount: previousEntries.filter((entry) =>
+      MACRO_AXES.some(({ field }) => portionMacroGrams(entry, field) === null),
+    ).length,
+    axes,
+  };
+}
+
 function sortEntries(a: NutritionEntry, b: NutritionEntry) {
   const aCreated = a.createdAt ?? "";
   const bCreated = b.createdAt ?? "";
@@ -223,7 +338,10 @@ function sortEntries(a: NutritionEntry, b: NutritionEntry) {
   return a.foodName.localeCompare(b.foodName, "fr");
 }
 
-export function nutritionGoalStatus(totalKcal: number, goalKcal: number | null): NutritionGoalStatus {
+export function nutritionGoalStatus(
+  totalKcal: number,
+  goalKcal: number | null,
+): NutritionGoalStatus {
   if (!goalKcal || goalKcal <= 0) {
     return {
       progress: null,

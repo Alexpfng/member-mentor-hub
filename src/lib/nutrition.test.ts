@@ -3,6 +3,7 @@ import { describe, expect, it } from "bun:test";
 import {
   DEFAULT_NUTRITION_FOODS,
   buildNutritionSummary,
+  buildNutritionMacroComparison,
   kcalForPortion,
   nutritionGoalStatus,
   type NutritionEntry,
@@ -94,6 +95,104 @@ describe("buildNutritionSummary", () => {
 
     expect(summary.meals.lunch.entries.map((item) => item.foodName)).toEqual(["A", "B"]);
     expect(summary.remainingKcal).toBeNull();
+  });
+});
+
+describe("buildNutritionMacroComparison", () => {
+  it("sums today's known macros by portion and compares them with prior logged days", () => {
+    const comparison = buildNutritionMacroComparison("2026-10-06", [
+      entry({
+        id: "today-known",
+        date: "2026-10-06",
+        grams: 150,
+        proteinPer100g: 20,
+        carbsPer100g: 30,
+        fatPer100g: 10,
+      }),
+      entry({
+        id: "today-unknown",
+        date: "2026-10-06",
+        grams: 200,
+        proteinPer100g: null,
+        carbsPer100g: 10,
+        fatPer100g: null,
+      }),
+      entry({
+        id: "prior-a",
+        date: "2026-10-05",
+        grams: 100,
+        proteinPer100g: 20,
+        carbsPer100g: 40,
+        fatPer100g: 5,
+      }),
+      entry({
+        id: "prior-b",
+        date: "2026-10-04",
+        grams: 200,
+        proteinPer100g: 15,
+        carbsPer100g: null,
+        fatPer100g: 10,
+      }),
+      entry({ id: "outside-window", date: "2026-09-29", proteinPer100g: 99 }),
+      entry({ id: "future", date: "2026-10-07", proteinPer100g: 99 }),
+    ]);
+
+    expect(comparison.axes).toEqual([
+      {
+        key: "protein",
+        label: "Protéines",
+        todayGrams: 30,
+        previousAverageGrams: 25,
+        previousDays: 2,
+        missingEntries: 1,
+        previousMissingEntries: 0,
+      },
+      {
+        key: "carbs",
+        label: "Glucides",
+        todayGrams: 65,
+        previousAverageGrams: 40,
+        previousDays: 1,
+        missingEntries: 0,
+        previousMissingEntries: 1,
+      },
+      {
+        key: "fat",
+        label: "Lipides",
+        todayGrams: 15,
+        previousAverageGrams: 12.5,
+        previousDays: 2,
+        missingEntries: 1,
+        previousMissingEntries: 0,
+      },
+    ]);
+    expect(comparison.todayEntryCount).toBe(2);
+    expect(comparison.todayIncompleteEntryCount).toBe(1);
+    expect(comparison.previousIncompleteEntryCount).toBe(1);
+  });
+
+  it("compte une seule fois chaque aliment incomplet même si plusieurs macros manquent", () => {
+    const comparison = buildNutritionMacroComparison("2026-10-06", [
+      entry({ date: "2026-10-06", proteinPer100g: null, carbsPer100g: 10, fatPer100g: null }),
+      entry({
+        id: "missing-carbs",
+        date: "2026-10-06",
+        proteinPer100g: 20,
+        carbsPer100g: null,
+        fatPer100g: 5,
+      }),
+    ]);
+
+    expect(comparison.todayIncompleteEntryCount).toBe(2);
+  });
+
+  it("keeps known zero values and reports no comparison without prior known days", () => {
+    const comparison = buildNutritionMacroComparison("2026-10-06", [
+      entry({ date: "2026-10-06", proteinPer100g: 0, carbsPer100g: 0, fatPer100g: 0 }),
+    ]);
+
+    expect(comparison.axes.map((axis) => axis.todayGrams)).toEqual([0, 0, 0]);
+    expect(comparison.axes.map((axis) => axis.previousAverageGrams)).toEqual([null, null, null]);
   });
 });
 

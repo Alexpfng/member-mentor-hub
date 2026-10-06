@@ -6,10 +6,12 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { localDateISO } from "@/lib/local-date";
 import {
   DEFAULT_NUTRITION_FOODS,
+  buildNutritionMacroComparison,
   buildNutritionSummary,
   type MealSlot,
   type NutritionEntry,
   type NutritionFood,
+  type NutritionMacroEntry,
 } from "@/lib/nutrition";
 
 async function assertCoach(userId: string) {
@@ -105,7 +107,7 @@ async function readNutrition(memberId: string, date: string, days = 7) {
         .order("created_at", { ascending: true }),
       supabaseAdmin
         .from("nutrition_entries")
-        .select("date, grams, kcal_per_100g")
+        .select("date, grams, kcal_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g")
         .eq("member_id", memberId)
         .gte("date", sinceISO)
         .lte("date", date),
@@ -121,13 +123,37 @@ async function readNutrition(memberId: string, date: string, days = 7) {
 
   const totalsByDate = new Map<string, number>();
   for (const row of recentEntries ?? []) {
-    const total = Math.round((Math.max(0, row.grams ?? 0) * Math.max(0, row.kcal_per_100g ?? 0)) / 100);
+    const total = Math.round(
+      (Math.max(0, row.grams ?? 0) * Math.max(0, row.kcal_per_100g ?? 0)) / 100,
+    );
     totalsByDate.set(row.date, (totalsByDate.get(row.date) ?? 0) + total);
   }
   const averageKcal7d =
     totalsByDate.size > 0
-      ? Math.round([...totalsByDate.values()].reduce((sum, value) => sum + value, 0) / totalsByDate.size)
+      ? Math.round(
+          [...totalsByDate.values()].reduce((sum, value) => sum + value, 0) / totalsByDate.size,
+        )
       : null;
+  const macroComparison = buildNutritionMacroComparison(
+    date,
+    (
+      (recentEntries ?? []) as Array<{
+        date: string;
+        grams: number;
+        protein_per_100g: number | null;
+        carbs_per_100g: number | null;
+        fat_per_100g: number | null;
+      }>
+    ).map(
+      (row): NutritionMacroEntry => ({
+        date: row.date,
+        grams: row.grams,
+        proteinPer100g: row.protein_per_100g,
+        carbsPer100g: row.carbs_per_100g,
+        fatPer100g: row.fat_per_100g,
+      }),
+    ),
+  );
 
   return {
     goal: {
@@ -137,6 +163,7 @@ async function readNutrition(memberId: string, date: string, days = 7) {
     foods,
     summary,
     averageKcal7d,
+    macroComparison,
   };
 }
 
