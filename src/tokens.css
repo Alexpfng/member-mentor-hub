@@ -482,6 +482,16 @@ html.theme-light {
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
 }
 
+.adapter-week-board-scroll {
+  scrollbar-width: none;
+}
+
+.adapter-week-board-scroll::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
 /* ============================================================
    RESPONSIVE OVERLAY — adapts the fixed phone-frame mockups and
    the fixed coach sidebar to fluid sizes without touching the DA.

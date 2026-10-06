@@ -30,8 +30,12 @@ import {
   normalizeExpertRpeForStorage,
   trimOptionalComment,
 } from "@/lib/live-session-feedback";
-import { getExpertEmomLoggedValue, getExpertSetLoggedValue } from "@/lib/session-prescription";
-import { alternatingRepsCycle, parseEmom } from "@/lib/emom";
+import {
+  getDefaultSetWeight,
+  getExpertEmomLoggedValue,
+  getExpertSetLoggedValue,
+} from "@/lib/session-prescription";
+import { buildEmomPlan, parseEmom, type EmomMinutePlanItem } from "@/lib/emom";
 import { parseRpeCell } from "@/lib/rpe-cell";
 import {
   buildLadderCycle,
@@ -128,14 +132,20 @@ function isBodyweight(charge?: string | null): boolean {
 
 function isDurationReps(reps?: string | number | null): boolean {
   if (reps == null) return false;
-  const r = String(reps).toLowerCase().trim();
+  const r = String(reps)
+    .toLowerCase()
+    .trim()
+    .replace(/\s*\/\s*(?=s|sec|secondes?\b)/g, "");
   return /\d+\s*(s|sec|secondes?|"|''|min|m)\b/.test(r) || /\d+\s*['"]/.test(r);
 }
 
 /** Extracts duration in seconds from a reps string. Returns null if not parseable. */
 function parseDurationSeconds(reps?: string | number | null): number | null {
   if (reps == null) return null;
-  const r = String(reps).toLowerCase().trim();
+  const r = String(reps)
+    .toLowerCase()
+    .trim()
+    .replace(/\s*\/\s*(?=s|sec|secondes?\b)/g, "");
   // "30s", "30 sec", "30 secondes"
   let m = r.match(/(\d+)\s*(s|sec|secondes?)/);
   if (m) return parseInt(m[1], 10);
@@ -228,15 +238,6 @@ function parseRepsPerSet(
   if (parts.length === seriesCount) return parts;
   if (parts.length > 1 && parts.length === seriesCount) return parts;
   return Array(seriesCount).fill(parts[0] || raw);
-}
-
-/** Extrait le premier nombre d'une chaîne (ex: "60kg" → 60, "12,5kg" → 12.5) */
-function extractNumeric(s?: string | null): number | null {
-  if (s == null) return null;
-  const m = String(s).match(/-?\d+(?:[.,]\d+)?/);
-  if (!m) return null;
-  const n = parseFloat(m[0].replace(",", "."));
-  return Number.isFinite(n) ? n : null;
 }
 
 /**
@@ -929,17 +930,20 @@ type EmomBlock = {
   blockIdx: number;
   blockLetter?: string;
   exercise: ProgExercise;
+  exercises?: ProgExercise[];
   durationMin: number;
   repsPerMin: number | null;
   repsLabel: string | null; // reps affichées telles quelles (ex. "3/4")
   alternating: boolean; // reps alternées paires/impaires
+  emomMode?: "classic" | "alternating-reps" | "alternating-exercises";
+  minutePlan?: EmomMinutePlanItem[];
   /** Ladder : cycle de reps rejoué en boucle, une valeur par minute (3,4,5,4…). */
   repsCycle?: number[] | null;
 };
 
 type CircuitBlock = {
   kind: "circuit";
-  mode: "circuit" | "amrap";
+  mode: "circuit" | "amrap" | "emom";
   blockIdx: number;
   blockLetter?: string;
   exercises: ProgExercise[];
@@ -970,8 +974,28 @@ function buildSteps(exercises: ProgExercise[]): Step[] {
     const restSec = parseRecupSeconds(b.exercises[0]?.recup, defaultRestFor(colorOfBlock));
 
     // EMOM blocks get a dedicated timer step — no brief, no sets
-    if (blockType === "emom" && !isSuperset) {
+    if (blockType === "emom" && isSuperset) {
+      const emomPlan = buildEmomPlan(b.exercises);
+      steps.push({
+        kind: "emom",
+        blockIdx,
+        blockLetter: b.letter,
+        exercise: b.exercises[0],
+        exercises: b.exercises,
+        durationMin: emomPlan.durationMin,
+        repsPerMin: emomPlan.repsPerMin,
+        repsLabel: emomPlan.repsLabel,
+        alternating: emomPlan.mode === "alternating-reps",
+        repsCycle: emomPlan.repsCycle ?? null,
+        emomMode: emomPlan.mode,
+        minutePlan: emomPlan.minutePlan,
+      });
+      return;
+    }
+
+    if (blockType === "emom") {
       const ex = b.exercises[0];
+      const emomPlan = buildEmomPlan([ex]);
       const parsed = parseEmom(
         ex.series != null ? String(ex.series) : null,
         ex.reps != null ? String(ex.reps) : null,
@@ -997,7 +1021,6 @@ function buildSteps(exercises: ProgExercise[]): Step[] {
       // Reps alternées (« 1/2 ») : on fournit le cycle minute par minute, sinon
       // l'écran affichait la même cible à chaque minute et l'alternance n'était
       // qu'une phrase en en-tête.
-      const altCycle = alternatingRepsCycle(repsRaw);
       steps.push({
         kind: "emom",
         blockIdx,
@@ -1007,7 +1030,9 @@ function buildSteps(exercises: ProgExercise[]): Step[] {
         repsPerMin,
         repsLabel,
         alternating: !!altMatch,
-        repsCycle: altCycle,
+        repsCycle: emomPlan.repsCycle ?? null,
+        emomMode: emomPlan.mode,
+        minutePlan: emomPlan.minutePlan,
       });
       return;
     }
@@ -1024,7 +1049,9 @@ function buildSteps(exercises: ProgExercise[]): Step[] {
         blockLetter: b.letter,
         exercises: b.exercises,
         defaultTotalMin:
-          blockType === "circuit" ? Math.max(1, roundsOrMinutes * b.exercises.length) : roundsOrMinutes,
+          blockType === "circuit"
+            ? Math.max(1, roundsOrMinutes * b.exercises.length)
+            : roundsOrMinutes,
         workSecPerStation: 60,
         restSecBetween: 0,
       });
@@ -1751,6 +1778,41 @@ export function LiveSession({
     setPhase("step");
   }
 
+  async function skipCurrentExerciseAsUnavailable(exerciseName: string) {
+    const confirmed = window.confirm(
+      `Passer "${exerciseName}" pour cette séance ? Le coach verra que l'exercice n'a pas été fait.`,
+    );
+    if (!confirmed) return;
+
+    await writeQueueRef.current;
+    const [deleteLogs, deleteFeedbacks] = await Promise.all([
+      supabase
+        .from("set_logs")
+        .delete()
+        .eq("session_id", sessionId)
+        .eq("exercise_name", exerciseName),
+      supabase
+        .from("exercise_feedbacks")
+        .delete()
+        .eq("session_id", sessionId)
+        .eq("exercise_name", exerciseName),
+    ]);
+    if (deleteLogs.error) throw deleteLogs.error;
+    if (deleteFeedbacks.error) throw deleteFeedbacks.error;
+
+    const nextSaved = markExerciseSkippedForPain(
+      savedByStep,
+      progressSteps,
+      exerciseName,
+      "Exercice non réalisé : machine prise ou indisponible.",
+    );
+    setSavedByStep(nextSaved);
+    setLogging(null);
+    setValidationError(null);
+    setTimedDone(false);
+    advanceToNextUndoneOrRecap(nextSaved);
+  }
+
   async function finishExpertRecap(noteOverride?: string) {
     const missingExercise = expertRecapGroups.find(
       (group) => expertRecapRpeByExercise[group.exerciseName] == null,
@@ -1877,31 +1939,25 @@ export function LiveSession({
   function computeDefaults(step: WorkSet): { weight: string; reps: string; rpe: number | null } {
     const bodyweight = isBodyweight(step.exercise.charge);
 
-    // POIDS : 1) historique 2) série précédente même exo dans CETTE séance 3) charge programme 4) vide
-    let weight = "";
-    if (!bodyweight) {
-      const exoHist = lastByExo[step.exercise.name];
-      const histSet = exoHist?.[step.setNumber] as LastSet | undefined;
-      if (histSet?.weight != null) {
-        weight = String(histSet.weight);
-      } else {
-        // Série précédente dans la séance en cours
-        for (let i = stepIdx - 1; i >= 0; i--) {
-          const s = steps[i];
-          if (s.kind === "set" && s.exercise.name === step.exercise.name) {
-            const prev = savedByStep[i];
-            if (prev?.weight != null) {
-              weight = String(prev.weight);
-              break;
-            }
-          }
-        }
-        if (!weight && step.exercise.charge) {
-          const n = extractNumeric(step.exercise.charge);
-          if (n != null) weight = String(n);
+    let previousSetWeight: number | null = null;
+    for (let i = stepIdx - 1; i >= 0; i--) {
+      const s = steps[i];
+      if (s.kind === "set" && s.exercise.name === step.exercise.name) {
+        const prev = savedByStep[i];
+        if (prev?.weight != null) {
+          previousSetWeight = prev.weight;
+          break;
         }
       }
     }
+    const exoHist = lastByExo[step.exercise.name];
+    const histSet = exoHist?.[step.setNumber] as LastSet | undefined;
+    const weight = getDefaultSetWeight({
+      prescribedCharge: step.exercise.charge,
+      previousSetWeight,
+      historyWeight: histSet?.weight ?? null,
+      bodyweight,
+    });
 
     // REPS : on laisse vide, la cible est en placeholder (cf. parseRepsPerSet)
     const reps = "";
@@ -2879,6 +2935,8 @@ export function LiveSession({
           repsLabel={current.repsLabel}
           alternating={current.alternating}
           repsCycle={current.repsCycle}
+          emomMode={current.emomMode}
+          minutePlan={current.minutePlan}
           sessionId={sessionId}
           onFinish={(logs, emomRpe) => {
             const computedReps =
@@ -3402,6 +3460,14 @@ export function LiveSession({
             </button>
           )}
 
+          <button
+            onClick={() => skipCurrentExerciseAsUnavailable(exStep.exercise.name)}
+            className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+            style={{ width: "100%", borderStyle: "dashed", opacity: 0.9 }}
+          >
+            ⤼ EXERCICE IMPOSSIBLE — ZAPPER
+          </button>
+
           <div style={{ display: "flex", gap: 8 }}>
             {canGoPrevBlock && (
               <button
@@ -3832,6 +3898,14 @@ export function LiveSession({
           </button>
         )}
 
+        <button
+          onClick={() => skipCurrentExerciseAsUnavailable(setStep.exercise.name)}
+          className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+          style={{ width: "100%", borderStyle: "dashed", opacity: 0.9 }}
+        >
+          ⤼ EXERCICE IMPOSSIBLE — ZAPPER
+        </button>
+
         <div style={{ display: "flex", gap: 8 }}>
           {canGoPrevBlock && (
             <button
@@ -4111,6 +4185,8 @@ function EmomScreen({
   repsLabel,
   alternating,
   repsCycle,
+  emomMode,
+  minutePlan,
   sessionId,
   onFinish,
   onPain,
@@ -4121,6 +4197,8 @@ function EmomScreen({
   repsLabel?: string | null;
   alternating?: boolean;
   repsCycle?: number[] | null;
+  emomMode?: "classic" | "alternating-reps" | "alternating-exercises";
+  minutePlan?: EmomMinutePlanItem[];
   sessionId: string;
   onFinish: (repsByMinute: number[], rpe: number | null) => void;
   onPain: () => void;
@@ -4156,6 +4234,16 @@ function EmomScreen({
   const currentMinute = Math.floor(elapsed / 60); // 0-indexed current minute
   const secInMinute = elapsed % 60;
   const secLeftInMinute = 59 - secInMinute;
+  const currentMinutePlan =
+    minutePlan?.[currentMinute] ??
+    (minutePlan?.length ? minutePlan[currentMinute % minutePlan.length] : undefined);
+  const nextMinutePlan =
+    minutePlan?.[currentMinute + 1] ??
+    (minutePlan?.length ? minutePlan[(currentMinute + 1) % minutePlan.length] : undefined);
+  const displayedExerciseName =
+    emomMode === "alternating-exercises" && currentMinutePlan
+      ? currentMinutePlan.exerciseName
+      : exercise.name;
 
   useEffect(() => {
     if (!running || elapsed >= totalSec) return;
@@ -4230,7 +4318,7 @@ function EmomScreen({
             className="cst-display"
             style={{ margin: "4px 0 0", fontSize: 22, color: "var(--cst-text)" }}
           >
-            {exercise.name.toUpperCase()}
+            {displayedExerciseName.toUpperCase()}
           </h2>
           {exercise.charge && !isBodyweight(exercise.charge) && (
             <div className="cst-mono" style={{ fontSize: 13, marginTop: 6, color: "#D4A53B" }}>
@@ -4244,6 +4332,20 @@ function EmomScreen({
             >
               ↔ {repsLabel} : minutes paires {repsLabel?.split("/")[0]} reps · impaires{" "}
               {repsLabel?.split("/")[1]} reps
+            </div>
+          )}
+          {emomMode === "alternating-exercises" && currentMinutePlan && (
+            <div
+              className="cst-mono"
+              style={{ fontSize: 10, opacity: 0.72, marginTop: 4, color: "#D4A53B" }}
+            >
+              MINUTE {currentMinutePlan.minute} · {currentMinutePlan.targetLabel ?? "cible libre"}
+              {nextMinutePlan && (
+                <span style={{ display: "block", marginTop: 3, opacity: 0.76 }}>
+                  PROCHAINE MINUTE · {nextMinutePlan.exerciseName}
+                  {nextMinutePlan.targetLabel ? ` · ${nextMinutePlan.targetLabel}` : ""}
+                </span>
+              )}
             </div>
           )}
         </div>
@@ -4613,7 +4715,7 @@ function CircuitScreen({
   onFinish,
   onPain,
 }: {
-  mode: "circuit" | "amrap";
+  mode: "circuit" | "amrap" | "emom";
   exercises: ProgExercise[];
   defaultTotalMin: number;
   workSecPerStation: number;
@@ -4625,7 +4727,7 @@ function CircuitScreen({
   onPain: () => void;
 }) {
   const { t } = useI18n();
-  const modeLabel = mode === "amrap" ? "AMRAP" : "CIRCUIT";
+  const modeLabel = mode === "amrap" ? "AMRAP" : mode === "emom" ? "EMOM" : "CIRCUIT";
   const [totalMin, setTotalMin] = React.useState(defaultTotalMin);
   const [elapsed, setElapsed] = React.useState(0);
   const [running, setRunning] = React.useState(false);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 
-import { alternatingRepsCycle, parseEmom } from "./emom";
+import { alternatingRepsCycle, buildEmomPlan, parseEmom } from "./emom";
 
 describe("parseEmom — saisie via le builder (Durée = Séries, Reps/min = Reps)", () => {
   it("lit la durée et les reps des deux champs", () => {
@@ -14,6 +14,13 @@ describe("parseEmom — saisie via le builder (Durée = Séries, Reps/min = Reps
 
   it("gère les reps alternées (3/4)", () => {
     expect(parseEmom("10", "3/4", "Fentes")).toEqual({ durationMin: 10, repsPerMin: 3 });
+  });
+
+  it("laisse les champs explicites du coach prioritaires sur un ancien EMOM dans le nom", () => {
+    expect(parseEmom("10", "5", "Gobelet squat EMOM5/7'")).toEqual({
+      durationMin: 10,
+      repsPerMin: 5,
+    });
   });
 });
 
@@ -105,5 +112,68 @@ describe("alternatingRepsCycle", () => {
     expect(alternatingRepsCycle(null)).toBeNull();
     expect(alternatingRepsCycle("EMOM 10")).toBeNull();
     expect(alternatingRepsCycle("3/4/5")).toBeNull(); // ladder, pas alterné
+  });
+});
+
+describe("buildEmomPlan", () => {
+  it("classifies a single-exercise EMOM as classic", () => {
+    expect(
+      buildEmomPlan([{ name: "Tractions", block_type: "emom", series: "10", reps: "3" }]),
+    ).toEqual({
+      mode: "classic",
+      durationMin: 10,
+      repsPerMin: 3,
+      repsLabel: "3",
+      minutePlan: Array.from({ length: 10 }, (_, index) => ({
+        minute: index + 1,
+        exerciseIndex: 0,
+        exerciseName: "Tractions",
+        targetLabel: "3 reps",
+      })),
+    });
+  });
+
+  it("classifies slash reps as alternating reps with odd minutes using the second value", () => {
+    expect(
+      buildEmomPlan([{ name: "Tractions", block_type: "emom", series: "4", reps: "1/2" }]),
+    ).toEqual({
+      mode: "alternating-reps",
+      durationMin: 4,
+      repsPerMin: 1,
+      repsLabel: "1/2",
+      repsCycle: [2, 1],
+      minutePlan: [
+        { minute: 1, exerciseIndex: 0, exerciseName: "Tractions", targetLabel: "2 reps" },
+        { minute: 2, exerciseIndex: 0, exerciseName: "Tractions", targetLabel: "1 rep" },
+        { minute: 3, exerciseIndex: 0, exerciseName: "Tractions", targetLabel: "2 reps" },
+        { minute: 4, exerciseIndex: 0, exerciseName: "Tractions", targetLabel: "1 rep" },
+      ],
+    });
+  });
+
+  it("classifies a two-exercise EMOM block as alternating exercises", () => {
+    expect(
+      buildEmomPlan([
+        { name: "Tractions", block_type: "emom", code: "A1", series: "6", reps: "3" },
+        { name: "Goblet squat", block_type: "emom", code: "A2", series: "6", reps: "5" },
+      ]),
+    ).toEqual({
+      mode: "alternating-exercises",
+      durationMin: 6,
+      repsPerMin: null,
+      repsLabel: null,
+      exercises: [
+        { name: "Tractions", targetLabel: "3 reps" },
+        { name: "Goblet squat", targetLabel: "5 reps" },
+      ],
+      minutePlan: [
+        { minute: 1, exerciseIndex: 0, exerciseName: "Tractions", targetLabel: "3 reps" },
+        { minute: 2, exerciseIndex: 1, exerciseName: "Goblet squat", targetLabel: "5 reps" },
+        { minute: 3, exerciseIndex: 0, exerciseName: "Tractions", targetLabel: "3 reps" },
+        { minute: 4, exerciseIndex: 1, exerciseName: "Goblet squat", targetLabel: "5 reps" },
+        { minute: 5, exerciseIndex: 0, exerciseName: "Tractions", targetLabel: "3 reps" },
+        { minute: 6, exerciseIndex: 1, exerciseName: "Goblet squat", targetLabel: "5 reps" },
+      ],
+    });
   });
 });

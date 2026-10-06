@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import {
+  getDefaultSetWeight,
   getCoachMetricLabel,
   getCoachMetricValue,
   getExpertEmomLoggedValue,
@@ -26,6 +27,16 @@ describe("getExpertSetLoggedValue", () => {
         1,
       ),
     ).toEqual({ value: 20, kind: "seconds" });
+  });
+
+  test("accepts slash-separated seconds from the coach form", () => {
+    expect(
+      getExpertSetLoggedValue(
+        { name: "Star plank", reps: "30 / s", tempo: "iso", block_type: "iso" },
+        3,
+        1,
+      ),
+    ).toEqual({ value: 30, kind: "seconds" });
   });
 });
 
@@ -57,5 +68,40 @@ describe("coach metric display", () => {
   test("keeps REPS label for regular exercises", () => {
     expect(getCoachMetricLabel({ name: "Rowing barre", reps: "8" })).toBe("REPS");
     expect(getCoachMetricValue({ name: "Rowing barre", reps: "8" }, 8)).toBe("8");
+  });
+});
+
+describe("getDefaultSetWeight", () => {
+  test("prioritizes the coach prescribed load over an older historical load", () => {
+    expect(
+      getDefaultSetWeight({
+        prescribedCharge: "2 x haltères 5kg",
+        previousSetWeight: null,
+        historyWeight: 2,
+        bodyweight: false,
+      }),
+    ).toBe("5");
+  });
+
+  test("keeps the previous set of the current session before the prescription", () => {
+    expect(
+      getDefaultSetWeight({
+        prescribedCharge: "5kg",
+        previousSetWeight: 6,
+        historyWeight: 2,
+        bodyweight: false,
+      }),
+    ).toBe("6");
+  });
+
+  test("uses history only when the coach did not prescribe a load", () => {
+    expect(
+      getDefaultSetWeight({
+        prescribedCharge: null,
+        previousSetWeight: null,
+        historyWeight: 2,
+        bodyweight: false,
+      }),
+    ).toBe("2");
   });
 });

@@ -713,30 +713,20 @@ export default function Exercices() {
             </div>
           </Field>
           <Field label="Groupe musculaire">
-            <input
+            <SuggestionInput
               value={editing.muscle_group || ""}
-              onChange={(e) => setEditing({ ...editing, muscle_group: e.target.value })}
-              list="muscle-list"
-              style={inputStyle}
+              onChange={(value) => setEditing({ ...editing, muscle_group: value })}
+              options={muscles}
+              placeholder="ex: quadriceps"
             />
-            <datalist id="muscle-list">
-              {muscles.map((m) => (
-                <option key={m} value={m} />
-              ))}
-            </datalist>
           </Field>
           <Field label="Équipement">
-            <input
+            <SuggestionInput
               value={editing.equipement || ""}
-              onChange={(e) => setEditing({ ...editing, equipement: e.target.value })}
-              list="equip-list"
-              style={inputStyle}
+              onChange={(value) => setEditing({ ...editing, equipement: value })}
+              options={equipments}
+              placeholder="ex: barre"
             />
-            <datalist id="equip-list">
-              {equipments.map((m) => (
-                <option key={m} value={m} />
-              ))}
-            </datalist>
           </Field>
           <Field label="Tempo par défaut">
             <input
@@ -1141,12 +1131,118 @@ function Drawer({ children, onClose, title }: { children: React.ReactNode; onClo
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <label style={{ display: "block", marginBottom: 12 }}>
+    <div style={{ display: "block", marginBottom: 12 }}>
       <div className="cst-mono" style={{ fontSize: 9, color: "var(--cst-text-muted)", letterSpacing: "0.2em", marginBottom: 4 }}>
         {label.toUpperCase()}
       </div>
       {children}
-    </label>
+    </div>
+  );
+}
+
+function SuggestionInput({
+  value,
+  onChange,
+  options,
+  placeholder,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  options: string[];
+  placeholder?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const normalizedValue = value.trim().toLowerCase();
+  const visibleOptions = options
+    .filter((option) => !normalizedValue || option.toLowerCase().includes(normalizedValue))
+    .slice(0, 12);
+
+  return (
+    <div style={{ position: "relative" }}>
+      <input
+        value={value}
+        onChange={(event) => {
+          onChange(event.target.value);
+          setOpen(true);
+        }}
+        onFocus={() => setOpen(true)}
+        onBlur={() => window.setTimeout(() => setOpen(false), 120)}
+        placeholder={placeholder}
+        style={{ ...inputStyle, paddingRight: 42, boxSizing: "border-box" }}
+      />
+      <button
+        type="button"
+        onMouseDown={(event) => event.preventDefault()}
+        onClick={() => setOpen((isOpen) => !isOpen)}
+        aria-label="Ouvrir la liste"
+        style={{
+          position: "absolute",
+          top: 4,
+          right: 4,
+          width: 32,
+          height: 28,
+          borderRadius: 5,
+          border: "1px solid var(--cst-btn-ghost-border)",
+          background: "rgba(255,255,255,0.04)",
+          color: "var(--cst-text)",
+          cursor: "pointer",
+          fontSize: 14,
+          lineHeight: "26px",
+        }}
+      >
+        ▾
+      </button>
+      {open && (
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            top: "calc(100% + 4px)",
+            zIndex: 220,
+            maxHeight: 220,
+            overflowY: "auto",
+            padding: 4,
+            borderRadius: 8,
+            border: "1px solid var(--cst-card-border)",
+            background: "var(--cst-bg-elev)",
+            boxShadow: "0 14px 35px rgba(0,0,0,0.35)",
+          }}
+        >
+          {visibleOptions.length > 0 ? (
+            visibleOptions.map((option) => (
+              <button
+                key={option}
+                type="button"
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  onChange(option);
+                  setOpen(false);
+                }}
+                style={{
+                  width: "100%",
+                  display: "block",
+                  padding: "8px 10px",
+                  border: "none",
+                  borderRadius: 6,
+                  background: option === value ? "rgba(45,90,53,0.25)" : "transparent",
+                  color: "var(--cst-text)",
+                  textAlign: "left",
+                  fontSize: 13,
+                  cursor: "pointer",
+                }}
+              >
+                {option}
+              </button>
+            ))
+          ) : (
+            <div style={{ padding: "8px 10px", color: "var(--cst-text-muted)", fontSize: 12 }}>
+              Aucun choix existant
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 

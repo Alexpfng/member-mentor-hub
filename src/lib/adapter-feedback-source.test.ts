@@ -88,6 +88,20 @@ describe("mergeExerciseFeedbackMaps", () => {
       },
     });
   });
+
+  it("ne propage pas un commentaire libre d'une ancienne semaine quand la semaine recente a son propre retour", () => {
+    expect(
+      mergeExerciseFeedbackMaps([
+        {
+          "gobelet squat": {
+            ...fb(8),
+            comments: ["Legere gene au genou"],
+          },
+        },
+        { "gobelet squat": fb(7.5) },
+      ]),
+    ).toEqual({ "gobelet squat": fb(7.5) });
+  });
 });
 
 describe("filterFeedbackSessionsForProgram", () => {

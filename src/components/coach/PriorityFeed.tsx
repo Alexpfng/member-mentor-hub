@@ -7,7 +7,13 @@ import { resolvePainReport } from "@/lib/pain-reports.functions";
 import { markVideoReviewed } from "@/lib/videos.functions";
 import { timeAgo } from "@/lib/format";
 import { toast } from "sonner";
-import { hideMessageFromPriorityItems, hideSessionFromPriorityItems, hideVideoFromPriorityItems, type PriorityMemberGroup, type PrioritySessionEntry } from "./priority-feed";
+import {
+  hideMessageFromPriorityItems,
+  hideSessionFromPriorityItems,
+  hideVideoFromPriorityItems,
+  type PriorityMemberGroup,
+  type PrioritySessionEntry,
+} from "./priority-feed";
 
 export default function PriorityFeed() {
   const navigate = useNavigate();
@@ -21,11 +27,13 @@ export default function PriorityFeed() {
   const [hiddenSessionIds, setHiddenSessionIds] = useState<string[]>([]);
   const [hiddenMessageIds, setHiddenMessageIds] = useState<string[]>([]);
   const [hiddenVideoIds, setHiddenVideoIds] = useState<string[]>([]);
+  const [selectedSessionIds, setSelectedSessionIds] = useState<string[]>([]);
 
   useEffect(() => {
     setHiddenSessionIds([]);
     setHiddenMessageIds([]);
     setHiddenVideoIds([]);
+    setSelectedSessionIds([]);
   }, [data]);
 
   if (isLoading) {
@@ -109,6 +117,28 @@ export default function PriorityFeed() {
     }
   }
 
+  async function onHideSelectedSessions() {
+    if (selectedSessionIds.length === 0) return;
+    const confirmed = window.confirm(
+      `Retirer ${selectedSessionIds.length} séance(s) sélectionnée(s) du dashboard coach ?`,
+    );
+    if (!confirmed) return;
+
+    const ids = [...selectedSessionIds];
+    setSelectedSessionIds([]);
+    setHiddenSessionIds((current) => [...new Set([...current, ...ids])]);
+
+    try {
+      await Promise.all(ids.map((sessionId) => hideSession({ data: { sessionId } })));
+      toast.success(`${ids.length} séance(s) retirée(s) du dashboard`);
+      await qc.invalidateQueries({ queryKey: ["coach"] });
+    } catch (e: unknown) {
+      setHiddenSessionIds((current) => current.filter((id) => !ids.includes(id)));
+      setSelectedSessionIds(ids);
+      toast.error(e instanceof Error ? e.message : "Erreur");
+    }
+  }
+
   async function onHideMessage(messageId: string) {
     const confirmed = window.confirm("Retirer ce message de la colonne priorité ?");
     if (!confirmed) return;
@@ -143,6 +173,31 @@ export default function PriorityFeed() {
 
   return (
     <div className="cst-card-dark" style={{ padding: 0, overflow: "hidden" }}>
+      {selectedSessionIds.length > 0 && (
+        <div
+          style={{
+            padding: "10px 18px",
+            borderBottom: "1px solid rgba(255,255,255,0.08)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 8,
+          }}
+        >
+          <span className="cst-mono" style={{ fontSize: 10, opacity: 0.7 }}>
+            {selectedSessionIds.length} SÉANCE{selectedSessionIds.length > 1 ? "S" : ""} SÉLECTIONNÉE
+            {selectedSessionIds.length > 1 ? "S" : ""}
+          </span>
+          <button
+            type="button"
+            className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+            onClick={onHideSelectedSessions}
+            style={{ color: "#ff8a7a", borderColor: "rgba(255,138,122,0.35)" }}
+          >
+            RETIRER
+          </button>
+        </div>
+      )}
       {visibleCoachItems.map((it, idx) => {
         const isLast = idx === visibleCoachItems.length - 1;
         const common = { borderBottom: isLast ? "none" : "1px solid rgba(255,255,255,0.06)" } as const;
@@ -191,6 +246,19 @@ export default function PriorityFeed() {
                   <div key={sess.sessionId} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 6, padding: "8px 10px" }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: sess.exercises.length > 0 ? 5 : 0 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                        <input
+                          type="checkbox"
+                          checked={selectedSessionIds.includes(sess.sessionId)}
+                          onChange={(event) =>
+                            setSelectedSessionIds((current) =>
+                              event.target.checked
+                                ? [...current, sess.sessionId]
+                                : current.filter((id) => id !== sess.sessionId),
+                            )
+                          }
+                          aria-label={`Sélectionner ${sess.label || `la séance ${si + 1}`}`}
+                          style={{ width: 16, height: 16, accentColor: "#6EAB76" }}
+                        />
                         <span style={{ fontSize: 11, opacity: 0.7 }}>{sess.label || `Séance ${si + 1}`}</span>
                         {sess.maxRpe > 0 && <span className="cst-mono" style={{ fontSize: 9, color: "#E07B39" }}>RPE {sess.maxRpe}</span>}
                       </div>

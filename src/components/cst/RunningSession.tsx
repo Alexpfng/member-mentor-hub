@@ -188,7 +188,7 @@ export function RunningSession({
               >
                 {t("PROGRAMME DE LA SÉANCE")}
               </div>
-              <ProgramBlocks exercises={exercises} />
+              <ProgramBlocks exercises={exercises} isRunningSession />
             </div>
           )}
 

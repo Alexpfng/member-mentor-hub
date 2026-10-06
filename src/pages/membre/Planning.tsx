@@ -21,10 +21,12 @@ import {
   deletePlannedSession,
   markDayRest,
   abandonSession,
+  postponePlannedSessionToNextWeek,
 } from "@/lib/planning.functions";
 import { createFreeSession } from "@/lib/free-session.functions";
 import { useI18n } from "@/lib/i18n";
 import { applyPlannedSessionToWeekPlan, groupSessionsByDate } from "@/lib/planning-local-state";
+import { catchupFirst, isCatchupPlannedSession } from "@/lib/planning-catchup";
 
 // Libellé du jour déduit de la DATE réelle (et non de la position dans la grille).
 // Le programme peut démarrer un autre jour que lundi ; la case doit afficher le vrai
@@ -81,12 +83,14 @@ function DraggableSession({
   label,
   status,
   done,
+  catchup,
   onTap,
 }: {
   id: string;
   label: string;
   status: string;
   done?: boolean;
+  catchup?: boolean;
   onTap?: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id });
@@ -95,7 +99,9 @@ function DraggableSession({
     opacity: isDragging ? 0.5 : 1,
   } as const;
   const color =
-    done || status === "done"
+    catchup
+      ? "bg-red-500/20 text-red-100 border border-red-500/70"
+      : done || status === "done"
       ? "bg-emerald-600 text-white"
       : status === "rest"
         ? "bg-muted text-muted-foreground"
@@ -111,7 +117,7 @@ function DraggableSession({
       onClick={onTap}
       className={`text-left rounded-md px-2 py-1 text-xs touch-none max-w-full break-words ${color}`}
     >
-      {done ? "✓ " : status === "rest" ? "— " : "● "}
+      {catchup ? "!" : done ? "✓" : status === "rest" ? "—" : "●"}{" "}
       {label}
     </button>
   );
@@ -296,6 +302,7 @@ export default function MemberPlanning() {
   const restFn = useServerFn(markDayRest);
   const createFree = useServerFn(createFreeSession);
   const abandonFn = useServerFn(abandonSession);
+  const postponeFn = useServerFn(postponePlannedSessionToNextWeek);
 
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -340,9 +347,11 @@ export default function MemberPlanning() {
   const assignmentStartISO = data?.assignment?.start_date?.slice(0, 10) ?? null;
 
   const plannedByDate = useMemo(() => {
-    const map = new Map<string, any>();
+    const map = new Map<string, any[]>();
     (data?.planned ?? []).forEach((p: any) => {
-      if (p.planned_date) map.set(p.planned_date, p);
+      if (!p.planned_date) return;
+      const rows = map.get(p.planned_date) ?? [];
+      map.set(p.planned_date, catchupFirst([...rows, p]));
     });
     return map;
   }, [data]);
@@ -410,7 +419,7 @@ export default function MemberPlanning() {
     const taken = sessions.some(
       (session: any) => session.status === "completed" || session.status === "in_progress",
     );
-    return taken || plannedByDate.has(date);
+    return taken || (plannedByDate.get(date)?.length ?? 0) > 0;
   };
 
   const isBeforeAssignmentStart = (date: string) =>
@@ -576,6 +585,22 @@ export default function MemberPlanning() {
     }
   }
 
+  async function postponePlanned(planned: any) {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const row = await postponeFn({ data: { id: planned.id, reason: "no_time" } });
+      setData((current: any) => applyPlannedSessionToWeekPlan(current, row as any));
+      setModal(null);
+      await reload({ showLoading: false });
+      toast.success(t("Séance reportée en priorité sur la semaine suivante"));
+    } catch (e: any) {
+      toast.error(e?.message ?? t("Erreur"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function abandonRunning(sess: any) {
     if (busy) return;
     setBusy(true);
@@ -694,7 +719,7 @@ export default function MemberPlanning() {
             <div className="flex flex-col gap-2 sm:grid sm:grid-cols-7">
               {weekDates.map((date) => {
                 const sessions = sessionsByDate.get(date) ?? [];
-                const planned = plannedByDate.get(date);
+                const plannedList = plannedByDate.get(date) ?? [];
                 // Seules une séance faite ou en cours occupent réellement le jour.
                 // Tout autre statut (abandonnée, valeur inattendue) ne doit PAS
                 // bloquer la case : sinon elle n'affiche ni carte ni bouton +,
@@ -712,9 +737,16 @@ export default function MemberPlanning() {
                 // consommant sa pastille « À planifier » : elle n'existait plus
                 // nulle part et ne pouvait plus être replacée.
                 const plannedAlreadyDone =
-                  !!planned &&
-                  doneSessions.some((session: any) => planned.day_label === session.session_label);
-                const showPlanned = !!planned && !plannedAlreadyDone;
+                  plannedList.length > 0 &&
+                  plannedList.some((planned: any) =>
+                    doneSessions.some((session: any) => planned.day_label === session.session_label),
+                  );
+                const visiblePlanned = plannedList.filter(
+                  (planned: any) =>
+                    !doneSessions.some(
+                      (session: any) => planned.day_label === session.session_label,
+                    ),
+                );
                 return (
                   <DroppableDay
                     key={date}
@@ -748,15 +780,17 @@ export default function MemberPlanning() {
                         {t(" · en cours")}
                       </button>
                     ))}
-                    {showPlanned && (
+                    {visiblePlanned.map((planned: any) => (
                       <DraggableSession
+                        key={planned.id}
                         id={`plan-${planned.id}`}
                         label={planned.day_label}
                         status={planned.status}
+                        catchup={isCatchupPlannedSession(planned)}
                         onTap={() => openPlannedDay(date, planned)}
                       />
-                    )}
-                    {!dayTaken && !planned && !isBeforeAssignmentStart(date) && (
+                    ))}
+                    {!dayTaken && visiblePlanned.length === 0 && !isBeforeAssignmentStart(date) && (
                       <button
                         onClick={() => openEmptyDay(date)}
                         className="w-full sm:w-auto rounded-md px-2 py-1 text-xs opacity-40 hover:opacity-100 border border-dashed border-border"
@@ -764,7 +798,7 @@ export default function MemberPlanning() {
                         +
                       </button>
                     )}
-                    {!dayTaken && !planned && isBeforeAssignmentStart(date) && (
+                    {!dayTaken && visiblePlanned.length === 0 && isBeforeAssignmentStart(date) && (
                       <div className="rounded-md px-2 py-1 text-xs opacity-35 border border-dashed border-border">
                         {t("Indispo")}
                       </div>
@@ -969,6 +1003,11 @@ export default function MemberPlanning() {
           >
             {t("📅 Déplacer à un autre jour")}
           </SheetBtn>
+          {modal.date <= todayISO && modal.planned.status === "planned" && (
+            <SheetBtn onClick={() => postponePlanned(modal.planned)} disabled={busy}>
+              {t("📌 Pas eu le temps · reporter en priorité")}
+            </SheetBtn>
+          )}
           <SheetBtn onClick={() => deletePlanned(modal.planned.id)} disabled={busy} danger>
             {t("Supprimer du planning")}
           </SheetBtn>

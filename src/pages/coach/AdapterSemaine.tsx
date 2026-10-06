@@ -24,9 +24,9 @@ import { parseRpeCell } from "@/lib/rpe-cell";
 import { getQuickRpePopoverPlacement } from "@/lib/coach-rpe-feedback";
 import { sanitizeLibraryExerciseNotes } from "@/lib/library-exercise-payload";
 import { shouldShowWeekRpeResetButton } from "@/lib/program-weeks";
-import {
-  adapterWeekHorizontalScrollLimit,
-} from "@/lib/adapter-week-horizontal-scroll";
+import { adapterWeekHorizontalScrollLimit } from "@/lib/adapter-week-horizontal-scroll";
+import { defaultPublishStartDate } from "@/lib/publish-start-date";
+import { normalizeCoachEditableWeek } from "@/lib/coach-exercise-normalizer";
 
 type LibExercise = {
   id: string;
@@ -58,6 +58,7 @@ type ProgExercise = {
 };
 type DayStructure = { label?: string; exercises?: ProgExercise[] };
 type WeekStructure = { days?: DayStructure[] };
+type EmomEditorMode = "classic" | "alternating-reps" | "alternating-exercises";
 
 type Feedback = {
   rpe: number | null;
@@ -81,6 +82,23 @@ const BLOCK_TYPE_OPTIONS = [
   { value: "dropset", label: "Dropset" },
   { value: "iso", label: "Isométrie" },
   { value: "cardio", label: "Cardio" },
+];
+const EMOM_MODE_OPTIONS: Array<{ value: EmomEditorMode; label: string; help: string }> = [
+  {
+    value: "classic",
+    label: "Simple : 1 exercice",
+    help: "Même exercice à chaque minute, avec le même nombre de reps/min.",
+  },
+  {
+    value: "alternating-reps",
+    label: "Reps paires / impaires",
+    help: "Même exercice, mais cible différente selon les minutes paires et impaires.",
+  },
+  {
+    value: "alternating-exercises",
+    label: "Exercice pair / impair",
+    help: "Deux exercices avec le même code de bloc : minute 1 = A1, minute 2 = A2, puis ça alterne.",
+  },
 ];
 
 function formatRpeValue(value: number) {
@@ -207,6 +225,9 @@ const COLOR_MAP: Record<string, { bg: string; label: string }> = {
   yellow: { bg: "#D4A82E", label: "Explosivité" },
   lime: { bg: "#E8D44A", label: "CORE" },
   blue: { bg: "#4A8BC4", label: "Mobilité" },
+  gray_light: { bg: "#D9D9D9", label: "Course · échauffement" },
+  gray_medium: { bg: "#999999", label: "Course · séance" },
+  gray_dark: { bg: "#595959", label: "Course · retour au calme" },
 };
 
 function ColorDot({ c }: { c?: string | null }) {
@@ -411,7 +432,12 @@ function ExoEditModal({
   fb,
   suggestion,
   weekNumber,
+  isEnduranceEdit,
+  emomMode,
+  emomPairCount = 1,
   onChange,
+  onEmomModeChange,
+  onCreateEmomPair,
   onReplace,
   onDelete,
   onClose,
@@ -420,7 +446,12 @@ function ExoEditModal({
   fb: Feedback | undefined;
   suggestion: Suggestion | null;
   weekNumber: number | null;
+  isEnduranceEdit?: boolean;
+  emomMode?: EmomEditorMode;
+  emomPairCount?: number;
   onChange: (fn: (e: ProgExercise) => ProgExercise) => void;
+  onEmomModeChange?: (mode: EmomEditorMode) => void;
+  onCreateEmomPair?: () => void;
   onReplace: () => void;
   onDelete: () => void;
   onClose: () => void;
@@ -437,16 +468,32 @@ function ExoEditModal({
     </label>
   );
   const blockType = String(ex.block_type ?? "standard").toLowerCase();
+  const currentEmomMode = emomMode ?? inferEmomEditorMode(ex);
   const isMinuteBased = blockType === "emom" || blockType === "ladder" || blockType === "amrap";
-  const seriesLabel = blockType === "circuit" ? "TOURS" : isMinuteBased ? "DURÉE (min)" : "SÉRIES";
-  const repsLabel =
-    blockType === "emom" || blockType === "ladder"
+  const seriesLabel = isEnduranceEdit
+    ? "VOLUME / DURÉE"
+    : blockType === "circuit"
+      ? "TOURS"
+      : isMinuteBased
+        ? "DURÉE (min)"
+        : "SÉRIES";
+  const repsLabel = isEnduranceEdit
+    ? "CONTENU / DISTANCE"
+    : blockType === "emom" && currentEmomMode === "alternating-reps"
+      ? "REPS PAIRES / IMPAIRES"
+    : blockType === "emom" || blockType === "ladder"
       ? "REPS/MIN"
       : blockType === "circuit"
         ? "REPS / STATION"
         : blockType === "amrap"
           ? "OBJECTIF"
           : "REPS";
+  const tempoLabel = isEnduranceEdit ? "ALLURE / TEMPO" : "TEMPO";
+  const recupLabel = isEnduranceEdit ? "RÉCUP / PAUSE" : "RÉCUP";
+  const notesLabel = isEnduranceEdit ? "CONSIGNE FOOTING / OBJECTIF" : "NOTE POUR LE MEMBRE";
+  const notesPlaceholder = isEnduranceEdit
+    ? "Objectif, allure, ressenti attendu, consigne de course…"
+    : "Consigne technique… (Entrée = nouvelle ligne)";
   return (
     <div
       onMouseDown={(e) => {
@@ -577,10 +624,97 @@ function ExoEditModal({
               lineHeight: 1.4,
             }}
           >
-            Circuit : mets la même lettre de code (C1, C2...) sur les stations. AMRAP : indique
-            la durée dans le premier champ.
+            {isEnduranceEdit
+              ? "Séance endurance : édite le volume, l'allure, la récup et l'objectif. Les champs charge/RPE muscu sont masqués ici."
+              : blockType === "emom"
+                ? "EMOM : durée en minutes dans Séries, reps/min dans Reps. « 1/2 » alterne les reps paires/impaires. A1/A2 alterne deux exercices minute par minute."
+                : "Circuit : mets la même lettre de code (C1, C2...) sur les stations. AMRAP : indique la durée dans le premier champ."}
           </div>
         </div>
+
+        {blockType === "emom" && !isEnduranceEdit && (
+          <div
+            style={{
+              marginBottom: 12,
+              padding: "10px 12px",
+              borderRadius: 8,
+              border: "1px solid rgba(255,255,255,0.08)",
+              background: "rgba(45,90,53,0.08)",
+            }}
+          >
+            {field(
+              "MODE EMOM",
+              <select
+                value={currentEmomMode}
+                onChange={(e) => {
+                  const mode = e.target.value as EmomEditorMode;
+                  if (onEmomModeChange) {
+                    onEmomModeChange(mode);
+                  } else {
+                    onChange((x) => applyEmomEditorMode(x, mode));
+                  }
+                }}
+                className="cst-input"
+              >
+                {EMOM_MODE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>,
+            )}
+            <div
+              style={{
+                marginTop: 8,
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
+              }}
+            >
+              <div
+                className="cst-mono"
+                style={{ fontSize: 9, opacity: 0.58, letterSpacing: "0.06em", lineHeight: 1.45 }}
+              >
+                {EMOM_MODE_OPTIONS.find((option) => option.value === currentEmomMode)?.help}
+              </div>
+              {currentEmomMode === "alternating-reps" && (
+                <div
+                  className="cst-mono"
+                  style={{ fontSize: 10, color: "var(--cst-mid-green)", lineHeight: 1.45 }}
+                >
+                  Exemple : 1/2 = minutes paires 1 rep, minutes impaires 2 reps.
+                </div>
+              )}
+              {currentEmomMode === "alternating-exercises" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div
+                    className="cst-mono"
+                    style={{
+                      fontSize: 10,
+                      color:
+                        emomPairCount >= 2 ? "var(--cst-mid-green)" : "rgba(212,168,46,0.95)",
+                      lineHeight: 1.45,
+                    }}
+                  >
+                    {emomPairCount >= 2
+                      ? `${emomPairCount} exercices trouvés sur ce bloc : l'alternance minute par minute est prête.`
+                      : "Il manque le deuxième exercice du bloc. Crée A2/B2 pour alterner avec celui-ci."}
+                  </div>
+                  {emomPairCount < 2 && onCreateEmomPair && (
+                    <button
+                      type="button"
+                      onClick={onCreateEmomPair}
+                      className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+                      style={{ alignSelf: "flex-start" }}
+                    >
+                      + Créer l'exercice pair/impair
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         <div style={{ marginBottom: 12 }}>
           {field(
@@ -607,8 +741,9 @@ function ExoEditModal({
               lineHeight: 1.4,
             }}
           >
-            Même lettre = bloc : donne « C1 », « C2 »... à plusieurs exercices pour les enchaîner.
-            Laisse vide pour un exercice seul.
+            {blockType === "emom" && currentEmomMode === "alternating-exercises"
+              ? "Même lettre + numéros différents : A1 minute 1, A2 minute 2, puis alternance."
+              : "Même lettre = bloc : donne « C1 », « C2 »... à plusieurs exercices pour les enchaîner. Laisse vide pour un exercice seul."}
           </div>
         </div>
 
@@ -616,7 +751,11 @@ function ExoEditModal({
           {field(
             seriesLabel,
             <input
-              type={blockType === "standard" || blockType === "dropset" || blockType === "iso" ? "text" : "number"}
+              type={
+                blockType === "standard" || blockType === "dropset" || blockType === "iso"
+                  ? "text"
+                  : "number"
+              }
               min={1}
               max={120}
               value={String(ex.series ?? "")}
@@ -629,42 +768,51 @@ function ExoEditModal({
             <input
               value={String(ex.reps ?? "")}
               onChange={(e) => onChange((x) => ({ ...x, reps: e.target.value }))}
+              placeholder={
+                blockType === "emom" && currentEmomMode === "alternating-reps"
+                  ? "ex. 1/2"
+                  : blockType === "emom"
+                    ? "ex. 5"
+                    : undefined
+              }
               className="cst-input"
             />,
           )}
+          {!isEnduranceEdit &&
+            field(
+              "CHARGE (kg)",
+              <input
+                value={ex.charge ?? ""}
+                onChange={(e) => onChange((x) => ({ ...x, charge: e.target.value }))}
+                className="cst-input"
+              />,
+            )}
+          {!isEnduranceEdit &&
+            field(
+              "RPE CIBLE",
+              <input
+                inputMode="text"
+                placeholder="ex. 8,5 ou échec"
+                value={String(ex.rpe_target ?? "")}
+                onChange={(e) => onChange((x) => ({ ...x, rpe_target: e.target.value }))}
+                className="cst-input"
+              />,
+            )}
           {field(
-            "CHARGE (kg)",
-            <input
-              value={ex.charge ?? ""}
-              onChange={(e) => onChange((x) => ({ ...x, charge: e.target.value }))}
-              className="cst-input"
-            />,
-          )}
-          {field(
-            "RPE CIBLE",
-            <input
-              inputMode="text"
-              placeholder="ex. 8,5 ou échec"
-              value={String(ex.rpe_target ?? "")}
-              onChange={(e) => onChange((x) => ({ ...x, rpe_target: e.target.value }))}
-              className="cst-input"
-            />,
-          )}
-          {field(
-            "TEMPO",
+            tempoLabel,
             <input
               value={ex.tempo ?? ""}
               onChange={(e) => onChange((x) => ({ ...x, tempo: e.target.value || null }))}
-              placeholder="3-1-2"
+              placeholder={isEnduranceEdit ? "ex. 7:00/km, 8,5km/h…" : "3-1-2"}
               className="cst-input"
             />,
           )}
           {field(
-            "RÉCUP",
+            recupLabel,
             <input
               value={ex.recup ?? ""}
               onChange={(e) => onChange((x) => ({ ...x, recup: e.target.value || null }))}
-              placeholder="90s"
+              placeholder={isEnduranceEdit ? "ex. 1min marche, 90s…" : "90s"}
               className="cst-input"
             />,
           )}
@@ -672,11 +820,11 @@ function ExoEditModal({
 
         <div style={{ marginBottom: 12 }}>
           {field(
-            "NOTE POUR LE MEMBRE",
+            notesLabel,
             <textarea
               value={ex.coach_notes ?? ""}
               onChange={(e) => onChange((x) => ({ ...x, coach_notes: e.target.value || null }))}
-              placeholder="Consigne technique… (Entrée = nouvelle ligne)"
+              placeholder={notesPlaceholder}
               className="cst-input"
               rows={7}
               style={{
@@ -771,21 +919,6 @@ function isEnduranceSession(day: { label?: string | null } | null | undefined): 
   return ENDURANCE_SESSION_RE.test(day?.label ?? "");
 }
 
-// Un « exercice » cardio / course : soit block_type cardio, soit un bloc de consignes
-// texte importé (rpe_target non numérique). On les détecte pour fusionner une séance de
-// course — exercice réel + lignes de consignes — en une seule carte (comme côté membre).
-function isCardioExo(ex: ProgExercise): boolean {
-  if ((ex.block_type ?? "").toLowerCase() === "cardio") return true;
-  // Consigne texte libre = cardio. Un « 10 (10kg trop lourd) » n'est PAS une consigne
-  // (c'est un RPE + commentaire) → parseRpeCell.consigne est null, donc pas cardio.
-  const consigne = parseRpeCell(ex.rpe_target).consigne;
-  return !!(consigne && consigne.length > 3);
-}
-// Texte de consigne porté par un exercice cardio (stocké dans rpe_target non numérique).
-function cardioConsigneText(ex: ProgExercise): string | null {
-  return parseRpeCell(ex.rpe_target).consigne;
-}
-
 // Code de bloc (A1, B2…) → lettre du groupe. Deux exercices ou plus qui partagent
 // la lettre (B1, B2…) forment un enchaînement / superset — c'est ainsi qu'ils sont
 // repérés dans les Google Sheets. On affiche le code + un bandeau pour que le coach
@@ -793,6 +926,53 @@ function cardioConsigneText(ex: ProgExercise): string | null {
 function blockLetterOf(code?: string | null): string | null {
   const m = /^([A-Za-z])\d/.exec(String(code ?? "").trim());
   return m ? m[1].toUpperCase() : null;
+}
+
+function looseBlockLetterOf(code?: string | null): string {
+  const m = /^([A-Za-z])/.exec(String(code ?? "").trim());
+  return m ? m[1].toUpperCase() : "A";
+}
+
+function hasAlternatingReps(reps?: string | number | null): boolean {
+  return /^\s*\d+\s*\/\s*\d+\s*$/.test(String(reps ?? ""));
+}
+
+function inferEmomEditorMode(ex: ProgExercise, sameCodeBlockCount = 1): EmomEditorMode {
+  if (sameCodeBlockCount >= 2) return "alternating-exercises";
+  if (/^[A-Z]\d$/i.test(String(ex.code ?? ""))) return "alternating-exercises";
+  if (hasAlternatingReps(ex.reps)) return "alternating-reps";
+  return "classic";
+}
+
+function applyEmomEditorMode(ex: ProgExercise, mode: EmomEditorMode): ProgExercise {
+  const currentReps = String(ex.reps ?? "").trim();
+  const firstReps = currentReps.match(/\d+/)?.[0] ?? "1";
+  const letter = looseBlockLetterOf(ex.code);
+
+  if (mode === "classic") {
+    return {
+      ...ex,
+      block_type: "emom",
+      code: /^[A-Z]\d$/i.test(String(ex.code ?? "")) ? null : ex.code,
+      reps: hasAlternatingReps(ex.reps) ? firstReps : ex.reps,
+    };
+  }
+
+  if (mode === "alternating-reps") {
+    return {
+      ...ex,
+      block_type: "emom",
+      code: /^[A-Z]\d$/i.test(String(ex.code ?? "")) ? null : ex.code,
+      reps: hasAlternatingReps(ex.reps) ? ex.reps : `${firstReps}/${Number(firstReps) + 1}`,
+    };
+  }
+
+  return {
+    ...ex,
+    block_type: "emom",
+    code: `${letter}1`,
+    reps: hasAlternatingReps(ex.reps) ? firstReps : ex.reps,
+  };
 }
 
 export default function AdapterSemaine() {
@@ -821,6 +1001,7 @@ export default function AdapterSemaine() {
   const [changes, setChanges] = useState<Array<{ type: string; label: string }>>([]);
   const [notify, setNotify] = useState(true);
   const [message, setMessage] = useState("");
+  const [publishStartDate, setPublishStartDate] = useState("");
   const [replaceTarget, setReplaceTarget] = useState<{
     dayIdx: number;
     exoIdx: number;
@@ -833,6 +1014,7 @@ export default function AdapterSemaine() {
   // principe que la bibliothèque et le builder). Clé = « jour:index ».
   const [selectedExos, setSelectedExos] = useState<Set<string>>(new Set());
   const [showBulkColors, setShowBulkColors] = useState(false);
+  const [weekView, setWeekView] = useState<"cards" | "global">("cards");
   const [libraryTarget, setLibraryTarget] = useState<number | null>(null);
   const [quickRpeTarget, setQuickRpeTarget] = useState<{
     dayIdx: number;
@@ -872,7 +1054,7 @@ export default function AdapterSemaine() {
         data: { memberId, weekNumber: search.week, ...(safeWeekId ? { weekId: safeWeekId } : {}) },
       });
       setCtx(c);
-      setStructure((c.week.structure as WeekStructure) ?? { days: [] });
+      setStructure(normalizeCoachEditableWeek((c.week.structure as WeekStructure) ?? { days: [] }));
       const isAlreadyPublished = ["published", "in_progress"].includes(c.week.status);
       setMessage(
         isAlreadyPublished
@@ -937,6 +1119,38 @@ export default function AdapterSemaine() {
       return { ...s, days };
     });
   }
+
+  function setExoEmomMode(dayIdx: number, exoIdx: number, mode: EmomEditorMode) {
+    clearExoSelection();
+    updateExo(dayIdx, exoIdx, (ex) => applyEmomEditorMode(ex, mode));
+  }
+
+  function createEmomPairExercise(dayIdx: number, exoIdx: number) {
+    clearExoSelection();
+    setStructure((s) => {
+      const days = [...(s.days ?? [])];
+      const day = { ...days[dayIdx] };
+      const exos = [...(day.exercises ?? [])];
+      const source = exos[exoIdx];
+      if (!source) return s;
+      const letter = looseBlockLetterOf(source.code);
+      exos[exoIdx] = applyEmomEditorMode(source, "alternating-exercises");
+      const pair: ProgExercise = {
+        ...source,
+        name: `${source.name} — minute paire`,
+        code: `${letter}2`,
+        block_type: "emom",
+        reps: hasAlternatingReps(source.reps) ? String(source.reps).match(/\d+/)?.[0] ?? "1" : source.reps,
+        coach_notes: source.coach_notes ?? null,
+      };
+      exos.splice(exoIdx + 1, 0, pair);
+      day.exercises = exos;
+      days[dayIdx] = day;
+      return { ...s, days };
+    });
+    setEditTarget({ dayIdx, exoIdx: exoIdx + 1 });
+  }
+
   function exoKey(dayIdx: number, exoIdx: number) {
     return `${dayIdx}:${exoIdx}`;
   }
@@ -1101,6 +1315,7 @@ export default function AdapterSemaine() {
       setSavedAt(Date.now());
       const { changes } = await previewFn({ data: { weekId: ctx.week.id } });
       setChanges(changes);
+      setPublishStartDate(defaultPublishStartDate(ctx.week.start_date));
       setShowPublish(true);
     } catch (e) {
       alert((e as Error).message);
@@ -1109,10 +1324,19 @@ export default function AdapterSemaine() {
 
   async function doPublish() {
     if (!ctx?.week.id) return;
+    if (!publishStartDate) {
+      alert("Choisis une date de démarrage pour cette semaine.");
+      return;
+    }
     setPublishing(true);
     try {
       await publishFn({
-        data: { weekId: ctx.week.id, notify, message: notify ? message : undefined },
+        data: {
+          weekId: ctx.week.id,
+          startDate: publishStartDate || undefined,
+          notify,
+          message: notify ? message : undefined,
+        },
       });
       setShowPublish(false);
       navigate({ to: "/coach/membre/$memberId", params: { memberId } });
@@ -1394,16 +1618,52 @@ export default function AdapterSemaine() {
         {/* Jours en colonnes (builder léger) */}
         {(structure.days ?? []).length > 0 && (
           <>
-            <div
+            <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+              {([
+                ["cards", "Cartes"],
+                ["global", "Vue globale"],
+              ] as const).map(([view, label]) => (
+                <button
+                  key={view}
+                  onClick={() => setWeekView(view)}
+                  aria-pressed={weekView === view}
+                  className="cst-btn cst-btn-sm"
+                  style={{
+                    background: weekView === view ? "var(--cst-mid-green)" : "transparent",
+                    border: "1px solid rgba(255,255,255,0.18)",
+                    color: "var(--cst-text)",
+                    borderRadius: 6,
+                    padding: "7px 12px",
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {weekView === "cards" ? <div
               ref={weekBoardScrollRef}
+              className="adapter-week-board-scroll"
               onScroll={(event) => {
                 setWeekScrollLeft(Math.round(event.currentTarget.scrollLeft));
                 updateWeekScrollMetrics();
               }}
+              onWheel={(event) => {
+                const horizontalDelta =
+                  Math.abs(event.deltaX) > Math.abs(event.deltaY) || event.shiftKey
+                    ? event.deltaX || event.deltaY
+                    : 0;
+                if (!horizontalDelta) return;
+                event.preventDefault();
+                const nextScrollLeft = Math.max(
+                  0,
+                  Math.min(weekScrollMax, weekScrollLeft + horizontalDelta),
+                );
+                syncWeekHorizontalScroll(nextScrollLeft);
+              }}
               style={{
                 display: "flex",
                 gap: 14,
-                overflowX: "auto",
+                overflowX: "hidden",
                 paddingBottom: 8,
                 marginBottom: 10,
                 alignItems: "flex-start",
@@ -1424,753 +1684,725 @@ export default function AdapterSemaine() {
                     gap: 10,
                   }}
                 >
-                {/* En-tête colonne jour */}
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <input
-                    value={day.label ?? ""}
-                    onChange={(e) =>
-                      setStructure((s) => {
-                        const days = [...(s.days ?? [])];
-                        days[di] = { ...days[di], label: e.target.value };
-                        return { ...s, days };
-                      })
-                    }
-                    placeholder={sessionLabel(di)}
-                    className="cst-display"
-                    style={{
-                      flex: 1,
-                      minWidth: 0,
-                      background: "transparent",
-                      border: "none",
-                      borderBottom: "1px solid rgba(255,255,255,0.1)",
-                      color: "var(--cst-text)",
-                      fontSize: 15,
-                      paddingBottom: 4,
-                    }}
-                  />
-                  {confirmDeleteDay === di ? (
-                    <>
+                  {/* En-tête colonne jour */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <input
+                      value={day.label ?? ""}
+                      onChange={(e) =>
+                        setStructure((s) => {
+                          const days = [...(s.days ?? [])];
+                          days[di] = { ...days[di], label: e.target.value };
+                          return { ...s, days };
+                        })
+                      }
+                      placeholder={sessionLabel(di)}
+                      className="cst-display"
+                      style={{
+                        flex: 1,
+                        minWidth: 0,
+                        background: "transparent",
+                        border: "none",
+                        borderBottom: "1px solid rgba(255,255,255,0.1)",
+                        color: "var(--cst-text)",
+                        fontSize: 15,
+                        paddingBottom: 4,
+                      }}
+                    />
+                    {confirmDeleteDay === di ? (
+                      <>
+                        <button
+                          onClick={() => removeDay(di)}
+                          style={{
+                            background: "#C44A3A",
+                            border: "none",
+                            color: "#fff",
+                            borderRadius: 5,
+                            padding: "3px 7px",
+                            fontSize: 10,
+                            cursor: "pointer",
+                          }}
+                        >
+                          Oui
+                        </button>
+                        <button
+                          onClick={() => setConfirmDeleteDay(null)}
+                          style={{
+                            background: "transparent",
+                            border: "1px solid rgba(255,255,255,0.2)",
+                            color: "var(--cst-text-soft)",
+                            borderRadius: 5,
+                            padding: "3px 7px",
+                            fontSize: 10,
+                            cursor: "pointer",
+                          }}
+                        >
+                          Non
+                        </button>
+                      </>
+                    ) : (
                       <button
-                        onClick={() => removeDay(di)}
-                        style={{
-                          background: "#C44A3A",
-                          border: "none",
-                          color: "#fff",
-                          borderRadius: 5,
-                          padding: "3px 7px",
-                          fontSize: 10,
-                          cursor: "pointer",
-                        }}
-                      >
-                        Oui
-                      </button>
-                      <button
-                        onClick={() => setConfirmDeleteDay(null)}
+                        onClick={() => setConfirmDeleteDay(di)}
+                        title="Supprimer ce jour"
                         style={{
                           background: "transparent",
-                          border: "1px solid rgba(255,255,255,0.2)",
-                          color: "var(--cst-text-soft)",
+                          border: "1px solid rgba(196,74,58,0.3)",
+                          color: "#C44A3A",
                           borderRadius: 5,
                           padding: "3px 7px",
-                          fontSize: 10,
+                          fontSize: 12,
                           cursor: "pointer",
                         }}
                       >
-                        Non
+                        🗑
                       </button>
-                    </>
-                  ) : (
-                    <button
-                      onClick={() => setConfirmDeleteDay(di)}
-                      title="Supprimer ce jour"
-                      style={{
-                        background: "transparent",
-                        border: "1px solid rgba(196,74,58,0.3)",
-                        color: "#C44A3A",
-                        borderRadius: 5,
-                        padding: "3px 7px",
-                        fontSize: 12,
-                        cursor: "pointer",
-                      }}
-                    >
-                      🗑
-                    </button>
-                  )}
-                </div>
+                    )}
+                  </div>
 
-                {/* Cartes exercices */}
-                {(day.exercises ?? []).map((ex, ei) => {
-                  const exos = day.exercises ?? [];
-                  // La fusion ne s'applique qu'aux séances d'endurance (course, natation,
-                  // renfo, trail…). En muscu, chaque exercice garde sa carte et son RPE.
-                  const dayIsEndurance = isEnduranceSession(day);
-                  // Fragment cardio qui suit un autre exercice cardio : il est absorbé dans
-                  // la carte précédente (une séance de course = une seule carte).
-                  if (dayIsEndurance && ei > 0 && isCardioExo(ex) && isCardioExo(exos[ei - 1]))
-                    return null;
-                  // Tête d'un bloc cardio : on agrège les fragments cardio consécutifs.
-                  const cardioFragments: ProgExercise[] = [];
-                  if (dayIsEndurance && isCardioExo(ex)) {
-                    for (let k = ei + 1; k < exos.length && isCardioExo(exos[k]); k++) {
-                      cardioFragments.push(exos[k]);
-                    }
-                  }
-                  const blockLen = 1 + cardioFragments.length;
-                  const fbMatch = findExerciseFeedback(ctx.feedback, ex.name);
-                  const fb = fbMatch?.feedback;
-                  const sugg = suggestFor(ex, fb);
-                  const cardColor = COLOR_MAP[(ex.color || "").toLowerCase()]?.bg || "#555";
-                  const lastIdx = (day.exercises?.length ?? 1) - 1;
-                  // Enchaînement (superset) : cet exercice partage sa lettre de code
-                  // (B1/B2…) avec au moins un autre du même jour.
-                  const blockLetter = blockLetterOf(ex.code);
-                  const isSuperset =
-                    !!blockLetter &&
-                    exos.filter((e) => blockLetterOf(e.code) === blockLetter).length >= 2;
-                  const prevLetter = ei > 0 ? blockLetterOf(exos[ei - 1]?.code) : null;
-                  const nextLetter = blockLetterOf(exos[ei + 1]?.code);
-                  const isBlockStart = isSuperset && blockLetter !== prevLetter;
-                  const isBlockEnd = isSuperset && blockLetter !== nextLetter;
-                  // Le RPE est une valeur numérique (badge). La virgule décimale (9,5)
-                  // est acceptée. Tout texte libre hérité d'un ancien import cardio reste
-                  // affiché sous la carte, mais ne s'affiche plus comme un badge « CONSIGNE ».
-                  const rpeStr = ex.rpe_target == null ? "" : String(ex.rpe_target).trim();
-                  // « 10 (10kg trop lourd) » → RPE 10 dans le badge + commentaire sur sa ligne dédiée.
-                  const parsedRpe = parseRpeCell(ex.rpe_target);
-                  const rpeIsNumeric = parsedRpe.rpe != null;
-                  const rpeDisplay = parsedRpe.rpe != null ? parsedRpe.rpe.replace(".", ",") : null;
-                  const rpeIsFailure = parsedRpe.isFailure;
-                  const rpeComment = parsedRpe.comment;
-                  const rpeConsigne = parsedRpe.consigne;
-                  const memberRpeValue = fb?.rpe ?? null;
-                  const badgeLabel = getCoachRpeBadgeLabel({
-                    rpe_target: ex.rpe_target,
-                    memberRpe: memberRpeValue,
-                    memberRpeHidden: ex.member_rpe_hidden,
-                  });
-                  const badgeShowsMemberRpe =
-                    memberRpeValue != null &&
-                    !rpeIsNumeric &&
-                    !rpeIsFailure &&
-                    !ex.member_rpe_hidden;
-                  const badgeColor = badgeShowsMemberRpe
-                    ? memberRpeValue >= 9
-                      ? "#C0392B"
-                      : memberRpeValue >= 7
-                        ? "#E07B39"
-                        : "#5BA85A"
-                    : rpeIsNumeric
-                      ? cardColor
-                      : rpeIsFailure
-                        ? "#ffb0a5"
-                        : "rgba(255,255,255,0.35)";
-                  return (
-                    <Fragment key={ei}>
-                      {isBlockStart && (
-                        <div
-                          className="cst-mono"
-                          style={{
-                            fontSize: 9,
-                            letterSpacing: "0.16em",
-                            fontWeight: 700,
-                            color: "var(--cst-mid-green)",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 6,
-                            padding: "4px 2px 0",
-                          }}
-                        >
-                          ⛓ SUPERSET {blockLetter} · enchaîner sans repos
-                        </div>
-                      )}
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: 4,
-                          alignItems: "stretch",
-                          ...(isSuperset
-                            ? {
-                                borderLeft: "2px solid var(--cst-mid-green)",
-                                paddingLeft: 6,
-                                marginLeft: 1,
-                                paddingBottom: isBlockEnd ? 4 : 0,
-                              }
-                            : {}),
-                        }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedExos.has(exoKey(di, ei))}
-                          onChange={() => toggleExoSelected(di, ei)}
-                          title="Sélectionner pour changer la couleur en groupe"
-                          aria-label={`Sélectionner ${ex.name}`}
-                          style={{
-                            marginTop: 10,
-                            width: 15,
-                            height: 15,
-                            flexShrink: 0,
-                            cursor: "pointer",
-                            accentColor: "var(--cst-mid-green)",
-                          }}
-                        />
-                        <div
-                          onClick={() => setEditTarget({ dayIdx: di, exoIdx: ei })}
-                          role="button"
-                          tabIndex={0}
-                          onKeyDown={(event) => {
-                            if (event.key === "Enter" || event.key === " ") {
-                              event.preventDefault();
-                              setEditTarget({ dayIdx: di, exoIdx: ei });
-                            }
-                          }}
-                          style={{
-                            textAlign: "left",
-                            cursor: "pointer",
-                            flex: 1,
-                            minWidth: 0,
-                            background: `${cardColor}0d`,
-                            border: sugg
-                              ? "1px solid rgba(212,168,46,0.5)"
-                              : `1px solid ${cardColor}40`,
-                            borderLeft: `3px solid ${cardColor}`,
-                            borderRadius: 8,
-                            padding: "9px 10px",
-                            color: "var(--cst-text)",
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: 4,
-                          }}
-                        >
+                  {/* Cartes exercices */}
+                  {(day.exercises ?? []).map((ex, ei) => {
+                    const exos = day.exercises ?? [];
+                    // La fusion ne s'applique qu'aux séances d'endurance (course, natation,
+                    // renfo, trail…). En muscu, chaque exercice garde sa carte et son RPE.
+                    const dayIsEndurance = isEnduranceSession(day);
+                    // En endurance, chaque ligne est une phase distincte. On ne fusionne plus
+                    // les fragments cardio en une seule grosse carte : le coach doit pouvoir
+                    // lire et modifier échauffement / bloc / récupération séparément.
+                    const blockLen = 1;
+                    const fbMatch = findExerciseFeedback(ctx.feedback, ex.name);
+                    const fb = fbMatch?.feedback;
+                    const sugg = dayIsEndurance ? null : suggestFor(ex, fb);
+                    const cardColor = COLOR_MAP[(ex.color || "").toLowerCase()]?.bg || "#555";
+                    const lastIdx = (day.exercises?.length ?? 1) - 1;
+                    // Enchaînement (superset) : cet exercice partage sa lettre de code
+                    // (B1/B2…) avec au moins un autre du même jour.
+                    const blockLetter = blockLetterOf(ex.code);
+                    const isSuperset =
+                      !dayIsEndurance &&
+                      !!blockLetter &&
+                      exos.filter((e) => blockLetterOf(e.code) === blockLetter).length >= 2;
+                    const prevLetter = ei > 0 ? blockLetterOf(exos[ei - 1]?.code) : null;
+                    const nextLetter = blockLetterOf(exos[ei + 1]?.code);
+                    const isBlockStart = isSuperset && blockLetter !== prevLetter;
+                    const isBlockEnd = isSuperset && blockLetter !== nextLetter;
+                    // Le RPE est une valeur numérique (badge). La virgule décimale (9,5)
+                    // est acceptée. Tout texte libre hérité d'un ancien import cardio reste
+                    // affiché sous la carte, mais ne s'affiche plus comme un badge « CONSIGNE ».
+                    const rpeStr = ex.rpe_target == null ? "" : String(ex.rpe_target).trim();
+                    // « 10 (10kg trop lourd) » → RPE 10 dans le badge + commentaire sur sa ligne dédiée.
+                    const parsedRpe = parseRpeCell(ex.rpe_target);
+                    const rpeIsNumeric = parsedRpe.rpe != null;
+                    const rpeDisplay =
+                      parsedRpe.rpe != null ? parsedRpe.rpe.replace(".", ",") : null;
+                    const rpeIsFailure = parsedRpe.isFailure;
+                    const rpeComment = parsedRpe.comment;
+                    const rpeConsigne = parsedRpe.consigne;
+                    const memberRpeValue = fb?.rpe ?? null;
+                    const badgeLabel = getCoachRpeBadgeLabel({
+                      rpe_target: ex.rpe_target,
+                      memberRpe: memberRpeValue,
+                      memberRpeHidden: ex.member_rpe_hidden,
+                    });
+                    const badgeShowsMemberRpe =
+                      memberRpeValue != null &&
+                      !rpeIsNumeric &&
+                      !rpeIsFailure &&
+                      !ex.member_rpe_hidden;
+                    const badgeColor = badgeShowsMemberRpe
+                      ? memberRpeValue >= 9
+                        ? "#C0392B"
+                        : memberRpeValue >= 7
+                          ? "#E07B39"
+                          : "#5BA85A"
+                      : rpeIsNumeric
+                        ? cardColor
+                        : rpeIsFailure
+                          ? "#ffb0a5"
+                          : "rgba(255,255,255,0.35)";
+                    return (
+                      <Fragment key={ei}>
+                        {isBlockStart && (
                           <div
+                            className="cst-mono"
                             style={{
-                              display: "grid",
-                              gridTemplateColumns: "minmax(0, 1fr) auto",
-                              alignItems: "start",
-                              columnGap: 7,
+                              fontSize: 9,
+                              letterSpacing: "0.16em",
+                              fontWeight: 700,
+                              color: "var(--cst-mid-green)",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 6,
+                              padding: "4px 2px 0",
+                            }}
+                          >
+                            ⛓ SUPERSET {blockLetter} · enchaîner sans repos
+                          </div>
+                        )}
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: 4,
+                            alignItems: "stretch",
+                            ...(isSuperset
+                              ? {
+                                  borderLeft: "2px solid var(--cst-mid-green)",
+                                  paddingLeft: 6,
+                                  marginLeft: 1,
+                                  paddingBottom: isBlockEnd ? 4 : 0,
+                                }
+                              : {}),
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedExos.has(exoKey(di, ei))}
+                            onChange={() => toggleExoSelected(di, ei)}
+                            title="Sélectionner pour changer la couleur en groupe"
+                            aria-label={`Sélectionner ${ex.name}`}
+                            style={{
+                              marginTop: 10,
+                              width: 15,
+                              height: 15,
+                              flexShrink: 0,
+                              cursor: "pointer",
+                              accentColor: "var(--cst-mid-green)",
+                            }}
+                          />
+                          <div
+                            onClick={() => setEditTarget({ dayIdx: di, exoIdx: ei })}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault();
+                                setEditTarget({ dayIdx: di, exoIdx: ei });
+                              }
+                            }}
+                            style={{
+                              textAlign: "left",
+                              cursor: "pointer",
+                              flex: 1,
+                              minWidth: 0,
+                              background: `${cardColor}0d`,
+                              border: sugg
+                                ? "1px solid rgba(212,168,46,0.5)"
+                                : `1px solid ${cardColor}40`,
+                              borderLeft: `3px solid ${cardColor}`,
+                              borderRadius: 8,
+                              padding: "9px 10px",
+                              color: "var(--cst-text)",
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: 4,
                             }}
                           >
                             <div
                               style={{
-                                display: "flex",
-                                alignItems: "flex-start",
-                                gap: 6,
-                                minWidth: 0,
+                                display: "grid",
+                                gridTemplateColumns: "minmax(0, 1fr) auto",
+                                alignItems: "start",
+                                columnGap: 7,
                               }}
                             >
-                              <ColorDot c={ex.color} />
-                              {ex.code && (
-                                <span
-                                  className="cst-mono"
-                                  title={isSuperset ? `Superset ${blockLetter}` : undefined}
-                                  style={{
-                                    width: 34,
-                                    minWidth: 34,
-                                    maxWidth: 42,
-                                    textAlign: "center",
-                                    fontSize: 10,
-                                    fontWeight: 700,
-                                    flexShrink: 0,
-                                    color: "var(--cst-mid-green)",
-                                    background: "rgba(45,90,53,0.14)",
-                                    border: "1px solid rgba(45,90,53,0.3)",
-                                    borderRadius: 4,
-                                    padding: "1px 4px",
-                                    whiteSpace: "nowrap",
-                                    overflow: "hidden",
-                                    textOverflow: "ellipsis",
-                                  }}
-                                >
-                                  {ex.code}
-                                </span>
-                              )}
-                              <span
+                              <div
                                 style={{
+                                  display: "flex",
+                                  alignItems: "flex-start",
+                                  gap: 6,
                                   minWidth: 0,
-                                  fontSize: 13,
-                                  fontWeight: 600,
-                                  whiteSpace: "normal",
-                                  overflowWrap: "anywhere",
-                                  wordBreak: "normal",
-                                  hyphens: "auto",
-                                  lineHeight: 1.3,
                                 }}
                               >
-                                {ex.name}
-                              </span>
+                                <ColorDot c={ex.color} />
+                                {ex.code && (
+                                  <span
+                                    className="cst-mono"
+                                    title={isSuperset ? `Superset ${blockLetter}` : undefined}
+                                    style={{
+                                      width: 34,
+                                      minWidth: 34,
+                                      maxWidth: 42,
+                                      textAlign: "center",
+                                      fontSize: 10,
+                                      fontWeight: 700,
+                                      flexShrink: 0,
+                                      color: "var(--cst-mid-green)",
+                                      background: "rgba(45,90,53,0.14)",
+                                      border: "1px solid rgba(45,90,53,0.3)",
+                                      borderRadius: 4,
+                                      padding: "1px 4px",
+                                      whiteSpace: "nowrap",
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                    }}
+                                  >
+                                    {ex.code}
+                                  </span>
+                                )}
+                                <span
+                                  style={{
+                                    minWidth: 0,
+                                    fontSize: 13,
+                                    fontWeight: 600,
+                                    whiteSpace: "normal",
+                                    overflowWrap: "anywhere",
+                                    wordBreak: "normal",
+                                    hyphens: "auto",
+                                    lineHeight: 1.3,
+                                  }}
+                                >
+                                  {ex.name}
+                                </span>
+                              </div>
+                              {sugg && (
+                                <span
+                                  title="Suggestion d'après les retours"
+                                  style={{ fontSize: 11 }}
+                                >
+                                  {sugg.type === "pain" ? "🔴" : "⚠"}
+                                </span>
+                              )}
                             </div>
-                            {sugg && (
-                              <span title="Suggestion d'après les retours" style={{ fontSize: 11 }}>
-                                {sugg.type === "pain" ? "🔴" : "⚠"}
-                              </span>
-                            )}
-                          </div>
-                          <div
-                            style={{
-                              display: "flex",
-                              justifyContent: "flex-end",
-                              alignItems: "center",
-                              gap: 6,
-                              minHeight: 24,
-                            }}
-                          >
-                            <button
-                              type="button"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                void addCurrentExoToLibrary(ex);
-                              }}
-                              title="Ajouter cet exercice à la bibliothèque"
-                              className="cst-mono"
+                            <div
                               style={{
-                                background: "rgba(255,255,255,0.04)",
-                                border: "1px solid rgba(255,255,255,0.12)",
-                                color: "var(--cst-text-soft)",
-                                borderRadius: 6,
-                                padding: "4px 7px",
-                                fontSize: 9,
-                                letterSpacing: "0.12em",
-                                cursor: "pointer",
-                                flexShrink: 0,
+                                display: "flex",
+                                justifyContent: "flex-end",
+                                alignItems: "center",
+                                gap: 6,
+                                minHeight: 24,
                               }}
                             >
-                              ↥ BIBLIO
-                            </button>
-                            <div style={{ position: "relative", flexShrink: 0 }}>
                               <button
                                 type="button"
                                 onClick={(event) => {
                                   event.stopPropagation();
-                                  const rect = (
-                                    event.currentTarget as HTMLButtonElement
-                                  ).getBoundingClientRect();
-                                  const side = getQuickRpePopoverPlacement({
-                                    anchorTop: rect.top,
-                                    anchorBottom: rect.bottom,
-                                    popoverHeight: QUICK_RPE_POPOVER_HEIGHT,
-                                    viewportHeight: window.innerHeight,
-                                  });
-                                  const left = Math.max(
-                                    12,
-                                    Math.min(
-                                      rect.right - QUICK_RPE_POPOVER_WIDTH,
-                                      window.innerWidth - QUICK_RPE_POPOVER_WIDTH - 12,
-                                    ),
-                                  );
-                                  setQuickRpeTarget((current) =>
-                                    current?.dayIdx === di && current?.exoIdx === ei
-                                      ? null
-                                      : {
-                                          dayIdx: di,
-                                          exoIdx: ei,
-                                          top: side === "bottom" ? rect.bottom + 6 : rect.top - 6,
-                                          left,
-                                          side,
-                                        },
-                                  );
+                                  void addCurrentExoToLibrary(ex);
                                 }}
+                                title="Ajouter cet exercice à la bibliothèque"
                                 className="cst-mono"
-                                title={rpeConsigne ?? "Modifier le RPE"}
                                 style={{
-                                  fontSize: 10,
-                                  fontWeight: 700,
-                                  maxWidth: 90,
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                  whiteSpace: "nowrap",
-                                  background: rpeIsNumeric
-                                    ? `${cardColor}33`
-                                    : rpeIsFailure
-                                      ? "rgba(201,72,58,0.22)"
-                                      : "rgba(255,255,255,0.06)",
-                                  border: `1px solid ${rpeIsNumeric ? cardColor + "66" : rpeIsFailure ? "rgba(255,138,122,0.32)" : "rgba(255,255,255,0.12)"}`,
-                                  borderRadius: 5,
-                                  padding: "2px 7px",
-                                  color: badgeColor,
+                                  background: "rgba(255,255,255,0.04)",
+                                  border: "1px solid rgba(255,255,255,0.12)",
+                                  color: "var(--cst-text-soft)",
+                                  borderRadius: 6,
+                                  padding: "4px 7px",
+                                  fontSize: 9,
+                                  letterSpacing: "0.12em",
                                   cursor: "pointer",
+                                  flexShrink: 0,
                                 }}
                               >
-                                {badgeLabel}
+                                ↥ BIBLIO
                               </button>
-                              {quickRpeTarget?.dayIdx === di && quickRpeTarget?.exoIdx === ei && (
-                                <div
-                                  ref={quickRpePopoverRef}
-                                  onClick={(event) => event.stopPropagation()}
-                                  style={{
-                                    position: "fixed",
-                                    top: quickRpeTarget.top,
-                                    left: quickRpeTarget.left,
-                                    transform:
-                                      quickRpeTarget.side === "top" ? "translateY(-100%)" : "none",
-                                    zIndex: 300,
-                                    width: QUICK_RPE_POPOVER_WIDTH,
-                                    padding: 8,
-                                    borderRadius: 8,
-                                    background: "#223528",
-                                    border: "1px solid rgba(255,255,255,0.12)",
-                                    boxShadow: "0 10px 30px rgba(0,0,0,0.35)",
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    gap: 8,
-                                  }}
-                                >
-                                  <div
+                              {!dayIsEndurance && (
+                                <div style={{ position: "relative", flexShrink: 0 }}>
+                                  <button
+                                    type="button"
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      const rect = (
+                                        event.currentTarget as HTMLButtonElement
+                                      ).getBoundingClientRect();
+                                      const side = getQuickRpePopoverPlacement({
+                                        anchorTop: rect.top,
+                                        anchorBottom: rect.bottom,
+                                        popoverHeight: QUICK_RPE_POPOVER_HEIGHT,
+                                        viewportHeight: window.innerHeight,
+                                      });
+                                      const left = Math.max(
+                                        12,
+                                        Math.min(
+                                          rect.right - QUICK_RPE_POPOVER_WIDTH,
+                                          window.innerWidth - QUICK_RPE_POPOVER_WIDTH - 12,
+                                        ),
+                                      );
+                                      setQuickRpeTarget((current) =>
+                                        current?.dayIdx === di && current?.exoIdx === ei
+                                          ? null
+                                          : {
+                                              dayIdx: di,
+                                              exoIdx: ei,
+                                              top:
+                                                side === "bottom" ? rect.bottom + 6 : rect.top - 6,
+                                              left,
+                                              side,
+                                            },
+                                      );
+                                    }}
                                     className="cst-mono"
+                                    title={rpeConsigne ?? "Modifier le RPE"}
                                     style={{
-                                      fontSize: 9,
-                                      opacity: 0.68,
-                                      letterSpacing: "0.12em",
+                                      fontSize: 10,
+                                      fontWeight: 700,
+                                      maxWidth: 90,
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                      whiteSpace: "nowrap",
+                                      background: rpeIsNumeric
+                                        ? `${cardColor}33`
+                                        : rpeIsFailure
+                                          ? "rgba(201,72,58,0.22)"
+                                          : "rgba(255,255,255,0.06)",
+                                      border: `1px solid ${rpeIsNumeric ? cardColor + "66" : rpeIsFailure ? "rgba(255,138,122,0.32)" : "rgba(255,255,255,0.12)"}`,
+                                      borderRadius: 5,
+                                      padding: "2px 7px",
+                                      color: badgeColor,
+                                      cursor: "pointer",
                                     }}
                                   >
-                                    RPE CIBLE COACH
-                                  </div>
-                                  <div
-                                    style={{
-                                      display: "grid",
-                                      gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-                                      gap: 6,
-                                    }}
-                                  >
-                                    {QUICK_RPE_VALUES.map((value) => (
-                                      <button
-                                        key={String(value)}
-                                        type="button"
-                                        className="cst-mono"
-                                        onClick={() => applyQuickRpe(di, ei, value)}
+                                    {badgeLabel}
+                                  </button>
+                                  {quickRpeTarget?.dayIdx === di &&
+                                    quickRpeTarget?.exoIdx === ei && (
+                                      <div
+                                        ref={quickRpePopoverRef}
+                                        onClick={(event) => event.stopPropagation()}
                                         style={{
-                                          borderRadius: 6,
-                                          border: "1px solid rgba(255,255,255,0.1)",
-                                          background:
-                                            parsedRpe.rpe != null && Number(parsedRpe.rpe) === value
-                                              ? `${cardColor}44`
-                                              : "rgba(255,255,255,0.05)",
-                                          color: "#fff",
-                                          WebkitTextFillColor: "#fff",
-                                          appearance: "none",
-                                          WebkitAppearance: "none",
-                                          padding: "6px 0",
-                                          fontSize: 11,
-                                          fontWeight: 700,
-                                          cursor: "pointer",
+                                          position: "fixed",
+                                          top: quickRpeTarget.top,
+                                          left: quickRpeTarget.left,
+                                          transform:
+                                            quickRpeTarget.side === "top"
+                                              ? "translateY(-100%)"
+                                              : "none",
+                                          zIndex: 300,
+                                          width: QUICK_RPE_POPOVER_WIDTH,
+                                          padding: 8,
+                                          borderRadius: 8,
+                                          background: "#223528",
+                                          border: "1px solid rgba(255,255,255,0.12)",
+                                          boxShadow: "0 10px 30px rgba(0,0,0,0.35)",
+                                          display: "flex",
+                                          flexDirection: "column",
+                                          gap: 8,
                                         }}
                                       >
-                                        {formatRpeValue(value)}
-                                      </button>
-                                    ))}
-                                    <button
-                                      type="button"
-                                      className="cst-mono"
-                                      onClick={() => applyQuickRpe(di, ei, "échec")}
-                                      style={{
-                                        gridColumn: "span 2",
-                                        borderRadius: 6,
-                                        border: "1px solid rgba(255,138,122,0.28)",
-                                        background:
-                                          String(rpeStr).trim().toLowerCase() === "échec" ||
-                                          String(rpeStr).trim().toLowerCase() === "echec"
-                                            ? "rgba(201,72,58,0.28)"
-                                            : "rgba(255,255,255,0.05)",
-                                        color: "#fff",
-                                        WebkitTextFillColor: "#fff",
-                                        appearance: "none",
-                                        WebkitAppearance: "none",
-                                        padding: "6px 0",
-                                        fontSize: 11,
-                                        fontWeight: 700,
-                                        cursor: "pointer",
-                                      }}
-                                    >
-                                      ÉCHEC
-                                    </button>
-                                    <button
-                                      type="button"
-                                      className="cst-mono"
-                                      onClick={() => applyQuickRpe(di, ei, null)}
-                                      style={{
-                                        gridColumn: "span 2",
-                                        borderRadius: 6,
-                                        border: "1px solid rgba(255,255,255,0.1)",
-                                        background: "rgba(255,255,255,0.04)",
-                                        color: "rgba(255,255,255,0.92)",
-                                        WebkitTextFillColor: "rgba(255,255,255,0.92)",
-                                        appearance: "none",
-                                        WebkitAppearance: "none",
-                                        padding: "6px 0",
-                                        fontSize: 10,
-                                        cursor: "pointer",
-                                      }}
-                                    >
-                                      Effacer le RPE
-                                    </button>
-                                  </div>
-                                  <label
-                                    style={{ display: "flex", flexDirection: "column", gap: 6 }}
-                                  >
-                                    <span
-                                      className="cst-mono"
-                                      style={{
-                                        fontSize: 9,
-                                        opacity: 0.65,
-                                        letterSpacing: "0.12em",
-                                      }}
-                                    >
-                                      COMMENTAIRE / CONSIGNE (OPTIONNEL)
-                                    </span>
-                                    <textarea
-                                      value={String(ex.coach_notes ?? "")}
-                                      onChange={(event) =>
-                                        applyQuickCoachNote(di, ei, event.target.value)
-                                      }
-                                      placeholder="ex. rester propre, douleur à surveiller..."
-                                      rows={3}
-                                      style={{
-                                        width: "100%",
-                                        resize: "vertical",
-                                        borderRadius: 8,
-                                        border: "1px solid rgba(255,255,255,0.12)",
-                                        background: "rgba(255,255,255,0.04)",
-                                        color: "#fff",
-                                        padding: "10px 12px",
-                                        fontSize: 12,
-                                        lineHeight: 1.4,
-                                      }}
-                                    />
-                                  </label>
+                                        <div
+                                          className="cst-mono"
+                                          style={{
+                                            fontSize: 9,
+                                            opacity: 0.68,
+                                            letterSpacing: "0.12em",
+                                          }}
+                                        >
+                                          RPE CIBLE COACH
+                                        </div>
+                                        <div
+                                          style={{
+                                            display: "grid",
+                                            gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+                                            gap: 6,
+                                          }}
+                                        >
+                                          {QUICK_RPE_VALUES.map((value) => (
+                                            <button
+                                              key={String(value)}
+                                              type="button"
+                                              className="cst-mono"
+                                              onClick={() => applyQuickRpe(di, ei, value)}
+                                              style={{
+                                                borderRadius: 6,
+                                                border: "1px solid rgba(255,255,255,0.1)",
+                                                background:
+                                                  parsedRpe.rpe != null &&
+                                                  Number(parsedRpe.rpe) === value
+                                                    ? `${cardColor}44`
+                                                    : "rgba(255,255,255,0.05)",
+                                                color: "#fff",
+                                                WebkitTextFillColor: "#fff",
+                                                appearance: "none",
+                                                WebkitAppearance: "none",
+                                                padding: "6px 0",
+                                                fontSize: 11,
+                                                fontWeight: 700,
+                                                cursor: "pointer",
+                                              }}
+                                            >
+                                              {formatRpeValue(value)}
+                                            </button>
+                                          ))}
+                                          <button
+                                            type="button"
+                                            className="cst-mono"
+                                            onClick={() => applyQuickRpe(di, ei, "échec")}
+                                            style={{
+                                              gridColumn: "span 2",
+                                              borderRadius: 6,
+                                              border: "1px solid rgba(255,138,122,0.28)",
+                                              background:
+                                                String(rpeStr).trim().toLowerCase() === "échec" ||
+                                                String(rpeStr).trim().toLowerCase() === "echec"
+                                                  ? "rgba(201,72,58,0.28)"
+                                                  : "rgba(255,255,255,0.05)",
+                                              color: "#fff",
+                                              WebkitTextFillColor: "#fff",
+                                              appearance: "none",
+                                              WebkitAppearance: "none",
+                                              padding: "6px 0",
+                                              fontSize: 11,
+                                              fontWeight: 700,
+                                              cursor: "pointer",
+                                            }}
+                                          >
+                                            ÉCHEC
+                                          </button>
+                                          <button
+                                            type="button"
+                                            className="cst-mono"
+                                            onClick={() => applyQuickRpe(di, ei, null)}
+                                            style={{
+                                              gridColumn: "span 2",
+                                              borderRadius: 6,
+                                              border: "1px solid rgba(255,255,255,0.1)",
+                                              background: "rgba(255,255,255,0.04)",
+                                              color: "rgba(255,255,255,0.92)",
+                                              WebkitTextFillColor: "rgba(255,255,255,0.92)",
+                                              appearance: "none",
+                                              WebkitAppearance: "none",
+                                              padding: "6px 0",
+                                              fontSize: 10,
+                                              cursor: "pointer",
+                                            }}
+                                          >
+                                            Effacer le RPE
+                                          </button>
+                                        </div>
+                                        <label
+                                          style={{
+                                            display: "flex",
+                                            flexDirection: "column",
+                                            gap: 6,
+                                          }}
+                                        >
+                                          <span
+                                            className="cst-mono"
+                                            style={{
+                                              fontSize: 9,
+                                              opacity: 0.65,
+                                              letterSpacing: "0.12em",
+                                            }}
+                                          >
+                                            COMMENTAIRE / CONSIGNE (OPTIONNEL)
+                                          </span>
+                                          <textarea
+                                            value={String(ex.coach_notes ?? "")}
+                                            onChange={(event) =>
+                                              applyQuickCoachNote(di, ei, event.target.value)
+                                            }
+                                            placeholder="ex. rester propre, douleur à surveiller..."
+                                            rows={3}
+                                            style={{
+                                              width: "100%",
+                                              resize: "vertical",
+                                              borderRadius: 8,
+                                              border: "1px solid rgba(255,255,255,0.12)",
+                                              background: "rgba(255,255,255,0.04)",
+                                              color: "#fff",
+                                              padding: "10px 12px",
+                                              fontSize: 12,
+                                              lineHeight: 1.4,
+                                            }}
+                                          />
+                                        </label>
+                                      </div>
+                                    )}
                                 </div>
                               )}
                             </div>
-                          </div>
-                          <div
-                            className="cst-mono"
-                            style={{
-                              fontSize: 10,
-                              opacity: 0.6,
-                              display: "flex",
-                              gap: 8,
-                              flexWrap: "wrap",
-                            }}
-                          >
-                            <span>
-                              {ex.block_type === "emom"
-                                ? String(ex.series ?? "EMOM")
-                                : `${ex.series ?? "—"}×${ex.reps ?? "—"}`}
-                            </span>
-                            {ex.charge && (
-                              <span>
-                                {/^(pdc|bb|bw|poids du corps|pds de corps|corps|bodyweight|[-—/])$/i.test(
-                                  ex.charge.trim(),
-                                )
-                                  ? "PDC"
-                                  : /^[\d.,]+$/.test(ex.charge.trim())
-                                    ? `${ex.charge.trim()}kg`
-                                    : ex.charge.trim()}
-                              </span>
-                            )}
-                            {ex.tempo && <span>⏱{ex.tempo}</span>}
-                          </div>
-                          {rpeComment && (
                             <div
                               className="cst-mono"
                               style={{
                                 fontSize: 10,
+                                opacity: 0.6,
                                 display: "flex",
-                                gap: 5,
-                                alignItems: "baseline",
+                                gap: 8,
                                 flexWrap: "wrap",
                               }}
                             >
-                              <span style={{ opacity: 0.5, letterSpacing: "0.06em" }}>RPE ·</span>
-                              <span style={{ fontStyle: "italic", opacity: 0.9, color: cardColor }}>
-                                {rpeComment}
+                              <span>
+                                {ex.block_type === "emom"
+                                  ? String(ex.series ?? "EMOM")
+                                  : `${ex.series ?? "—"}×${ex.reps ?? "—"}`}
                               </span>
+                              {ex.charge && (
+                                <span>
+                                  {/^(pdc|bb|bw|poids du corps|pds de corps|corps|bodyweight|[-—/])$/i.test(
+                                    ex.charge.trim(),
+                                  )
+                                    ? "PDC"
+                                    : /^[\d.,]+$/.test(ex.charge.trim())
+                                      ? `${ex.charge.trim()}kg`
+                                      : ex.charge.trim()}
+                                </span>
+                              )}
+                              {ex.tempo && <span>⏱{ex.tempo}</span>}
                             </div>
-                          )}
-                          {rpeConsigne && (
-                            <div
-                              style={{
-                                fontSize: 11,
-                                opacity: 0.75,
-                                lineHeight: 1.35,
-                                whiteSpace: "normal",
-                                wordBreak: "break-word",
-                              }}
-                            >
-                              {rpeConsigne}
-                            </div>
-                          )}
-                          {fb?.rpe != null && (rpeIsNumeric || rpeIsFailure) && (
-                            <div
-                              className="cst-mono"
-                              style={{
-                                fontSize: 10,
-                                opacity: 0.55,
-                                color: "var(--cst-text-soft)",
-                              }}
-                            >
-                              Cible coach · {rpeIsFailure ? "ÉCHEC" : `RPE ${rpeDisplay}`}
-                            </div>
-                          )}
-                          {fb?.rpe != null && (
-                            <div
-                              className="cst-mono"
-                              style={{
-                                fontSize: 10,
-                                fontWeight: 700,
-                                color:
-                                  fb.rpe >= 9 ? "#C0392B" : fb.rpe >= 7 ? "#E07B39" : "#5BA85A",
-                              }}
-                            >
-                              Retour membre S{ctx.sourceSummary.weekNumber ?? "?"} · RPE {fb.rpe}
-                              {/* Nom rapproché quand il diffère : le coach doit pouvoir
+                            {rpeComment && (
+                              <div
+                                className="cst-mono"
+                                style={{
+                                  fontSize: 10,
+                                  display: "flex",
+                                  gap: 5,
+                                  alignItems: "baseline",
+                                  flexWrap: "wrap",
+                                }}
+                              >
+                                <span style={{ opacity: 0.5, letterSpacing: "0.06em" }}>RPE ·</span>
+                                <span
+                                  style={{ fontStyle: "italic", opacity: 0.9, color: cardColor }}
+                                >
+                                  {rpeComment}
+                                </span>
+                              </div>
+                            )}
+                            {rpeConsigne && (
+                              <div
+                                style={{
+                                  fontSize: 11,
+                                  opacity: 0.75,
+                                  lineHeight: 1.35,
+                                  whiteSpace: "normal",
+                                  wordBreak: "break-word",
+                                }}
+                              >
+                                {rpeConsigne}
+                              </div>
+                            )}
+                            {fb?.rpe != null && (rpeIsNumeric || rpeIsFailure) && (
+                              <div
+                                className="cst-mono"
+                                style={{
+                                  fontSize: 10,
+                                  opacity: 0.55,
+                                  color: "var(--cst-text-soft)",
+                                }}
+                              >
+                                Cible coach · {rpeIsFailure ? "ÉCHEC" : `RPE ${rpeDisplay}`}
+                              </div>
+                            )}
+                            {fb?.rpe != null && (
+                              <div
+                                className="cst-mono"
+                                style={{
+                                  fontSize: 10,
+                                  fontWeight: 700,
+                                  color:
+                                    fb.rpe >= 9 ? "#C0392B" : fb.rpe >= 7 ? "#E07B39" : "#5BA85A",
+                                }}
+                              >
+                                Retour membre S{ctx.sourceSummary.weekNumber ?? "?"} · RPE {fb.rpe}
+                                {/* Nom rapproché quand il diffère : le coach doit pouvoir
                                   juger lui-même si c'est bien le même mouvement. */}
-                              {fbMatch && !fbMatch.exact && (
-                                <span style={{ display: "block", fontWeight: 400, opacity: 0.65 }}>
-                                  sur « {fbMatch.key} »
-                                </span>
-                              )}
-                            </div>
-                          )}
-                          {(fb?.comments?.length ?? 0) > 0 && (
-                            <div
-                              style={{
-                                fontSize: 10,
-                                fontStyle: "italic",
-                                opacity: 0.75,
-                                color: "#8FB4DC",
-                              }}
-                              title={fb?.comments?.join("\n")}
-                            >
-                              💬 « {fb?.comments?.[0]} »
-                              {(fb?.comments?.length ?? 0) > 1 && (
-                                <span style={{ opacity: 0.7 }}>
-                                  {" "}
-                                  +{(fb?.comments?.length ?? 1) - 1}
-                                </span>
-                              )}
-                            </div>
-                          )}
-                          {ex.coach_notes && (
-                            <div
-                              style={{
-                                fontSize: 10,
-                                opacity: 0.5,
-                                fontStyle: "italic",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                whiteSpace: "nowrap",
-                              }}
-                            >
-                              "{ex.coach_notes}"
-                            </div>
-                          )}
-                          {cardioFragments.length > 0 && (
-                            <div
-                              style={{
-                                display: "flex",
-                                flexDirection: "column",
-                                gap: 4,
-                                marginTop: 2,
-                                paddingTop: 6,
-                                borderTop: "1px solid rgba(255,255,255,0.08)",
-                              }}
-                            >
-                              {cardioFragments.map((f, fi) => {
-                                const txt = cardioConsigneText(f);
-                                return (
-                                  <div
-                                    key={fi}
-                                    style={{
-                                      fontSize: 11,
-                                      lineHeight: 1.35,
-                                      whiteSpace: "normal",
-                                      wordBreak: "break-word",
-                                    }}
+                                {fbMatch && !fbMatch.exact && (
+                                  <span
+                                    style={{ display: "block", fontWeight: 400, opacity: 0.65 }}
                                   >
-                                    {f.name && (
-                                      <span style={{ fontWeight: 600, opacity: 0.9 }}>
-                                        {f.name}{" "}
-                                      </span>
-                                    )}
-                                    {txt && <span style={{ opacity: 0.75 }}>{txt}</span>}
-                                    {f.coach_notes && (
-                                      <span style={{ opacity: 0.6, fontStyle: "italic" }}>
-                                        {" "}
-                                        {f.coach_notes}
-                                      </span>
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
-                        <div
-                          style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            justifyContent: "center",
-                            gap: 3,
-                          }}
-                        >
-                          <button
-                            onClick={() => moveBlock(di, ei, blockLen, -1)}
-                            disabled={ei === 0}
-                            title="Monter"
+                                    sur « {fbMatch.key} »
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                            {(fb?.comments?.length ?? 0) > 0 && (
+                              <div
+                                style={{
+                                  fontSize: 10,
+                                  fontStyle: "italic",
+                                  opacity: 0.75,
+                                  color: "#8FB4DC",
+                                }}
+                                title={fb?.comments?.join("\n")}
+                              >
+                                💬 « {fb?.comments?.[0]} »
+                                {(fb?.comments?.length ?? 0) > 1 && (
+                                  <span style={{ opacity: 0.7 }}>
+                                    {" "}
+                                    +{(fb?.comments?.length ?? 1) - 1}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                            {ex.coach_notes && (
+                              <div
+                                style={{
+                                  fontSize: 10,
+                                  opacity: 0.5,
+                                  fontStyle: "italic",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                "{ex.coach_notes}"
+                              </div>
+                            )}
+                          </div>
+                          <div
                             style={{
-                              background: "rgba(255,255,255,0.05)",
-                              border: "1px solid rgba(255,255,255,0.12)",
-                              color: "var(--cst-text)",
-                              borderRadius: 5,
-                              width: 28,
-                              padding: "5px 0",
-                              fontSize: 12,
-                              lineHeight: 1,
-                              cursor: ei === 0 ? "default" : "pointer",
-                              opacity: ei === 0 ? 0.25 : 0.85,
+                              display: "flex",
+                              flexDirection: "column",
+                              justifyContent: "center",
+                              gap: 3,
                             }}
                           >
-                            ↑
-                          </button>
-                          <button
-                            onClick={() => moveBlock(di, ei, blockLen, 1)}
-                            disabled={ei + blockLen - 1 >= lastIdx}
-                            title="Descendre"
-                            style={{
-                              background: "rgba(255,255,255,0.05)",
-                              border: "1px solid rgba(255,255,255,0.12)",
-                              color: "var(--cst-text)",
-                              borderRadius: 5,
-                              width: 28,
-                              padding: "5px 0",
-                              fontSize: 12,
-                              lineHeight: 1,
-                              cursor: ei + blockLen - 1 >= lastIdx ? "default" : "pointer",
-                              opacity: ei + blockLen - 1 >= lastIdx ? 0.25 : 0.85,
-                            }}
-                          >
-                            ↓
-                          </button>
+                            <button
+                              onClick={() => moveBlock(di, ei, blockLen, -1)}
+                              disabled={ei === 0}
+                              title="Monter"
+                              style={{
+                                background: "rgba(255,255,255,0.05)",
+                                border: "1px solid rgba(255,255,255,0.12)",
+                                color: "var(--cst-text)",
+                                borderRadius: 5,
+                                width: 28,
+                                padding: "5px 0",
+                                fontSize: 12,
+                                lineHeight: 1,
+                                cursor: ei === 0 ? "default" : "pointer",
+                                opacity: ei === 0 ? 0.25 : 0.85,
+                              }}
+                            >
+                              ↑
+                            </button>
+                            <button
+                              onClick={() => moveBlock(di, ei, blockLen, 1)}
+                              disabled={ei + blockLen - 1 >= lastIdx}
+                              title="Descendre"
+                              style={{
+                                background: "rgba(255,255,255,0.05)",
+                                border: "1px solid rgba(255,255,255,0.12)",
+                                color: "var(--cst-text)",
+                                borderRadius: 5,
+                                width: 28,
+                                padding: "5px 0",
+                                fontSize: 12,
+                                lineHeight: 1,
+                                cursor: ei + blockLen - 1 >= lastIdx ? "default" : "pointer",
+                                opacity: ei + blockLen - 1 >= lastIdx ? 0.25 : 0.85,
+                              }}
+                            >
+                              ↓
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    </Fragment>
-                  );
-                })}
+                      </Fragment>
+                    );
+                  })}
 
-                {/* Ajouter un exercice (bibliothèque) */}
-                <button
-                  onClick={() => setLibraryTarget(di)}
-                  style={{
-                    background: "transparent",
-                    border: "1px dashed rgba(255,255,255,0.2)",
-                    color: "var(--cst-text-soft)",
-                    borderRadius: 7,
-                    padding: "9px 10px",
-                    fontSize: 12,
-                    cursor: "pointer",
-                    width: "100%",
-                  }}
-                >
-                  + exercice
-                </button>
+                  {/* Ajouter un exercice (bibliothèque) */}
+                  <button
+                    onClick={() => setLibraryTarget(di)}
+                    style={{
+                      background: "transparent",
+                      border: "1px dashed rgba(255,255,255,0.2)",
+                      color: "var(--cst-text-soft)",
+                      borderRadius: 7,
+                      padding: "9px 10px",
+                      fontSize: 12,
+                      cursor: "pointer",
+                      width: "100%",
+                    }}
+                  >
+                    + exercice
+                  </button>
                 </div>
               ))}
 
@@ -2195,8 +2427,41 @@ export default function AdapterSemaine() {
               >
                 + Séance
               </button>
-            </div>
-            {weekScrollMax > 0 && (
+            </div> : (
+              <div style={{ overflowX: "auto", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8 }}>
+                <table style={{ width: "100%", minWidth: 820, borderCollapse: "collapse", fontSize: 12 }}>
+                  <thead>
+                    <tr className="cst-mono" style={{ textAlign: "left", color: "var(--cst-text-soft)", fontSize: 9 }}>
+                      {["SÉANCE", "CODE", "EXERCICE / PHASE", "SÉRIES", "REPS / CONTENU", "CHARGE / ALLURE", "TEMPO", "RÉCUP", "RPE"].map((label) => (
+                        <th key={label} style={{ padding: "9px 10px", borderBottom: "1px solid rgba(255,255,255,0.12)", whiteSpace: "nowrap" }}>{label}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(structure.days ?? []).flatMap((day, dayIdx) =>
+                      (day.exercises ?? []).map((ex, exoIdx) => (
+                        <tr
+                          key={`${dayIdx}-${exoIdx}`}
+                          onClick={() => setEditTarget({ dayIdx, exoIdx })}
+                          style={{ cursor: "pointer", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+                        >
+                          <td style={{ padding: "9px 10px", whiteSpace: "nowrap", color: "var(--cst-text-soft)" }}>{day.label || `Séance ${dayIdx + 1}`}</td>
+                          <td className="cst-mono" style={{ padding: "9px 10px", color: "var(--cst-text-soft)" }}>{ex.code || "—"}</td>
+                          <td style={{ padding: "9px 10px", minWidth: 210 }}>
+                            <span style={{ display: "inline-block", width: 9, height: 9, borderRadius: "50%", background: COLOR_MAP[(ex.color ?? "").toLowerCase()]?.bg ?? "#666", marginRight: 8 }} />
+                            {ex.name}
+                          </td>
+                          {[ex.series, ex.reps, ex.charge, ex.tempo, ex.recup, ex.rpe_target].map((value, index) => (
+                            <td key={index} className="cst-mono" style={{ padding: "9px 10px", whiteSpace: "nowrap", color: "var(--cst-text-soft)" }}>{value == null || value === "" ? "—" : String(value)}</td>
+                          ))}
+                        </tr>
+                      )),
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {weekView === "cards" && weekScrollMax > 0 && (
               <div
                 style={{
                   position: "sticky",
@@ -2287,6 +2552,8 @@ export default function AdapterSemaine() {
           setNotify={setNotify}
           message={message}
           setMessage={setMessage}
+          startDate={publishStartDate}
+          setStartDate={setPublishStartDate}
           publishing={publishing}
           onCancel={() => setShowPublish(false)}
           onPublish={doPublish}
@@ -2301,7 +2568,7 @@ export default function AdapterSemaine() {
           currentPatterns={null}
           currentMuscleGroup={null}
           onClose={() => setReplaceTarget(null)}
-          onReplaced={(s) => setStructure(s as WeekStructure)}
+          onReplaced={(s) => setStructure(normalizeCoachEditableWeek(s as WeekStructure))}
         />
       )}
       {showDuplicate && ctx && (
@@ -2327,15 +2594,31 @@ export default function AdapterSemaine() {
       {editTarget &&
         structure.days?.[editTarget.dayIdx]?.exercises?.[editTarget.exoIdx] &&
         (() => {
+          const day = structure.days![editTarget.dayIdx];
           const ex = structure.days![editTarget.dayIdx].exercises![editTarget.exoIdx];
           const fb = findExerciseFeedback(ctx.feedback, ex.name)?.feedback;
+          const emomLetter = /^([A-Za-z])/.exec(String(ex.code ?? "").trim())?.[1]?.toUpperCase();
+          const emomPairCount = emomLetter
+            ? (day.exercises ?? []).filter(
+                (candidate) =>
+                  String(candidate.block_type ?? "").toLowerCase() === "emom" &&
+                  looseBlockLetterOf(candidate.code) === emomLetter,
+              ).length
+            : 1;
           return (
             <ExoEditModal
               ex={ex}
               fb={fb}
-              suggestion={suggestFor(ex, fb)}
+              suggestion={isEnduranceSession(day) ? null : suggestFor(ex, fb)}
               weekNumber={ctx.sourceSummary.weekNumber}
+              isEnduranceEdit={isEnduranceSession(day)}
+              emomMode={inferEmomEditorMode(ex, emomPairCount)}
+              emomPairCount={emomPairCount}
               onChange={(fn) => updateExo(editTarget.dayIdx, editTarget.exoIdx, fn)}
+              onEmomModeChange={(mode) =>
+                setExoEmomMode(editTarget.dayIdx, editTarget.exoIdx, mode)
+              }
+              onCreateEmomPair={() => createEmomPairExercise(editTarget.dayIdx, editTarget.exoIdx)}
               onReplace={() => {
                 setReplaceTarget({ dayIdx: editTarget.dayIdx, exoIdx: editTarget.exoIdx, ex });
                 setEditTarget(null);
@@ -2456,6 +2739,8 @@ function PublishModal(props: {
   setNotify: (b: boolean) => void;
   message: string;
   setMessage: (s: string) => void;
+  startDate: string;
+  setStartDate: (s: string) => void;
   publishing: boolean;
   onCancel: () => void;
   onPublish: () => void;
@@ -2490,6 +2775,25 @@ function PublishModal(props: {
         >
           pour {props.memberName}
         </div>
+
+        <label style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 18 }}>
+          <span
+            className="cst-mono"
+            style={{ fontSize: 10, opacity: 0.7, letterSpacing: "0.15em" }}
+          >
+            DATE DE DÉMARRAGE
+          </span>
+          <input
+            type="date"
+            value={props.startDate}
+            onChange={(e) => props.setStartDate(e.target.value)}
+            className="cst-input"
+            style={{ width: "100%" }}
+          />
+          <span style={{ fontSize: 12, opacity: 0.62, lineHeight: 1.45 }}>
+            Cette date sert à placer la semaine sur le bon créneau côté coaché.
+          </span>
+        </label>
 
         <div
           className="cst-mono"

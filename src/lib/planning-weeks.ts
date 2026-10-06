@@ -9,6 +9,11 @@ export type PlanningWeekOptions = {
   weekStartsOn?: number | null;
 };
 
+export type PublishedWeekDate = {
+  weekNumber: number;
+  startDate?: string | null;
+};
+
 export const WEEK_START_OPTIONS = [
   { value: 1, label: "Lundi" },
   { value: 2, label: "Mardi" },
@@ -66,6 +71,28 @@ export function currentPlanningWeekNumber(
   return Math.max(1, Math.floor(diffDays / 7) + 1);
 }
 
+export function currentPublishedPlanningWeekNumber(
+  assignmentStartDate: string | null | undefined,
+  publishedWeeks: PublishedWeekDate[] | null | undefined,
+  todayISO: string = localDateISO(),
+  options?: PlanningWeekOptions,
+) {
+  const today = todayISO.slice(0, 10);
+  const datedWeeks = (publishedWeeks ?? [])
+    .filter((week) => week.startDate)
+    .sort((a, b) => b.weekNumber - a.weekNumber);
+  for (const week of datedWeeks) {
+    const bounds = planningWeekBoundsForPublishedWeek(
+      assignmentStartDate,
+      week.weekNumber,
+      week.startDate,
+      options,
+    );
+    if (today >= bounds.weekStart && today <= bounds.weekEnd) return week.weekNumber;
+  }
+  return currentPlanningWeekNumber(assignmentStartDate, todayISO, options);
+}
+
 export function planningWeekBounds(
   assignmentStartDate: string | null | undefined,
   weekNumber: number,
@@ -76,4 +103,17 @@ export function planningWeekBounds(
   const weekStart = addDaysISO(anchorWeekStart, Math.max(0, weekNumber - 1) * 7);
   const weekEnd = addDaysISO(weekStart, 6);
   return { weekStart, weekEnd };
+}
+
+export function planningWeekBoundsForPublishedWeek(
+  assignmentStartDate: string | null | undefined,
+  weekNumber: number,
+  publishedWeekStartDate?: string | null,
+  options?: PlanningWeekOptions,
+) {
+  if (publishedWeekStartDate) {
+    const anchorWeekStart = assignmentWeekAnchor(publishedWeekStartDate, options);
+    return { weekStart: anchorWeekStart, weekEnd: addDaysISO(anchorWeekStart, 6) };
+  }
+  return planningWeekBounds(assignmentStartDate, weekNumber, options);
 }

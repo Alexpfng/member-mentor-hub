@@ -34,6 +34,22 @@ export function hideSessionFromPriorityItems<T extends { type: string; sessionId
   });
 }
 
+export function hideSessionsFromPriorityItems<T extends { type: string; sessionId?: string | null }>(
+  items: Array<T | PriorityMemberGroup>,
+  sessionIds: string[],
+) {
+  const ids = new Set(sessionIds);
+  return sessionIds.reduce(
+    (currentItems, sessionId) => hideSessionFromPriorityItems(currentItems, sessionId),
+    items,
+  ).filter((item) => {
+    if (item.type === "member_group") {
+      return (item as PriorityMemberGroup).sessions.some((session) => !ids.has(session.sessionId));
+    }
+    return !ids.has((item as T).sessionId ?? "");
+  });
+}
+
 export function hideMessageFromPriorityItems<T extends { type: string; id: string }>(
   items: T[],
   messageId: string,

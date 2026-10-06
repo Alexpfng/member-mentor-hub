@@ -3,7 +3,11 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import seedExercises from "@/data/seed-exercises-v2.json";
-import { getProgramExerciseLibraryIntensity, sanitizeLibraryExerciseNotes } from "./library-exercise-payload";
+import {
+  getProgramExerciseColorFromIntensity,
+  getProgramExerciseLibraryIntensity,
+  sanitizeLibraryExerciseNotes,
+} from "./library-exercise-payload";
 
 type SeedRow = {
   id: string;
@@ -80,7 +84,13 @@ export const listExercises = createServerFn({ method: "GET" })
       .order("name", { ascending: true })
       .limit(2000);
     if (error) throw new Error(error.message);
-    return { exercises: data ?? [] };
+    const exercises = (data ?? []).map((exercise: any) => ({
+      ...exercise,
+      color:
+        exercise.color ??
+        getProgramExerciseColorFromIntensity(exercise.intensity_code ?? exercise.category),
+    }));
+    return { exercises };
   });
 
 export const listIntensityCodes = createServerFn({ method: "GET" })
@@ -130,10 +140,17 @@ export const upsertExercise = createServerFn({ method: "POST" })
       created_by: context.userId,
       ...(data.movement_patterns !== undefined ? { movement_patterns: patterns } : {}),
     };
+    const fallbackColor = getProgramExerciseColorFromIntensity(intensity);
     if (data.id) {
+      const { data: existing, error: existingError } = await (supabaseAdmin as any)
+        .from("exercises")
+        .select("color")
+        .eq("id", data.id)
+        .maybeSingle();
+      if (existingError) throw new Error(existingError.message);
       const { data: row, error } = await (supabaseAdmin as any)
         .from("exercises")
-        .update(payload)
+        .update(existing?.color ? payload : { ...payload, color: fallbackColor })
         .eq("id", data.id)
         .select()
         .single();
@@ -142,7 +159,7 @@ export const upsertExercise = createServerFn({ method: "POST" })
     }
     const { data: row, error } = await (supabaseAdmin as any)
       .from("exercises")
-      .insert(payload)
+      .insert({ ...payload, color: fallbackColor })
       .select()
       .single();
     if (error) throw new Error(error.message);

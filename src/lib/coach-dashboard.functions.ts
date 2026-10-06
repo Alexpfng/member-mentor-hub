@@ -13,6 +13,7 @@ import {
   findPainExercisesInProgram,
   getFollowupAccessibleSessions,
 } from "@/lib/coach-session-flags";
+import { isCatchupPlannedSession } from "@/lib/planning-catchup";
 
 async function assertCoach(userId: string) {
   const { data } = await supabaseAdmin
@@ -182,14 +183,18 @@ export const getLateSessions = createServerFn({ method: "GET" })
     today.setHours(0, 0, 0, 0);
     const todayStr = today.toISOString().slice(0, 10);
 
+    const future = new Date();
+    future.setDate(future.getDate() + 7);
+    const futureStr = future.toISOString().slice(0, 10);
+
     const [{ data: lateRowsRaw }, { data: allRows }] = await Promise.all([
       supabaseAdmin
         .from("planned_sessions")
-        .select("id, member_id, day_label, planned_date, week_number, created_at")
+        .select("id, member_id, day_label, planned_date, week_number, created_at, metadata")
         .eq("status", "planned")
         .not("planned_date", "is", null)
         .gte("planned_date", floor)
-        .lte("planned_date", cutoff)
+        .lte("planned_date", futureStr)
         .order("planned_date", { ascending: true })
         .limit(200),
       supabaseAdmin
@@ -202,9 +207,10 @@ export const getLateSessions = createServerFn({ method: "GET" })
     ]);
 
     // Exclude retroactive entries: created AFTER planned_date → coach entered old sessions today
-    const lateRows = (lateRowsRaw ?? []).filter(
-      (r) => r.planned_date! >= r.created_at.slice(0, 10),
-    );
+    const lateRows = (lateRowsRaw ?? []).filter((r) => {
+      const isLate = r.planned_date! <= cutoff && r.planned_date! >= r.created_at.slice(0, 10);
+      return isLate || isCatchupPlannedSession(r);
+    });
 
     // Per-member totals (done vs all that should have been done by today, also excluding retroactive)
     const totals = new Map<string, { total: number; done: number }>();
@@ -223,12 +229,20 @@ export const getLateSessions = createServerFn({ method: "GET" })
       doneCount: number;
       totalPlanned: number;
       maxDaysLate: number;
-      sessions: Array<{ id: string; dayLabel: string; plannedDate: string; daysLate: number }>;
+      catchupCount: number;
+      sessions: Array<{
+        id: string;
+        dayLabel: string;
+        plannedDate: string;
+        daysLate: number;
+        catchup: boolean;
+      }>;
     };
     const grouped = new Map<string, LateGroup>();
     for (const p of lateRows ?? []) {
       const d = new Date(`${p.planned_date}T00:00:00`);
       const daysLate = Math.max(0, Math.round((today.getTime() - d.getTime()) / 86400000));
+      const catchup = isCatchupPlannedSession(p);
       const existing = grouped.get(p.member_id);
       const t = totals.get(p.member_id) ?? { total: 0, done: 0 };
       if (!existing) {
@@ -239,18 +253,27 @@ export const getLateSessions = createServerFn({ method: "GET" })
           doneCount: t.done,
           totalPlanned: t.total,
           maxDaysLate: daysLate,
+          catchupCount: catchup ? 1 : 0,
           sessions: [
-            { id: p.id, dayLabel: p.day_label ?? "", plannedDate: p.planned_date ?? "", daysLate },
+            {
+              id: p.id,
+              dayLabel: p.day_label ?? "",
+              plannedDate: p.planned_date ?? "",
+              daysLate,
+              catchup,
+            },
           ],
         });
       } else {
         existing.lateCount++;
         existing.maxDaysLate = Math.max(existing.maxDaysLate, daysLate);
+        if (catchup) existing.catchupCount++;
         existing.sessions.push({
           id: p.id,
           dayLabel: p.day_label ?? "",
           plannedDate: p.planned_date ?? "",
           daysLate,
+          catchup,
         });
       }
     }

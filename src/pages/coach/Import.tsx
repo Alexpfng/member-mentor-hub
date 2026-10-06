@@ -25,6 +25,9 @@ const COLOR_DOT: Record<string, string> = {
   green: "#5BA85A",
   yellow: "#D4A82E",
   blue: "#4A8BC4",
+  gray_light: "#D9D9D9",
+  gray_medium: "#999999",
+  gray_dark: "#595959",
 };
 
 function nextMondayISO(): string {
@@ -430,6 +433,8 @@ function PatchWeeksDialog({
           display: "flex",
           flexDirection: "column",
           gap: 14,
+          maxHeight: "calc(100vh - 32px)",
+          overflow: "hidden",
         }}
       >
         <CSTSectionNum num={4} label="MISE À JOUR" sub={`${weekLabel} · PROGRAMME ACTIF`} />
@@ -448,11 +453,12 @@ function PatchWeeksDialog({
         />
         <div
           style={{
-            maxHeight: 280,
-            overflow: "auto",
+            minHeight: 0,
+            overflowY: "auto",
             display: "flex",
             flexDirection: "column",
             gap: 6,
+            paddingRight: 2,
           }}
         >
           {isLoading && <div style={{ opacity: 0.6, fontSize: 13 }}>Chargement…</div>}
@@ -490,7 +496,16 @@ function PatchWeeksDialog({
               );
             })}
         </div>
-        <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+        <div
+          style={{
+            display: "flex",
+            gap: 8,
+            justifyContent: "flex-end",
+            paddingTop: 10,
+            borderTop: "1px solid rgba(255,255,255,0.08)",
+            flexWrap: "wrap",
+          }}
+        >
           <button className="cst-btn cst-btn-ghost-dark" onClick={onClose} disabled={saving}>
             ANNULER
           </button>

@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { listWeekPlan, upsertPlannedSession } from "@/lib/planning.functions";
 import { createFreeSession } from "@/lib/free-session.functions";
+import { catchupFirst, isCatchupPlannedSession } from "@/lib/planning-catchup";
 import MemberNav from "../../components/MemberNav";
 import { CSTLogo, CSTSectionNum } from "../../components/Atoms";
 import { toast } from "sonner";
@@ -16,6 +17,7 @@ type PlannedRow = {
   status: string;
   planned_date: string | null;
   week_number: number | null;
+  metadata?: unknown;
 };
 
 type SessionRow = {
@@ -80,6 +82,9 @@ export default function Commencer() {
 
   const programName = plan?.assignment?.programs?.name ?? null;
   const dayDefs = (plan?.dayDefs ?? []).filter((d) => d?.type !== "Repos" && d?.label);
+  const catchupPlanned = catchupFirst(
+    (plan?.planned ?? []).filter((p) => p.status === "planned" && isCatchupPlannedSession(p)),
+  );
   const sessionsByLabel = new Map<string, SessionRow>();
   for (const s of plan?.sessions ?? []) {
     if (s.session_label) sessionsByLabel.set(s.session_label.toLowerCase(), s);
@@ -160,9 +165,52 @@ export default function Commencer() {
               <div className="cst-italic" style={{ fontSize: 26 }}>aujourd'hui&nbsp;?</div>
             </div>
 
+            {catchupPlanned.length > 0 && (
+              <div style={{ marginTop: 22 }}>
+                <CSTSectionNum num={2} label="RATTRAPAGE" sub="PRIORITAIRE" />
+                <div className="cst-col" style={{ gap: 6, marginTop: 12 }}>
+                  {catchupPlanned.map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() =>
+                        tsNav({
+                          to: "/membre/logger",
+                          search: { day: p.day_label, week: p.week_number ?? plan?.weekNumber ?? 1 },
+                        })
+                      }
+                      disabled={busy}
+                      className="cst-card-dark"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 12,
+                        padding: "12px 14px",
+                        textAlign: "left",
+                        cursor: busy ? "wait" : "pointer",
+                        border: "1px solid rgba(224,70,70,0.65)",
+                        background: "rgba(224,70,70,0.12)",
+                        width: "100%",
+                      }}
+                    >
+                      <span style={{ fontSize: 16, color: "#E07070", width: 18, textAlign: "center" }}>!</span>
+                      <span style={{ flex: 1, minWidth: 0 }}>
+                        <div className="cst-display" style={{ fontSize: 14, color: "#fff" }}>
+                          {p.day_label.toUpperCase()}
+                        </div>
+                        <div className="cst-mono" style={{ fontSize: 9, color: "#E07070", marginTop: 2 }}>
+                          À RATTRAPER EN PRIORITÉ
+                        </div>
+                      </span>
+                      <span style={{ color: "rgba(255,255,255,0.65)", fontSize: 16 }}>▶</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {hasProgram && (
               <div style={{ marginTop: 22 }}>
-                <CSTSectionNum num={2} label="MON PROGRAMME" sub={(programName ?? "").toUpperCase()} />
+                <CSTSectionNum num={catchupPlanned.length > 0 ? 3 : 2} label="MON PROGRAMME" sub={(programName ?? "").toUpperCase()} />
                 <div className="cst-col" style={{ gap: 6, marginTop: 12 }}>
                   {dayDefs.map((d, idx) => {
                     const label = d.label ?? "";

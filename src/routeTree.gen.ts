@@ -9,67 +9,67 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SignupRouteImport } from './routes/signup'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as OnboardingStepRouteImport } from './routes/onboarding.$step'
-import { Route as AuthenticatedMembreIndexRouteImport } from './routes/_authenticated.membre.index'
 import { Route as AuthenticatedCoachIndexRouteImport } from './routes/_authenticated.coach.index'
-import { Route as ApiStravaWebhookRouteImport } from './routes/api/strava/webhook'
-import { Route as ApiStravaCallbackRouteImport } from './routes/api/strava/callback'
-import { Route as AuthenticatedMembreRunningRouteImport } from './routes/_authenticated.membre.running'
-import { Route as AuthenticatedMembreRetoursRouteImport } from './routes/_authenticated.membre.retours'
-import { Route as AuthenticatedMembreProgressionRouteImport } from './routes/_authenticated.membre.progression'
-import { Route as AuthenticatedMembreProgrammeRouteImport } from './routes/_authenticated.membre.programme'
-import { Route as AuthenticatedMembreProfilRouteImport } from './routes/_authenticated.membre.profil'
-import { Route as AuthenticatedMembrePlanningRouteImport } from './routes/_authenticated.membre.planning'
-import { Route as AuthenticatedMembreMessagesRouteImport } from './routes/_authenticated.membre.messages'
-import { Route as AuthenticatedMembreLoggerRouteImport } from './routes/_authenticated.membre.logger'
-import { Route as AuthenticatedMembreHistoriqueRouteImport } from './routes/_authenticated.membre.historique'
-import { Route as AuthenticatedMembreComposerRouteImport } from './routes/_authenticated.membre.composer'
-import { Route as AuthenticatedMembreCommunauteRouteImport } from './routes/_authenticated.membre.communaute'
-import { Route as AuthenticatedMembreCommencerRouteImport } from './routes/_authenticated.membre.commencer'
-import { Route as AuthenticatedMembreCarnetRouteImport } from './routes/_authenticated.membre.carnet'
-import { Route as AuthenticatedMembreBibliothequeRouteImport } from './routes/_authenticated.membre.bibliotheque'
-import { Route as AuthenticatedCoachSeancesRouteImport } from './routes/_authenticated.coach.seances'
-import { Route as AuthenticatedCoachRunningRouteImport } from './routes/_authenticated.coach.running'
-import { Route as AuthenticatedCoachRetardsRouteImport } from './routes/_authenticated.coach.retards'
-import { Route as AuthenticatedCoachProgrammesRouteImport } from './routes/_authenticated.coach.programmes'
-import { Route as AuthenticatedCoachPlanningRouteImport } from './routes/_authenticated.coach.planning'
-import { Route as AuthenticatedCoachMessagesRouteImport } from './routes/_authenticated.coach.messages'
-import { Route as AuthenticatedCoachMembresRouteImport } from './routes/_authenticated.coach.membres'
-import { Route as AuthenticatedCoachLogsRouteImport } from './routes/_authenticated.coach.logs'
-import { Route as AuthenticatedCoachInvitationsRouteImport } from './routes/_authenticated.coach.invitations'
-import { Route as AuthenticatedCoachImportRouteImport } from './routes/_authenticated.coach.import'
-import { Route as AuthenticatedCoachExercicesRouteImport } from './routes/_authenticated.coach.exercices'
-import { Route as AuthenticatedCoachCommunauteRouteImport } from './routes/_authenticated.coach.communaute'
 import { Route as AuthenticatedCoachBuilderRouteImport } from './routes/_authenticated.coach.builder'
-import { Route as AuthenticatedCoachProgrammesIndexRouteImport } from './routes/_authenticated.coach.programmes.index'
+import { Route as AuthenticatedCoachCommunauteRouteImport } from './routes/_authenticated.coach.communaute'
+import { Route as AuthenticatedCoachExercicesRouteImport } from './routes/_authenticated.coach.exercices'
+import { Route as AuthenticatedCoachImportRouteImport } from './routes/_authenticated.coach.import'
+import { Route as AuthenticatedCoachInvitationsRouteImport } from './routes/_authenticated.coach.invitations'
+import { Route as AuthenticatedCoachLogsRouteImport } from './routes/_authenticated.coach.logs'
+import { Route as AuthenticatedCoachMembresRouteImport } from './routes/_authenticated.coach.membres'
+import { Route as AuthenticatedCoachMessagesRouteImport } from './routes/_authenticated.coach.messages'
+import { Route as AuthenticatedCoachPlanningRouteImport } from './routes/_authenticated.coach.planning'
+import { Route as AuthenticatedCoachProgrammesRouteImport } from './routes/_authenticated.coach.programmes'
+import { Route as AuthenticatedCoachRetardsRouteImport } from './routes/_authenticated.coach.retards'
+import { Route as AuthenticatedCoachRunningRouteImport } from './routes/_authenticated.coach.running'
+import { Route as AuthenticatedCoachSeancesRouteImport } from './routes/_authenticated.coach.seances'
+import { Route as AuthenticatedMembreIndexRouteImport } from './routes/_authenticated.membre.index'
+import { Route as AuthenticatedMembreBibliothequeRouteImport } from './routes/_authenticated.membre.bibliotheque'
+import { Route as AuthenticatedMembreCarnetRouteImport } from './routes/_authenticated.membre.carnet'
+import { Route as AuthenticatedMembreCommencerRouteImport } from './routes/_authenticated.membre.commencer'
+import { Route as AuthenticatedMembreCommunauteRouteImport } from './routes/_authenticated.membre.communaute'
+import { Route as AuthenticatedMembreComposerRouteImport } from './routes/_authenticated.membre.composer'
+import { Route as AuthenticatedMembreHistoriqueRouteImport } from './routes/_authenticated.membre.historique'
+import { Route as AuthenticatedMembreLoggerRouteImport } from './routes/_authenticated.membre.logger'
+import { Route as AuthenticatedMembreMessagesRouteImport } from './routes/_authenticated.membre.messages'
+import { Route as AuthenticatedMembreNutritionRouteImport } from './routes/_authenticated.membre.nutrition'
+import { Route as AuthenticatedMembrePlanningRouteImport } from './routes/_authenticated.membre.planning'
+import { Route as AuthenticatedMembreProfilRouteImport } from './routes/_authenticated.membre.profil'
+import { Route as AuthenticatedMembreProgrammeRouteImport } from './routes/_authenticated.membre.programme'
+import { Route as AuthenticatedMembreProgressionRouteImport } from './routes/_authenticated.membre.progression'
+import { Route as AuthenticatedMembreRetoursRouteImport } from './routes/_authenticated.membre.retours'
+import { Route as AuthenticatedMembreRunningRouteImport } from './routes/_authenticated.membre.running'
+import { Route as ApiStravaCallbackRouteImport } from './routes/api/strava/callback'
+import { Route as ApiStravaWebhookRouteImport } from './routes/api/strava/webhook'
 import { Route as AuthenticatedCoachBuilderIndexRouteImport } from './routes/_authenticated.coach.builder.index'
-import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
-import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
-import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
-import { Route as ApiPublicHooksGenerateLogbooksRouteImport } from './routes/api/public/hooks/generate-logbooks'
-import { Route as AuthenticatedMembreSeanceSessionIdRouteImport } from './routes/_authenticated.membre.seance.$sessionId'
-import { Route as AuthenticatedMembreSeanceLibreSessionIdRouteImport } from './routes/_authenticated.membre.seance-libre.$sessionId'
-import { Route as AuthenticatedMembreCarnetWeekRouteImport } from './routes/_authenticated.membre.carnet.$week'
-import { Route as AuthenticatedCoachSeanceSessionIdRouteImport } from './routes/_authenticated.coach.seance.$sessionId'
-import { Route as AuthenticatedCoachProgrammesIdRouteImport } from './routes/_authenticated.coach.programmes.$id'
-import { Route as AuthenticatedCoachMembreMemberIdRouteImport } from './routes/_authenticated.coach.membre.$memberId'
 import { Route as AuthenticatedCoachBuilderIdRouteImport } from './routes/_authenticated.coach.builder.$id'
+import { Route as AuthenticatedCoachMembreMemberIdRouteImport } from './routes/_authenticated.coach.membre.$memberId'
+import { Route as AuthenticatedCoachProgrammesIndexRouteImport } from './routes/_authenticated.coach.programmes.index'
+import { Route as AuthenticatedCoachProgrammesIdRouteImport } from './routes/_authenticated.coach.programmes.$id'
+import { Route as AuthenticatedCoachSeanceSessionIdRouteImport } from './routes/_authenticated.coach.seance.$sessionId'
+import { Route as AuthenticatedMembreCarnetWeekRouteImport } from './routes/_authenticated.membre.carnet.$week'
+import { Route as AuthenticatedMembreSeanceLibreSessionIdRouteImport } from './routes/_authenticated.membre.seance-libre.$sessionId'
+import { Route as AuthenticatedMembreSeanceSessionIdRouteImport } from './routes/_authenticated.membre.seance.$sessionId'
+import { Route as ApiPublicHooksGenerateLogbooksRouteImport } from './routes/api/public/hooks/generate-logbooks'
+import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
+import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as AuthenticatedCoachMembreMemberIdIndexRouteImport } from './routes/_authenticated.coach.membre.$memberId.index'
 import { Route as AuthenticatedCoachMembreMemberIdAdapterRouteImport } from './routes/_authenticated.coach.membre.$memberId.adapter'
 
-const SignupRoute = SignupRouteImport.update({
-  id: '/signup',
-  path: '/signup',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -77,13 +77,14 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRoute = AuthenticatedRouteImport.update({
-  id: '/_authenticated',
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingStepRoute = OnboardingStepRouteImport.update({
@@ -91,174 +92,15 @@ const OnboardingStepRoute = OnboardingStepRouteImport.update({
   path: '/onboarding/$step',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedMembreIndexRoute =
-  AuthenticatedMembreIndexRouteImport.update({
-    id: '/membre/',
-    path: '/membre/',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
 const AuthenticatedCoachIndexRoute = AuthenticatedCoachIndexRouteImport.update({
   id: '/coach/',
   path: '/coach/',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const ApiStravaWebhookRoute = ApiStravaWebhookRouteImport.update({
-  id: '/api/strava/webhook',
-  path: '/api/strava/webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiStravaCallbackRoute = ApiStravaCallbackRouteImport.update({
-  id: '/api/strava/callback',
-  path: '/api/strava/callback',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedMembreRunningRoute =
-  AuthenticatedMembreRunningRouteImport.update({
-    id: '/membre/running',
-    path: '/membre/running',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedMembreRetoursRoute =
-  AuthenticatedMembreRetoursRouteImport.update({
-    id: '/membre/retours',
-    path: '/membre/retours',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedMembreProgressionRoute =
-  AuthenticatedMembreProgressionRouteImport.update({
-    id: '/membre/progression',
-    path: '/membre/progression',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedMembreProgrammeRoute =
-  AuthenticatedMembreProgrammeRouteImport.update({
-    id: '/membre/programme',
-    path: '/membre/programme',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedMembreProfilRoute =
-  AuthenticatedMembreProfilRouteImport.update({
-    id: '/membre/profil',
-    path: '/membre/profil',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedMembrePlanningRoute =
-  AuthenticatedMembrePlanningRouteImport.update({
-    id: '/membre/planning',
-    path: '/membre/planning',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedMembreMessagesRoute =
-  AuthenticatedMembreMessagesRouteImport.update({
-    id: '/membre/messages',
-    path: '/membre/messages',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedMembreLoggerRoute =
-  AuthenticatedMembreLoggerRouteImport.update({
-    id: '/membre/logger',
-    path: '/membre/logger',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedMembreHistoriqueRoute =
-  AuthenticatedMembreHistoriqueRouteImport.update({
-    id: '/membre/historique',
-    path: '/membre/historique',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedMembreComposerRoute =
-  AuthenticatedMembreComposerRouteImport.update({
-    id: '/membre/composer',
-    path: '/membre/composer',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedMembreCommunauteRoute =
-  AuthenticatedMembreCommunauteRouteImport.update({
-    id: '/membre/communaute',
-    path: '/membre/communaute',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedMembreCommencerRoute =
-  AuthenticatedMembreCommencerRouteImport.update({
-    id: '/membre/commencer',
-    path: '/membre/commencer',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedMembreCarnetRoute =
-  AuthenticatedMembreCarnetRouteImport.update({
-    id: '/membre/carnet',
-    path: '/membre/carnet',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedMembreBibliothequeRoute =
-  AuthenticatedMembreBibliothequeRouteImport.update({
-    id: '/membre/bibliotheque',
-    path: '/membre/bibliotheque',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedCoachSeancesRoute =
-  AuthenticatedCoachSeancesRouteImport.update({
-    id: '/coach/seances',
-    path: '/coach/seances',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedCoachRunningRoute =
-  AuthenticatedCoachRunningRouteImport.update({
-    id: '/coach/running',
-    path: '/coach/running',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedCoachRetardsRoute =
-  AuthenticatedCoachRetardsRouteImport.update({
-    id: '/coach/retards',
-    path: '/coach/retards',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedCoachProgrammesRoute =
-  AuthenticatedCoachProgrammesRouteImport.update({
-    id: '/coach/programmes',
-    path: '/coach/programmes',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedCoachPlanningRoute =
-  AuthenticatedCoachPlanningRouteImport.update({
-    id: '/coach/planning',
-    path: '/coach/planning',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedCoachMessagesRoute =
-  AuthenticatedCoachMessagesRouteImport.update({
-    id: '/coach/messages',
-    path: '/coach/messages',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedCoachMembresRoute =
-  AuthenticatedCoachMembresRouteImport.update({
-    id: '/coach/membres',
-    path: '/coach/membres',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedCoachLogsRoute = AuthenticatedCoachLogsRouteImport.update({
-  id: '/coach/logs',
-  path: '/coach/logs',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedCoachInvitationsRoute =
-  AuthenticatedCoachInvitationsRouteImport.update({
-    id: '/coach/invitations',
-    path: '/coach/invitations',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedCoachImportRoute =
-  AuthenticatedCoachImportRouteImport.update({
-    id: '/coach/import',
-    path: '/coach/import',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedCoachExercicesRoute =
-  AuthenticatedCoachExercicesRouteImport.update({
-    id: '/coach/exercices',
-    path: '/coach/exercices',
+const AuthenticatedCoachBuilderRoute =
+  AuthenticatedCoachBuilderRouteImport.update({
+    id: '/coach/builder',
+    path: '/coach/builder',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedCoachCommunauteRoute =
@@ -267,10 +109,193 @@ const AuthenticatedCoachCommunauteRoute =
     path: '/coach/communaute',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedCoachBuilderRoute =
-  AuthenticatedCoachBuilderRouteImport.update({
-    id: '/coach/builder',
-    path: '/coach/builder',
+const AuthenticatedCoachExercicesRoute =
+  AuthenticatedCoachExercicesRouteImport.update({
+    id: '/coach/exercices',
+    path: '/coach/exercices',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedCoachImportRoute =
+  AuthenticatedCoachImportRouteImport.update({
+    id: '/coach/import',
+    path: '/coach/import',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedCoachInvitationsRoute =
+  AuthenticatedCoachInvitationsRouteImport.update({
+    id: '/coach/invitations',
+    path: '/coach/invitations',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedCoachLogsRoute = AuthenticatedCoachLogsRouteImport.update({
+  id: '/coach/logs',
+  path: '/coach/logs',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedCoachMembresRoute =
+  AuthenticatedCoachMembresRouteImport.update({
+    id: '/coach/membres',
+    path: '/coach/membres',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedCoachMessagesRoute =
+  AuthenticatedCoachMessagesRouteImport.update({
+    id: '/coach/messages',
+    path: '/coach/messages',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedCoachPlanningRoute =
+  AuthenticatedCoachPlanningRouteImport.update({
+    id: '/coach/planning',
+    path: '/coach/planning',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedCoachProgrammesRoute =
+  AuthenticatedCoachProgrammesRouteImport.update({
+    id: '/coach/programmes',
+    path: '/coach/programmes',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedCoachRetardsRoute =
+  AuthenticatedCoachRetardsRouteImport.update({
+    id: '/coach/retards',
+    path: '/coach/retards',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedCoachRunningRoute =
+  AuthenticatedCoachRunningRouteImport.update({
+    id: '/coach/running',
+    path: '/coach/running',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedCoachSeancesRoute =
+  AuthenticatedCoachSeancesRouteImport.update({
+    id: '/coach/seances',
+    path: '/coach/seances',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedMembreIndexRoute =
+  AuthenticatedMembreIndexRouteImport.update({
+    id: '/membre/',
+    path: '/membre/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedMembreBibliothequeRoute =
+  AuthenticatedMembreBibliothequeRouteImport.update({
+    id: '/membre/bibliotheque',
+    path: '/membre/bibliotheque',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedMembreCarnetRoute =
+  AuthenticatedMembreCarnetRouteImport.update({
+    id: '/membre/carnet',
+    path: '/membre/carnet',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedMembreCommencerRoute =
+  AuthenticatedMembreCommencerRouteImport.update({
+    id: '/membre/commencer',
+    path: '/membre/commencer',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedMembreCommunauteRoute =
+  AuthenticatedMembreCommunauteRouteImport.update({
+    id: '/membre/communaute',
+    path: '/membre/communaute',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedMembreComposerRoute =
+  AuthenticatedMembreComposerRouteImport.update({
+    id: '/membre/composer',
+    path: '/membre/composer',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedMembreHistoriqueRoute =
+  AuthenticatedMembreHistoriqueRouteImport.update({
+    id: '/membre/historique',
+    path: '/membre/historique',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedMembreLoggerRoute =
+  AuthenticatedMembreLoggerRouteImport.update({
+    id: '/membre/logger',
+    path: '/membre/logger',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedMembreMessagesRoute =
+  AuthenticatedMembreMessagesRouteImport.update({
+    id: '/membre/messages',
+    path: '/membre/messages',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedMembreNutritionRoute =
+  AuthenticatedMembreNutritionRouteImport.update({
+    id: '/membre/nutrition',
+    path: '/membre/nutrition',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedMembrePlanningRoute =
+  AuthenticatedMembrePlanningRouteImport.update({
+    id: '/membre/planning',
+    path: '/membre/planning',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedMembreProfilRoute =
+  AuthenticatedMembreProfilRouteImport.update({
+    id: '/membre/profil',
+    path: '/membre/profil',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedMembreProgrammeRoute =
+  AuthenticatedMembreProgrammeRouteImport.update({
+    id: '/membre/programme',
+    path: '/membre/programme',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedMembreProgressionRoute =
+  AuthenticatedMembreProgressionRouteImport.update({
+    id: '/membre/progression',
+    path: '/membre/progression',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedMembreRetoursRoute =
+  AuthenticatedMembreRetoursRouteImport.update({
+    id: '/membre/retours',
+    path: '/membre/retours',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedMembreRunningRoute =
+  AuthenticatedMembreRunningRouteImport.update({
+    id: '/membre/running',
+    path: '/membre/running',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const ApiStravaCallbackRoute = ApiStravaCallbackRouteImport.update({
+  id: '/api/strava/callback',
+  path: '/api/strava/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiStravaWebhookRoute = ApiStravaWebhookRouteImport.update({
+  id: '/api/strava/webhook',
+  path: '/api/strava/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedCoachBuilderIndexRoute =
+  AuthenticatedCoachBuilderIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedCoachBuilderRoute,
+  } as any)
+const AuthenticatedCoachBuilderIdRoute =
+  AuthenticatedCoachBuilderIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => AuthenticatedCoachBuilderRoute,
+  } as any)
+const AuthenticatedCoachMembreMemberIdRoute =
+  AuthenticatedCoachMembreMemberIdRouteImport.update({
+    id: '/coach/membre/$memberId',
+    path: '/coach/membre/$memberId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedCoachProgrammesIndexRoute =
@@ -279,44 +304,16 @@ const AuthenticatedCoachProgrammesIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedCoachProgrammesRoute,
   } as any)
-const AuthenticatedCoachBuilderIndexRoute =
-  AuthenticatedCoachBuilderIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedCoachBuilderRoute,
+const AuthenticatedCoachProgrammesIdRoute =
+  AuthenticatedCoachProgrammesIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => AuthenticatedCoachProgrammesRoute,
   } as any)
-const LovableEmailQueueProcessRoute =
-  LovableEmailQueueProcessRouteImport.update({
-    id: '/lovable/email/queue/process',
-    path: '/lovable/email/queue/process',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
-  id: '/lovable/email/auth/webhook',
-  path: '/lovable/email/auth/webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
-  id: '/lovable/email/auth/preview',
-  path: '/lovable/email/auth/preview',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicHooksGenerateLogbooksRoute =
-  ApiPublicHooksGenerateLogbooksRouteImport.update({
-    id: '/api/public/hooks/generate-logbooks',
-    path: '/api/public/hooks/generate-logbooks',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const AuthenticatedMembreSeanceSessionIdRoute =
-  AuthenticatedMembreSeanceSessionIdRouteImport.update({
-    id: '/membre/seance/$sessionId',
-    path: '/membre/seance/$sessionId',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedMembreSeanceLibreSessionIdRoute =
-  AuthenticatedMembreSeanceLibreSessionIdRouteImport.update({
-    id: '/membre/seance-libre/$sessionId',
-    path: '/membre/seance-libre/$sessionId',
+const AuthenticatedCoachSeanceSessionIdRoute =
+  AuthenticatedCoachSeanceSessionIdRouteImport.update({
+    id: '/coach/seance/$sessionId',
+    path: '/coach/seance/$sessionId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedMembreCarnetWeekRoute =
@@ -325,29 +322,39 @@ const AuthenticatedMembreCarnetWeekRoute =
     path: '/$week',
     getParentRoute: () => AuthenticatedMembreCarnetRoute,
   } as any)
-const AuthenticatedCoachSeanceSessionIdRoute =
-  AuthenticatedCoachSeanceSessionIdRouteImport.update({
-    id: '/coach/seance/$sessionId',
-    path: '/coach/seance/$sessionId',
+const AuthenticatedMembreSeanceLibreSessionIdRoute =
+  AuthenticatedMembreSeanceLibreSessionIdRouteImport.update({
+    id: '/membre/seance-libre/$sessionId',
+    path: '/membre/seance-libre/$sessionId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedCoachProgrammesIdRoute =
-  AuthenticatedCoachProgrammesIdRouteImport.update({
-    id: '/$id',
-    path: '/$id',
-    getParentRoute: () => AuthenticatedCoachProgrammesRoute,
-  } as any)
-const AuthenticatedCoachMembreMemberIdRoute =
-  AuthenticatedCoachMembreMemberIdRouteImport.update({
-    id: '/coach/membre/$memberId',
-    path: '/coach/membre/$memberId',
+const AuthenticatedMembreSeanceSessionIdRoute =
+  AuthenticatedMembreSeanceSessionIdRouteImport.update({
+    id: '/membre/seance/$sessionId',
+    path: '/membre/seance/$sessionId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedCoachBuilderIdRoute =
-  AuthenticatedCoachBuilderIdRouteImport.update({
-    id: '/$id',
-    path: '/$id',
-    getParentRoute: () => AuthenticatedCoachBuilderRoute,
+const ApiPublicHooksGenerateLogbooksRoute =
+  ApiPublicHooksGenerateLogbooksRouteImport.update({
+    id: '/api/public/hooks/generate-logbooks',
+    path: '/api/public/hooks/generate-logbooks',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
+  id: '/lovable/email/auth/preview',
+  path: '/lovable/email/auth/preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
+  id: '/lovable/email/auth/webhook',
+  path: '/lovable/email/auth/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailQueueProcessRoute =
+  LovableEmailQueueProcessRouteImport.update({
+    id: '/lovable/email/queue/process',
+    path: '/lovable/email/queue/process',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const AuthenticatedCoachMembreMemberIdIndexRoute =
   AuthenticatedCoachMembreMemberIdIndexRouteImport.update({
@@ -389,6 +396,7 @@ export interface FileRoutesByFullPath {
   '/membre/historique': typeof AuthenticatedMembreHistoriqueRoute
   '/membre/logger': typeof AuthenticatedMembreLoggerRoute
   '/membre/messages': typeof AuthenticatedMembreMessagesRoute
+  '/membre/nutrition': typeof AuthenticatedMembreNutritionRoute
   '/membre/planning': typeof AuthenticatedMembrePlanningRoute
   '/membre/profil': typeof AuthenticatedMembreProfilRoute
   '/membre/programme': typeof AuthenticatedMembreProgrammeRoute
@@ -440,6 +448,7 @@ export interface FileRoutesByTo {
   '/membre/historique': typeof AuthenticatedMembreHistoriqueRoute
   '/membre/logger': typeof AuthenticatedMembreLoggerRoute
   '/membre/messages': typeof AuthenticatedMembreMessagesRoute
+  '/membre/nutrition': typeof AuthenticatedMembreNutritionRoute
   '/membre/planning': typeof AuthenticatedMembrePlanningRoute
   '/membre/profil': typeof AuthenticatedMembreProfilRoute
   '/membre/programme': typeof AuthenticatedMembreProgrammeRoute
@@ -494,6 +503,7 @@ export interface FileRoutesById {
   '/_authenticated/membre/historique': typeof AuthenticatedMembreHistoriqueRoute
   '/_authenticated/membre/logger': typeof AuthenticatedMembreLoggerRoute
   '/_authenticated/membre/messages': typeof AuthenticatedMembreMessagesRoute
+  '/_authenticated/membre/nutrition': typeof AuthenticatedMembreNutritionRoute
   '/_authenticated/membre/planning': typeof AuthenticatedMembrePlanningRoute
   '/_authenticated/membre/profil': typeof AuthenticatedMembreProfilRoute
   '/_authenticated/membre/programme': typeof AuthenticatedMembreProgrammeRoute
@@ -549,6 +559,7 @@ export interface FileRouteTypes {
     | '/membre/historique'
     | '/membre/logger'
     | '/membre/messages'
+    | '/membre/nutrition'
     | '/membre/planning'
     | '/membre/profil'
     | '/membre/programme'
@@ -600,6 +611,7 @@ export interface FileRouteTypes {
     | '/membre/historique'
     | '/membre/logger'
     | '/membre/messages'
+    | '/membre/nutrition'
     | '/membre/planning'
     | '/membre/profil'
     | '/membre/programme'
@@ -653,6 +665,7 @@ export interface FileRouteTypes {
     | '/_authenticated/membre/historique'
     | '/_authenticated/membre/logger'
     | '/_authenticated/membre/messages'
+    | '/_authenticated/membre/nutrition'
     | '/_authenticated/membre/planning'
     | '/_authenticated/membre/profil'
     | '/_authenticated/membre/programme'
@@ -697,25 +710,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/signup': {
-      id: '/signup'
-      path: '/signup'
-      fullPath: '/signup'
-      preLoaderRoute: typeof SignupRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -725,11 +724,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/onboarding/$step': {
@@ -739,214 +752,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingStepRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/membre/': {
-      id: '/_authenticated/membre/'
-      path: '/membre'
-      fullPath: '/membre/'
-      preLoaderRoute: typeof AuthenticatedMembreIndexRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/coach/': {
       id: '/_authenticated/coach/'
       path: '/coach'
       fullPath: '/coach/'
       preLoaderRoute: typeof AuthenticatedCoachIndexRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/api/strava/webhook': {
-      id: '/api/strava/webhook'
-      path: '/api/strava/webhook'
-      fullPath: '/api/strava/webhook'
-      preLoaderRoute: typeof ApiStravaWebhookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/strava/callback': {
-      id: '/api/strava/callback'
-      path: '/api/strava/callback'
-      fullPath: '/api/strava/callback'
-      preLoaderRoute: typeof ApiStravaCallbackRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/membre/running': {
-      id: '/_authenticated/membre/running'
-      path: '/membre/running'
-      fullPath: '/membre/running'
-      preLoaderRoute: typeof AuthenticatedMembreRunningRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/membre/retours': {
-      id: '/_authenticated/membre/retours'
-      path: '/membre/retours'
-      fullPath: '/membre/retours'
-      preLoaderRoute: typeof AuthenticatedMembreRetoursRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/membre/progression': {
-      id: '/_authenticated/membre/progression'
-      path: '/membre/progression'
-      fullPath: '/membre/progression'
-      preLoaderRoute: typeof AuthenticatedMembreProgressionRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/membre/programme': {
-      id: '/_authenticated/membre/programme'
-      path: '/membre/programme'
-      fullPath: '/membre/programme'
-      preLoaderRoute: typeof AuthenticatedMembreProgrammeRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/membre/profil': {
-      id: '/_authenticated/membre/profil'
-      path: '/membre/profil'
-      fullPath: '/membre/profil'
-      preLoaderRoute: typeof AuthenticatedMembreProfilRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/membre/planning': {
-      id: '/_authenticated/membre/planning'
-      path: '/membre/planning'
-      fullPath: '/membre/planning'
-      preLoaderRoute: typeof AuthenticatedMembrePlanningRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/membre/messages': {
-      id: '/_authenticated/membre/messages'
-      path: '/membre/messages'
-      fullPath: '/membre/messages'
-      preLoaderRoute: typeof AuthenticatedMembreMessagesRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/membre/logger': {
-      id: '/_authenticated/membre/logger'
-      path: '/membre/logger'
-      fullPath: '/membre/logger'
-      preLoaderRoute: typeof AuthenticatedMembreLoggerRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/membre/historique': {
-      id: '/_authenticated/membre/historique'
-      path: '/membre/historique'
-      fullPath: '/membre/historique'
-      preLoaderRoute: typeof AuthenticatedMembreHistoriqueRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/membre/composer': {
-      id: '/_authenticated/membre/composer'
-      path: '/membre/composer'
-      fullPath: '/membre/composer'
-      preLoaderRoute: typeof AuthenticatedMembreComposerRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/membre/communaute': {
-      id: '/_authenticated/membre/communaute'
-      path: '/membre/communaute'
-      fullPath: '/membre/communaute'
-      preLoaderRoute: typeof AuthenticatedMembreCommunauteRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/membre/commencer': {
-      id: '/_authenticated/membre/commencer'
-      path: '/membre/commencer'
-      fullPath: '/membre/commencer'
-      preLoaderRoute: typeof AuthenticatedMembreCommencerRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/membre/carnet': {
-      id: '/_authenticated/membre/carnet'
-      path: '/membre/carnet'
-      fullPath: '/membre/carnet'
-      preLoaderRoute: typeof AuthenticatedMembreCarnetRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/membre/bibliotheque': {
-      id: '/_authenticated/membre/bibliotheque'
-      path: '/membre/bibliotheque'
-      fullPath: '/membre/bibliotheque'
-      preLoaderRoute: typeof AuthenticatedMembreBibliothequeRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/coach/seances': {
-      id: '/_authenticated/coach/seances'
-      path: '/coach/seances'
-      fullPath: '/coach/seances'
-      preLoaderRoute: typeof AuthenticatedCoachSeancesRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/coach/running': {
-      id: '/_authenticated/coach/running'
-      path: '/coach/running'
-      fullPath: '/coach/running'
-      preLoaderRoute: typeof AuthenticatedCoachRunningRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/coach/retards': {
-      id: '/_authenticated/coach/retards'
-      path: '/coach/retards'
-      fullPath: '/coach/retards'
-      preLoaderRoute: typeof AuthenticatedCoachRetardsRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/coach/programmes': {
-      id: '/_authenticated/coach/programmes'
-      path: '/coach/programmes'
-      fullPath: '/coach/programmes'
-      preLoaderRoute: typeof AuthenticatedCoachProgrammesRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/coach/planning': {
-      id: '/_authenticated/coach/planning'
-      path: '/coach/planning'
-      fullPath: '/coach/planning'
-      preLoaderRoute: typeof AuthenticatedCoachPlanningRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/coach/messages': {
-      id: '/_authenticated/coach/messages'
-      path: '/coach/messages'
-      fullPath: '/coach/messages'
-      preLoaderRoute: typeof AuthenticatedCoachMessagesRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/coach/membres': {
-      id: '/_authenticated/coach/membres'
-      path: '/coach/membres'
-      fullPath: '/coach/membres'
-      preLoaderRoute: typeof AuthenticatedCoachMembresRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/coach/logs': {
-      id: '/_authenticated/coach/logs'
-      path: '/coach/logs'
-      fullPath: '/coach/logs'
-      preLoaderRoute: typeof AuthenticatedCoachLogsRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/coach/invitations': {
-      id: '/_authenticated/coach/invitations'
-      path: '/coach/invitations'
-      fullPath: '/coach/invitations'
-      preLoaderRoute: typeof AuthenticatedCoachInvitationsRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/coach/import': {
-      id: '/_authenticated/coach/import'
-      path: '/coach/import'
-      fullPath: '/coach/import'
-      preLoaderRoute: typeof AuthenticatedCoachImportRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/coach/exercices': {
-      id: '/_authenticated/coach/exercices'
-      path: '/coach/exercices'
-      fullPath: '/coach/exercices'
-      preLoaderRoute: typeof AuthenticatedCoachExercicesRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/coach/communaute': {
-      id: '/_authenticated/coach/communaute'
-      path: '/coach/communaute'
-      fullPath: '/coach/communaute'
-      preLoaderRoute: typeof AuthenticatedCoachCommunauteRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/coach/builder': {
@@ -956,12 +766,215 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCoachBuilderRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/coach/programmes/': {
-      id: '/_authenticated/coach/programmes/'
-      path: '/'
-      fullPath: '/coach/programmes/'
-      preLoaderRoute: typeof AuthenticatedCoachProgrammesIndexRouteImport
-      parentRoute: typeof AuthenticatedCoachProgrammesRoute
+    '/_authenticated/coach/communaute': {
+      id: '/_authenticated/coach/communaute'
+      path: '/coach/communaute'
+      fullPath: '/coach/communaute'
+      preLoaderRoute: typeof AuthenticatedCoachCommunauteRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/coach/exercices': {
+      id: '/_authenticated/coach/exercices'
+      path: '/coach/exercices'
+      fullPath: '/coach/exercices'
+      preLoaderRoute: typeof AuthenticatedCoachExercicesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/coach/import': {
+      id: '/_authenticated/coach/import'
+      path: '/coach/import'
+      fullPath: '/coach/import'
+      preLoaderRoute: typeof AuthenticatedCoachImportRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/coach/invitations': {
+      id: '/_authenticated/coach/invitations'
+      path: '/coach/invitations'
+      fullPath: '/coach/invitations'
+      preLoaderRoute: typeof AuthenticatedCoachInvitationsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/coach/logs': {
+      id: '/_authenticated/coach/logs'
+      path: '/coach/logs'
+      fullPath: '/coach/logs'
+      preLoaderRoute: typeof AuthenticatedCoachLogsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/coach/membres': {
+      id: '/_authenticated/coach/membres'
+      path: '/coach/membres'
+      fullPath: '/coach/membres'
+      preLoaderRoute: typeof AuthenticatedCoachMembresRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/coach/messages': {
+      id: '/_authenticated/coach/messages'
+      path: '/coach/messages'
+      fullPath: '/coach/messages'
+      preLoaderRoute: typeof AuthenticatedCoachMessagesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/coach/planning': {
+      id: '/_authenticated/coach/planning'
+      path: '/coach/planning'
+      fullPath: '/coach/planning'
+      preLoaderRoute: typeof AuthenticatedCoachPlanningRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/coach/programmes': {
+      id: '/_authenticated/coach/programmes'
+      path: '/coach/programmes'
+      fullPath: '/coach/programmes'
+      preLoaderRoute: typeof AuthenticatedCoachProgrammesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/coach/retards': {
+      id: '/_authenticated/coach/retards'
+      path: '/coach/retards'
+      fullPath: '/coach/retards'
+      preLoaderRoute: typeof AuthenticatedCoachRetardsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/coach/running': {
+      id: '/_authenticated/coach/running'
+      path: '/coach/running'
+      fullPath: '/coach/running'
+      preLoaderRoute: typeof AuthenticatedCoachRunningRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/coach/seances': {
+      id: '/_authenticated/coach/seances'
+      path: '/coach/seances'
+      fullPath: '/coach/seances'
+      preLoaderRoute: typeof AuthenticatedCoachSeancesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/membre/': {
+      id: '/_authenticated/membre/'
+      path: '/membre'
+      fullPath: '/membre/'
+      preLoaderRoute: typeof AuthenticatedMembreIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/membre/bibliotheque': {
+      id: '/_authenticated/membre/bibliotheque'
+      path: '/membre/bibliotheque'
+      fullPath: '/membre/bibliotheque'
+      preLoaderRoute: typeof AuthenticatedMembreBibliothequeRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/membre/carnet': {
+      id: '/_authenticated/membre/carnet'
+      path: '/membre/carnet'
+      fullPath: '/membre/carnet'
+      preLoaderRoute: typeof AuthenticatedMembreCarnetRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/membre/commencer': {
+      id: '/_authenticated/membre/commencer'
+      path: '/membre/commencer'
+      fullPath: '/membre/commencer'
+      preLoaderRoute: typeof AuthenticatedMembreCommencerRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/membre/communaute': {
+      id: '/_authenticated/membre/communaute'
+      path: '/membre/communaute'
+      fullPath: '/membre/communaute'
+      preLoaderRoute: typeof AuthenticatedMembreCommunauteRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/membre/composer': {
+      id: '/_authenticated/membre/composer'
+      path: '/membre/composer'
+      fullPath: '/membre/composer'
+      preLoaderRoute: typeof AuthenticatedMembreComposerRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/membre/historique': {
+      id: '/_authenticated/membre/historique'
+      path: '/membre/historique'
+      fullPath: '/membre/historique'
+      preLoaderRoute: typeof AuthenticatedMembreHistoriqueRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/membre/logger': {
+      id: '/_authenticated/membre/logger'
+      path: '/membre/logger'
+      fullPath: '/membre/logger'
+      preLoaderRoute: typeof AuthenticatedMembreLoggerRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/membre/messages': {
+      id: '/_authenticated/membre/messages'
+      path: '/membre/messages'
+      fullPath: '/membre/messages'
+      preLoaderRoute: typeof AuthenticatedMembreMessagesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/membre/nutrition': {
+      id: '/_authenticated/membre/nutrition'
+      path: '/membre/nutrition'
+      fullPath: '/membre/nutrition'
+      preLoaderRoute: typeof AuthenticatedMembreNutritionRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/membre/planning': {
+      id: '/_authenticated/membre/planning'
+      path: '/membre/planning'
+      fullPath: '/membre/planning'
+      preLoaderRoute: typeof AuthenticatedMembrePlanningRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/membre/profil': {
+      id: '/_authenticated/membre/profil'
+      path: '/membre/profil'
+      fullPath: '/membre/profil'
+      preLoaderRoute: typeof AuthenticatedMembreProfilRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/membre/programme': {
+      id: '/_authenticated/membre/programme'
+      path: '/membre/programme'
+      fullPath: '/membre/programme'
+      preLoaderRoute: typeof AuthenticatedMembreProgrammeRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/membre/progression': {
+      id: '/_authenticated/membre/progression'
+      path: '/membre/progression'
+      fullPath: '/membre/progression'
+      preLoaderRoute: typeof AuthenticatedMembreProgressionRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/membre/retours': {
+      id: '/_authenticated/membre/retours'
+      path: '/membre/retours'
+      fullPath: '/membre/retours'
+      preLoaderRoute: typeof AuthenticatedMembreRetoursRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/membre/running': {
+      id: '/_authenticated/membre/running'
+      path: '/membre/running'
+      fullPath: '/membre/running'
+      preLoaderRoute: typeof AuthenticatedMembreRunningRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/api/strava/callback': {
+      id: '/api/strava/callback'
+      path: '/api/strava/callback'
+      fullPath: '/api/strava/callback'
+      preLoaderRoute: typeof ApiStravaCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/strava/webhook': {
+      id: '/api/strava/webhook'
+      path: '/api/strava/webhook'
+      fullPath: '/api/strava/webhook'
+      preLoaderRoute: typeof ApiStravaWebhookRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/coach/builder/': {
       id: '/_authenticated/coach/builder/'
@@ -970,46 +983,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCoachBuilderIndexRouteImport
       parentRoute: typeof AuthenticatedCoachBuilderRoute
     }
-    '/lovable/email/queue/process': {
-      id: '/lovable/email/queue/process'
-      path: '/lovable/email/queue/process'
-      fullPath: '/lovable/email/queue/process'
-      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/coach/builder/$id': {
+      id: '/_authenticated/coach/builder/$id'
+      path: '/$id'
+      fullPath: '/coach/builder/$id'
+      preLoaderRoute: typeof AuthenticatedCoachBuilderIdRouteImport
+      parentRoute: typeof AuthenticatedCoachBuilderRoute
     }
-    '/lovable/email/auth/webhook': {
-      id: '/lovable/email/auth/webhook'
-      path: '/lovable/email/auth/webhook'
-      fullPath: '/lovable/email/auth/webhook'
-      preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lovable/email/auth/preview': {
-      id: '/lovable/email/auth/preview'
-      path: '/lovable/email/auth/preview'
-      fullPath: '/lovable/email/auth/preview'
-      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/generate-logbooks': {
-      id: '/api/public/hooks/generate-logbooks'
-      path: '/api/public/hooks/generate-logbooks'
-      fullPath: '/api/public/hooks/generate-logbooks'
-      preLoaderRoute: typeof ApiPublicHooksGenerateLogbooksRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/membre/seance/$sessionId': {
-      id: '/_authenticated/membre/seance/$sessionId'
-      path: '/membre/seance/$sessionId'
-      fullPath: '/membre/seance/$sessionId'
-      preLoaderRoute: typeof AuthenticatedMembreSeanceSessionIdRouteImport
+    '/_authenticated/coach/membre/$memberId': {
+      id: '/_authenticated/coach/membre/$memberId'
+      path: '/coach/membre/$memberId'
+      fullPath: '/coach/membre/$memberId'
+      preLoaderRoute: typeof AuthenticatedCoachMembreMemberIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/membre/seance-libre/$sessionId': {
-      id: '/_authenticated/membre/seance-libre/$sessionId'
-      path: '/membre/seance-libre/$sessionId'
-      fullPath: '/membre/seance-libre/$sessionId'
-      preLoaderRoute: typeof AuthenticatedMembreSeanceLibreSessionIdRouteImport
+    '/_authenticated/coach/programmes/': {
+      id: '/_authenticated/coach/programmes/'
+      path: '/'
+      fullPath: '/coach/programmes/'
+      preLoaderRoute: typeof AuthenticatedCoachProgrammesIndexRouteImport
+      parentRoute: typeof AuthenticatedCoachProgrammesRoute
+    }
+    '/_authenticated/coach/programmes/$id': {
+      id: '/_authenticated/coach/programmes/$id'
+      path: '/$id'
+      fullPath: '/coach/programmes/$id'
+      preLoaderRoute: typeof AuthenticatedCoachProgrammesIdRouteImport
+      parentRoute: typeof AuthenticatedCoachProgrammesRoute
+    }
+    '/_authenticated/coach/seance/$sessionId': {
+      id: '/_authenticated/coach/seance/$sessionId'
+      path: '/coach/seance/$sessionId'
+      fullPath: '/coach/seance/$sessionId'
+      preLoaderRoute: typeof AuthenticatedCoachSeanceSessionIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/membre/carnet/$week': {
@@ -1019,33 +1025,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMembreCarnetWeekRouteImport
       parentRoute: typeof AuthenticatedMembreCarnetRoute
     }
-    '/_authenticated/coach/seance/$sessionId': {
-      id: '/_authenticated/coach/seance/$sessionId'
-      path: '/coach/seance/$sessionId'
-      fullPath: '/coach/seance/$sessionId'
-      preLoaderRoute: typeof AuthenticatedCoachSeanceSessionIdRouteImport
+    '/_authenticated/membre/seance-libre/$sessionId': {
+      id: '/_authenticated/membre/seance-libre/$sessionId'
+      path: '/membre/seance-libre/$sessionId'
+      fullPath: '/membre/seance-libre/$sessionId'
+      preLoaderRoute: typeof AuthenticatedMembreSeanceLibreSessionIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/coach/programmes/$id': {
-      id: '/_authenticated/coach/programmes/$id'
-      path: '/$id'
-      fullPath: '/coach/programmes/$id'
-      preLoaderRoute: typeof AuthenticatedCoachProgrammesIdRouteImport
-      parentRoute: typeof AuthenticatedCoachProgrammesRoute
-    }
-    '/_authenticated/coach/membre/$memberId': {
-      id: '/_authenticated/coach/membre/$memberId'
-      path: '/coach/membre/$memberId'
-      fullPath: '/coach/membre/$memberId'
-      preLoaderRoute: typeof AuthenticatedCoachMembreMemberIdRouteImport
+    '/_authenticated/membre/seance/$sessionId': {
+      id: '/_authenticated/membre/seance/$sessionId'
+      path: '/membre/seance/$sessionId'
+      fullPath: '/membre/seance/$sessionId'
+      preLoaderRoute: typeof AuthenticatedMembreSeanceSessionIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/coach/builder/$id': {
-      id: '/_authenticated/coach/builder/$id'
-      path: '/$id'
-      fullPath: '/coach/builder/$id'
-      preLoaderRoute: typeof AuthenticatedCoachBuilderIdRouteImport
-      parentRoute: typeof AuthenticatedCoachBuilderRoute
+    '/api/public/hooks/generate-logbooks': {
+      id: '/api/public/hooks/generate-logbooks'
+      path: '/api/public/hooks/generate-logbooks'
+      fullPath: '/api/public/hooks/generate-logbooks'
+      preLoaderRoute: typeof ApiPublicHooksGenerateLogbooksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/auth/preview': {
+      id: '/lovable/email/auth/preview'
+      path: '/lovable/email/auth/preview'
+      fullPath: '/lovable/email/auth/preview'
+      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/auth/webhook': {
+      id: '/lovable/email/auth/webhook'
+      path: '/lovable/email/auth/webhook'
+      fullPath: '/lovable/email/auth/webhook'
+      preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/queue/process': {
+      id: '/lovable/email/queue/process'
+      path: '/lovable/email/queue/process'
+      fullPath: '/lovable/email/queue/process'
+      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/coach/membre/$memberId/': {
       id: '/_authenticated/coach/membre/$memberId/'
@@ -1151,6 +1171,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedMembreHistoriqueRoute: typeof AuthenticatedMembreHistoriqueRoute
   AuthenticatedMembreLoggerRoute: typeof AuthenticatedMembreLoggerRoute
   AuthenticatedMembreMessagesRoute: typeof AuthenticatedMembreMessagesRoute
+  AuthenticatedMembreNutritionRoute: typeof AuthenticatedMembreNutritionRoute
   AuthenticatedMembrePlanningRoute: typeof AuthenticatedMembrePlanningRoute
   AuthenticatedMembreProfilRoute: typeof AuthenticatedMembreProfilRoute
   AuthenticatedMembreProgrammeRoute: typeof AuthenticatedMembreProgrammeRoute
@@ -1188,6 +1209,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedMembreHistoriqueRoute: AuthenticatedMembreHistoriqueRoute,
   AuthenticatedMembreLoggerRoute: AuthenticatedMembreLoggerRoute,
   AuthenticatedMembreMessagesRoute: AuthenticatedMembreMessagesRoute,
+  AuthenticatedMembreNutritionRoute: AuthenticatedMembreNutritionRoute,
   AuthenticatedMembrePlanningRoute: AuthenticatedMembrePlanningRoute,
   AuthenticatedMembreProfilRoute: AuthenticatedMembreProfilRoute,
   AuthenticatedMembreProgrammeRoute: AuthenticatedMembreProgrammeRoute,

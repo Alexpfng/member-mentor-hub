@@ -42,6 +42,15 @@ export function parseEmom(
   reps: string | null,
   name: string | null = null,
 ): EmomParams {
+  const explicitDuration = series?.match(/^\s*(\d+)\s*(?:'|min|m)?\s*$/i)?.[1];
+  const explicitReps = reps?.match(/^(\d+)$/)?.[1] ?? reps?.match(/^\s*(\d+)\s*\/\s*\d+\s*$/)?.[1];
+  if (explicitDuration && explicitReps) {
+    return fixSwappedDurationAndReps({
+      durationMin: parseInt(explicitDuration, 10),
+      repsPerMin: parseInt(explicitReps, 10),
+    });
+  }
+
   // Normalise: apostrophe typographique → droit, minuscule.
   // Le nom est inclus pour les regex « emom… » (le coach écrit souvent la durée
   // dans le nom, ex. « … EMOM6' ») mais PAS pour les fallbacks durFromSeries /
@@ -128,4 +137,111 @@ export function alternatingRepsCycle(reps: string | null | undefined): number[] 
   if (!Number.isFinite(even) || !Number.isFinite(odd)) return null;
   // minute 1 (impaire) → odd, minute 2 (paire) → even, puis on boucle.
   return [odd, even];
+}
+
+type EmomExerciseLike = {
+  name?: string | null;
+  code?: string | null;
+  block_type?: string | null;
+  series?: string | number | null;
+  reps?: string | number | null;
+};
+
+export type EmomMode = "classic" | "alternating-reps" | "alternating-exercises";
+
+export type EmomMinutePlanItem = {
+  minute: number;
+  exerciseIndex: number;
+  exerciseName: string;
+  targetLabel: string | null;
+};
+
+export type EmomPlan = {
+  mode: EmomMode;
+  durationMin: number;
+  repsPerMin: number | null;
+  repsLabel: string | null;
+  repsCycle?: number[];
+  exercises?: Array<{ name: string; targetLabel: string | null }>;
+  minutePlan: EmomMinutePlanItem[];
+};
+
+function pluralizeReps(value: number) {
+  return `${value} ${value > 1 ? "reps" : "rep"}`;
+}
+
+function targetLabelFromReps(reps: string | number | null | undefined) {
+  const raw = String(reps ?? "").trim();
+  const numeric = raw.match(/^\d+$/)?.[0];
+  return numeric ? pluralizeReps(parseInt(numeric, 10)) : raw || null;
+}
+
+export function buildEmomPlan(exercises: EmomExerciseLike[]): EmomPlan {
+  const first = exercises[0] ?? {};
+  const parsed = parseEmom(
+    first.series != null ? String(first.series) : null,
+    first.reps != null ? String(first.reps) : null,
+    first.name ?? null,
+  );
+  const durationMin = Math.max(1, Math.round(parsed.durationMin) || DEFAULT_DURATION_MIN);
+
+  if (exercises.length >= 2) {
+    const plannedExercises = exercises.slice(0, 2).map((exercise) => ({
+      name: exercise.name ?? "Exercice",
+      targetLabel: targetLabelFromReps(exercise.reps),
+    }));
+
+    return {
+      mode: "alternating-exercises",
+      durationMin,
+      repsPerMin: null,
+      repsLabel: null,
+      exercises: plannedExercises,
+      minutePlan: Array.from({ length: durationMin }, (_, index) => {
+        const exerciseIndex = index % plannedExercises.length;
+        const exercise = plannedExercises[exerciseIndex];
+        return {
+          minute: index + 1,
+          exerciseIndex,
+          exerciseName: exercise.name,
+          targetLabel: exercise.targetLabel,
+        };
+      }),
+    };
+  }
+
+  const repsRaw = first.reps != null ? String(first.reps).trim() : "";
+  const repsCycle = alternatingRepsCycle(repsRaw);
+  if (repsCycle) {
+    return {
+      mode: "alternating-reps",
+      durationMin,
+      repsPerMin: parsed.repsPerMin,
+      repsLabel: repsRaw,
+      repsCycle,
+      minutePlan: Array.from({ length: durationMin }, (_, index) => {
+        const reps = repsCycle[index % repsCycle.length];
+        return {
+          minute: index + 1,
+          exerciseIndex: 0,
+          exerciseName: first.name ?? "Exercice",
+          targetLabel: pluralizeReps(reps),
+        };
+      }),
+    };
+  }
+
+  const targetLabel = parsed.repsPerMin != null ? pluralizeReps(parsed.repsPerMin) : null;
+  return {
+    mode: "classic",
+    durationMin,
+    repsPerMin: parsed.repsPerMin,
+    repsLabel: parsed.repsPerMin != null ? String(parsed.repsPerMin) : null,
+    minutePlan: Array.from({ length: durationMin }, (_, index) => ({
+      minute: index + 1,
+      exerciseIndex: 0,
+      exerciseName: first.name ?? "Exercice",
+      targetLabel,
+    })),
+  };
 }

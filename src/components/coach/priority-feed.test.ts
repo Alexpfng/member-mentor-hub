@@ -1,6 +1,11 @@
 import { describe, expect, it } from "bun:test";
 
-import { hideMessageFromPriorityItems, hideSessionFromPriorityItems, hideVideoFromPriorityItems } from "./priority-feed";
+import {
+  hideMessageFromPriorityItems,
+  hideSessionFromPriorityItems,
+  hideSessionsFromPriorityItems,
+  hideVideoFromPriorityItems,
+} from "./priority-feed";
 
 describe("hideSessionFromPriorityItems", () => {
   it("removes only the targeted session from a grouped priority card", () => {
@@ -53,6 +58,51 @@ describe("hideSessionFromPriorityItems", () => {
     ];
 
     expect(hideSessionFromPriorityItems(items, "s1")).toEqual([]);
+  });
+
+  it("removes several selected sessions from grouped priority cards", () => {
+    const items = [
+      {
+        type: "member_group" as const,
+        id: "mg-1",
+        memberId: "m1",
+        memberName: "Teddy Morin",
+        maxRpe: 9,
+        createdAt: "2026-07-02T19:00:00.000Z",
+        priority: 80,
+        sessions: [
+          { sessionId: "s1", createdAt: "2026-07-02T19:00:00.000Z", exercises: [], maxRpe: 0 },
+          { sessionId: "s2", createdAt: "2026-07-01T19:00:00.000Z", exercises: [], maxRpe: 0 },
+        ],
+      },
+      {
+        type: "member_group" as const,
+        id: "mg-2",
+        memberId: "m2",
+        memberName: "Jordan Bouillot",
+        maxRpe: 7,
+        createdAt: "2026-07-03T19:00:00.000Z",
+        priority: 70,
+        sessions: [
+          { sessionId: "s3", createdAt: "2026-07-03T19:00:00.000Z", exercises: [], maxRpe: 0 },
+        ],
+      },
+    ];
+
+    expect(hideSessionsFromPriorityItems(items, ["s1", "s3"])).toEqual([
+      {
+        type: "member_group",
+        id: "mg-1",
+        memberId: "m1",
+        memberName: "Teddy Morin",
+        maxRpe: 9,
+        createdAt: "2026-07-02T19:00:00.000Z",
+        priority: 80,
+        sessions: [
+          { sessionId: "s2", createdAt: "2026-07-01T19:00:00.000Z", exercises: [], maxRpe: 0 },
+        ],
+      },
+    ]);
   });
 
   it("removes only the targeted message card", () => {

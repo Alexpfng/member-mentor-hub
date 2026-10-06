@@ -20,13 +20,13 @@ function normalizeText(value?: string | null) {
 
 function isDurationReps(reps?: string | number | null): boolean {
   if (reps == null) return false;
-  const r = String(reps).toLowerCase().trim();
+  const r = String(reps).toLowerCase().trim().replace(/\s*\/\s*(?=s|sec|secondes?\b)/g, "");
   return /\d+\s*(s|sec|secondes?|"|''|min|m)\b/.test(r) || /\d+\s*['"]/.test(r);
 }
 
 function parseDurationSeconds(reps?: string | number | null): number | null {
   if (reps == null) return null;
-  const r = String(reps).toLowerCase().trim();
+  const r = String(reps).toLowerCase().trim().replace(/\s*\/\s*(?=s|sec|secondes?\b)/g, "");
   let m = r.match(/(\d+)\s*(s|sec|secondes?)/);
   if (m) return parseInt(m[1], 10);
   m = r.match(/(\d+)\s*(min|minutes?)/);
@@ -58,12 +58,59 @@ function extractNumeric(value?: string | number | null): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function extractLoadKg(value?: string | number | null): number | null {
+  if (value == null) return null;
+  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+  const raw = String(value).toLowerCase();
+  const kgMatches = [...raw.matchAll(/(-?\d+(?:[.,]\d+)?)\s*(?:kg|kgs|kilo|kilos)\b/g)];
+  const kgValue = kgMatches.at(-1)?.[1];
+  if (kgValue) {
+    const parsed = parseFloat(kgValue.replace(",", "."));
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  if (/\d+\s*x\s*(?:halt[eè]res?|dumbbells?|kettlebells?|kb)\b/.test(raw)) return null;
+  return extractNumeric(raw);
+}
+
+function formatDefaultWeight(value: number) {
+  return Number.isInteger(value) ? String(value) : String(value).replace(".", ",");
+}
+
+export function getDefaultSetWeight({
+  prescribedCharge,
+  previousSetWeight,
+  historyWeight,
+  bodyweight,
+}: {
+  prescribedCharge?: string | number | null;
+  previousSetWeight?: number | null;
+  historyWeight?: number | null;
+  bodyweight: boolean;
+}) {
+  if (bodyweight) return "";
+  if (previousSetWeight != null && Number.isFinite(previousSetWeight)) {
+    return formatDefaultWeight(previousSetWeight);
+  }
+
+  const prescribedWeight = extractLoadKg(prescribedCharge);
+  if (prescribedWeight != null) return formatDefaultWeight(prescribedWeight);
+
+  if (historyWeight != null && Number.isFinite(historyWeight)) {
+    return formatDefaultWeight(historyWeight);
+  }
+
+  return "";
+}
+
 function isTimedByName(name?: string | null, tempo?: string | null) {
   const merged = normalizeText(`${name ?? ""} ${tempo ?? ""}`);
   return /gainage|plank|planche|iso\b|isometr|hold|tenir|maintien|floating/.test(merged);
 }
 
 export function getExpertSetLoggedValue(exercise: ExerciseLike, totalSets: number, setNumber: number): { value: number | null; kind: MetricKind } {
+  const rawDurationValue = isDurationReps(exercise.reps) ? parseDurationSeconds(exercise.reps) : null;
+  if (rawDurationValue != null) return { value: rawDurationValue, kind: "seconds" };
   const repTarget = parseRepsPerSet(exercise.reps, totalSets)[setNumber - 1] || (exercise.reps ? String(exercise.reps) : "");
   const durationValue = isDurationReps(repTarget) ? parseDurationSeconds(repTarget) : null;
   if (durationValue != null) return { value: durationValue, kind: "seconds" };

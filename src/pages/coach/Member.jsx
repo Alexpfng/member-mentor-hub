@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import AssignmentTimingFields from "@/components/coach/AssignmentTimingFields";
 import { deriveAssignmentStartDate } from "@/lib/assignment-start";
 import { localDateISO } from "@/lib/local-date";
+import { buildSessionLoadSummaries } from "@/lib/member-session-load-summary";
 
 function normalize(s) {
   return (s || "").toString().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
@@ -323,6 +324,7 @@ import {
 import { VideoReviewPanel } from "../../components/coach/VideoReviewPanel";
 import MemberTrackingPanel from "../../components/coach/MemberTrackingPanel";
 import MemberFollowupTab from "../../components/coach/MemberFollowupTab";
+import MemberNutritionPanel from "../../components/coach/MemberNutritionPanel";
 import WeeksManagerPanel from "../../components/coach/WeeksManagerPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { getMemberTabsDockPosition } from "@/lib/member-tabs-docking";
@@ -860,6 +862,11 @@ export default function CoachMember() {
     return items.slice(0, 4);
   }, [data]);
 
+  const loadSummariesBySession = useMemo(
+    () => buildSessionLoadSummaries(data?.set_logs ?? []),
+    [data?.set_logs],
+  );
+
   function handleAssign(programId) {
     if (!programId) return;
     const pickedProgram = programs.find((program) => program.id === programId);
@@ -1365,6 +1372,7 @@ export default function CoachMember() {
                               toShow.map((s) => {
                                 const kind = statusKind(s.status);
                                 const rpe = s.average_rpe != null ? Number(s.average_rpe) : null;
+                                const loadSummaries = loadSummariesBySession[s.id] ?? [];
                                 const rpeColor =
                                   rpe == null
                                     ? "inherit"
@@ -1407,6 +1415,29 @@ export default function CoachMember() {
                                           </span>
                                         )}
                                       </span>
+                                      {loadSummaries.length > 0 && (
+                                        <span
+                                          className="cst-mono"
+                                          style={{
+                                            fontSize: 10,
+                                            color: "#D4A53B",
+                                            opacity: 0.9,
+                                            whiteSpace: "nowrap",
+                                            overflow: "hidden",
+                                            textOverflow: "ellipsis",
+                                          }}
+                                          title={loadSummaries
+                                            .map((item) => `${item.exerciseName} : ${item.loadLabel}`)
+                                            .join(" · ")}
+                                        >
+                                          CHARGES RÉALISÉES ·{" "}
+                                          {loadSummaries
+                                            .slice(0, 3)
+                                            .map((item) => `${item.exerciseName} ${item.loadLabel}`)
+                                            .join(" · ")}
+                                          {loadSummaries.length > 3 ? " · …" : ""}
+                                        </span>
+                                      )}
                                     </div>
                                     <CSTStatus kind={kind} />
                                   </div>
@@ -1442,6 +1473,7 @@ export default function CoachMember() {
                     const sessionAccess = getHistorySessionAccessCopy();
                     const openSession = () =>
                       navigate({ to: "/coach/seance/$sessionId", params: { sessionId: s.id } });
+                    const loadSummaries = loadSummariesBySession[s.id] ?? [];
 
                     return (
                       <div
@@ -1480,6 +1512,29 @@ export default function CoachMember() {
                               : "—"}
                             {s.average_rpe ? ` · RPE ${Number(s.average_rpe).toFixed(1)}` : ""}
                           </span>
+                          {loadSummaries.length > 0 && (
+                            <span
+                              className="cst-mono"
+                              style={{
+                                fontSize: 10,
+                                color: "#D4A53B",
+                                opacity: 0.9,
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                              }}
+                              title={loadSummaries
+                                .map((item) => `${item.exerciseName} : ${item.loadLabel}`)
+                                .join(" · ")}
+                            >
+                              CHARGES RÉALISÉES ·{" "}
+                              {loadSummaries
+                                .slice(0, 3)
+                                .map((item) => `${item.exerciseName} ${item.loadLabel}`)
+                                .join(" · ")}
+                              {loadSummaries.length > 3 ? " · …" : ""}
+                            </span>
+                          )}
                         </div>
                         <CSTStatus kind={statusKind(s.status)} />
                         <span
@@ -1924,6 +1979,8 @@ export default function CoachMember() {
                 </span>
               </div>
             </div>
+
+            <MemberNutritionPanel memberId={memberId} />
           </div>
         </div>
       </div>

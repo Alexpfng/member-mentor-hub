@@ -1,9 +1,11 @@
 import { describe, expect, it } from "bun:test";
 
 import {
+  currentPublishedPlanningWeekNumber,
   currentPlanningWeekNumber,
   normalizeWeekStartsOn,
   planningWeekBounds,
+  planningWeekBoundsForPublishedWeek,
   weekWindowLabel,
 } from "./planning-weeks";
 
@@ -32,6 +34,13 @@ describe("planningWeekBounds", () => {
       weekEnd: "2026-08-13",
     });
   });
+
+  it("utilise la date de démarrage choisie à la publication de la semaine", () => {
+    expect(planningWeekBoundsForPublishedWeek("2026-07-30", 2, "2026-08-17")).toEqual({
+      weekStart: "2026-08-17",
+      weekEnd: "2026-08-23",
+    });
+  });
 });
 
 describe("currentPlanningWeekNumber", () => {
@@ -50,6 +59,16 @@ describe("currentPlanningWeekNumber", () => {
   it("respecte une semaine perso vendredi → jeudi", () => {
     expect(currentPlanningWeekNumber("2026-07-30", "2026-08-06", { weekStartsOn: 5 })).toBe(1);
     expect(currentPlanningWeekNumber("2026-07-30", "2026-08-07", { weekStartsOn: 5 })).toBe(2);
+  });
+
+  it("priorise une semaine publiée datée sur le calcul global du programme", () => {
+    expect(
+      currentPublishedPlanningWeekNumber(
+        "2026-07-30",
+        [{ weekNumber: 2, startDate: "2026-09-14" }],
+        "2026-09-15",
+      ),
+    ).toBe(2);
   });
 });
 

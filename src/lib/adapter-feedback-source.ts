@@ -50,17 +50,18 @@ export function mergeExerciseFeedbackMaps(
         continue;
       }
 
-      const comments = [...new Set([...(feedback.comments ?? []), ...(previous.comments ?? [])])];
+      const comments = feedback.comments?.length ? [...new Set(feedback.comments)] : undefined;
 
-      merged[key] = {
+      const next: AdapterExerciseFeedback = {
         rpe: feedback.rpe ?? previous.rpe,
         pain: previous.pain || feedback.pain,
         tooHard: previous.tooHard || feedback.tooHard,
         tooEasy: previous.tooEasy || feedback.tooEasy,
         failure: previous.failure || feedback.failure,
         loadLabel: feedback.loadLabel ?? previous.loadLabel,
-        comments: comments.length > 0 ? comments : undefined,
       };
+      if (comments) next.comments = comments;
+      merged[key] = next;
     }
     return merged;
   }, {});

@@ -26,6 +26,9 @@ const COLOR_MAP: Record<string, string> = {
   yellow: "#D4A82E",
   lime: "#E8D44A",
   blue: "#4A8BC4",
+  gray_light: "#D9D9D9",
+  gray_medium: "#999999",
+  gray_dark: "#595959",
 };
 
 function colorDot(c?: string | null) {
@@ -82,7 +85,19 @@ type Block = {
   isSuperset: boolean;
 };
 
-export function groupBlocks(exercises: ProgExercise[]): Block[] {
+type GroupBlocksOptions = {
+  disableSupersets?: boolean;
+};
+
+export function groupBlocks(exercises: ProgExercise[], options: GroupBlocksOptions = {}): Block[] {
+  if (options.disableSupersets) {
+    return exercises.map((ex) => ({
+      letter: ex.code?.match(/^([A-Z])/)?.[1],
+      exercises: [ex],
+      isSuperset: false,
+    }));
+  }
+
   const blocks: Block[] = [];
   let current: Block | null = null;
   for (const ex of exercises) {
@@ -334,6 +349,9 @@ const EXERCISE_COLOR_MAP: Record<string, string> = {
   yellow: "#D4A82E",
   lime: "#E8D44A",
   blue: "#4A8BC4",
+  gray_light: "#D9D9D9",
+  gray_medium: "#999999",
+  gray_dark: "#595959",
 };
 function exCardColor(c?: string | null): string {
   return EXERCISE_COLOR_MAP[(c || "").toLowerCase()] || "";
@@ -356,7 +374,8 @@ function ExerciseRow({
   const col = exCardColor(ex.color);
   // « 10 (10kg trop lourd) » → RPE 10 dans la case RPE + commentaire sur sa ligne dédiée.
   const parsedRpe = parseRpeCell(ex.rpe_target);
-  const rpeCellDisplay = parsedRpe.rpe != null ? parsedRpe.rpe.replace(".", ",") : parsedRpe.isFailure ? "échec" : "—";
+  const rpeCellDisplay =
+    parsedRpe.rpe != null ? parsedRpe.rpe.replace(".", ",") : parsedRpe.isFailure ? "échec" : "—";
   return (
     <div
       style={{
@@ -435,7 +454,14 @@ function ExerciseRow({
       {parsedRpe.comment && (
         <div
           className="cst-mono"
-          style={{ fontSize: 11, display: "flex", gap: 6, alignItems: "baseline", flexWrap: "wrap", opacity: 0.9 }}
+          style={{
+            fontSize: 11,
+            display: "flex",
+            gap: 6,
+            alignItems: "baseline",
+            flexWrap: "wrap",
+            opacity: 0.9,
+          }}
         >
           <span style={{ opacity: 0.55, letterSpacing: "0.06em" }}>RPE ·</span>
           <span style={{ fontStyle: "italic" }}>{parsedRpe.comment}</span>
@@ -462,70 +488,24 @@ function ExerciseRow({
   );
 }
 
-/** Fusionne les blocs cardio consécutifs en un seul bloc pour l'affichage. */
-function mergeCardioBlocks(blocks: Block[]): Array<Block & { mergedCardio?: boolean }> {
-  const result: Array<Block & { mergedCardio?: boolean }> = [];
-  let i = 0;
-  while (i < blocks.length) {
-    const block = blocks[i];
-    if (block.exercises.length > 0 && block.exercises.every(isCardioExercise)) {
-      // Absorbe tous les blocs cardio consécutifs
-      const mergedExercises = [...block.exercises];
-      while (i + 1 < blocks.length && blocks[i + 1].exercises.every(isCardioExercise)) {
-        i++;
-        mergedExercises.push(...blocks[i].exercises);
-      }
-      result.push({
-        letter: block.letter,
-        exercises: mergedExercises,
-        isSuperset: false,
-        mergedCardio: true,
-      });
-    } else {
-      result.push(block);
-    }
-    i++;
-  }
-  return result;
-}
-
 export function ProgramBlocks({
   exercises,
   threadSlot,
   onExerciseClick,
+  isRunningSession = false,
 }: {
   exercises: ProgExercise[];
   threadSlot?: (ex: ProgExercise) => React.ReactNode;
   onExerciseClick?: (ex: ProgExercise) => void;
+  isRunningSession?: boolean;
 }) {
-  const blocks = mergeCardioBlocks(groupBlocks(exercises || []));
+  const blocks = groupBlocks(exercises || [], { disableSupersets: isRunningSession });
   if (blocks.length === 0) {
     return <div style={{ padding: 16, opacity: 0.5, fontSize: 12 }}>Aucun exercice.</div>;
   }
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       {blocks.map((b, i) => {
-        // Bloc cardio fusionné → une seule carte
-        if (b.mergedCardio) {
-          return (
-            <div
-              key={i}
-              style={{
-                background: "rgba(255,255,255,0.02)",
-                border: "1px solid rgba(255,255,255,0.07)",
-                borderRadius: 10,
-                overflow: "hidden",
-              }}
-            >
-              <MergedCardioRow
-                exercises={b.exercises}
-                threadSlot={threadSlot}
-                onExerciseClick={onExerciseClick}
-              />
-            </div>
-          );
-        }
-
         const firstType = b.exercises[0]?.block_type;
         const badge = blockBadge(firstType) ?? (b.isSuperset ? "SUPERSET" : null);
         const supersetRest = b.isSuperset

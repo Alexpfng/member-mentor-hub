@@ -1,6 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { getRecentSessions, hideSessionFromCoachDashboard } from "@/lib/coach-dashboard.functions";
 import { timeAgo, sanitizeDurationMin } from "@/lib/format";
 import { CSTAvatar } from "@/components/Atoms";
@@ -15,6 +16,7 @@ export default function RecentSessionsList() {
   const qc = useQueryClient();
   const fetchSessions = useServerFn(getRecentSessions);
   const hideSession = useServerFn(hideSessionFromCoachDashboard);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const { data, isLoading } = useQuery({
     queryKey: ["coach", "recent-sessions"],
     queryFn: () => fetchSessions({ data: { limit: 20 } }),
@@ -33,6 +35,25 @@ export default function RecentSessionsList() {
     }
   }
 
+  async function onHideSelectedSessions() {
+    if (selectedIds.length === 0) return;
+    const confirmed = window.confirm(
+      `Retirer ${selectedIds.length} séance(s) sélectionnée(s) du dashboard coach ?`,
+    );
+    if (!confirmed) return;
+
+    const ids = [...selectedIds];
+    setSelectedIds([]);
+    try {
+      await Promise.all(ids.map((sessionId) => hideSession({ data: { sessionId } })));
+      toast.success(`${ids.length} séance(s) retirée(s) du dashboard`);
+      await qc.invalidateQueries({ queryKey: ["coach"] });
+    } catch (error) {
+      setSelectedIds(ids);
+      toast.error(error instanceof Error ? error.message : "Erreur");
+    }
+  }
+
   if (isLoading) return <div className="cst-card-dark" style={{ padding: 20, opacity: 0.6 }}>Chargement…</div>;
   const sessions = data ?? [];
   if (sessions.length === 0) {
@@ -41,6 +62,23 @@ export default function RecentSessionsList() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: "flex-end" }}>
+        {selectedIds.length > 0 && (
+          <>
+            <span className="cst-mono" style={{ fontSize: 10, opacity: 0.65 }}>
+              {selectedIds.length} SÉLECTIONNÉE{selectedIds.length > 1 ? "S" : ""}
+            </span>
+            <button
+              type="button"
+              className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+              onClick={onHideSelectedSessions}
+              style={{ color: "#ff8a7a", borderColor: "rgba(255,138,122,0.35)" }}
+            >
+              RETIRER
+            </button>
+          </>
+        )}
+      </div>
       {sessions.map((s) => {
         const initials = s.memberName.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
         const isFree = s.sessionType === "free";
@@ -53,6 +91,21 @@ export default function RecentSessionsList() {
         return (
           <div key={s.id} className="cst-card-dark" style={{ padding: 14, display: "flex", gap: 14, alignItems: "flex-start", cursor: "pointer", borderLeft: s.status === "in_progress" ? "2px solid #6EAB76" : undefined }}
             onClick={() => navigate({ to: "/coach/seance/$sessionId", params: { sessionId: s.id } })}>
+            <input
+              type="checkbox"
+              checked={selectedIds.includes(s.id)}
+              onChange={(event) => {
+                event.stopPropagation();
+                setSelectedIds((current) =>
+                  event.target.checked
+                    ? [...current, s.id]
+                    : current.filter((sessionId) => sessionId !== s.id),
+                );
+              }}
+              onClick={(event) => event.stopPropagation()}
+              aria-label={`Sélectionner la séance de ${s.memberName}`}
+              style={{ marginTop: 10, width: 18, height: 18, accentColor: "#6EAB76" }}
+            />
             <CSTAvatar initials={initials} size={36} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>

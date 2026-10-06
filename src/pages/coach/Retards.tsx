@@ -56,7 +56,7 @@ function CoachRetardsInner() {
 
         {/* Info band */}
         <div className="cst-mono" style={{ fontSize: 10, opacity: 0.5, padding: '10px 32px', borderBottom: '1px solid rgba(255,255,255,0.04)', letterSpacing: '0.15em' }}>
-          SÉANCES PLANIFIÉES NON COMMENCÉES · RETARD ≥ 3 JOURS · FENÊTRE 30 JOURS
+          SÉANCES PLANIFIÉES NON COMMENCÉES · RETARD ≥ 3 JOURS · RATTRAPAGES PRIORITAIRES · FENÊTRE 30 JOURS
         </div>
 
         {/* Content */}
@@ -78,7 +78,7 @@ function CoachRetardsInner() {
                   <div key={g.memberId} className="cst-card-dark" style={{ borderRadius: 10, overflow: 'hidden' }}>
                     {/* Member header */}
                     <div style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-                      <span style={{ width: 10, height: 10, borderRadius: '50%', background: g.maxDaysLate >= 7 ? '#C0392B' : '#E07B39', flexShrink: 0 }} />
+                      <span style={{ width: 10, height: 10, borderRadius: '50%', background: g.catchupCount > 0 ? '#E04646' : g.maxDaysLate >= 7 ? '#C0392B' : '#E07B39', flexShrink: 0 }} />
 
                       <div style={{ flex: 1, minWidth: 160 }}>
                         <div style={{ fontWeight: 700, fontSize: 15 }}>{g.memberName}</div>
@@ -95,7 +95,8 @@ function CoachRetardsInner() {
 
                       {/* Badge retard */}
                       <span className="cst-mono" style={{ fontSize: 10, color: '#E07B39', letterSpacing: '0.1em', flexShrink: 0 }}>
-                        {g.lateCount} SÉANCE{g.lateCount > 1 ? 'S' : ''} EN RETARD · MAX +{g.maxDaysLate}J
+                        {g.catchupCount > 0 ? `${g.catchupCount} RATTRAPAGE${g.catchupCount > 1 ? 'S' : ''} PRIORITAIRE${g.catchupCount > 1 ? 'S' : ''} · ` : ''}
+                        {g.lateCount} SÉANCE{g.lateCount > 1 ? 'S' : ''} À TRAITER · MAX +{g.maxDaysLate}J
                       </span>
 
                       {/* Actions */}
@@ -128,12 +129,14 @@ function CoachRetardsInner() {
                       <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '10px 18px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
                         {g.sessions.map((s) => (
                           <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0' }}>
-                            <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'rgba(224,123,57,0.7)', flexShrink: 0 }} />
+                            <span style={{ width: 5, height: 5, borderRadius: '50%', background: s.catchup ? 'rgba(224,70,70,0.9)' : 'rgba(224,123,57,0.7)', flexShrink: 0 }} />
                             <span style={{ flex: 1, fontSize: 13 }}>{s.dayLabel || 'Séance'}</span>
                             <span className="cst-mono" style={{ fontSize: 10, opacity: 0.55 }}>
                               {new Date(`${s.plannedDate}T00:00:00`).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}
                             </span>
-                            <span className="cst-mono" style={{ fontSize: 10, color: '#E07B39' }}>+{s.daysLate}j</span>
+                            <span className="cst-mono" style={{ fontSize: 10, color: s.catchup ? '#E07070' : '#E07B39' }}>
+                              {s.catchup ? 'RATTRAPAGE' : `+${s.daysLate}j`}
+                            </span>
                           </div>
                         ))}
                       </div>

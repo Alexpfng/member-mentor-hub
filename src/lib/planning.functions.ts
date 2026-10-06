@@ -4,11 +4,12 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { displayProgramDayLabel, mergeAssignmentWeeks } from "@/lib/program-weeks";
 import {
-  currentPlanningWeekNumber,
+  currentPublishedPlanningWeekNumber,
   normalizeWeekStartsOn,
-  planningWeekBounds,
+  planningWeekBoundsForPublishedWeek,
   weekWindowLabel,
 } from "@/lib/planning-weeks";
+import { buildCatchupMetadata } from "@/lib/planning-catchup";
 import { attachStravaActivityCardsToSessions } from "@/lib/strava-activity-card";
 
 const dateStr = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -50,6 +51,34 @@ async function notifyCoachPlanning(memberId: string, content: string) {
   }
 }
 
+async function getActiveCoachForMember(memberId: string) {
+  const [{ data: assignment }, { data: profile }] = await Promise.all([
+    supabaseAdmin
+      .from("assignments")
+      .select("program_id, programs(coach_id)")
+      .eq("member_id", memberId)
+      .eq("active", true)
+      .maybeSingle(),
+    supabaseAdmin
+      .from("profiles")
+      .select("first_name, last_name")
+      .eq("id", memberId)
+      .maybeSingle(),
+  ]);
+
+  return {
+    coachId: (assignment as any)?.programs?.coach_id as string | undefined,
+    memberName:
+      [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || "Le membre",
+  };
+}
+
+function addDaysISO(iso: string, days: number): string {
+  const date = new Date(`${iso}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
 // Convention : `week_number` est 1-based PARTOUT en base (aligné sur
 // assignment_weeks et sessions). Les index de tableau (structure.weeks) restent
 // 0-based en interne : weekIdx = weekNumber - 1.
@@ -81,18 +110,6 @@ export const listWeekPlan = createServerFn({ method: "GET" })
     }
 
     const weekStartsOn = normalizeWeekStartsOn(profile?.planning_week_start_day);
-    const currentWeekNumber = currentPlanningWeekNumber(assignment.start_date, undefined, {
-      weekStartsOn,
-    });
-    const weekNumber = data.weekNumber ?? currentWeekNumber;
-    const weekIdx = weekNumber - 1;
-
-    const { weekStart: startISO, weekEnd: endISO } = planningWeekBounds(
-      assignment.start_date,
-      weekNumber,
-      { weekStartsOn },
-    );
-
     const program = (assignment as any).programs ?? null;
     // Fusionne les semaines adaptées (assignment_weeks) sur le template : le planning
     // doit proposer les séances réellement assignées au membre (une semaine adaptée
@@ -100,9 +117,29 @@ export const listWeekPlan = createServerFn({ method: "GET" })
     // le lanceur ne retrouvera pas.
     const { data: adaptedWeeks } = await supabaseAdmin
       .from("assignment_weeks")
-      .select("week_number, structure")
+      .select("week_number, structure, start_date")
       .eq("assignment_id", assignment.id)
       .in("status", ["published", "in_progress", "done"]);
+    const currentWeekNumber = currentPublishedPlanningWeekNumber(
+      assignment.start_date,
+      (adaptedWeeks ?? []).map((week: any) => ({
+        weekNumber: week.week_number,
+        startDate: week.start_date,
+      })),
+      undefined,
+      { weekStartsOn },
+    );
+    const weekNumber = data.weekNumber ?? currentWeekNumber;
+    const weekIdx = weekNumber - 1;
+    const publishedWeekStart =
+      (adaptedWeeks ?? []).find((week: any) => week.week_number === weekNumber)?.start_date ??
+      null;
+    const { weekStart: startISO, weekEnd: endISO } = planningWeekBoundsForPublishedWeek(
+      assignment.start_date,
+      weekNumber,
+      publishedWeekStart,
+      { weekStartsOn },
+    );
     const weeks = mergeAssignmentWeeks(program?.structure, adaptedWeeks ?? []);
     const weekDef = weeks[weekIdx] ?? null;
     // Les écrans ne consomment que label/type : payload épuré et sérialisable.
@@ -266,6 +303,106 @@ export const deletePlannedSession = createServerFn({ method: "POST" })
     );
 
     return { ok: true };
+  });
+
+export const postponePlannedSessionToNextWeek = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        reason: z.enum(["no_time", "coach_request", "member_request"]).optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: planned, error: fetchError } = await supabaseAdmin
+      .from("planned_sessions")
+      .select("id, member_id, program_id, week_number, day_label, planned_date, reminder_time")
+      .eq("id", data.id)
+      .eq("member_id", context.userId)
+      .eq("status", "planned")
+      .maybeSingle();
+    if (fetchError) throw new Error(fetchError.message);
+    if (!planned) throw new Error("Séance introuvable ou déjà traitée.");
+    if (!planned.planned_date) {
+      throw new Error("Cette séance n'a pas de date à reporter.");
+    }
+
+    const targetDate = addDaysISO(planned.planned_date, 7);
+    const metadata = buildCatchupMetadata({
+      sourcePlannedId: planned.id,
+      sourceWeekNumber: planned.week_number ?? null,
+      sourcePlannedDate: planned.planned_date,
+      reason: data.reason ?? "no_time",
+    });
+
+    const { data: catchupRow, error: insertError } = await supabaseAdmin
+      .from("planned_sessions")
+      .insert({
+        member_id: context.userId,
+        program_id: planned.program_id ?? null,
+        week_number: (planned.week_number ?? 0) + 1,
+        day_label: planned.day_label,
+        planned_date: targetDate,
+        reminder_time: planned.reminder_time ?? null,
+        status: "planned",
+        metadata,
+      })
+      .select()
+      .single();
+    if (insertError) throw new Error(insertError.message);
+
+    const { error: updateError } = await supabaseAdmin
+      .from("planned_sessions")
+      .update({
+        status: "skipped",
+        metadata: {
+          catchup_replaced_by: catchupRow.id,
+          catchup_target_date: targetDate,
+        },
+      })
+      .eq("id", planned.id)
+      .eq("member_id", context.userId);
+    if (updateError) throw new Error(updateError.message);
+
+    await supabaseAdmin.from("member_app_events").insert({
+      member_id: context.userId,
+      actor_user_id: context.userId,
+      actor_role: "member",
+      event_name: "planned_session_catchup_created",
+      surface: "member_planning",
+      path: "/membre/planning",
+      metadata: {
+        source_planned_id: planned.id,
+        catchup_planned_id: catchupRow.id,
+        day_label: planned.day_label,
+        source_planned_date: planned.planned_date,
+        target_planned_date: targetDate,
+      },
+    });
+
+    const { coachId, memberName } = await getActiveCoachForMember(context.userId);
+    if (coachId) {
+      await supabaseAdmin.from("messages").insert([
+        {
+          from_id: context.userId,
+          to_id: coachId,
+          content: `${memberName} 📌 a reporté « ${planned.day_label} » en rattrapage prioritaire : ${frDate(
+            planned.planned_date,
+          )} → ${frDate(targetDate)}`,
+        },
+        {
+          from_id: coachId,
+          to_id: context.userId,
+          content: `Séance reportée : « ${planned.day_label} » est à rattraper en priorité le ${frDate(
+            targetDate,
+          )}. Elle apparaîtra en rouge dans ton planning.`,
+        },
+      ]);
+    }
+
+    return catchupRow;
   });
 
 /**
