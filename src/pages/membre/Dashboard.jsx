@@ -11,6 +11,7 @@ import { WeightLogDialog } from "../../components/cst/WeightLogDialog";
 import { ActivityLogDialog } from "../../components/cst/ActivityLogDialog";
 import { DailyHabitCard } from "../../components/cst/DailyHabitCard";
 import { MemberWeekOverview as MemberWeekOverviewCard } from "../../components/cst/MemberWeekOverview";
+import { MemberNutritionWidget } from "../../components/cst/MemberNutritionWidget";
 import { GuidedTour, hasSeenTour } from "../../components/cst/GuidedTour";
 import { usePRConfetti } from "@/hooks/usePRConfetti";
 import { getMemberDashboard } from "@/lib/member-stats.functions";
@@ -259,6 +260,7 @@ export default function MemberDashboard() {
     { icon: "📅", label: "Planning", path: "/membre/planning" },
     { icon: "📖", label: "Carnet", path: "/membre/carnet" },
     { icon: "📈", label: "Progrès", path: "/membre/progression" },
+    { icon: "◎", label: "Nutrition", path: "/membre/nutrition" },
     { icon: "🏃", label: "Trail & Run", path: "/membre/running" },
     { icon: "📚", label: "Bibliothèque", path: "/membre/bibliotheque" },
     { icon: "💬", label: "Messages", path: "/membre/messages" },
@@ -839,6 +841,8 @@ export default function MemberDashboard() {
                 onOpenPlanning={() => navigate("/membre/planning")}
                 onOpenDetails={() => navigate("/membre/ma-semaine")}
               />
+
+              <MemberNutritionWidget />
 
               {/* Stats */}
               <div
