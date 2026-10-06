@@ -5,18 +5,7 @@ import { getUnreadCount } from "@/lib/coach.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useI18n } from "@/lib/i18n";
-
-const items = [
-  { id: "home", icon: "🏠", label: "Accueil", path: "/membre" },
-  { id: "prog", icon: "📋", label: "Programme", path: "/membre/programme" },
-  { id: "plan", icon: "📅", label: "Planning", path: "/membre/planning" },
-  { id: "carn", icon: "📖", label: "Carnet", path: "/membre/carnet" },
-  { id: "progr", icon: "📈", label: "Progrès", path: "/membre/progression" },
-  { id: "nutrition", icon: "◎", label: "Nutrition", path: "/membre/nutrition" },
-  { id: "trail", icon: "🏃", label: "Trail & Run", path: "/membre/running" },
-  { id: "msgs", icon: "💬", label: "Messages", path: "/membre/messages" },
-  { id: "profile", icon: "⚙️", label: "Réglages", path: "/membre/profil" },
-];
+import { memberNavigationActiveId, memberNavigationItems as items } from "@/lib/member-navigation";
 
 export default function MemberNav({ unreadCount: unreadProp = undefined } = {}) {
   const navigate = useNavigate();
@@ -57,10 +46,7 @@ export default function MemberNav({ unreadCount: unreadProp = undefined } = {}) 
 
   const effectiveUnread = typeof unreadProp === "number" ? unreadProp : unread;
 
-  const activeId =
-    items.find((it) =>
-      it.path !== "/membre" ? pathname.startsWith(it.path) : pathname === "/membre",
-    )?.id ?? "home";
+  const activeId = memberNavigationActiveId(pathname);
 
   return (
     <>

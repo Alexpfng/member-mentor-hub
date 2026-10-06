@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 
 import MemberNav from "../../components/MemberNav";
+import MemberDesktopNav from "../../components/MemberDesktopNav";
 import {
   addNutritionEntry,
   createNutritionFood,
@@ -58,21 +59,24 @@ export default function MembreNutrition() {
 
   const foods: Food[] = data?.foods ?? [];
   const foodCategories = useMemo(
-    () => ["Toutes", ...Array.from(new Set(foods.map((food) => food.category))).sort((a, b) => a.localeCompare(b, "fr"))],
+    () => [
+      "Toutes",
+      ...Array.from(new Set(foods.map((food) => food.category))).sort((a, b) =>
+        a.localeCompare(b, "fr"),
+      ),
+    ],
     [foods],
   );
-  const filteredFoods = useMemo(
-    () => {
-      const search = foodSearch.trim().toLocaleLowerCase("fr");
-      return foods.filter((food) => {
-        const matchesCategory = selectedCategory === "Toutes" || food.category === selectedCategory;
-        const matchesSearch = !search || food.name.toLocaleLowerCase("fr").includes(search);
-        return matchesCategory && matchesSearch;
-      });
-    },
-    [foods, foodSearch, selectedCategory],
-  );
-  const selectedFood = foods.find((food) => food.id === selectedFoodId) ?? filteredFoods[0] ?? foods[0] ?? null;
+  const filteredFoods = useMemo(() => {
+    const search = foodSearch.trim().toLocaleLowerCase("fr");
+    return foods.filter((food) => {
+      const matchesCategory = selectedCategory === "Toutes" || food.category === selectedCategory;
+      const matchesSearch = !search || food.name.toLocaleLowerCase("fr").includes(search);
+      return matchesCategory && matchesSearch;
+    });
+  }, [foods, foodSearch, selectedCategory]);
+  const selectedFood =
+    foods.find((food) => food.id === selectedFoodId) ?? filteredFoods[0] ?? foods[0] ?? null;
   const summary = data?.summary;
 
   const previewKcal = useMemo(() => {
@@ -134,7 +138,7 @@ export default function MembreNutrition() {
           fatPer100g: selectedFood.fat_per_100g,
         },
       });
-      toast.success("Aliment ajouté");
+      toast.success(`Enregistré dans ${MEAL_LABELS[meal].toLocaleLowerCase("fr")}`);
       await reload(date);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Ajout impossible");
@@ -170,7 +174,9 @@ export default function MembreNutrition() {
           ...current,
           foods: exists
             ? currentFoods
-            : [...currentFoods, created].sort((a: Food, b: Food) => a.name.localeCompare(b.name, "fr")),
+            : [...currentFoods, created].sort((a: Food, b: Food) =>
+                a.name.localeCompare(b.name, "fr"),
+              ),
         };
       });
       setSelectedCategory(created.category);
@@ -196,8 +202,10 @@ export default function MembreNutrition() {
   }
 
   return (
-    <div className="min-h-screen cst-bg cst-text">
+    <div className="min-h-screen cst-bg cst-text nutrition-page-layout">
+      <MemberDesktopNav />
       <main
+        className="nutrition-page-main"
         style={{
           minHeight: "100vh",
           padding: "22px 18px 96px",
@@ -205,9 +213,14 @@ export default function MembreNutrition() {
           margin: "0 auto",
         }}
       >
-        <header style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+        <header
+          style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}
+        >
           <div>
-            <div className="cst-mono" style={{ fontSize: 10, opacity: 0.55, letterSpacing: "0.18em" }}>
+            <div
+              className="cst-mono"
+              style={{ fontSize: 10, opacity: 0.55, letterSpacing: "0.18em" }}
+            >
               NUTRITION
             </div>
             <h1 className="cst-display" style={{ fontSize: 34, margin: "8px 0 0" }}>
@@ -268,7 +281,10 @@ export default function MembreNutrition() {
                 }}
               />
             </div>
-            <div className="cst-mono" style={{ marginTop: 8, fontSize: 10, color: "var(--cst-text-soft)" }}>
+            <div
+              className="cst-mono"
+              style={{ marginTop: 8, fontSize: 10, color: "var(--cst-text-soft)" }}
+            >
               {summary?.status?.label ?? "Chargement..."}
             </div>
           </div>
@@ -281,7 +297,13 @@ export default function MembreNutrition() {
           <div className="cst-mono" style={{ fontSize: 10, opacity: 0.6 }}>
             AJOUTER UN ALIMENT
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(145px, 1fr))", gap: 10 }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(145px, 1fr))",
+              gap: 10,
+            }}
+          >
             <select
               className="cst-input"
               value={selectedCategory}
@@ -325,7 +347,9 @@ export default function MembreNutrition() {
                   {food.name} · {food.kcal_per_100g} kcal/100g
                 </option>
               ))}
-              {filteredFoods.length === 0 ? <option value="">Aucun aliment disponible</option> : null}
+              {filteredFoods.length === 0 ? (
+                <option value="">Aucun aliment disponible</option>
+              ) : null}
             </select>
             <select
               className="cst-input"
@@ -347,9 +371,16 @@ export default function MembreNutrition() {
               onChange={(event) => setGrams(event.target.value)}
               placeholder="100g"
             />
-            <button className="cst-btn cst-btn-primary" disabled={saving || loading} onClick={handleAdd}>
-              + {previewKcal} kcal
+            <button
+              className="cst-btn cst-btn-primary"
+              disabled={saving || loading}
+              onClick={handleAdd}
+            >
+              {saving ? "ENREGISTREMENT..." : `AJOUTER À MA JOURNÉE · ${previewKcal} KCAL`}
             </button>
+          </div>
+          <div className="cst-mono" style={{ fontSize: 9, opacity: 0.6 }}>
+            L’ajout est enregistré immédiatement dans le repas et la date sélectionnés.
           </div>
           <div
             style={{
@@ -375,7 +406,11 @@ export default function MembreNutrition() {
               onChange={(event) => setCustomFoodKcal(event.target.value)}
               placeholder="kcal/100g"
             />
-            <button className="cst-btn cst-btn-ghost-dark" disabled={creatingFood} onClick={handleCreateFood}>
+            <button
+              className="cst-btn cst-btn-ghost-dark"
+              disabled={creatingFood}
+              onClick={handleCreateFood}
+            >
               {creatingFood ? "AJOUT..." : "+ BASE"}
             </button>
           </div>
@@ -397,7 +432,10 @@ export default function MembreNutrition() {
                   <h2 className="cst-display" style={{ fontSize: 20, margin: 0 }}>
                     {MEAL_LABELS[slot]}
                   </h2>
-                  <span className="cst-mono" style={{ fontSize: 11, color: "var(--cst-mid-green)" }}>
+                  <span
+                    className="cst-mono"
+                    style={{ fontSize: 11, color: "var(--cst-mid-green)" }}
+                  >
                     {formatKcal(mealSummary?.totalKcal)}
                   </span>
                 </div>
