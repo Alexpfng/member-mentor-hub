@@ -12,7 +12,7 @@ export type ImportedExercise = {
   recup: string | null;
   rpe_target: string | null;
   coach_notes: string | null;
-  color: "red" | "green" | "yellow" | "blue" | null;
+  color: "red" | "green" | "yellow" | "blue" | "gray_light" | "gray_medium" | "gray_dark" | null;
   youtube_url: string | null;
   youtube_id: string | null;
   block_type: "standard" | "emom" | "ladder" | "amrap" | "dropset" | "iso" | "circuit";
@@ -78,6 +78,9 @@ const COLOR_MAP: Record<string, string[]> = {
   // il était classé à tort dans le groupe bleu.
   yellow: ["FFE599", "FFD966", "F1C232", "FFF2CC"],
   blue: ["CFE2F3", "9FC5E8", "6FA8DC", "A4C2F4", "C9DAF8"],
+  gray_light: ["F3F3F3", "EEEEEE", "D9D9D9", "D0D0D0"],
+  gray_medium: ["B7B7B7", "A6A6A6", "999999", "A0A0A0"],
+  gray_dark: ["666666", "595959", "434343", "7F7F7F"],
 };
 
 const SESSION_RE =
@@ -87,6 +90,56 @@ const AUXILIARY_SECTION_RE =
 const EX_CODE_RE = /^([A-H]\d*)[.)]\s*(.*)/i;
 const JUNK_RE =
   /^(objectif|obj\.|important|consigne|remarque|note|attention|rappel|\(|on cherche|on peut|pour |~|\d+\s*(min|km|m))/i;
+const MISSING_SESSION_NAME_LABEL = "MET LE NOM QUI CONVIENT";
+
+function isExerciseHeader(value: unknown) {
+  return /^(exercices?|exercises?|mouvements?|movements?)$/.test(normalizeLabel(String(value ?? "")));
+}
+
+function exerciseHeaderColumn(ws: XLSX.WorkSheet, row: number, range: XLSX.Range): number | null {
+  for (let col = range.s.c; col <= range.e.c; col++) {
+    if (isExerciseHeader(getCell(ws, row, col)?.v)) return col;
+  }
+  return null;
+}
+
+function normalizeLabel(value: string | null | undefined) {
+  return (value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+function isGenericSessionLabel(value: string | null | undefined) {
+  return /^seance\s*\d+$/.test(normalizeLabel(value));
+}
+
+function isWeekSheetName(name: string) {
+  return /^S\d+/i.test(name) || (SESSION_RE.test(name) && /\d/.test(name));
+}
+
+function sessionLabelFromSheetName(sheetName: string, dayIndex: number) {
+  const cleaned = sheetName
+    .replace(/^S\d+\s*[-–—_:]\s*/i, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (cleaned && !/^S\d+$/i.test(cleaned) && SESSION_RE.test(cleaned)) return cleaned;
+  return MISSING_SESSION_NAME_LABEL;
+}
+
+function preHeaderSessionLabel(ws: XLSX.WorkSheet, range: XLSX.Range, layout: ColumnLayout): string | null {
+  for (let r = layout.headerRow - 1; r >= range.s.r; r--) {
+    for (let c = range.s.c; c <= Math.min(range.e.c, layout.nameCol + 4); c++) {
+      const cell = getCell(ws, r, c);
+      const raw = cell?.v !== undefined && cell?.v !== null ? String(cell.v).trim() : "";
+      if (!raw || raw.toLowerCase() === "exercice" || raw.length >= 90) continue;
+      if (SESSION_RE.test(raw) || AUXILIARY_SECTION_RE.test(raw)) return raw;
+    }
+  }
+  return null;
+}
 
 function getCell(ws: XLSX.WorkSheet, row: number, col: number): any {
   const addr = XLSX.utils.encode_cell({ r: row, c: col });
@@ -100,6 +153,20 @@ function cellStr(ws: XLSX.WorkSheet, r: number, c: number): string | null {
   const s = String(cell.v).trim();
   if (!s || s === "-") return null;
   return s;
+}
+
+function mergedCellStr(ws: XLSX.WorkSheet, r: number, c: number): string | null {
+  const merge = (ws["!merges"] || []).find(
+    (item) => item.s.r <= r && item.e.r >= r && item.s.c <= c && item.e.c >= c,
+  );
+  return merge ? cellStr(ws, merge.s.r, merge.s.c) ?? cellStr(ws, r, c) : cellStr(ws, r, c);
+}
+
+function hasMergedValue(ws: XLSX.WorkSheet, r: number, c: number): boolean {
+  const merge = (ws["!merges"] || []).find(
+    (item) => item.s.r < r && item.e.r >= r && item.s.c <= c && item.e.c >= c,
+  );
+  return !!merge && !!cellStr(ws, merge.s.r, merge.s.c);
 }
 
 function detectColor(cell: any): ImportedExercise["color"] {
@@ -145,13 +212,19 @@ function findLinkColumn(
   return null;
 }
 
-function findColumnLayout(ws: XLSX.WorkSheet, range: XLSX.Range): ColumnLayout | null {
-  for (let r = range.s.r; r <= Math.min(range.s.r + 40, range.e.r); r++) {
-    for (let c = 0; c < 6; c++) {
+function findColumnLayout(
+  ws: XLSX.WorkSheet,
+  range: XLSX.Range,
+  headerRow?: number,
+  headerNameCol?: number,
+): ColumnLayout | null {
+  const firstRow = headerRow ?? range.s.r;
+  const lastRow = headerRow ?? range.e.r;
+  for (let r = firstRow; r <= lastRow; r++) {
+    for (let c = headerNameCol ?? range.s.c; c <= (headerNameCol ?? range.e.c); c++) {
       const cell = getCell(ws, r, c);
       if (!cell || cell.v === undefined) continue;
-      // Les tableaux du coach sont tantôt en français, tantôt en anglais.
-      if (!/^exerc(ice|ise)$/i.test(String(cell.v).trim())) continue;
+      if (!isExerciseHeader(cell.v)) continue;
 
       const layout: Partial<ColumnLayout> = { nameCol: c, headerRow: r };
       const taken = new Set<number>([c]);
@@ -322,45 +395,78 @@ function extractMetadata(ws: XLSX.WorkSheet): ImportedMetadata {
 function parseWeekSheet(ws: XLSX.WorkSheet, sheetName: string): ImportedWeek | null {
   if (!ws["!ref"]) return null;
   const range = XLSX.utils.decode_range(ws["!ref"]);
-  const layout = findColumnLayout(ws, range);
+  let layout = findColumnLayout(ws, range);
   if (!layout) return null;
   const weekNum = parseInt(sheetName.match(/\d+/)?.[0] || "0", 10);
   const week: ImportedWeek = { number: weekNum, sheet: sheetName, days: [] };
+  const sheetSessionLabel = sessionLabelFromSheetName(sheetName, 1);
+  const headerSessionLabel = preHeaderSessionLabel(ws, range, layout);
+  const defaultSessionLabel =
+    headerSessionLabel && !(isGenericSessionLabel(headerSessionLabel) && !isGenericSessionLabel(sheetSessionLabel))
+      ? headerSessionLabel
+      : sheetSessionLabel;
   let currentDay: ImportedDay | null = null;
   let dayIndex = 0;
-
+  let lastTableHeaderRow = layout.headerRow;
   for (let r = layout.headerRow + 1; r <= range.e.r; r++) {
+    if (exerciseHeaderColumn(ws, r, range) !== null) lastTableHeaderRow = r;
+  }
+
+  let blankNameRows = 0;
+  for (let r = layout.headerRow + 1; r <= range.e.r; r++) {
+    const headerNameCol = exerciseHeaderColumn(ws, r, range);
+    if (headerNameCol !== null) {
+      const nextLayout = findColumnLayout(ws, range, r, headerNameCol);
+      if (nextLayout) layout = nextLayout;
+      continue;
+    }
+
     const nameCell = getCell(ws, r, layout.nameCol);
     const name = nameCell?.v !== undefined && nameCell?.v !== null ? String(nameCell.v).trim() : "";
-    if (!name || name.toLowerCase() === "exercice") continue;
+    if (!name) {
+      blankNameRows++;
+      const note = cellStr(ws, r, layout.notesCol);
+      const previous = currentDay?.exercises[currentDay.exercises.length - 1];
+      if (note && previous) {
+        previous.coach_notes = previous.coach_notes ? `${previous.coach_notes}\n${note}` : note;
+      }
+      continue;
+    }
+    const precedingBlankNameRows = blankNameRows;
+    blankNameRows = 0;
 
-    const series = cellStr(ws, r, layout.seriesCol);
-    const rawReps = cellStr(ws, r, layout.repsCol);
-    const rawCharge = cellStr(ws, r, layout.chargeCol);
-    const rpe = cellStr(ws, r, layout.rpeCol);
-    const tempo = cellStr(ws, r, layout.tempoCol);
-    const recup = cellStr(ws, r, layout.recupCol);
-
-    // Séances de course : la distance et le temps jouent le rôle des répétitions,
-    // l'allure celui de la charge (c'est l'intensité prescrite). Ce qui ne rentre
-    // pas est repris en note plutôt que jeté — le coach ne doit rien perdre.
-    const distance = cellStr(ws, r, layout.distanceCol ?? -1);
-    const allure = cellStr(ws, r, layout.allureCol ?? -1);
-    const temps = cellStr(ws, r, layout.tempsCol ?? -1);
-    const reps = rawReps ?? distance ?? temps;
-    const charge = rawCharge ?? allure;
-    const leftovers = [
-      rawReps && distance ? `Distance : ${distance}` : null,
-      (rawReps || distance) && temps ? `Temps : ${temps}` : null,
-      rawCharge && allure ? `Allure : ${allure}` : null,
-    ].filter(Boolean) as string[];
-
-    const hasData = !!(series || reps || charge || rpe);
     const exMatch = name.match(EX_CODE_RE);
-    const isAuxiliarySessionTitle = AUXILIARY_SECTION_RE.test(name) && !hasData && !exMatch;
+    const directSeries = cellStr(ws, r, layout.seriesCol);
+    const directReps = cellStr(ws, r, layout.repsCol);
+    const directCharge = cellStr(ws, r, layout.chargeCol);
+    const directTempo = cellStr(ws, r, layout.tempoCol);
+    const directRecup = cellStr(ws, r, layout.recupCol);
+    const directRpe = cellStr(ws, r, layout.rpeCol);
+    const directDistance = cellStr(ws, r, layout.distanceCol ?? -1);
+    const directAllure = cellStr(ws, r, layout.allureCol ?? -1);
+    const directTemps = cellStr(ws, r, layout.tempsCol ?? -1);
+    const directRpeIsNumeric = !!directRpe && !Number.isNaN(Number(directRpe.replace(",", ".")));
+    const hasDirectData = !!(
+      directSeries || directReps || directCharge || directTempo || directRecup || directRpe ||
+      directDistance || directAllure || directTemps
+    );
+    const directHasExerciseValues = !!(
+      directSeries || directReps || directCharge || directTempo || directDistance || directRpeIsNumeric
+    );
+    const directHasRunValues = !!(directTemps || directAllure);
+    const directIsRunContinuation =
+      !exMatch && !directSeries && !directReps && directHasRunValues &&
+      (layout.tempsCol !== undefined || layout.allureCol !== undefined);
+
+    if (
+      !exMatch && precedingBlankNameRows >= 2 && r > lastTableHeaderRow && !hasDirectData &&
+      !SESSION_RE.test(name) && !AUXILIARY_SECTION_RE.test(name)
+    ) break;
+
+    const isAuxiliarySessionTitle = AUXILIARY_SECTION_RE.test(name) && !hasDirectData && !exMatch;
     const isSessionTitle =
       (SESSION_RE.test(name) || isAuxiliarySessionTitle) &&
-      !hasData &&
+      !hasDirectData &&
       !exMatch &&
       name.length < 90;
 
@@ -370,6 +476,90 @@ function parseWeekSheet(ws: XLSX.WorkSheet, sheetName: string): ImportedWeek | n
       week.days.push(currentDay);
       continue;
     }
+
+    if (directIsRunContinuation) {
+      const prev = currentDay?.exercises[currentDay.exercises.length - 1];
+      if (prev) {
+        const fragment = [name, directTemps && `Temps : ${directTemps}`, directAllure && `Allure : ${directAllure}`, cellStr(ws, r, layout.notesCol)]
+          .filter(Boolean)
+          .join(" — ");
+        prev.coach_notes = prev.coach_notes ? `${prev.coach_notes}\n${fragment}` : fragment;
+      }
+      continue;
+    }
+
+    const isConsigneLabel = JUNK_RE.test(name);
+    if (isConsigneLabel) {
+      const prev = currentDay?.exercises[currentDay.exercises.length - 1];
+      if (prev) {
+        const fragment = [
+          name,
+          directSeries,
+          directReps,
+          directCharge,
+          directTempo,
+          directRecup,
+          directRpeIsNumeric ? null : directRpe,
+          directDistance && `Distance : ${directDistance}`,
+          directTemps && `Temps : ${directTemps}`,
+          directAllure && `Allure : ${directAllure}`,
+          cellStr(ws, r, layout.notesCol),
+        ]
+          .filter(Boolean)
+          .join(" — ");
+        prev.coach_notes = prev.coach_notes ? `${prev.coach_notes}\n${fragment}` : fragment;
+      }
+      continue;
+    }
+
+    const isTextContinuation =
+      !exMatch && !directHasExerciseValues && !directHasRunValues &&
+      /^[a-zàâäéèêëîïôöùûüç]/.test(name);
+    if (isTextContinuation) {
+      const prev = currentDay?.exercises[currentDay.exercises.length - 1];
+      const fragment = [name, cellStr(ws, r, layout.notesCol)].filter(Boolean).join(" — ");
+      if (prev && fragment) {
+        prev.coach_notes = prev.coach_notes ? `${prev.coach_notes}\n${fragment}` : fragment;
+      }
+      continue;
+    }
+
+    const hasMergedPrescription = [
+      layout.seriesCol,
+      layout.repsCol,
+      layout.chargeCol,
+      layout.tempoCol,
+      layout.recupCol,
+      layout.rpeCol,
+      layout.distanceCol ?? -1,
+      layout.allureCol ?? -1,
+      layout.tempsCol ?? -1,
+    ].some((col) => hasMergedValue(ws, r, col));
+    const readMergedValues = !!exMatch || (!isConsigneLabel && (directHasExerciseValues || hasMergedPrescription));
+    const field = (col: number) => (readMergedValues ? mergedCellStr(ws, r, col) : cellStr(ws, r, col));
+    const series = field(layout.seriesCol);
+    const rawReps = field(layout.repsCol);
+    const rawCharge = field(layout.chargeCol);
+    const rpe = field(layout.rpeCol);
+    const tempo = field(layout.tempoCol);
+    const recup = field(layout.recupCol);
+    const distance = field(layout.distanceCol ?? -1);
+    const allure = field(layout.allureCol ?? -1);
+    const temps = field(layout.tempsCol ?? -1);
+    const reps = rawReps ?? distance ?? temps;
+    const charge = rawCharge;
+    const leftovers = [
+      rawReps && distance ? `Distance : ${distance}` : null,
+      (rawReps || distance) && temps ? `Temps : ${temps}` : null,
+      rawCharge && allure ? `Allure : ${allure}` : null,
+      !rawCharge && allure
+        ? /^\s*~?\s*\d{1,2}:\d{2}/.test(allure)
+          ? `Allure : ${allure}`
+          : `Indication : ${allure}`
+        : null,
+    ].filter(Boolean) as string[];
+
+    const hasData = !!(series || reps || charge || rpe);
 
     // Ligne de consigne (« OBJECTIF : … », fragment de phrase en minuscules…)
     // sans données numériques : on la rattache aux notes de l'exercice précédent
@@ -383,7 +573,6 @@ function parseWeekSheet(ws: XLSX.WorkSheet, sheetName: string): ImportedWeek | n
     // devenait un exercice fantôme. Une ligne qui commence simplement par une
     // minuscule, elle, n'est une consigne que si elle ne porte aucune donnée :
     // un vrai exercice peut s'appeler « développé couché ».
-    const isConsigneLabel = JUNK_RE.test(name);
     const looksLikeConsigne =
       !exMatch && (isConsigneLabel || (!hasNumericData && /^[a-zàâäéèêëîïôöùûüç]/.test(name)));
     if (looksLikeConsigne) {
@@ -407,7 +596,11 @@ function parseWeekSheet(ws: XLSX.WorkSheet, sheetName: string): ImportedWeek | n
     if (!hasData && !exMatch) continue;
     if (!currentDay) {
       dayIndex++;
-      currentDay = { number: dayIndex, label: `Séance ${dayIndex}`, exercises: [] };
+      currentDay = {
+        number: dayIndex,
+        label: dayIndex === 1 ? defaultSessionLabel : sessionLabelFromSheetName(sheetName, dayIndex),
+        exercises: [],
+      };
       week.days.push(currentDay);
     }
 
@@ -451,6 +644,9 @@ function parseWeekSheet(ws: XLSX.WorkSheet, sheetName: string): ImportedWeek | n
   }
 
   week.days = week.days.filter((d) => d.exercises.length > 0);
+  week.days.forEach((day, index) => {
+    day.number = index + 1;
+  });
   for (const day of week.days) propagateBlockSeries(day.exercises);
   return week;
 }
@@ -458,13 +654,13 @@ function parseWeekSheet(ws: XLSX.WorkSheet, sheetName: string): ImportedWeek | n
 export async function listExcelSheets(file: File): Promise<string[]> {
   const buffer = await file.arrayBuffer();
   const wb = XLSX.read(buffer, { type: "array" });
-  return wb.SheetNames.filter((n) => /^S\d+/i.test(n));
+  return wb.SheetNames.filter(isWeekSheetName);
 }
 
 export async function parseExcelFile(file: File, selectedSheets?: string[]): Promise<ParsedExcel> {
   const buffer = await file.arrayBuffer();
   const wb = XLSX.read(buffer, { type: "array", cellStyles: true });
-  const allWeekSheets = wb.SheetNames.filter((n) => /^S\d+/i.test(n));
+  const allWeekSheets = wb.SheetNames.filter(isWeekSheetName);
   const weekSheets = selectedSheets
     ? allWeekSheets.filter((n) => selectedSheets.includes(n))
     : allWeekSheets;
