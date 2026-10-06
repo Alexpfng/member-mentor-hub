@@ -37,6 +37,7 @@ import { Route as AuthenticatedMembreCommunauteRouteImport } from './routes/_aut
 import { Route as AuthenticatedMembreComposerRouteImport } from './routes/_authenticated.membre.composer'
 import { Route as AuthenticatedMembreHistoriqueRouteImport } from './routes/_authenticated.membre.historique'
 import { Route as AuthenticatedMembreLoggerRouteImport } from './routes/_authenticated.membre.logger'
+import { Route as AuthenticatedMembreMaSemaineRouteImport } from './routes/_authenticated.membre.ma-semaine'
 import { Route as AuthenticatedMembreMessagesRouteImport } from './routes/_authenticated.membre.messages'
 import { Route as AuthenticatedMembreNutritionRouteImport } from './routes/_authenticated.membre.nutrition'
 import { Route as AuthenticatedMembrePlanningRouteImport } from './routes/_authenticated.membre.planning'
@@ -222,6 +223,12 @@ const AuthenticatedMembreLoggerRoute =
     path: '/membre/logger',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedMembreMaSemaineRoute =
+  AuthenticatedMembreMaSemaineRouteImport.update({
+    id: '/membre/ma-semaine',
+    path: '/membre/ma-semaine',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedMembreMessagesRoute =
   AuthenticatedMembreMessagesRouteImport.update({
     id: '/membre/messages',
@@ -395,6 +402,7 @@ export interface FileRoutesByFullPath {
   '/membre/composer': typeof AuthenticatedMembreComposerRoute
   '/membre/historique': typeof AuthenticatedMembreHistoriqueRoute
   '/membre/logger': typeof AuthenticatedMembreLoggerRoute
+  '/membre/ma-semaine': typeof AuthenticatedMembreMaSemaineRoute
   '/membre/messages': typeof AuthenticatedMembreMessagesRoute
   '/membre/nutrition': typeof AuthenticatedMembreNutritionRoute
   '/membre/planning': typeof AuthenticatedMembrePlanningRoute
@@ -447,6 +455,7 @@ export interface FileRoutesByTo {
   '/membre/composer': typeof AuthenticatedMembreComposerRoute
   '/membre/historique': typeof AuthenticatedMembreHistoriqueRoute
   '/membre/logger': typeof AuthenticatedMembreLoggerRoute
+  '/membre/ma-semaine': typeof AuthenticatedMembreMaSemaineRoute
   '/membre/messages': typeof AuthenticatedMembreMessagesRoute
   '/membre/nutrition': typeof AuthenticatedMembreNutritionRoute
   '/membre/planning': typeof AuthenticatedMembrePlanningRoute
@@ -502,6 +511,7 @@ export interface FileRoutesById {
   '/_authenticated/membre/composer': typeof AuthenticatedMembreComposerRoute
   '/_authenticated/membre/historique': typeof AuthenticatedMembreHistoriqueRoute
   '/_authenticated/membre/logger': typeof AuthenticatedMembreLoggerRoute
+  '/_authenticated/membre/ma-semaine': typeof AuthenticatedMembreMaSemaineRoute
   '/_authenticated/membre/messages': typeof AuthenticatedMembreMessagesRoute
   '/_authenticated/membre/nutrition': typeof AuthenticatedMembreNutritionRoute
   '/_authenticated/membre/planning': typeof AuthenticatedMembrePlanningRoute
@@ -558,6 +568,7 @@ export interface FileRouteTypes {
     | '/membre/composer'
     | '/membre/historique'
     | '/membre/logger'
+    | '/membre/ma-semaine'
     | '/membre/messages'
     | '/membre/nutrition'
     | '/membre/planning'
@@ -610,6 +621,7 @@ export interface FileRouteTypes {
     | '/membre/composer'
     | '/membre/historique'
     | '/membre/logger'
+    | '/membre/ma-semaine'
     | '/membre/messages'
     | '/membre/nutrition'
     | '/membre/planning'
@@ -664,6 +676,7 @@ export interface FileRouteTypes {
     | '/_authenticated/membre/composer'
     | '/_authenticated/membre/historique'
     | '/_authenticated/membre/logger'
+    | '/_authenticated/membre/ma-semaine'
     | '/_authenticated/membre/messages'
     | '/_authenticated/membre/nutrition'
     | '/_authenticated/membre/planning'
@@ -904,6 +917,13 @@ declare module '@tanstack/react-router' {
       path: '/membre/logger'
       fullPath: '/membre/logger'
       preLoaderRoute: typeof AuthenticatedMembreLoggerRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/membre/ma-semaine': {
+      id: '/_authenticated/membre/ma-semaine'
+      path: '/membre/ma-semaine'
+      fullPath: '/membre/ma-semaine'
+      preLoaderRoute: typeof AuthenticatedMembreMaSemaineRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/membre/messages': {
@@ -1170,6 +1190,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedMembreComposerRoute: typeof AuthenticatedMembreComposerRoute
   AuthenticatedMembreHistoriqueRoute: typeof AuthenticatedMembreHistoriqueRoute
   AuthenticatedMembreLoggerRoute: typeof AuthenticatedMembreLoggerRoute
+  AuthenticatedMembreMaSemaineRoute: typeof AuthenticatedMembreMaSemaineRoute
   AuthenticatedMembreMessagesRoute: typeof AuthenticatedMembreMessagesRoute
   AuthenticatedMembreNutritionRoute: typeof AuthenticatedMembreNutritionRoute
   AuthenticatedMembrePlanningRoute: typeof AuthenticatedMembrePlanningRoute
@@ -1208,6 +1229,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedMembreComposerRoute: AuthenticatedMembreComposerRoute,
   AuthenticatedMembreHistoriqueRoute: AuthenticatedMembreHistoriqueRoute,
   AuthenticatedMembreLoggerRoute: AuthenticatedMembreLoggerRoute,
+  AuthenticatedMembreMaSemaineRoute: AuthenticatedMembreMaSemaineRoute,
   AuthenticatedMembreMessagesRoute: AuthenticatedMembreMessagesRoute,
   AuthenticatedMembreNutritionRoute: AuthenticatedMembreNutritionRoute,
   AuthenticatedMembrePlanningRoute: AuthenticatedMembrePlanningRoute,

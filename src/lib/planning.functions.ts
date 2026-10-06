@@ -11,6 +11,7 @@ import {
 } from "@/lib/planning-weeks";
 import { buildCatchupMetadata } from "@/lib/planning-catchup";
 import { attachStravaActivityCardsToSessions } from "@/lib/strava-activity-card";
+import { buildMemberWeekDetails } from "@/lib/member-week-details";
 
 const dateStr = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
@@ -106,7 +107,14 @@ export const listWeekPlan = createServerFn({ method: "GET" })
     ]);
 
     if (!assignment) {
-      return { weekNumber: 1, weekStart: null, weekEnd: null, days: [], assignment: null };
+      return {
+        weekNumber: 1,
+        weekStart: null,
+        weekEnd: null,
+        days: [],
+        weekDetails: [],
+        assignment: null,
+      };
     }
 
     const weekStartsOn = normalizeWeekStartsOn(profile?.planning_week_start_day);
@@ -196,6 +204,7 @@ export const listWeekPlan = createServerFn({ method: "GET" })
       weekWindowLabel: weekWindowLabel(weekStartsOn),
       assignment,
       dayDefs,
+      weekDetails: buildMemberWeekDetails(weekDef?.days),
       planned: planned ?? [],
       sessions: attachStravaActivityCardsToSessions(sessions ?? [], stravaActivities ?? []).map(
         (session: any) => {

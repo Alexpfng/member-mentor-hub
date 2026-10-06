@@ -837,6 +837,7 @@ export default function MemberDashboard() {
                 today={todayISO}
                 dayLabels={dayLabels}
                 onOpenPlanning={() => navigate("/membre/planning")}
+                onOpenDetails={() => navigate("/membre/ma-semaine")}
               />
 
               {/* Stats */}

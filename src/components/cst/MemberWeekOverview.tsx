@@ -10,6 +10,7 @@ type Props = {
   today: string;
   dayLabels: string[];
   onOpenPlanning: () => void;
+  onOpenDetails: () => void;
 };
 
 const DAY_LABELS = ["LUN", "MAR", "MER", "JEU", "VEN", "SAM", "DIM"];
@@ -20,6 +21,7 @@ export function MemberWeekOverview({
   today,
   dayLabels,
   onOpenPlanning,
+  onOpenDetails,
 }: Props) {
   const { t } = useI18n();
   const { summary } = overview;
@@ -301,14 +303,31 @@ export function MemberWeekOverview({
         })}
       </div>
 
-      <button
-        type="button"
-        className="cst-btn cst-btn-ghost-dark"
-        onClick={onOpenPlanning}
-        style={{ width: "100%", marginTop: 12, fontSize: 10 }}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+          gap: 8,
+          marginTop: 12,
+        }}
       >
-        {t("VOIR LE PLANNING →")}
-      </button>
+        <button
+          type="button"
+          className="cst-btn cst-btn-ghost-dark"
+          onClick={onOpenPlanning}
+          style={{ width: "100%", minWidth: 0, paddingInline: 8, fontSize: 9 }}
+        >
+          {t("VOIR LE PLANNING →")}
+        </button>
+        <button
+          type="button"
+          className="cst-btn cst-btn-primary"
+          onClick={onOpenDetails}
+          style={{ width: "100%", minWidth: 0, paddingInline: 8, fontSize: 9 }}
+        >
+          {t("VOIR PLUS →")}
+        </button>
+      </div>
     </section>
   );
 }
