@@ -43,7 +43,10 @@ export function parseEmom(
   name: string | null = null,
 ): EmomParams {
   const explicitDuration = series?.match(/^\s*(\d+)\s*(?:'|min|m)?\s*$/i)?.[1];
-  const explicitReps = reps?.match(/^(\d+)$/)?.[1] ?? reps?.match(/^\s*(\d+)\s*\/\s*\d+\s*$/)?.[1];
+  const explicitReps =
+    reps?.match(/^\s*(\d+)\s*$/)?.[1] ??
+    reps?.match(/^\s*(\d+)\s*\/\s*\d+\s*$/)?.[1] ??
+    reps?.match(/^\s*emom\s*(\d+)\s*(?:reps?)?\s*$/i)?.[1];
   if (explicitDuration && explicitReps) {
     return fixSwappedDurationAndReps({
       durationMin: parseInt(explicitDuration, 10),
@@ -95,7 +98,9 @@ export function parseEmom(
   // reps/min = champ Reps — y compris alterné « 3/4 » (paires/impaires).
   const repsAlt = reps?.match(/^\s*(\d+)\s*\/\s*\d+\s*$/)?.[1];
   const repsFromReps =
-    reps?.match(/^(\d+)$/)?.[1] ?? repsAlt ?? reps?.match(/emom\s*(\d+)\s*reps?/i)?.[1];
+    reps?.match(/^\s*(\d+)\s*$/)?.[1] ??
+    repsAlt ??
+    reps?.match(/^\s*emom\s*(\d+)\s*(?:reps?)?\s*$/i)?.[1];
   const repsFromSeries = series?.match(/emom\s*(\d+)/i)?.[1];
   // Le champ Reps, quand il est renseigné, fait foi : un « EMOM 10 » écrit dans
   // Séries désigne la durée, pas les reps — le lire en priorité écrasait la

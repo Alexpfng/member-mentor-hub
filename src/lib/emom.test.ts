@@ -12,6 +12,13 @@ describe("parseEmom — saisie via le builder (Durée = Séries, Reps/min = Reps
     expect(parseEmom("10min", "1", "Tractions")).toEqual({ durationMin: 10, repsPerMin: 1 });
   });
 
+  it("lit une cible de répétitions saisie au format EMOM4", () => {
+    expect(parseEmom("10", "EMOM4", "Back squat")).toEqual({
+      durationMin: 10,
+      repsPerMin: 4,
+    });
+  });
+
   it("gère les reps alternées (3/4)", () => {
     expect(parseEmom("10", "3/4", "Fentes")).toEqual({ durationMin: 10, repsPerMin: 3 });
   });
@@ -131,6 +138,15 @@ describe("buildEmomPlan", () => {
         targetLabel: "3 reps",
       })),
     });
+  });
+
+  it("shows the target reps when the imported reps field contains EMOM4", () => {
+    const plan = buildEmomPlan([
+      { name: "Back squat", block_type: "emom", series: "10", reps: "EMOM4" },
+    ]);
+
+    expect(plan.repsPerMin).toBe(4);
+    expect(plan.minutePlan.every((minute) => minute.targetLabel === "4 reps")).toBe(true);
   });
 
   it("classifies slash reps as alternating reps with odd minutes using the second value", () => {
