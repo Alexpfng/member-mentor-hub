@@ -71,11 +71,12 @@ export function normalizeStravaActivityCard(
   const avgHr = toNumber(activity.average_heartrate ?? fromRaw(raw, "average_heartrate"));
   const averageSpeedMps = toNumber(activity.average_speed_mps ?? fromRaw(raw, "average_speed"));
   const distanceKm = distanceM != null ? round2(distanceM / 1000) : null;
+  const paceTimeSec = elapsedSec != null && elapsedSec > 0 ? elapsedSec : durationSec;
   const paceSecPerKm =
-    averageSpeedMps != null && averageSpeedMps > 0
-      ? Math.round(1000 / averageSpeedMps)
-      : distanceKm && durationSec
-        ? Math.round(durationSec / distanceKm)
+    distanceM != null && distanceM > 0 && paceTimeSec != null && paceTimeSec > 0
+      ? Math.round((paceTimeSec * 1000) / distanceM)
+      : averageSpeedMps != null && averageSpeedMps > 0
+        ? Math.round(1000 / averageSpeedMps)
         : null;
 
   return {

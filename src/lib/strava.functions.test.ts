@@ -47,6 +47,18 @@ describe("mapStravaActivityToRunMetrics", () => {
     });
   });
 
+  it("calculates average pace from elapsed time instead of pause-trimmed moving speed", () => {
+    const metrics = mapStravaActivityToRunMetrics({
+      distance: 7610,
+      moving_time: 3446,
+      elapsed_time: 3632,
+      average_speed: 2.21,
+    });
+
+    expect(metrics.paceSecPerKm).toBe(477);
+    expect(metrics.durationSec).toBe(3446);
+  });
+
   it("keeps nullable values when Strava fields are missing", () => {
     const metrics = mapStravaActivityToRunMetrics({});
 

@@ -7,6 +7,21 @@ import {
 } from "./strava-activity-card";
 
 describe("normalizeStravaActivityCard", () => {
+  it("shows average pace from elapsed time when Strava has removed pauses from moving time", () => {
+    const card = normalizeStravaActivityCard({
+      distance_m: 7610,
+      moving_time_s: 3446,
+      elapsed_time_s: 3632,
+      average_speed_mps: 2.21,
+    });
+
+    expect(card).toMatchObject({
+      durationSec: 3446,
+      elapsedSec: 3632,
+      paceSecPerKm: 477,
+    });
+  });
+
   it("builds display data from a stored Strava activity payload", () => {
     const card = normalizeStravaActivityCard({
       session_id: "session-1",

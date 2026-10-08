@@ -86,6 +86,7 @@ export function mapStravaActivityToRunMetrics(activity: StravaActivityLike): Run
   const distanceKm =
     activity.distance != null ? Math.round((Number(activity.distance) / 1000) * 100) / 100 : null;
   const durationSec = activity.moving_time != null ? Number(activity.moving_time) : null;
+  const elapsedSec = activity.elapsed_time != null ? Number(activity.elapsed_time) : null;
   const elevationM =
     activity.total_elevation_gain != null
       ? Math.round(Number(activity.total_elevation_gain))
@@ -94,7 +95,11 @@ export function mapStravaActivityToRunMetrics(activity: StravaActivityLike): Run
     activity.average_heartrate != null ? Math.round(Number(activity.average_heartrate)) : null;
 
   let paceSecPerKm: number | null = null;
-  if (activity.average_speed != null && Number(activity.average_speed) > 0) {
+  if (activity.distance != null && Number(activity.distance) > 0 && elapsedSec != null && elapsedSec > 0) {
+    // Strava's average_speed uses pause-trimmed moving time; use elapsed time
+    // for the same average pace athletes see in their workout summary.
+    paceSecPerKm = Math.round((elapsedSec * 1000) / Number(activity.distance));
+  } else if (activity.average_speed != null && Number(activity.average_speed) > 0) {
     paceSecPerKm = Math.round(1000 / Number(activity.average_speed));
   } else if (distanceKm && durationSec) {
     paceSecPerKm = Math.round(durationSec / distanceKm);
