@@ -4244,6 +4244,15 @@ function EmomScreen({
     emomMode === "alternating-exercises" && currentMinutePlan
       ? currentMinutePlan.exerciseName
       : exercise.name;
+  const evenOddReps = repsLabel?.split("/");
+  const prescriptionText =
+    emomMode === "alternating-exercises" && currentMinutePlan
+      ? `${currentMinutePlan.targetLabel ?? "CIBLE LIBRE"} · ${currentMinutePlan.exerciseName}`
+      : alternating && evenOddReps?.length === 2
+        ? `${evenOddReps[0]} REPS MINUTES PAIRES · ${evenOddReps[1]} REPS MINUTES IMPAIRES`
+        : !isLadder && repsPerMin != null
+          ? `${repsPerMin} REPS À CHAQUE MINUTE`
+          : null;
 
   useEffect(() => {
     if (!running || elapsed >= totalSec) return;
@@ -4392,6 +4401,39 @@ function EmomScreen({
             >
               {isLadder ? "+1 MIN" : "+5 MIN"}
             </button>
+          </div>
+        )}
+
+        {prescriptionText && (
+          <div
+            aria-live="polite"
+            style={{
+              padding: "12px 14px",
+              background: "rgba(45,90,53,0.2)",
+              border: "1px solid rgba(110,171,118,0.45)",
+              borderRadius: 8,
+              textAlign: "center",
+            }}
+          >
+            <div
+              className="cst-mono"
+              style={{ fontSize: 10, opacity: 0.68, letterSpacing: "0.16em" }}
+            >
+              CIBLE DU MINUTEUR
+            </div>
+            <div
+              className="cst-display"
+              style={{ fontSize: 18, color: "#fff", marginTop: 5 }}
+            >
+              {prescriptionText}
+            </div>
+            <div className="cst-mono" style={{ fontSize: 10, opacity: 0.62, marginTop: 4 }}>
+              {emomMode === "alternating-exercises"
+                ? `MINUTE ${currentMinute + 1} · À FAIRE AU DÉBUT DE LA MINUTE`
+                : alternating
+                  ? "LE NOMBRE DE REPS DÉPEND DE LA PARITÉ DE LA MINUTE"
+                  : "À FAIRE AU DÉBUT DE CHAQUE MINUTE"}
+            </div>
           </div>
         )}
 

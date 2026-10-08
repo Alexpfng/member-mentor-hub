@@ -100,4 +100,11 @@ describe("formats spéciaux — coach et live session", () => {
     expect(source).toContain("minutePlan?.[currentMinute]");
     expect(source).toContain("PROCHAINE MINUTE");
   });
+
+  it("affiche la cible de répétitions clairement avant le démarrage du minuteur", () => {
+    const source = readSource("src/components/cst/LiveSession.tsx");
+    expect(source).toContain("CIBLE DU MINUTEUR");
+    expect(source).toContain("REPS À CHAQUE MINUTE");
+    expect(source).toContain("MINUTES PAIRES");
+  });
 });
