@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
 
 import {
   buildEarlyFinishMemberNote,
@@ -16,6 +17,19 @@ describe("normalizeExpertRpeForStorage", () => {
 
   test("caps KO values to 10 for storage", () => {
     expect(normalizeExpertRpeForStorage(11)).toBe(10);
+  });
+});
+
+describe("RPE storage constraints", () => {
+  test("accepts the complete 0–10 half-point scale offered to members", () => {
+    const migration = readFileSync(
+      "supabase/migrations/20261010154804_allow_zero_rpe_scores.sql",
+      "utf8",
+    );
+
+    expect(migration).toContain("drop constraint if exists set_logs_rpe_check");
+    expect(migration).toContain("drop constraint if exists exercise_feedbacks_rpe_check");
+    expect(migration).toMatch(/check\s*\(\s*rpe\s*>=\s*0\s+and\s+rpe\s*<=\s*10\s*\)/i);
   });
 });
 
