@@ -2,8 +2,62 @@ import { describe, expect, it } from "bun:test";
 
 import {
   buildCoachExerciseFeedback,
+  buildLatestSetRpesByExercise,
   getQuickRpePopoverPlacement,
 } from "./coach-rpe-feedback";
+
+describe("buildLatestSetRpesByExercise", () => {
+  it("returns ordered per-set RPEs from the latest completed exercise session only", () => {
+    const result = buildLatestSetRpesByExercise(
+      [
+        { id: "old", status: "completed", ended_at: "2026-10-01T10:00:00Z" },
+        { id: "latest", status: "completed", ended_at: "2026-10-08T10:00:00Z" },
+        { id: "active", status: "in_progress", ended_at: "2026-10-09T10:00:00Z" },
+      ],
+      [
+        { session_id: "old", exercise_name: "Back squat", set_number: 1, rpe: 6, completed: true },
+        { session_id: "old", exercise_name: "Back squat", set_number: 2, rpe: 7, completed: true },
+        {
+          session_id: "latest",
+          exercise_name: "Back squat",
+          set_number: 2,
+          rpe: 9,
+          completed: true,
+        },
+        {
+          session_id: "latest",
+          exercise_name: "Back squat",
+          set_number: 1,
+          rpe: 7,
+          completed: true,
+        },
+        {
+          session_id: "latest",
+          exercise_name: "Back squat",
+          set_number: 3,
+          rpe: null,
+          completed: true,
+        },
+        {
+          session_id: "latest",
+          exercise_name: "Back squat",
+          set_number: 4,
+          rpe: 9,
+          completed: null,
+        },
+        {
+          session_id: "active",
+          exercise_name: "Back squat",
+          set_number: 1,
+          rpe: 10,
+          completed: true,
+        },
+      ],
+    );
+
+    expect(result["back squat"]).toEqual([7, 9, 9]);
+  });
+});
 
 describe("buildCoachExerciseFeedback", () => {
   it("garde le dernier rpe réellement saisi au lieu de calculer une moyenne", () => {

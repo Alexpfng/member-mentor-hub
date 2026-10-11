@@ -35,16 +35,74 @@ type PainRow = {
   exercise_name: string | null;
 };
 
+type SetRpeSession = {
+  id: string;
+  status: string | null;
+  started_at?: string | null;
+  ended_at?: string | null;
+};
+
+type SetRpeLog = {
+  session_id: string | null;
+  exercise_name: string | null;
+  set_number: number | null;
+  rpe: number | null;
+  completed: boolean | null;
+};
+
+/** RPEs saisis pour chaque série de la dernière séance terminée de chaque exercice. */
+export function buildLatestSetRpesByExercise(sessions: SetRpeSession[], logs: SetRpeLog[]) {
+  const sessionsById = new Map(
+    sessions
+      .filter((session) => session.status === "completed")
+      .map((session) => [session.id, session]),
+  );
+  const grouped = new Map<string, Array<{ sessionId: string; setNumber: number; rpe: number }>>();
+
+  for (const log of logs) {
+    if (log.completed === false || log.rpe == null || !log.session_id) continue;
+    const session = sessionsById.get(log.session_id);
+    const exerciseKey = normalizeExerciseFeedbackKey(log.exercise_name);
+    if (!session || !exerciseKey) continue;
+    const rows = grouped.get(exerciseKey) ?? [];
+    rows.push({
+      sessionId: session.id,
+      setNumber: log.set_number ?? 0,
+      rpe: Number(log.rpe),
+    });
+    grouped.set(exerciseKey, rows);
+  }
+
+  const result: Record<string, number[]> = {};
+  const sessionById = new Map(sessions.map((session) => [session.id, session]));
+  for (const [exerciseKey, rows] of grouped) {
+    const latestSessionId = rows
+      .map((row) => row.sessionId)
+      .filter((id, index, all) => all.indexOf(id) === index)
+      .sort((a, b) => {
+        const sessionA = sessionById.get(a);
+        const sessionB = sessionById.get(b);
+        return (
+          ts(sessionB?.ended_at ?? sessionB?.started_at) -
+          ts(sessionA?.ended_at ?? sessionA?.started_at)
+        );
+      })[0];
+    if (!latestSessionId) continue;
+    result[exerciseKey] = rows
+      .filter((row) => row.sessionId === latestSessionId)
+      .sort((a, b) => a.setNumber - b.setNumber)
+      .map((row) => row.rpe);
+  }
+  return result;
+}
+
 function ts(value: string | null | undefined) {
   if (!value) return 0;
   const parsed = Date.parse(value);
   return Number.isNaN(parsed) ? 0 : parsed;
 }
 
-function ensureBucket(
-  acc: Record<string, FeedbackBucket>,
-  name: string | null | undefined,
-) {
+function ensureBucket(acc: Record<string, FeedbackBucket>, name: string | null | undefined) {
   const key = normalizeExerciseFeedbackKey(name);
   if (!key) return null;
   if (!acc[key]) {

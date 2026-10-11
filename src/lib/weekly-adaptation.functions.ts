@@ -9,7 +9,7 @@ import {
   mergeExerciseFeedbackMaps,
   type AdapterExerciseFeedback,
 } from "@/lib/adapter-feedback-source";
-import { buildCoachExerciseFeedback } from "@/lib/coach-rpe-feedback";
+import { buildCoachExerciseFeedback, buildLatestSetRpesByExercise } from "@/lib/coach-rpe-feedback";
 import { normalizeProgramStructure, normalizeWeekStructure } from "@/lib/week-structure-normalizer";
 import { clearFulfilledFilmRequests, filmedExerciseKeys } from "@/lib/film-requests";
 import { preserveAssignmentSessionMode } from "@/lib/assignment-session-mode";
@@ -150,12 +150,15 @@ type FeedbackSession = {
   status: string | null;
   average_rpe: number | null;
   program_id: string | null;
+  started_at?: string | null;
+  ended_at?: string | null;
 };
 
 type AggregatedFeedbackContext = {
   weekNumber: number | null;
   sessions: FeedbackSession[];
   feedback: Record<string, AdapterExerciseFeedback>;
+  recentSetRpes: Record<string, number[]>;
 };
 
 async function aggregateFeedback(
@@ -168,25 +171,41 @@ async function aggregateFeedback(
   let firstWeekWithSessions: AggregatedFeedbackContext | null = null;
   let mostRecentWeekWithFeedback: AggregatedFeedbackContext | null = null;
   const feedbackMaps: Array<Record<string, AdapterExerciseFeedback>> = [];
+  const rpeSessions: FeedbackSession[] = [];
+  const rpeLogs: Array<{
+    session_id: string | null;
+    exercise_name: string | null;
+    set_number: number | null;
+    rpe: number | null;
+    completed: boolean | null;
+  }> = [];
 
   for (const weekNumber of candidateWeeks) {
     const { data: sessions } = await supabaseAdmin
       .from("sessions")
-      .select("id, status, average_rpe, program_id")
+      .select("id, status, average_rpe, program_id, started_at, ended_at")
       .eq("member_id", memberId)
       .eq("week_number", weekNumber);
     const sourceSessions = filterFeedbackSessionsForProgram(sessions ?? [], programId);
     const sessionIds = sourceSessions.map((s) => s.id);
     if (sessionIds.length === 0) continue;
+    rpeSessions.push(...sourceSessions);
 
     if (!firstWeekWithSessions) {
-      firstWeekWithSessions = { weekNumber, sessions: sourceSessions, feedback: {} };
+      firstWeekWithSessions = {
+        weekNumber,
+        sessions: sourceSessions,
+        feedback: {},
+        recentSetRpes: {},
+      };
     }
 
     const [{ data: logs }, { data: feedbacks }, { data: pains }] = await Promise.all([
       supabaseAdmin
         .from("set_logs")
-        .select("exercise_name, rpe, reps, weight_kg, completed, note, logged_at")
+        .select(
+          "session_id, exercise_name, set_number, rpe, reps, weight_kg, completed, note, logged_at",
+        )
         .in("session_id", sessionIds),
       supabaseAdmin
         .from("exercise_feedbacks")
@@ -196,6 +215,7 @@ async function aggregateFeedback(
         .in("session_id", sessionIds),
       supabaseAdmin.from("pain_reports").select("exercise_name").in("session_id", sessionIds),
     ]);
+    rpeLogs.push(...(logs ?? []));
     const feedback = buildCoachExerciseFeedback({
       logs: logs ?? [],
       feedbacks: feedbacks ?? [],
@@ -209,7 +229,12 @@ async function aggregateFeedback(
       // on écrasait à chaque tour jusqu'à la plus ancienne → en adaptant la S4 le
       // coach voyait « retour membre S1 » au lieu de la semaine qu'il venait de finir.
       if (!mostRecentWeekWithFeedback) {
-        mostRecentWeekWithFeedback = { weekNumber, sessions: sourceSessions, feedback };
+        mostRecentWeekWithFeedback = {
+          weekNumber,
+          sessions: sourceSessions,
+          feedback,
+          recentSetRpes: {},
+        };
       }
     }
   }
@@ -218,6 +243,7 @@ async function aggregateFeedback(
     return {
       weekNumber: mostRecentWeekWithFeedback.weekNumber,
       sessions: mostRecentWeekWithFeedback.sessions,
+      recentSetRpes: buildLatestSetRpesByExercise(rpeSessions, rpeLogs),
       // feedbackMaps est [plus récent … plus ancien] et mergeExerciseFeedbackMaps
       // laisse gagner le DERNIER map pour un même exo → on inverse pour que la
       // semaine la plus récente prime (les semaines antérieures ne servent que de repli).
@@ -225,7 +251,12 @@ async function aggregateFeedback(
     };
   }
 
-  return firstWeekWithSessions;
+  return firstWeekWithSessions
+    ? {
+        ...firstWeekWithSessions,
+        recentSetRpes: buildLatestSetRpesByExercise(rpeSessions, rpeLogs),
+      }
+    : null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -483,6 +514,7 @@ export const getMemberWeekContext = createServerFn({ method: "POST" })
           "Membre",
       },
       feedback,
+      recentSetRpes: feedbackContext?.recentSetRpes ?? {},
       sourceSummary: {
         adherence,
         avgRpe,

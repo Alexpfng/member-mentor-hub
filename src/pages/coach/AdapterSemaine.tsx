@@ -12,7 +12,7 @@ import {
   previewWeekChanges,
 } from "@/lib/weekly-adaptation.functions";
 import { normalizeWeekId } from "@/lib/coach-navigation";
-import { findExerciseFeedback } from "@/lib/exercise-feedback";
+import { findExerciseFeedback, normalizeExerciseFeedbackKey } from "@/lib/exercise-feedback";
 import { listExercises, saveProgramExerciseToLibrary } from "@/lib/exercises.functions";
 import {
   resetWeekExerciseRpeTargets,
@@ -460,6 +460,7 @@ function LibraryPicker({
 function ExoEditModal({
   ex,
   fb,
+  setRpes,
   suggestion,
   weekNumber,
   isEnduranceEdit,
@@ -475,6 +476,7 @@ function ExoEditModal({
 }: {
   ex: ProgExercise;
   fb: Feedback | undefined;
+  setRpes: number[];
   suggestion: Suggestion | null;
   weekNumber: number | null;
   isEnduranceEdit?: boolean;
@@ -834,14 +836,25 @@ function ExoEditModal({
             )}
           {!isEnduranceEdit &&
             field(
-              "RPE CIBLE",
-              <input
-                inputMode="text"
-                placeholder="ex. 8,5 ou échec"
-                value={String(ex.rpe_target ?? "")}
-                onChange={(e) => onChange((x) => ({ ...x, rpe_target: e.target.value }))}
-                className="cst-input"
-              />,
+              "RPE PAR SÉRIE · DERNIÈRE SÉANCE",
+              <div
+                className="cst-input cst-mono"
+                aria-label="RPE réellement saisis sur les dernières séries"
+                style={{
+                  minHeight: 40,
+                  display: "flex",
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                  gap: "4px 12px",
+                  fontSize: 12,
+                }}
+              >
+                {setRpes.length > 0
+                  ? setRpes.map((rpe, index) => (
+                      <span key={`${index}-${rpe}`}>S{index + 1} · {rpe}</span>
+                    ))
+                  : "Aucun RPE saisi"}
+              </div>,
             )}
           {field(
             tempoLabel,
@@ -2682,7 +2695,10 @@ export default function AdapterSemaine() {
         (() => {
           const day = structure.days![editTarget.dayIdx];
           const ex = structure.days![editTarget.dayIdx].exercises![editTarget.exoIdx];
-          const fb = findExerciseFeedback(ctx.feedback, ex.name)?.feedback;
+          const fbMatch = findExerciseFeedback(ctx.feedback, ex.name);
+          const fb = fbMatch?.feedback;
+          const setRpes =
+            ctx.recentSetRpes[fbMatch?.key ?? normalizeExerciseFeedbackKey(ex.name)] ?? [];
           const emomLetter = /^([A-Za-z])/.exec(String(ex.code ?? "").trim())?.[1]?.toUpperCase();
           const emomPairCount = emomLetter
             ? (day.exercises ?? []).filter(
@@ -2695,6 +2711,7 @@ export default function AdapterSemaine() {
             <ExoEditModal
               ex={ex}
               fb={fb}
+              setRpes={setRpes}
               suggestion={isEnduranceSession(day) ? null : suggestFor(ex, fb)}
               weekNumber={ctx.sourceSummary.weekNumber}
               isEnduranceEdit={isEnduranceSession(day)}
