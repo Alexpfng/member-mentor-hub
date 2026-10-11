@@ -36,6 +36,7 @@ import {
   getDefaultSetWeight,
   getExpertEmomLoggedValue,
   getExpertSetLoggedValue,
+  getTimedDurationSeconds,
 } from "@/lib/session-prescription";
 import { buildEmomPlan, parseEmom, type EmomMinutePlanItem } from "@/lib/emom";
 import { parseRpeCell } from "@/lib/rpe-cell";
@@ -3528,11 +3529,7 @@ export function LiveSession({
     isDurationReps(setStep.exercise.reps) ||
     isTimedByName(setStep.exercise.name, setStep.exercise.tempo);
   const durationMode = isDurationReps(setStep.exercise.reps) || isTimed;
-  const timedSecs =
-    parseDurationSeconds(setStep.exercise.reps) ??
-    (isTimed && /^\d+$/.test(String(setStep.exercise.reps ?? "").trim())
-      ? Number(setStep.exercise.reps)
-      : null);
+  const timedSecs = getTimedDurationSeconds(setStep.exercise);
   const timedRounds = isTimed ? parseTimedRounds(setStep.exercise.reps, setStep.exercise.name) : 1;
   const timedSideLabel =
     isPerSide(setStep.exercise.reps) || isUnilateralByName(setStep.exercise.name)
@@ -3653,7 +3650,7 @@ export function LiveSession({
             {repPlaceholder && (
               <>
                 OBJECTIF{" "}
-                {isTimed && /^\d+$/.test(repPlaceholder.trim())
+                {isTimed && parseDurationSeconds(repPlaceholder) == null
                   ? `${repPlaceholder} secondes`
                   : formatRepsObjectif(repPlaceholder) ?? repPlaceholder}
               </>
@@ -3696,7 +3693,7 @@ export function LiveSession({
             key={`timed-${stepIdx}`}
             seconds={timedSecs}
             label={
-              /^\d+$/.test(String(setStep.exercise.reps ?? "").trim())
+              isTimed && parseDurationSeconds(setStep.exercise.reps) == null
                 ? `${timedSecs} secondes`
                 : formatRepsObjectif(setStep.exercise.reps) ?? `${timedSecs}s`
             }

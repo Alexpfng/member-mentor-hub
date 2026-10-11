@@ -6,6 +6,7 @@ import {
   getCoachMetricValue,
   getExpertEmomLoggedValue,
   getExpertSetLoggedValue,
+  getTimedDurationSeconds,
 } from "./session-prescription";
 
 describe("getExpertSetLoggedValue", () => {
@@ -47,6 +48,11 @@ describe("getExpertSetLoggedValue", () => {
         1,
       ),
     ).toEqual({ value: 45, kind: "seconds" });
+  });
+
+  test("reads seconds written per side without an s suffix for isometric exercises", () => {
+    expect(getTimedDurationSeconds({ name: "Star plank", reps: "33 / côtés", tempo: "ISO" })).toBe(33);
+    expect(getTimedDurationSeconds({ name: "Rowing barre", reps: "33 / côtés" })).toBeNull();
   });
 });
 

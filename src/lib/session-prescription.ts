@@ -108,20 +108,25 @@ function isTimedByName(name?: string | null, tempo?: string | null) {
   return /gainage|plank|planche|iso\b|isometr|hold|tenir|maintien|floating/.test(merged);
 }
 
+export function getTimedDurationSeconds(exercise: ExerciseLike): number | null {
+  const explicitDuration = isDurationReps(exercise.reps)
+    ? parseDurationSeconds(exercise.reps)
+    : null;
+  if (explicitDuration != null) return explicitDuration;
+  if (!isTimedByName(exercise.name, exercise.tempo)) return null;
+
+  const unitlessTarget = String(exercise.reps ?? "")
+    .trim()
+    .match(/^(\d+)(?:\s*(?:\/|par)?\s*(?:c[ôo]t[ée]s?|jambes?|bras|pieds?))?$/i);
+  return unitlessTarget ? Number(unitlessTarget[1]) : null;
+}
+
 export function getExpertSetLoggedValue(exercise: ExerciseLike, totalSets: number, setNumber: number): { value: number | null; kind: MetricKind } {
-  const rawDurationValue = isDurationReps(exercise.reps) ? parseDurationSeconds(exercise.reps) : null;
+  const rawDurationValue = getTimedDurationSeconds(exercise);
   if (rawDurationValue != null) return { value: rawDurationValue, kind: "seconds" };
-  if (isTimedByName(exercise.name, exercise.tempo)) {
-    const bareDuration = String(exercise.reps ?? "").trim().match(/^\d+$/);
-    if (bareDuration) return { value: Number(bareDuration[0]), kind: "seconds" };
-  }
   const repTarget = parseRepsPerSet(exercise.reps, totalSets)[setNumber - 1] || (exercise.reps ? String(exercise.reps) : "");
-  const durationValue = isDurationReps(repTarget) ? parseDurationSeconds(repTarget) : null;
+  const durationValue = getTimedDurationSeconds({ ...exercise, reps: repTarget });
   if (durationValue != null) return { value: durationValue, kind: "seconds" };
-  if (isTimedByName(exercise.name, exercise.tempo)) {
-    const bareDuration = repTarget.trim().match(/^\d+$/);
-    if (bareDuration) return { value: Number(bareDuration[0]), kind: "seconds" };
-  }
   const numericValue = extractNumeric(repTarget);
   if (numericValue != null) return { value: Math.round(numericValue), kind: "reps" };
   if (isTimedByName(exercise.name, exercise.tempo)) return { value: null, kind: "seconds" };
