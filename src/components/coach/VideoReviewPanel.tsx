@@ -11,6 +11,9 @@ type V = {
   storage_path: string;
   created_at: string;
   coach_reviewed: boolean;
+  source: "technique" | "session";
+  url: string | null;
+  caption: string | null;
 };
 
 export function VideoReviewPanel({
@@ -44,7 +47,7 @@ export function VideoReviewPanel({
       // Deep link (?video=…) : déplie directement le fil de la vidéo ciblée.
       if (!initialVideoId) return;
       const target = (v ?? []).find(x => x.id === initialVideoId);
-      if (target) setOpenKey(`${target.session_id}::${target.exercise_name}`);
+      if (target) setOpenKey(`${target.source}:${target.id}`);
     });
     // eslint-disable-next-line
   }, [memberId, initialVideoId]);
@@ -73,7 +76,7 @@ export function VideoReviewPanel({
         </div>
       )}
       {videos.map(v => {
-        const key = `${v.session_id}::${v.exercise_name}`;
+        const key = `${v.source}:${v.id}`;
         const open = openKey === key;
         return (
           <div key={v.id} className="cst-card-dark" style={{ padding: 0, overflow: "hidden" }}>
@@ -104,13 +107,19 @@ export function VideoReviewPanel({
             </button>
             {open && (
               <div style={{ padding: "0 18px 16px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-                <ExerciseThread
-                  sessionId={v.session_id}
-                  exerciseName={v.exercise_name}
-                  userId={coachUserId}
-                  viewerRole="coach"
-                />
-                {!v.coach_reviewed && (
+                {v.source === "technique" ? (
+                  <ExerciseThread
+                    sessionId={v.session_id}
+                    exerciseName={v.exercise_name}
+                    userId={coachUserId}
+                    viewerRole="coach"
+                  />
+                ) : v.url ? (
+                  <video src={v.url} controls playsInline preload="metadata" style={{ width: "100%", maxHeight: 480, background: "#000", borderRadius: 6, marginTop: 12 }} />
+                ) : (
+                  <div style={{ padding: 14, opacity: 0.65, fontSize: 12 }}>Vidéo indisponible pour le moment.</div>
+                )}
+                {v.source === "technique" && !v.coach_reviewed && (
                   <button
                     onClick={() => markDone(v.id)}
                     className="cst-btn cst-btn-primary cst-btn-sm"

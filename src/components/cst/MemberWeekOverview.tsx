@@ -164,6 +164,43 @@ export function MemberWeekOverview({
         )}
       </div>
 
+      <div
+        aria-label={`${t("Pas cette semaine")}: ${summary.stepsTotal.toLocaleString("fr-FR")}, ${summary.stepDaysTracked} ${t("jours saisis")}`}
+        style={{
+          marginTop: 12,
+          padding: "11px 12px 9px",
+          borderRadius: 7,
+          background: "rgba(255,255,255,0.045)",
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "baseline" }}>
+          <span className="cst-mono" style={{ fontSize: 9, opacity: 0.62, letterSpacing: "0.12em" }}>
+            {t("PAS CETTE SEMAINE")}
+          </span>
+          <strong style={{ fontSize: 16 }}>{summary.stepsTotal.toLocaleString("fr-FR")}</strong>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: 5, marginTop: 9 }}>
+          {overview.days.map((day, index) => {
+            const percent = stepsGoal && day.steps != null ? Math.min(100, (day.steps / stepsGoal) * 100) : 0;
+            const color = day.stepsState === "met" ? "var(--cst-mid-green)" : day.stepsState === "short" ? "#E6BD56" : "rgba(255,255,255,0.18)";
+            return (
+              <div key={day.date} title={`${t(dayLabels[index] ?? DAY_LABELS[index] ?? "")}: ${day.steps == null ? t("Pas non saisis") : day.steps.toLocaleString("fr-FR")}`} style={{ minWidth: 0, textAlign: "center" }}>
+                <div style={{ height: 32, display: "flex", alignItems: "flex-end", justifyContent: "center", borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
+                  <div style={{ width: "70%", height: `${Math.max(day.steps != null ? 10 : 0, percent * 0.32)}px`, borderRadius: "3px 3px 0 0", background: color, opacity: day.steps == null ? 0.35 : 0.9 }} />
+                </div>
+                <span className="cst-mono" style={{ display: "block", marginTop: 4, fontSize: 7, opacity: 0.58 }}>{t(dayLabels[index] ?? DAY_LABELS[index] ?? "")}</span>
+                <span style={{ display: "block", marginTop: 2, fontSize: 8, fontWeight: 700, color: day.steps == null ? "rgba(255,255,255,0.35)" : color }}>
+                  {day.steps == null ? "—" : day.steps >= 1000 ? `${(day.steps / 1000).toLocaleString("fr-FR", { maximumFractionDigits: 1 })}k` : day.steps}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+        <div className="cst-mono" style={{ marginTop: 7, fontSize: 8, opacity: 0.55 }}>
+          {summary.stepDaysTracked} / {summary.stepDaysElapsed} {t("jours saisis")}
+        </div>
+      </div>
+
       <div style={{ marginTop: 14, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
         <div
           aria-hidden="true"

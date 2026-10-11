@@ -76,6 +76,7 @@ describe("buildMemberWeekOverview", () => {
       stepGoalsReached: 1,
       stepDaysTracked: 2,
       stepDaysElapsed: 2,
+      stepsTotal: 20000,
     });
     expect(overview.days[0]).toMatchObject({ workoutState: "completed", stepsState: "met" });
     expect(overview.days[1]).toMatchObject({ workoutState: "planned", stepsState: "short" });
@@ -101,6 +102,7 @@ describe("buildMemberWeekOverview", () => {
       stepGoalsReached: 0,
       stepDaysTracked: 0,
       stepDaysElapsed: 1,
+      stepsTotal: 0,
     });
     expect(overview.days[0]).toMatchObject({ workoutState: "open", stepsState: "no-goal" });
     expect(overview.days[1]).toMatchObject({ workoutState: "open", stepsState: "no-goal" });

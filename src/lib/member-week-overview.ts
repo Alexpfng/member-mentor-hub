@@ -36,6 +36,7 @@ export type MemberWeekOverview = {
     stepGoalsReached: number;
     stepDaysTracked: number;
     stepDaysElapsed: number;
+    stepsTotal: number;
   };
 };
 
@@ -146,6 +147,10 @@ export function buildMemberWeekOverview(input: {
       stepGoalsReached,
       stepDaysTracked,
       stepDaysElapsed: elapsedDates.length,
+      stepsTotal: elapsedDates.reduce(
+        (total, date) => total + (activityByDate.get(date)?.steps ?? 0),
+        0,
+      ),
     },
   };
 }

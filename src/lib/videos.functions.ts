@@ -173,12 +173,53 @@ export const listMemberVideos = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const coach = await isCoach(context.userId);
     if (!coach && context.userId !== data.memberId) throw new Error("Accès refusé");
-    const { data: videos, error } = await supabaseAdmin
-      .from("technique_videos")
-      .select("id, session_id, exercise_name, storage_path, created_at, coach_reviewed")
-      .eq("member_id", data.memberId)
-      .order("created_at", { ascending: false })
-      .limit(200);
+    const [{ data: videos, error }, { data: media, error: mediaError }] = await Promise.all([
+      supabaseAdmin
+        .from("technique_videos")
+        .select("id, session_id, exercise_name, storage_path, created_at, coach_reviewed")
+        .eq("member_id", data.memberId)
+        .order("created_at", { ascending: false })
+        .limit(200),
+      supabaseAdmin
+        .from("session_media")
+        .select("id, session_id, storage_path, caption, created_at")
+        .eq("member_id", data.memberId)
+        .eq("type", "video")
+        .order("created_at", { ascending: false })
+        .limit(200),
+    ]);
     if (error) throw new Error(error.message);
-    return videos ?? [];
+    if (mediaError) throw new Error(mediaError.message);
+
+    const [techniqueVideos, sessionVideos] = await Promise.all([
+      Promise.all((videos ?? []).map(async (video) => {
+        const signed = video.storage_path
+          ? await supabaseAdmin.storage.from("technique-videos").createSignedUrl(video.storage_path, 3600)
+          : { data: null };
+        return {
+          ...video,
+          source: "technique" as const,
+          url: signed.data?.signedUrl ?? null,
+          caption: null,
+        };
+      })),
+      Promise.all((media ?? []).map(async (video) => {
+        const signed = await supabaseAdmin.storage.from("session-media").createSignedUrl(video.storage_path, 3600);
+        return {
+          id: video.id,
+          session_id: video.session_id,
+          exercise_name: video.caption && video.caption !== "[SESSION]" ? video.caption : "Vidéo de séance",
+          storage_path: video.storage_path,
+          created_at: video.created_at,
+          coach_reviewed: true,
+          source: "session" as const,
+          url: signed.data?.signedUrl ?? null,
+          caption: video.caption,
+        };
+      })),
+    ]);
+
+    return [...techniqueVideos, ...sessionVideos].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    );
   });

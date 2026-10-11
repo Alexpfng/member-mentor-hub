@@ -6,6 +6,7 @@ import CoachSidebar from "@/components/CoachSidebar";
 import { CSTSectionNum } from "@/components/Atoms";
 import {
   getSessionDetail,
+  hideSessionFromCoachDashboard,
   markSessionSeen,
   setSessionCoachNote,
 } from "@/lib/coach-dashboard.functions";
@@ -48,6 +49,7 @@ export default function CoachSessionDetail() {
   const qc = useQueryClient();
   const fetchDetail = useServerFn(getSessionDetail);
   const markSeen = useServerFn(markSessionSeen);
+  const archiveSession = useServerFn(hideSessionFromCoachDashboard);
   const resolve = useServerFn(resolvePainReport);
   const [lightbox, setLightbox] = useState<{
     type: "photo" | "video";
@@ -60,6 +62,7 @@ export default function CoachSessionDetail() {
   const [coachNote, setCoachNote] = useState("");
   const [savingNote, setSavingNote] = useState(false);
   const [forcingComplete, setForcingComplete] = useState(false);
+  const [archiving, setArchiving] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["coach", "session", sessionId],
@@ -121,6 +124,21 @@ export default function CoachSessionDetail() {
     if (!confirmed) return;
 
     void handleForceComplete();
+  }
+
+  async function handleArchiveSession() {
+    if (archiving) return;
+    if (!window.confirm("Archiver cette séance ? Elle restera consultable dans les séances archivées.")) return;
+    setArchiving(true);
+    try {
+      await archiveSession({ data: { sessionId } });
+      toast.success("Séance archivée");
+      await qc.invalidateQueries({ queryKey: ["coach"] });
+      navigate({ to: "/coach" });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Archivage impossible");
+      setArchiving(false);
+    }
   }
 
   const blockForExo = useMemo(() => {
@@ -806,6 +824,15 @@ export default function CoachSessionDetail() {
               }
             >
               Fiche membre
+            </button>
+            <button
+              type="button"
+              className="cst-btn cst-btn-ghost-dark"
+              onClick={() => void handleArchiveSession()}
+              disabled={archiving}
+              style={{ color: "#ffb0a6", borderColor: "rgba(255,138,122,0.38)" }}
+            >
+              {archiving ? "Archivage…" : "Archiver"}
             </button>
           </div>
           <div style={{ fontSize: 11, opacity: 0.5, fontFamily: "var(--cst-mono)" }}>

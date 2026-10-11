@@ -27,6 +27,7 @@ import { shouldShowWeekRpeResetButton } from "@/lib/program-weeks";
 import { adapterWeekHorizontalScrollLimit } from "@/lib/adapter-week-horizontal-scroll";
 import { defaultPublishStartDate } from "@/lib/publish-start-date";
 import { normalizeCoachEditableWeek } from "@/lib/coach-exercise-normalizer";
+import { describeGlobalDay } from "@/lib/adapter-global-view";
 
 type LibExercise = {
   id: string;
@@ -1015,6 +1016,7 @@ export default function AdapterSemaine() {
   const [selectedExos, setSelectedExos] = useState<Set<string>>(new Set());
   const [showBulkColors, setShowBulkColors] = useState(false);
   const [weekView, setWeekView] = useState<"cards" | "global">("cards");
+  const [globalDayIndex, setGlobalDayIndex] = useState(0);
   const [libraryTarget, setLibraryTarget] = useState<number | null>(null);
   const [quickRpeTarget, setQuickRpeTarget] = useState<{
     dayIdx: number;
@@ -2428,24 +2430,42 @@ export default function AdapterSemaine() {
                 + Séance
               </button>
             </div> : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <label style={{ display: "flex", flexDirection: "column", gap: 6, maxWidth: 520 }}>
+                  <span className="cst-mono" style={{ fontSize: 9, opacity: 0.65, letterSpacing: "0.12em" }}>SÉANCE À AFFICHER</span>
+                  <select
+                    value={Math.min(globalDayIndex, Math.max(0, (structure.days ?? []).length - 1))}
+                    onChange={(event) => setGlobalDayIndex(Number(event.target.value))}
+                    style={{ minHeight: 42, padding: "8px 11px", borderRadius: 6, border: "1px solid rgba(255,255,255,0.18)", background: "var(--cst-card, #203528)", color: "var(--cst-text, #fff)", font: "inherit" }}
+                  >
+                    {(structure.days ?? []).map((day, index) => (
+                      <option key={`${day.label}-${index}`} value={index}>{describeGlobalDay(day).label}</option>
+                    ))}
+                  </select>
+                </label>
+                <div className="cst-card-dark" style={{ padding: 12 }}>
+                  <strong className="cst-display" style={{ fontSize: 15 }}>{describeGlobalDay((structure.days ?? [])[globalDayIndex] ?? {}).label.split(" · ")[0]}</strong>
+                  <div style={{ marginTop: 5, fontSize: 12, color: "var(--cst-text-soft)", lineHeight: 1.5 }}>
+                    {describeGlobalDay((structure.days ?? [])[globalDayIndex] ?? {}).contents}
+                  </div>
+                </div>
               <div style={{ overflowX: "auto", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8 }}>
                 <table style={{ width: "100%", minWidth: 820, borderCollapse: "collapse", fontSize: 12 }}>
                   <thead>
                     <tr className="cst-mono" style={{ textAlign: "left", color: "var(--cst-text-soft)", fontSize: 9 }}>
-                      {["SÉANCE", "CODE", "EXERCICE / PHASE", "SÉRIES", "REPS / CONTENU", "CHARGE / ALLURE", "TEMPO", "RÉCUP", "RPE"].map((label) => (
+                      {["CODE", "EXERCICE / PHASE", "SÉRIES", "REPS / CONTENU", "CHARGE / ALLURE", "TEMPO", "RÉCUP", "RPE"].map((label) => (
                         <th key={label} style={{ padding: "9px 10px", borderBottom: "1px solid rgba(255,255,255,0.12)", whiteSpace: "nowrap" }}>{label}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {(structure.days ?? []).flatMap((day, dayIdx) =>
+                    {(structure.days ?? []).flatMap((day, dayIdx) => dayIdx === globalDayIndex ?
                       (day.exercises ?? []).map((ex, exoIdx) => (
                         <tr
                           key={`${dayIdx}-${exoIdx}`}
                           onClick={() => setEditTarget({ dayIdx, exoIdx })}
                           style={{ cursor: "pointer", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
                         >
-                          <td style={{ padding: "9px 10px", whiteSpace: "nowrap", color: "var(--cst-text-soft)" }}>{day.label || `Séance ${dayIdx + 1}`}</td>
                           <td className="cst-mono" style={{ padding: "9px 10px", color: "var(--cst-text-soft)" }}>{ex.code || "—"}</td>
                           <td style={{ padding: "9px 10px", minWidth: 210 }}>
                             <span style={{ display: "inline-block", width: 9, height: 9, borderRadius: "50%", background: COLOR_MAP[(ex.color ?? "").toLowerCase()]?.bg ?? "#666", marginRight: 8 }} />
@@ -2455,10 +2475,11 @@ export default function AdapterSemaine() {
                             <td key={index} className="cst-mono" style={{ padding: "9px 10px", whiteSpace: "nowrap", color: "var(--cst-text-soft)" }}>{value == null || value === "" ? "—" : String(value)}</td>
                           ))}
                         </tr>
-                      )),
+                      )) : [],
                     )}
                   </tbody>
                 </table>
+              </div>
               </div>
             )}
             {weekView === "cards" && weekScrollMax > 0 && (
