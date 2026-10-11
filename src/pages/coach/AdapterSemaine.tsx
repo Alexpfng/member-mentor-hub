@@ -608,8 +608,20 @@ function ExoEditModal({
               {suggestion.actions.map((a, ai) => (
                 <button
                   key={ai}
+                  type="button"
                   onClick={() => {
-                    if (a.apply) onChange(a.apply);
+                    if (a.label === "Garder") {
+                      toast.info(
+                        "Charge conservée pour la prochaine semaine. Aucun changement à enregistrer.",
+                      );
+                    } else if (a.apply) {
+                      onChange(a.apply);
+                      toast.success("Ajustement appliqué au brouillon. Enregistrement en cours…");
+                    } else {
+                      toast.info(
+                        "Cette recommandation doit être appliquée manuellement dans la séance.",
+                      );
+                    }
                   }}
                   className="cst-btn cst-btn-sm"
                   style={{
@@ -1155,6 +1167,7 @@ export default function AdapterSemaine() {
         setSavedAt(Date.now());
       } catch (e) {
         console.error("[autosave]", e);
+        toast.error("La modification n’a pas pu être enregistrée. Réessaie.");
       }
     }, 700);
     return () => {
