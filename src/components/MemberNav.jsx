@@ -1,11 +1,16 @@
 import { useEffect, useState } from "react";
+import { MoreHorizontal } from "lucide-react";
 import { useNavigate, useLocation } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { getUnreadCount } from "@/lib/coach.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useI18n } from "@/lib/i18n";
-import { memberNavigationActiveId, memberNavigationItems as items } from "@/lib/member-navigation";
+import {
+  memberNavigationActiveId,
+  mobileMemberMoreItems,
+  mobileMemberPrimaryItems,
+} from "@/lib/member-navigation";
 
 export default function MemberNav({ unreadCount: unreadProp = undefined } = {}) {
   const navigate = useNavigate();
@@ -15,6 +20,7 @@ export default function MemberNav({ unreadCount: unreadProp = undefined } = {}) 
   const hasCoachRole = roles.includes("coach");
   const unreadFn = useServerFn(getUnreadCount);
   const [unread, setUnread] = useState(unreadProp ?? 0);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   useEffect(() => {
     if (typeof unreadProp === "number") return; // parent controls it
@@ -47,6 +53,25 @@ export default function MemberNav({ unreadCount: unreadProp = undefined } = {}) 
   const effectiveUnread = typeof unreadProp === "number" ? unreadProp : unread;
 
   const activeId = memberNavigationActiveId(pathname);
+  const moreActive = mobileMemberMoreItems.some((item) => item.id === activeId);
+
+  useEffect(() => {
+    setMoreOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!moreOpen) return;
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") setMoreOpen(false);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [moreOpen]);
+
+  const renderUnreadBadge = (className = "bottom-nav-badge") =>
+    effectiveUnread > 0 ? (
+      <span className={className}>{effectiveUnread > 9 ? "9+" : effectiveUnread}</span>
+    ) : null;
 
   return (
     <>
@@ -79,31 +104,69 @@ export default function MemberNav({ unreadCount: unreadProp = undefined } = {}) 
           <span>◎</span> VUE COACH
         </button>
       )}
-      <nav className="bottom-nav" role="navigation" aria-label="Navigation principale">
-        {items.map((it) => {
+      {moreOpen && (
+        <button
+          type="button"
+          className="bottom-nav-dismiss"
+          aria-label="Fermer le menu Plus"
+          onClick={() => setMoreOpen(false)}
+        />
+      )}
+      {moreOpen && (
+        <nav id="member-nav-more" className="bottom-nav-more" aria-label="Autres pages">
+          {mobileMemberMoreItems.map((item) => {
+            const active = item.id === activeId;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                className={`bottom-nav-more-item ${active ? "active" : ""}`}
+                onClick={() => {
+                  setMoreOpen(false);
+                  navigate({ to: item.path });
+                }}
+                aria-current={active ? "page" : undefined}
+              >
+                <span aria-hidden="true">{item.icon}</span>
+                <span>{t(item.label)}</span>
+                {item.id === "msgs" && renderUnreadBadge("bottom-nav-more-badge")}
+              </button>
+            );
+          })}
+        </nav>
+      )}
+      <nav className="bottom-nav" aria-label="Navigation principale">
+        {mobileMemberPrimaryItems.map((it) => {
           const on = it.id === activeId;
           return (
-            <div
+            <button
               key={it.id}
+              type="button"
               className={`bottom-nav-item ${on ? "active" : ""}`}
               onClick={() => navigate({ to: it.path })}
-              role="button"
-              tabIndex={0}
               aria-label={t(it.label)}
               aria-current={on ? "page" : undefined}
             >
-              <span className="nav-icon" style={{ fontSize: 20 }}>
+              <span className="nav-icon" aria-hidden="true">
                 {it.icon}
               </span>
               <span className="nav-label">{t(it.label)}</span>
-              {it.id === "msgs" && effectiveUnread > 0 && (
-                <span className="bottom-nav-badge">
-                  {effectiveUnread > 9 ? "9+" : effectiveUnread}
-                </span>
-              )}
-            </div>
+            </button>
           );
         })}
+        <button
+          type="button"
+          className={`bottom-nav-item bottom-nav-more-trigger ${moreActive ? "active" : ""}`}
+          onClick={() => setMoreOpen((open) => !open)}
+          aria-label={moreOpen ? "Fermer le menu Plus" : "Plus de pages"}
+          aria-expanded={moreOpen}
+        >
+          <span className="nav-icon" aria-hidden="true">
+            <MoreHorizontal size={20} strokeWidth={2.5} />
+          </span>
+          <span className="nav-label">Plus</span>
+          {renderUnreadBadge()}
+        </button>
       </nav>
     </>
   );

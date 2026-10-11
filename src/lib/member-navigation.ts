@@ -10,6 +10,14 @@ export const memberNavigationItems = [
   { id: "profile", icon: "⚙️", label: "Réglages", path: "/membre/profil" },
 ] as const;
 
+export const mobileMemberPrimaryItems = memberNavigationItems.filter((item) =>
+  ["home", "prog", "plan", "nutrition"].includes(item.id),
+);
+
+export const mobileMemberMoreItems = memberNavigationItems.filter(
+  (item) => !mobileMemberPrimaryItems.some((primary) => primary.id === item.id),
+);
+
 export function memberNavigationActiveId(pathname: string) {
   return (
     memberNavigationItems.find((item) =>

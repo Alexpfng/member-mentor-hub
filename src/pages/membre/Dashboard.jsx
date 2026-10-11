@@ -432,7 +432,7 @@ export default function MemberDashboard() {
           }}
         >
           <div
-            className="cst-screen cst-hatch"
+            className="cst-screen cst-hatch member-dashboard-screen"
             style={{ flex: 1, display: "flex", flexDirection: "column" }}
           >
             {/* Top nav — masqué sur desktop (géré par la sidebar) */}
