@@ -3,8 +3,10 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { isVideoFile, MAX_VIDEO_BYTES, removeUploadedVideo, uploadVideoToStorage, videoUploadError } from "@/lib/video-upload";
 import { ProgramBlocks, groupBlocks, type ProgExercise } from "./ProgramBlocks";
 import { ExerciseThread } from "./ExerciseThread";
+import { useTechniqueUploadQueue } from "./TechniqueUploadQueue";
 import PainReportDialog from "./PainReportDialog";
 import { useI18n } from "@/lib/i18n";
 import {
@@ -1220,6 +1222,7 @@ export function LiveSession({
   initialMode,
   quitRef,
 }: Props) {
+  const techniqueUploadQueue = useTechniqueUploadQueue();
   const { t } = useI18n();
   const steps = useMemo(() => buildSteps(exercises), [exercises]);
   const totalWorkSets = useMemo(
@@ -1899,6 +1902,17 @@ export function LiveSession({
 
   async function finalizeSession(noteOverride?: string) {
     try {
+      if (techniqueUploadQueue?.items.length) {
+        if (techniqueUploadQueue.uploading) {
+          toast.error("L'envoi des vidéos est en cours. Termine-le avant de clôturer la séance.");
+          return;
+        }
+        const videosSent = await techniqueUploadQueue.uploadAll();
+        if (!videosSent) {
+          toast.error("Certaines vidéos n'ont pas été envoyées. Réessaie depuis le bouton en bas avant de terminer.");
+          return;
+        }
+      }
       if (sessionMode === "expert") {
         await finishExpertRecap(noteOverride);
       } else {
@@ -5533,20 +5547,44 @@ function SessionMediaUploader({ sessionId, userId }: { sessionId: string; userId
     try {
       let i = 0;
       for (const file of Array.from(files)) {
-        const isVideo = file.type.startsWith("video/");
+        const isVideo = isVideoFile(file);
+        if (isVideo && file.size > MAX_VIDEO_BYTES) {
+          throw new Error(`${file.name} dépasse la limite de 50 Mo. Choisis une vidéo plus courte ou de qualité réduite.`);
+        }
         const ext = (file.name.match(/\.([a-zA-Z0-9]+)$/)?.[1] ?? "bin").toLowerCase();
         const path = `${userId}/${sessionId}/session-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-        const { error } = await supabase.storage
-          .from("session-media")
-          .upload(path, file, { contentType: file.type, upsert: false });
-        if (error) throw error;
-        await supabase.from("session_media").insert({
-          session_id: sessionId,
-          member_id: userId,
-          type: isVideo ? "video" : "photo",
-          storage_path: path,
-          caption: "[SESSION]", // marks session-level media for coach view
-        });
+        let stored = false;
+        try {
+          if (isVideo) {
+            await uploadVideoToStorage("session-media", path, file, (percent) => {
+              setProgress(Math.round(((i + percent / 100) / files.length) * 100));
+            });
+          } else {
+            const { error } = await supabase.storage
+              .from("session-media")
+              .upload(path, file, { contentType: file.type, upsert: false });
+            if (error) throw error;
+          }
+          stored = true;
+          const { error: insertError } = await supabase.from("session_media").insert({
+            session_id: sessionId,
+            member_id: userId,
+            type: isVideo ? "video" : "photo",
+            storage_path: path,
+            caption: "[SESSION]", // marks session-level media for coach view
+          });
+          if (insertError) throw insertError;
+        } catch (error) {
+          if (stored) {
+            try {
+              if (isVideo) await removeUploadedVideo("session-media", path);
+              else await supabase.storage.from("session-media").remove([path]);
+            } catch {
+              // Keep the original error for the member.
+            }
+          }
+          throw error;
+        }
         names.push(file.name);
         i += 1;
         setProgress(Math.round((i / files.length) * 100));
@@ -5554,6 +5592,7 @@ function SessionMediaUploader({ sessionId, userId }: { sessionId: string; userId
       setUploaded((prev) => [...prev, ...names]);
     } catch (e) {
       console.error("Session media upload failed", e);
+      toast.error(videoUploadError(e));
     } finally {
       setUploading(false);
       setProgress(0);

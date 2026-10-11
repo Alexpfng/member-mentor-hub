@@ -3,8 +3,16 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { attachSessionMedia } from "@/lib/free-session.functions";
 import { toast } from "sonner";
+import {
+  isVideoFile,
+  MAX_VIDEO_BYTES,
+  removeUploadedVideo,
+  uploadVideoToStorage,
+  videoUploadError,
+} from "@/lib/video-upload";
 
-const MAX_BYTES = 100 * 1024 * 1024; // 100 Mo
+const MAX_BYTES = MAX_VIDEO_BYTES;
+const MAX_IMAGE_BYTES = 100 * 1024 * 1024;
 
 type Props = {
   sessionId: string;
@@ -19,9 +27,18 @@ function extOf(file: File) {
 
 async function videoThumbnail(file: File): Promise<Blob | null> {
   return new Promise((resolve) => {
+    let settled = false;
+    const url = URL.createObjectURL(file);
+    const video = document.createElement("video");
+    const finish = (blob: Blob | null) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timeout);
+      URL.revokeObjectURL(url);
+      resolve(blob);
+    };
+    const timeout = window.setTimeout(() => finish(null), 8000);
     try {
-      const url = URL.createObjectURL(file);
-      const video = document.createElement("video");
       video.preload = "metadata";
       video.muted = true;
       video.playsInline = true;
@@ -30,7 +47,7 @@ async function videoThumbnail(file: File): Promise<Blob | null> {
         try {
           video.currentTime = Math.min(1, (video.duration || 1) / 2);
         } catch {
-          resolve(null);
+          finish(null);
         }
       };
       video.onseeked = () => {
@@ -41,22 +58,15 @@ async function videoThumbnail(file: File): Promise<Blob | null> {
         canvas.height = h;
         const ctx = canvas.getContext("2d");
         if (!ctx) {
-          URL.revokeObjectURL(url);
-          resolve(null);
+          finish(null);
           return;
         }
         ctx.drawImage(video, 0, 0, w, h);
-        canvas.toBlob((b) => {
-          URL.revokeObjectURL(url);
-          resolve(b);
-        }, "image/jpeg", 0.8);
+        canvas.toBlob((blob) => finish(blob), "image/jpeg", 0.8);
       };
-      video.onerror = () => {
-        URL.revokeObjectURL(url);
-        resolve(null);
-      };
+      video.onerror = () => finish(null);
     } catch {
-      resolve(null);
+      finish(null);
     }
   });
 }
@@ -69,38 +79,61 @@ export default function MediaUploader({ sessionId, memberId, onUploaded }: Props
   const [progress, setProgress] = useState(0);
   const attach = useServerFn(attachSessionMedia);
 
-  async function uploadOne(file: File) {
-    if (file.size > MAX_BYTES) {
-      toast.error(`${file.name} dépasse 100 Mo`);
-      return;
+  async function uploadOne(file: File, onProgress: (percent: number) => void) {
+    const isVideo = isVideoFile(file);
+    if (file.size > (isVideo ? MAX_BYTES : MAX_IMAGE_BYTES)) {
+      throw new Error(
+        isVideo
+          ? `${file.name} dépasse la limite de 50 Mo. Choisis une vidéo plus courte ou de qualité réduite.`
+          : `${file.name} dépasse la limite de 100 Mo.`,
+      );
     }
-    const isVideo = file.type.startsWith("video/");
     const type: "photo" | "video" = isVideo ? "video" : "photo";
     const path = `${memberId}/${sessionId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${extOf(file)}`;
-    const { error: upErr } = await supabase.storage
-      .from("session-media")
-      .upload(path, file, { contentType: file.type, upsert: false });
-    if (upErr) throw upErr;
-
     let thumbPath: string | null = null;
-    if (isVideo) {
-      const thumb = await videoThumbnail(file);
-      if (thumb) {
-        thumbPath = `${memberId}/${sessionId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-thumb.jpg`;
-        await supabase.storage
+    let uploaded = false;
+    try {
+      if (isVideo) {
+        await uploadVideoToStorage("session-media", path, file, onProgress);
+      } else {
+        const { error: upErr } = await supabase.storage
           .from("session-media")
-          .upload(thumbPath, thumb, { contentType: "image/jpeg", upsert: false });
+          .upload(path, file, { contentType: file.type, upsert: false });
+        if (upErr) throw upErr;
+        onProgress(100);
       }
-    }
+      uploaded = true;
+      if (isVideo) {
+        const thumb = await videoThumbnail(file);
+        if (thumb) {
+          thumbPath = `${memberId}/${sessionId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-thumb.jpg`;
+          const { error: thumbError } = await supabase.storage
+            .from("session-media")
+            .upload(thumbPath, thumb, { contentType: "image/jpeg", upsert: false });
+          if (thumbError) thumbPath = null;
+        }
+      }
 
-    await attach({
-      data: {
-        sessionId,
-        type,
-        storagePath: path,
-        thumbnailPath: thumbPath,
-      },
-    });
+      await attach({
+        data: {
+          sessionId,
+          type,
+          storagePath: path,
+          thumbnailPath: thumbPath,
+        },
+      });
+    } catch (error) {
+      if (uploaded) {
+        try {
+          if (isVideo) await removeUploadedVideo("session-media", path);
+          else await supabase.storage.from("session-media").remove([path]);
+          if (thumbPath) await supabase.storage.from("session-media").remove([thumbPath]);
+        } catch {
+          // Keep the upload or database error visible.
+        }
+      }
+      throw error;
+    }
   }
 
   async function handleFiles(files: FileList | null) {
@@ -109,16 +142,19 @@ export default function MediaUploader({ sessionId, memberId, onUploaded }: Props
     setProgress(0);
     try {
       let i = 0;
-      for (const f of Array.from(files)) {
-        await uploadOne(f);
+      const selected = Array.from(files);
+      for (const [index, f] of selected.entries()) {
+        await uploadOne(f, (fileProgress) => {
+          setProgress(Math.round(((index + fileProgress / 100) / selected.length) * 100));
+        });
         i += 1;
-        setProgress(Math.round((i / files.length) * 100));
+        setProgress(Math.round((i / selected.length) * 100));
       }
       onUploaded();
       toast.success(files.length > 1 ? `${files.length} fichiers envoyés` : "Fichier envoyé");
     } catch (e) {
       console.error(e);
-      toast.error(e instanceof Error ? e.message : "Erreur d'upload");
+      toast.error(videoUploadError(e));
     } finally {
       setUploading(false);
       setProgress(0);

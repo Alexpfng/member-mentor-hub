@@ -12,9 +12,7 @@
  */
 import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
-
-// Plan Supabase gratuit : chaque upload est plafonné à 50 Mo (non modifiable).
-export const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
+import { MAX_VIDEO_BYTES, removeUploadedVideo, uploadVideoToStorage, videoUploadError } from "@/lib/video-upload";
 
 export function humanMB(bytes: number): number {
   return Math.round((bytes / 1048576) * 10) / 10;
@@ -26,6 +24,7 @@ export function tooLargeMessage(bytes: number): string {
 
 export type PendingVideo = {
   id: string;
+  path: string;
   exerciseName: string;
   file: File;
   sizeMB: number;
@@ -37,9 +36,9 @@ type QueueApi = {
   /** Ajoute une vidéo à la file (garde-fou taille). */
   add: (exerciseName: string, file: File) => { ok: boolean; error?: string };
   remove: (id: string) => void;
-  uploadAll: () => Promise<void>;
+  uploadAll: () => Promise<boolean>;
   uploading: boolean;
-  progress: { done: number; total: number } | null;
+  progress: { done: number; total: number; percent: number } | null;
   sentCount: number;
   forExercise: (name: string) => PendingVideo[];
 };
@@ -64,7 +63,7 @@ export function TechniqueUploadQueueProvider({
 }) {
   const [items, setItems] = useState<PendingVideo[]>([]);
   const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+  const [progress, setProgress] = useState<{ done: number; total: number; percent: number } | null>(null);
   const [sentCount, setSentCount] = useState(0);
 
   const add = useCallback((exerciseName: string, file: File) => {
@@ -73,22 +72,25 @@ export function TechniqueUploadQueueProvider({
     }
     seq += 1;
     const id = `pv_${Date.now()}_${seq}`;
+    const safe = exerciseName.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 32) || "exercice";
+    const ext = (file.name.split(".").pop() || "mp4").toLowerCase().replace(/[^a-z0-9]/g, "");
+    const path = `${userId}/${sessionId}/${safe}-${id}.${ext || "mp4"}`;
     setSentCount(0);
-    setItems((xs) => [...xs, { id, exerciseName, file, sizeMB: humanMB(file.size), error: null }]);
+    setItems((xs) => [...xs, { id, path, exerciseName, file, sizeMB: humanMB(file.size), error: null }]);
     return { ok: true };
-  }, []);
+  }, [sessionId, userId]);
 
   const remove = useCallback((id: string) => {
     setItems((xs) => xs.filter((x) => x.id !== id));
   }, []);
 
   const uploadAll = useCallback(async () => {
-    if (uploading || !userId) return;
+    if (uploading || !userId) return false;
     const queued = items;
-    if (queued.length === 0) return;
+    if (queued.length === 0) return true;
     setUploading(true);
     setSentCount(0);
-    setProgress({ done: 0, total: queued.length });
+    setProgress({ done: 0, total: queued.length, percent: 0 });
 
     const succeeded: string[] = [];
     const errors: Record<string, string> = {};
@@ -97,29 +99,26 @@ export function TechniqueUploadQueueProvider({
       const it = queued[i];
       try {
         if (it.file.size > MAX_VIDEO_BYTES) throw new Error(tooLargeMessage(it.file.size));
-        const ts = Date.now();
-        const safe = it.exerciseName
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .slice(0, 32);
-        const ext = (it.file.name.split(".").pop() || "mp4").toLowerCase();
-        const path = `${userId}/${sessionId}/${safe}-${ts}-${i}.${ext}`;
-        const { error: upErr } = await supabase.storage
-          .from("technique-videos")
-          .upload(path, it.file, { contentType: it.file.type || "video/mp4", upsert: false });
-        if (upErr) throw upErr;
+        await uploadVideoToStorage("technique-videos", it.path, it.file, (percent) => {
+          setProgress({ done: i, total: queued.length, percent });
+        });
         const { error: insErr } = await supabase.from("technique_videos").insert({
           member_id: userId,
           session_id: sessionId,
           exercise_name: it.exerciseName,
-          storage_path: path,
+          storage_path: it.path,
         });
         if (insErr) throw insErr;
         succeeded.push(it.id);
       } catch (e) {
-        errors[it.id] = (e as Error)?.message || "Échec de l'envoi";
+        errors[it.id] = videoUploadError(e);
+        try {
+          await removeUploadedVideo("technique-videos", it.path);
+        } catch {
+          // Keep the original upload error visible; cleanup is best effort.
+        }
       } finally {
-        setProgress({ done: i + 1, total: queued.length });
+        setProgress({ done: i + 1, total: queued.length, percent: 0 });
       }
     }
 
@@ -132,6 +131,7 @@ export function TechniqueUploadQueueProvider({
     setSentCount(succeeded.length);
     setUploading(false);
     setProgress(null);
+    return succeeded.length === queued.length;
   }, [items, uploading, sessionId, userId]);
 
   const forExercise = useCallback(
@@ -204,10 +204,10 @@ function QueueBar({ api }: { api: QueueApi }) {
             </div>
             <div style={{ fontSize: 10, opacity: 0.65, marginTop: 2 }}>
               {uploading && progress
-                ? `Envoi… ${progress.done}/${progress.total}`
+                ? `Envoi… ${progress.done + 1}/${progress.total} · ${progress.percent}%`
                 : nbErrors > 0
                   ? `${nbErrors} en échec — appuie pour réessayer`
-                  : "En fin de séance, envoie tout d'un coup"}
+                    : "En fin de séance, l'envoi démarre automatiquement"}
             </div>
           </div>
           <button

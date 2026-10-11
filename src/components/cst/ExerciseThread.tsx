@@ -7,9 +7,10 @@ import {
   postExerciseComment,
   getSignedVideoUrl,
 } from "@/lib/videos.functions";
-import { useTechniqueUploadQueue, MAX_VIDEO_BYTES, tooLargeMessage } from "./TechniqueUploadQueue";
+import { useTechniqueUploadQueue, tooLargeMessage } from "./TechniqueUploadQueue";
 import { VideoRecorder } from "./VideoRecorder";
 import { useI18n } from "@/lib/i18n";
+import { MAX_VIDEO_BYTES, removeUploadedVideo, uploadVideoToStorage, videoUploadError } from "@/lib/video-upload";
 
 type Video = {
   id: string;
@@ -55,6 +56,7 @@ export function ExerciseThread({
   const [comments, setComments] = useState<Comment[]>([]);
   const [content, setContent] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadErr, setUploadErr] = useState<string | null>(null);
   const [posting, setPosting] = useState(false);
   const [signed, setSigned] = useState<Record<string, string>>({});
@@ -128,15 +130,15 @@ export function ExerciseThread({
   async function uploadFileImmediate(file: File) {
     setUploading(true);
     setUploadErr(null);
+    setUploadProgress(0);
+    const ts = Date.now();
+    const safe = exerciseName.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 32) || "exercice";
+    const ext = (file.name.split(".").pop() || "mp4").toLowerCase().replace(/[^a-z0-9]/g, "");
+    const path = `${userId}/${sessionId}/${safe}-${ts}.${ext || "mp4"}`;
+    let stored = false;
     try {
-      const ts = Date.now();
-      const safe = exerciseName.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 32);
-      const ext = (file.name.split(".").pop() || "mp4").toLowerCase();
-      const path = `${userId}/${sessionId}/${safe}-${ts}.${ext}`;
-      const { error: upErr } = await supabase.storage
-        .from("technique-videos")
-        .upload(path, file, { contentType: file.type || "video/mp4", upsert: false });
-      if (upErr) throw upErr;
+      await uploadVideoToStorage("technique-videos", path, file, setUploadProgress);
+      stored = true;
       const { error: insErr } = await supabase.from("technique_videos").insert({
         member_id: userId,
         session_id: sessionId,
@@ -146,9 +148,17 @@ export function ExerciseThread({
       if (insErr) throw insErr;
       await load();
     } catch (e) {
-      setUploadErr((e as Error).message || "Erreur upload");
+      if (stored) {
+        try {
+          await removeUploadedVideo("technique-videos", path);
+        } catch {
+          // Keep the original error visible if storage cleanup also fails.
+        }
+      }
+      setUploadErr(videoUploadError(e));
     } finally {
       setUploading(false);
+      setUploadProgress(0);
     }
   }
 
@@ -201,7 +211,7 @@ export function ExerciseThread({
           >
             🎥 FILMER (optimisé, sous 50 Mo)
           </button>
-          <UploadBtn icon="📁" label={uploading ? "ENVOI…" : "ou importer un fichier"} onFile={handlePicked} disabled={uploading} />
+          <UploadBtn icon="📁" label={uploading ? `ENVOI… ${uploadProgress}%` : "ou importer un fichier"} onFile={handlePicked} disabled={uploading} />
           {/* Séance live : vidéos choisies, en attente d'un envoi groupé en fin de séance */}
           {pending.map((p) => (
             <div key={p.id} style={{

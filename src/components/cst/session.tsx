@@ -1,6 +1,7 @@
 /* ColosmartTraining — Session live components */
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { MAX_VIDEO_BYTES, removeUploadedVideo, uploadVideoToStorage, videoUploadError } from "@/lib/video-upload";
 import { ExerciseThread } from "./ExerciseThread";
 import {
   ColorDot,
@@ -220,19 +221,23 @@ export function TechniqueVideoCapture({
   const [uploading, setUploading] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
 
   async function handleFile(file: File) {
+    if (file.size > MAX_VIDEO_BYTES) {
+      setError("Vidéo trop lourde (max 50 Mo). Choisis une vidéo plus courte ou de qualité réduite.");
+      return;
+    }
     setUploading(true);
     setError(null);
+    const ts = Date.now();
+    const safeName = exerciseName.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 32) || "exercice";
+    const ext = (file.name.split(".").pop() || "mp4").toLowerCase().replace(/[^a-z0-9]/g, "");
+    const path = `${userId}/${sessionId}/${safeName}-${ts}.${ext || "mp4"}`;
+    let stored = false;
     try {
-      const ts = Date.now();
-      const safeName = exerciseName.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 32);
-      const ext = file.name.split(".").pop() || "mp4";
-      const path = `${userId}/${sessionId}/${safeName}-${ts}.${ext}`;
-      const { error: upErr } = await supabase.storage
-        .from("technique-videos")
-        .upload(path, file, { contentType: file.type || "video/mp4", upsert: false });
-      if (upErr) throw upErr;
+      await uploadVideoToStorage("technique-videos", path, file, setProgress);
+      stored = true;
       const { error: insErr } = await supabase.from("technique_videos").insert({
         member_id: userId,
         session_id: sessionId,
@@ -242,7 +247,14 @@ export function TechniqueVideoCapture({
       if (insErr) throw insErr;
       setDone(true);
     } catch (e) {
-      setError((e as Error).message);
+      if (stored) {
+        try {
+          await removeUploadedVideo("technique-videos", path);
+        } catch {
+          // Preserve the primary error for the member.
+        }
+      }
+      setError(videoUploadError(e));
     } finally {
       setUploading(false);
     }
@@ -268,12 +280,13 @@ export function TechniqueVideoCapture({
       }}
     >
       <span>🎬</span>
-      <span>{uploading ? "ENVOI…" : "FILMER / CHOISIR UNE VIDÉO"}</span>
+      <span>{uploading ? `ENVOI… ${progress}%` : "FILMER / CHOISIR UNE VIDÉO"}</span>
       <input
         type="file" accept="video/*"
         style={{ display: "none" }}
         onChange={(e) => {
           const f = e.target.files?.[0];
+          e.currentTarget.value = "";
           if (f) handleFile(f);
         }}
         disabled={uploading}
