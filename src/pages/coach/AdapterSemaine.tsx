@@ -21,6 +21,7 @@ import {
 } from "@/lib/adapter-week-rpe";
 import { getCoachRpeBadgeLabel } from "@/lib/adapter-week-rpe-visuals";
 import { parseRpeCell } from "@/lib/rpe-cell";
+import { getNumericCoachRpeTarget } from "@/lib/coach-rpe-target";
 import { getQuickRpePopoverPlacement } from "@/lib/coach-rpe-feedback";
 import { sanitizeLibraryExerciseNotes } from "@/lib/library-exercise-payload";
 import { shouldShowWeekRpeResetButton } from "@/lib/program-weeks";
@@ -126,7 +127,7 @@ function nextChargePlus(charge: string | null | undefined, kg: number): string |
 
 function suggestFor(ex: ProgExercise, fb: Feedback | undefined): Suggestion | null {
   if (!fb) return null;
-  const target = Number(ex.rpe_target);
+  const target = getNumericCoachRpeTarget(ex.rpe_target);
   if (fb.pain) {
     return {
       type: "pain",
@@ -137,31 +138,52 @@ function suggestFor(ex: ProgExercise, fb: Feedback | undefined): Suggestion | nu
     return {
       type: "too_hard",
       actions: [
-        {
-          label: `−10% → ${nextChargeDelta(ex.charge, -0.1) ?? "?"} kg`,
-          apply: (e) => ({ ...e, charge: nextChargeDelta(e.charge, -0.1) ?? e.charge }),
-        },
-        {
-          label: `−5% → ${nextChargeDelta(ex.charge, -0.05) ?? "?"} kg`,
-          apply: (e) => ({ ...e, charge: nextChargeDelta(e.charge, -0.05) ?? e.charge }),
-        },
-        { label: "Garder", apply: (e) => e },
+        ...(nextChargeDelta(ex.charge, -0.1) == null
+          ? []
+          : [
+              {
+                label: `−10% → ${nextChargeDelta(ex.charge, -0.1)} kg`,
+                apply: (e: ProgExercise) => ({
+                  ...e,
+                  charge: nextChargeDelta(e.charge, -0.1) ?? e.charge,
+                }),
+              },
+            ]),
+        ...(nextChargeDelta(ex.charge, -0.05) == null
+          ? []
+          : [
+              {
+                label: `−5% → ${nextChargeDelta(ex.charge, -0.05)} kg`,
+                apply: (e: ProgExercise) => ({
+                  ...e,
+                  charge: nextChargeDelta(e.charge, -0.05) ?? e.charge,
+                }),
+              },
+            ]),
+        { label: "Garder", apply: (e: ProgExercise) => e },
       ],
     };
   }
-  if (fb.rpe != null && !Number.isNaN(target) && fb.rpe >= target + 1) {
+  if (fb.rpe != null && target != null && fb.rpe >= target + 1) {
     return {
       type: "high",
       actions: [
-        {
-          label: `−5% → ${nextChargeDelta(ex.charge, -0.05) ?? "?"} kg`,
-          apply: (e) => ({ ...e, charge: nextChargeDelta(e.charge, -0.05) ?? e.charge }),
-        },
+        ...(nextChargeDelta(ex.charge, -0.05) == null
+          ? []
+          : [
+              {
+                label: `−5% → ${nextChargeDelta(ex.charge, -0.05)} kg`,
+                apply: (e: ProgExercise) => ({
+                  ...e,
+                  charge: nextChargeDelta(e.charge, -0.05) ?? e.charge,
+                }),
+              },
+            ]),
         { label: "Garder", apply: (e) => e },
       ],
     };
   }
-  if (fb.rpe != null && !Number.isNaN(target) && fb.rpe <= target - 2) {
+  if (fb.rpe != null && target != null && fb.rpe <= target - 2) {
     return {
       type: "low",
       actions: [
@@ -183,7 +205,7 @@ function suggestFor(ex: ProgExercise, fb: Feedback | undefined): Suggestion | nu
       ],
     };
   }
-  if (fb.rpe != null && !Number.isNaN(target) && fb.rpe <= target - 1) {
+  if (fb.rpe != null && target != null && fb.rpe <= target - 1) {
     return {
       type: "slightly_low",
       actions: [
@@ -199,10 +221,17 @@ function suggestFor(ex: ProgExercise, fb: Feedback | undefined): Suggestion | nu
     return {
       type: "high",
       actions: [
-        {
-          label: `−5%`,
-          apply: (e) => ({ ...e, charge: nextChargeDelta(e.charge, -0.05) ?? e.charge }),
-        },
+        ...(nextChargeDelta(ex.charge, -0.05) == null
+          ? []
+          : [
+              {
+                label: `−5% → ${nextChargeDelta(ex.charge, -0.05)} kg`,
+                apply: (e: ProgExercise) => ({
+                  ...e,
+                  charge: nextChargeDelta(e.charge, -0.05) ?? e.charge,
+                }),
+              },
+            ]),
         { label: "Garder", apply: (e) => e },
       ],
     };
