@@ -8,6 +8,7 @@ import {
   getProgramExerciseLibraryIntensity,
   sanitizeLibraryExerciseNotes,
 } from "./library-exercise-payload";
+import { toProgramExerciseLibraryPayload } from "./program-exercise-library-payload";
 
 type SeedRow = {
   id: string;
@@ -166,25 +167,33 @@ export const upsertExercise = createServerFn({ method: "POST" })
     return { exercise: row };
   });
 
-export const createLibraryExerciseFromProgram = createServerFn({ method: "POST" })
+export const saveProgramExerciseToLibrary = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => importProgramExerciseSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertCoach(context.userId);
 
-    const exactName = data.name.trim();
+    const payload = toProgramExerciseLibraryPayload(data);
+    const exactName = payload.name;
     const normalizedName = exactName.toLowerCase();
     const { data: existing, error: existingError } = await (supabaseAdmin as any)
       .from("exercises")
-      .select(
-        "id, name, intensity_code, category, color, muscle_group, equipement, default_tempo, youtube_url, youtube_id, image_url, coach_notes, is_archived, is_global, movement_patterns"
-      )
+      .select("id, name")
       .ilike("name", exactName)
       .limit(1)
       .maybeSingle();
     if (existingError) throw new Error(existingError.message);
     if (existing && String(existing.name ?? "").trim().toLowerCase() === normalizedName) {
-      return { created: false, exercise: existing };
+      const { data: row, error } = await (supabaseAdmin as any)
+        .from("exercises")
+        .update(payload)
+        .eq("id", existing.id)
+        .select(
+          "id, name, intensity_code, category, color, muscle_group, equipement, default_tempo, youtube_url, youtube_id, image_url, coach_notes, is_archived, is_global, movement_patterns"
+        )
+        .single();
+      if (error) throw new Error(error.message);
+      return { created: false, updated: true, exercise: row };
     }
 
     const blockType = String(data.block_type ?? "").trim().toLowerCase();
@@ -192,20 +201,11 @@ export const createLibraryExerciseFromProgram = createServerFn({ method: "POST" 
     if (blockType) patterns.add(sanitizePattern(blockType));
     if (/boxe|boxing|corde|sac de frappe|shadow/i.test(exactName)) patterns.add("cardio");
 
-    const color = data.color?.trim() || null;
-    const intensity = getProgramExerciseLibraryIntensity(color);
-    const payload = {
-      name: exactName,
-      intensity_code: intensity,
-      category: intensity,
-      color,
+    const createPayload = {
+      ...toProgramExerciseLibraryPayload(data),
       muscle_group: null,
       equipement: null,
-      default_tempo: data.tempo?.trim() || null,
-      youtube_url: data.youtube_url?.trim() || null,
-      youtube_id: extractYoutubeId(data.youtube_url),
       image_url: null,
-      coach_notes: data.coach_notes?.trim() || null,
       is_archived: false,
       is_global: true,
       created_by: context.userId,
@@ -214,7 +214,7 @@ export const createLibraryExerciseFromProgram = createServerFn({ method: "POST" 
 
     const { data: row, error } = await (supabaseAdmin as any)
       .from("exercises")
-      .insert(payload)
+      .insert(createPayload)
       .select(
         "id, name, intensity_code, category, color, muscle_group, equipement, default_tempo, youtube_url, youtube_id, image_url, coach_notes, is_archived, is_global, movement_patterns"
       )

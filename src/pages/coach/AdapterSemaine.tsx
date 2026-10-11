@@ -13,7 +13,7 @@ import {
 } from "@/lib/weekly-adaptation.functions";
 import { normalizeWeekId } from "@/lib/coach-navigation";
 import { findExerciseFeedback } from "@/lib/exercise-feedback";
-import { createLibraryExerciseFromProgram, listExercises } from "@/lib/exercises.functions";
+import { listExercises, saveProgramExerciseToLibrary } from "@/lib/exercises.functions";
 import {
   resetWeekExerciseRpeTargets,
   setExerciseQuickCoachNote,
@@ -441,6 +441,7 @@ function ExoEditModal({
   onCreateEmomPair,
   onReplace,
   onDelete,
+  onSaveToLibrary,
   onClose,
 }: {
   ex: ProgExercise;
@@ -455,8 +456,10 @@ function ExoEditModal({
   onCreateEmomPair?: () => void;
   onReplace: () => void;
   onDelete: () => void;
+  onSaveToLibrary: () => Promise<void>;
   onClose: () => void;
 }) {
+  const [savingToLibrary, setSavingToLibrary] = useState(false);
   // Ne ferme la modale que si le clic COMMENCE et FINIT sur le fond : évite la
   // fermeture intempestive quand on sélectionne du texte et qu'on relâche hors du champ.
   const overlayDownRef = useRef(false);
@@ -884,26 +887,46 @@ function ExoEditModal({
           <ColorPicker value={ex.color} onChange={(c) => onChange((x) => ({ ...x, color: c }))} />
         </div>
 
-        <div style={{ display: "flex", gap: 8, justifyContent: "space-between" }}>
-          <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={onReplace} className="cst-btn cst-btn-ghost-dark cst-btn-sm">
-              ⇄ Remplacer
-            </button>
-            <button
-              onClick={onDelete}
-              className="cst-btn cst-btn-sm"
-              style={{
-                background: "transparent",
-                border: "1px solid rgba(196,74,58,0.4)",
-                color: "#C44A3A",
-              }}
-            >
-              🗑 Supprimer
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <button
+            type="button"
+            disabled={savingToLibrary}
+            onClick={async () => {
+              setSavingToLibrary(true);
+              try {
+                await onSaveToLibrary();
+              } finally {
+                setSavingToLibrary(false);
+              }
+            }}
+            className="cst-btn cst-btn-ghost-dark cst-btn-sm"
+            style={{ alignSelf: "flex-start", maxWidth: "100%" }}
+          >
+            {savingToLibrary ? "Enregistrement…" : "↥ Enregistrer dans la bibliothèque"}
+          </button>
+          <div
+            style={{ display: "flex", gap: 8, justifyContent: "space-between", flexWrap: "wrap" }}
+          >
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={onReplace} className="cst-btn cst-btn-ghost-dark cst-btn-sm">
+                ⇄ Remplacer
+              </button>
+              <button
+                onClick={onDelete}
+                className="cst-btn cst-btn-sm"
+                style={{
+                  background: "transparent",
+                  border: "1px solid rgba(196,74,58,0.4)",
+                  color: "#C44A3A",
+                }}
+              >
+                🗑 Supprimer
+              </button>
+            </div>
+            <button onClick={onClose} className="cst-btn cst-btn-primary cst-btn-sm">
+              OK
             </button>
           </div>
-          <button onClick={onClose} className="cst-btn cst-btn-primary cst-btn-sm">
-            OK
-          </button>
         </div>
       </div>
     </div>
@@ -988,7 +1011,7 @@ export default function AdapterSemaine() {
   const saveFn = useServerFn(saveDraftWeek);
   const publishFn = useServerFn(publishWeek);
   const previewFn = useServerFn(previewWeekChanges);
-  const createLibraryExerciseFn = useServerFn(createLibraryExerciseFromProgram);
+  const saveLibraryExerciseFn = useServerFn(saveProgramExerciseToLibrary);
 
   type Ctx = Awaited<ReturnType<typeof getMemberWeekContext>>;
   const [ctx, setCtx] = useState<Ctx | null>(null);
@@ -1250,7 +1273,7 @@ export default function AdapterSemaine() {
 
   async function addCurrentExoToLibrary(ex: ProgExercise) {
     try {
-      const result = await createLibraryExerciseFn({
+      const result = await saveLibraryExerciseFn({
         data: {
           name: ex.name,
           block_type: ex.block_type ?? null,
@@ -1260,10 +1283,10 @@ export default function AdapterSemaine() {
           coach_notes: sanitizeLibraryExerciseNotes(ex.coach_notes),
         },
       });
-      toast(
+      toast.success(
         result.created
-          ? `Ajouté à la bibliothèque: ${result.exercise.name}`
-          : `Déjà présent dans la bibliothèque: ${result.exercise.name}`,
+          ? `Ajouté à la bibliothèque : ${result.exercise.name}`
+          : `Fiche bibliothèque mise à jour : ${result.exercise.name}`,
       );
     } catch (error) {
       toast.error((error as Error).message);
@@ -2648,6 +2671,7 @@ export default function AdapterSemaine() {
                 removeExo(editTarget.dayIdx, editTarget.exoIdx);
                 setEditTarget(null);
               }}
+              onSaveToLibrary={() => addCurrentExoToLibrary(ex)}
               onClose={() => setEditTarget(null)}
             />
           );
