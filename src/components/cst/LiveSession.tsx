@@ -1616,7 +1616,9 @@ export function LiveSession({
     l: { weight: string; reps: string; rpe: number | null; note?: string },
   ) {
     const bodyweight = isBodyweight(step.exercise.charge);
-    const durationMode = isDurationReps(step.exercise.reps);
+    const durationMode =
+      isDurationReps(step.exercise.reps) ||
+      isTimedByName(step.exercise.name, step.exercise.tempo);
 
     // Validation contextuelle
     if (l.rpe == null) {
@@ -3522,9 +3524,15 @@ export function LiveSession({
   const exColor = asColor(setStep.exercise.color);
   const accent = colorHex(exColor) || "var(--cst-mid-green)";
   const bodyweight = isBodyweight(setStep.exercise.charge);
-  const durationMode = isDurationReps(setStep.exercise.reps);
-  const isTimed = durationMode || isTimedByName(setStep.exercise.name, setStep.exercise.tempo);
-  const timedSecs = parseDurationSeconds(setStep.exercise.reps);
+  const isTimed =
+    isDurationReps(setStep.exercise.reps) ||
+    isTimedByName(setStep.exercise.name, setStep.exercise.tempo);
+  const durationMode = isDurationReps(setStep.exercise.reps) || isTimed;
+  const timedSecs =
+    parseDurationSeconds(setStep.exercise.reps) ??
+    (isTimed && /^\d+$/.test(String(setStep.exercise.reps ?? "").trim())
+      ? Number(setStep.exercise.reps)
+      : null);
   const timedRounds = isTimed ? parseTimedRounds(setStep.exercise.reps, setStep.exercise.name) : 1;
   const timedSideLabel =
     isPerSide(setStep.exercise.reps) || isUnilateralByName(setStep.exercise.name)
@@ -3642,7 +3650,14 @@ export function LiveSession({
             <span style={{ fontSize: 22, opacity: 0.5 }}> / {setStep.totalSets}</span>
           </div>
           <div className="cst-mono" style={{ fontSize: 11, opacity: 0.8, marginTop: 8 }}>
-            {repPlaceholder && <>OBJECTIF {formatRepsObjectif(repPlaceholder) ?? repPlaceholder}</>}
+            {repPlaceholder && (
+              <>
+                OBJECTIF{" "}
+                {isTimed && /^\d+$/.test(repPlaceholder.trim())
+                  ? `${repPlaceholder} secondes`
+                  : formatRepsObjectif(repPlaceholder) ?? repPlaceholder}
+              </>
+            )}
             {setStep.exercise.rpe_target && (
               <>
                 {" "}
@@ -3680,7 +3695,11 @@ export function LiveSession({
           <TimedSetScreen
             key={`timed-${stepIdx}`}
             seconds={timedSecs}
-            label={formatRepsObjectif(setStep.exercise.reps) ?? `${timedSecs}s`}
+            label={
+              /^\d+$/.test(String(setStep.exercise.reps ?? "").trim())
+                ? `${timedSecs} secondes`
+                : formatRepsObjectif(setStep.exercise.reps) ?? `${timedSecs}s`
+            }
             rounds={timedRounds}
             sideLabel={timedSideLabel}
             onDone={() => {

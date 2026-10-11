@@ -38,6 +38,16 @@ describe("getExpertSetLoggedValue", () => {
       ),
     ).toEqual({ value: 30, kind: "seconds" });
   });
+
+  test("interprets a bare numeric target as seconds for isometric exercises", () => {
+    expect(
+      getExpertSetLoggedValue(
+        { name: "Star plank isométrie", reps: "45", tempo: "ISO" },
+        3,
+        1,
+      ),
+    ).toEqual({ value: 45, kind: "seconds" });
+  });
 });
 
 describe("getExpertEmomLoggedValue", () => {
@@ -63,6 +73,10 @@ describe("coach metric display", () => {
   test("uses SECONDES label for timed isometric exercises", () => {
     expect(getCoachMetricLabel({ name: "Star plank isométrie", reps: "20s / côté" })).toBe("SECONDES");
     expect(getCoachMetricValue({ name: "Star plank isométrie", reps: "20s / côté" }, 20)).toBe("20 s");
+  });
+
+  test("uses SECONDES for a bare numeric isometric target", () => {
+    expect(getCoachMetricValue({ name: "Star plank", reps: "45", tempo: "ISO" }, 45)).toBe("45 s");
   });
 
   test("keeps REPS label for regular exercises", () => {

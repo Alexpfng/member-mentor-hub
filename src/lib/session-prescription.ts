@@ -111,9 +111,17 @@ function isTimedByName(name?: string | null, tempo?: string | null) {
 export function getExpertSetLoggedValue(exercise: ExerciseLike, totalSets: number, setNumber: number): { value: number | null; kind: MetricKind } {
   const rawDurationValue = isDurationReps(exercise.reps) ? parseDurationSeconds(exercise.reps) : null;
   if (rawDurationValue != null) return { value: rawDurationValue, kind: "seconds" };
+  if (isTimedByName(exercise.name, exercise.tempo)) {
+    const bareDuration = String(exercise.reps ?? "").trim().match(/^\d+$/);
+    if (bareDuration) return { value: Number(bareDuration[0]), kind: "seconds" };
+  }
   const repTarget = parseRepsPerSet(exercise.reps, totalSets)[setNumber - 1] || (exercise.reps ? String(exercise.reps) : "");
   const durationValue = isDurationReps(repTarget) ? parseDurationSeconds(repTarget) : null;
   if (durationValue != null) return { value: durationValue, kind: "seconds" };
+  if (isTimedByName(exercise.name, exercise.tempo)) {
+    const bareDuration = repTarget.trim().match(/^\d+$/);
+    if (bareDuration) return { value: Number(bareDuration[0]), kind: "seconds" };
+  }
   const numericValue = extractNumeric(repTarget);
   if (numericValue != null) return { value: Math.round(numericValue), kind: "reps" };
   if (isTimedByName(exercise.name, exercise.tempo)) return { value: null, kind: "seconds" };
