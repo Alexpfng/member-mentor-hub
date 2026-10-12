@@ -112,7 +112,14 @@ export function planningWeekBoundsForPublishedWeek(
   options?: PlanningWeekOptions,
 ) {
   if (publishedWeekStartDate) {
-    const anchorWeekStart = assignmentWeekAnchor(publishedWeekStartDate, options);
+    const publishedDate = isoUtc(publishedWeekStartDate);
+    const configuredStart = weekStartsOnToUtcDay(options?.weekStartsOn);
+    const dayBeforeStart = (configuredStart + 6) % 7;
+    const containingWeekStart = assignmentWeekAnchor(publishedWeekStartDate, options);
+    const anchorWeekStart =
+      publishedDate.getUTCDay() === dayBeforeStart
+        ? addDaysISO(containingWeekStart, 7)
+        : containingWeekStart;
     return { weekStart: anchorWeekStart, weekEnd: addDaysISO(anchorWeekStart, 6) };
   }
   return planningWeekBounds(assignmentStartDate, weekNumber, options);

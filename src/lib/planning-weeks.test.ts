@@ -41,6 +41,13 @@ describe("planningWeekBounds", () => {
       weekEnd: "2026-08-23",
     });
   });
+
+  it("fait démarrer lundi une semaine publiée le dimanche pour la semaine à venir", () => {
+    expect(planningWeekBoundsForPublishedWeek("2026-09-30", 3, "2026-10-11")).toEqual({
+      weekStart: "2026-10-12",
+      weekEnd: "2026-10-18",
+    });
+  });
 });
 
 describe("currentPlanningWeekNumber", () => {
@@ -69,6 +76,20 @@ describe("currentPlanningWeekNumber", () => {
         "2026-09-15",
       ),
     ).toBe(2);
+  });
+
+  it("garde S3 comme semaine courante quand elle est publiée le dimanche précédent", () => {
+    expect(
+      currentPublishedPlanningWeekNumber(
+        "2026-09-21",
+        [
+          { weekNumber: 1, startDate: "2026-09-30" },
+          { weekNumber: 2, startDate: "2026-10-06" },
+          { weekNumber: 3, startDate: "2026-10-11" },
+        ],
+        "2026-10-12",
+      ),
+    ).toBe(3);
   });
 });
 
