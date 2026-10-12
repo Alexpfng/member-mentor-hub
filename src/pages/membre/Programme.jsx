@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { SUPABASE_ENABLED } from '@/lib/app-mode';
 import { currentPlanningWeekNumber, normalizeWeekStartsOn, weekWindowLabel } from '@/lib/planning-weeks';
 import { displayProgramDayLabel } from '@/lib/program-weeks';
+import { getProgramSessionDayNumber } from '@/lib/member-program-session';
 import { useI18n } from '@/lib/i18n';
 
 function diffDays(a, b) {
@@ -196,7 +197,7 @@ export default function MemberProgramme() {
                         {isOpen && (
                           <div className="cst-col" style={{ padding: '10px 14px 14px', gap: 14 }}>
                             {(w.days || []).map((d, di) => {
-                              const dayNum = d.number ?? di + 1;
+                              const dayNum = getProgramSessionDayNumber(di);
                               const dayLabel = displayProgramDayLabel(d, di);
                               const isDayOpen = openDayIndex === di;
                               const sess = sessionsByKey[`${weekNum}-${dayNum}`] || sessionsByKey[`${i + 1}-${di + 1}`];
