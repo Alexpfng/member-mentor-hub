@@ -3,6 +3,7 @@ import { describe, expect, it } from "bun:test";
 import {
   buildCoachExerciseFeedback,
   buildLatestSetRpesByExercise,
+  formatSetRpes,
   getQuickRpePopoverPlacement,
 } from "./coach-rpe-feedback";
 
@@ -56,6 +57,12 @@ describe("buildLatestSetRpesByExercise", () => {
     );
 
     expect(result["back squat"]).toEqual([7, 9, 9]);
+  });
+});
+
+describe("formatSetRpes", () => {
+  it("separates values with commas without ambiguous set labels", () => {
+    expect(formatSetRpes([10, 9, 8])).toBe("10, 9, 8");
   });
 });
 

@@ -22,7 +22,7 @@ import {
 import { getCoachRpeBadgeLabel } from "@/lib/adapter-week-rpe-visuals";
 import { parseRpeCell } from "@/lib/rpe-cell";
 import { getNumericCoachRpeTarget } from "@/lib/coach-rpe-target";
-import { getQuickRpePopoverPlacement } from "@/lib/coach-rpe-feedback";
+import { formatSetRpes, getQuickRpePopoverPlacement } from "@/lib/coach-rpe-feedback";
 import { sanitizeLibraryExerciseNotes } from "@/lib/library-exercise-payload";
 import { shouldShowWeekRpeResetButton } from "@/lib/program-weeks";
 import { adapterWeekHorizontalScrollLimit } from "@/lib/adapter-week-horizontal-scroll";
@@ -850,9 +850,7 @@ function ExoEditModal({
                 }}
               >
                 {setRpes.length > 0
-                  ? setRpes.map((rpe, index) => (
-                      <span key={`${index}-${rpe}`}>S{index + 1} · {rpe}</span>
-                    ))
+                  ? formatSetRpes(setRpes)
                   : "Aucun RPE saisi"}
               </div>,
             )}

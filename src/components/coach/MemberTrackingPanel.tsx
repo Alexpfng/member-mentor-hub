@@ -18,9 +18,10 @@ import {
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
-  ReferenceLine,
+  Cell,
 } from "recharts";
 import { CSTSectionNum } from "../Atoms";
+import { buildMemberWeeklySteps } from "../../lib/member-weekly-steps";
 
 type WeightLog = { date: string; weight_kg: number };
 type ActivityLog = { date: string; steps: number | null; calories: number | null };
@@ -28,12 +29,6 @@ type Goals = { steps: number | null; calories: number | null };
 
 function fmtDate(iso: string, opts?: Intl.DateTimeFormatOptions) {
   return new Date(`${iso}T00:00:00Z`).toLocaleDateString("fr-FR", { timeZone: "UTC", ...opts });
-}
-function mondayISO(iso: string) {
-  const d = new Date(`${iso}T00:00:00Z`);
-  const diff = (d.getUTCDay() + 6) % 7; // jours depuis lundi
-  d.setUTCDate(d.getUTCDate() - diff);
-  return d.toISOString().slice(0, 10);
 }
 function pct(a: number, b: number) {
   return b !== 0 ? ((a - b) / b) * 100 : 0;
@@ -115,24 +110,7 @@ export default function MemberTrackingPanel({
       ? Math.round(dailySteps.reduce((s, a) => s + a.steps, 0) / dailySteps.length)
       : null;
 
-  const weeks = useMemo(() => {
-    const buckets = new Map<string, number[]>();
-    for (const a of dailySteps) {
-      const k = mondayISO(a.date);
-      (buckets.get(k) ?? buckets.set(k, []).get(k)!).push(a.steps);
-    }
-    return [...buckets.entries()]
-      .map(([monday, arr]) => ({
-        monday,
-        avg: Math.round(arr.reduce((s, v) => s + v, 0) / arr.length),
-        days: arr.length,
-      }))
-      .sort((a, b) => a.monday.localeCompare(b.monday));
-  }, [dailySteps]);
-
-  // Tableau jour par jour, un bloc par mois (façon feuille de suivi de Léo) :
-  // chaque jour du mois en colonne (date · jour · nb de pas), + moyenne du mois et
-  // moyennes hebdo « S1..Sn » (tranches de 7 jours depuis le 1er du mois).
+  // Tableau jour par jour, un bloc par mois (façon feuille de suivi de Léo).
   const stepsByDate = useMemo(() => {
     const m = new Map<string, number>();
     for (const a of dailySteps) m.set(a.date, a.steps);
@@ -160,15 +138,11 @@ export default function MemberTrackingPanel({
         const iso = `${ym}-${String(i + 1).padStart(2, "0")}`;
         return { iso, dayNum: i + 1, steps: stepsByDate.get(iso) ?? null };
       });
-      const avgOf = (arr: { steps: number | null }[]) => {
-        const vals = arr.map((d) => d.steps).filter((v): v is number => v != null);
-        return vals.length ? Math.round(vals.reduce((s, v) => s + v, 0) / vals.length) : null;
-      };
-      const weekAvgs: { label: string; avg: number | null }[] = [];
-      for (let i = 0; i < days.length; i += 7) {
-        weekAvgs.push({ label: `S${Math.floor(i / 7) + 1}`, avg: avgOf(days.slice(i, i + 7)) });
-      }
-      return { ym, days, monthAvg: avgOf(days), weekAvgs };
+      const values = days.map((day) => day.steps).filter((value): value is number => value != null);
+      const monthAvg = values.length
+        ? Math.round(values.reduce((sum, value) => sum + value, 0) / values.length)
+        : null;
+      return { ym, days, monthAvg };
     });
   }, [dailySteps, stepsByDate]);
 
@@ -182,11 +156,14 @@ export default function MemberTrackingPanel({
   const stepsGoal = goals.steps ?? null;
   const weeksChart = useMemo(
     () =>
-      weeks.slice(-12).map((w) => ({
+      buildMemberWeeklySteps(dailySteps, stepsGoal).slice(-12).map((w) => ({
         label: fmtDate(w.monday, { day: "2-digit", month: "2-digit" }),
-        pas: w.avg,
+        pas: w.total,
+        daysTracked: w.daysTracked,
+        goal: w.goal,
+        goalReached: w.goalReached,
       })),
-    [weeks],
+    [dailySteps, stepsGoal],
   );
 
   return (
@@ -365,21 +342,44 @@ export default function MemberTrackingPanel({
             </div>
 
             {weeksChart.length > 0 && (
-              <div style={{ height: 180, marginBottom: 8 }}>
+              <div style={{ height: 210, marginBottom: 8 }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={weeksChart} margin={{ top: 8, right: 8, left: -6, bottom: 0 }}>
+                  <BarChart
+                    data={weeksChart}
+                    barCategoryGap="38%"
+                    margin={{ top: 8, right: 8, left: -6, bottom: 0 }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                    <XAxis dataKey="label" tick={AXIS_TICK} minTickGap={16} />
+                    <XAxis dataKey="label" tick={AXIS_TICK} minTickGap={8} />
                     <YAxis tick={AXIS_TICK} />
-                    <Tooltip contentStyle={CHART_TOOLTIP} />
-                    {stepsGoal != null && (
-                      <ReferenceLine y={stepsGoal} stroke="#E0A23B" strokeDasharray="4 4" />
-                    )}
-                    <Bar dataKey="pas" fill="#6EAB76" radius={[4, 4, 0, 0]} />
+                    <Tooltip
+                      contentStyle={CHART_TOOLTIP}
+                      formatter={(value, _name, item) => [
+                        `${Number(value).toLocaleString("fr-FR")} pas · cible ${item.payload.goal != null ? Number(item.payload.goal).toLocaleString("fr-FR") : "non définie"}`,
+                        "Semaine",
+                      ]}
+                      labelFormatter={(label) => `Semaine du ${label}`}
+                    />
+                    <Bar dataKey="pas" maxBarSize={42} radius={[4, 4, 0, 0]}>
+                      {weeksChart.map((week) => (
+                        <Cell
+                          key={week.label}
+                          fill={
+                            week.goalReached == null || week.goalReached
+                              ? "#6EAB76"
+                              : "#E0A23B"
+                          }
+                        />
+                      ))}
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             )}
+
+            <div className="cst-mono" style={{ fontSize: 9, opacity: 0.55, marginBottom: 10 }}>
+              TOTAL PAR SEMAINE · COULEUR SELON LA CIBLE DES JOURS SAISIS
+            </div>
 
             {/* Détail jour par jour, un bloc par mois (scroll horizontal) */}
             <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 16 }}>
@@ -444,25 +444,6 @@ export default function MemberTrackingPanel({
                       ))}
                     </div>
                   </div>
-                  {m.weekAvgs.length > 1 && (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 6 }}>
-                      {m.weekAvgs.map((w) => (
-                        <span
-                          key={w.label}
-                          className="cst-mono"
-                          style={{ fontSize: 9, opacity: 0.75 }}
-                        >
-                          {w.label} ·{" "}
-                          <span
-                            className="cst-display"
-                            style={{ color: stepColor(w.avg, stepsGoal) }}
-                          >
-                            {w.avg != null ? w.avg.toLocaleString("fr-FR") : "—"}
-                          </span>
-                        </span>
-                      ))}
-                    </div>
-                  )}
                 </div>
               ))}
             </div>

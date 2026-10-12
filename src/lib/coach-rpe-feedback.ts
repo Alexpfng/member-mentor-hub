@@ -50,6 +50,10 @@ type SetRpeLog = {
   completed: boolean | null;
 };
 
+export function formatSetRpes(values: number[]) {
+  return values.join(", ");
+}
+
 /** RPEs saisis pour chaque série de la dernière séance terminée de chaque exercice. */
 export function buildLatestSetRpesByExercise(sessions: SetRpeSession[], logs: SetRpeLog[]) {
   const sessionsById = new Map(
