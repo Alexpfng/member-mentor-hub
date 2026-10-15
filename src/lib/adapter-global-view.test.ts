@@ -23,24 +23,19 @@ describe("describeGlobalDay", () => {
 });
 
 describe("describeGlobalRpe", () => {
-  it("shows the prescription and each recorded member RPE in series order", () => {
-    expect(describeGlobalRpe(8, [7.5, 8, 9])).toEqual({
-      target: "Cible 8",
+  it("shows only each recorded member RPE in series order", () => {
+    expect(describeGlobalRpe([7.5, 8, 9])).toEqual({
       member: "7.5, 8, 9",
     });
   });
 
   it("shows recorded member RPEs even when the coach has no target", () => {
-    expect(describeGlobalRpe(null, [8, 8.5, 9])).toEqual({
-      target: null,
+    expect(describeGlobalRpe([8, 8.5, 9])).toEqual({
       member: "8, 8.5, 9",
     });
   });
 
-  it("keeps a text prescription when there are no recorded series RPEs", () => {
-    expect(describeGlobalRpe("Échec", [])).toEqual({
-      target: "Cible Échec",
-      member: null,
-    });
+  it("shows no value when the member has not recorded any series RPE", () => {
+    expect(describeGlobalRpe([])).toEqual({ member: null });
   });
 });

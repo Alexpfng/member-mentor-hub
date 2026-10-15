@@ -2529,7 +2529,7 @@ export default function AdapterSemaine() {
                 <table style={{ width: "100%", minWidth: 820, borderCollapse: "collapse", fontSize: 12 }}>
                   <thead>
                     <tr className="cst-mono" style={{ textAlign: "left", color: "var(--cst-text-soft)", fontSize: 9 }}>
-                      {["CODE", "EXERCICE / PHASE", "SÉRIES", "REPS / CONTENU", "CHARGE / ALLURE", "TEMPO", "RÉCUP", "RPE CIBLE / SÉRIES"].map((label) => (
+                      {["CODE", "EXERCICE / PHASE", "SÉRIES", "REPS / CONTENU", "CHARGE / ALLURE", "TEMPO", "RÉCUP", "RPE COACHÉ · SÉRIES"].map((label) => (
                         <th key={label} style={{ padding: "9px 10px", borderBottom: "1px solid rgba(255,255,255,0.12)", whiteSpace: "nowrap" }}>{label}</th>
                       ))}
                     </tr>
@@ -2555,17 +2555,16 @@ export default function AdapterSemaine() {
                             const setRpes = ctx?.recentSetRpes[
                               feedbackMatch?.key ?? normalizeExerciseFeedbackKey(ex.name)
                             ] ?? [];
-                            const rpe = describeGlobalRpe(ex.rpe_target, setRpes);
+                            const rpe = describeGlobalRpe(setRpes);
                             return (
                               <td
                                 className="cst-mono"
                                 style={{ padding: "7px 10px", minWidth: 150, color: "var(--cst-text-soft)" }}
-                                aria-label={[rpe.target, rpe.member].filter(Boolean).join(" · ") || "Aucun RPE"}
+                                aria-label={rpe.member ? `RPE coaché par série : ${rpe.member}` : "Aucun RPE coaché"}
                               >
-                                {rpe.target && <div style={{ opacity: 0.65, fontSize: 10 }}>{rpe.target}</div>}
                                 {rpe.member ? (
                                   <div style={{ color: "var(--cst-mid-green)", whiteSpace: "nowrap" }}>{rpe.member}</div>
-                                ) : !rpe.target ? "—" : null}
+                                ) : "—"}
                               </td>
                             );
                           })()}

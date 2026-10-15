@@ -10,13 +10,6 @@ export function describeGlobalDay(day: {
   };
 }
 
-export function describeGlobalRpe(
-  target: string | number | null | undefined,
-  setRpes: number[],
-) {
-  const targetValue = target == null ? "" : String(target).trim();
-  return {
-    target: targetValue ? `Cible ${targetValue}` : null,
-    member: setRpes.length ? setRpes.join(", ") : null,
-  };
+export function describeGlobalRpe(setRpes: number[]) {
+  return { member: setRpes.length ? setRpes.join(", ") : null };
 }
