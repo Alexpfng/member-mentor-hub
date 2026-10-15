@@ -2563,7 +2563,7 @@ export default function AdapterSemaine() {
                                 aria-label={rpe.member ? `RPE coaché par série : ${rpe.member}` : "Aucun RPE coaché"}
                               >
                                 {rpe.member ? (
-                                  <div style={{ color: "var(--cst-mid-green)", whiteSpace: "nowrap" }}>{rpe.member}</div>
+                                  <div style={{ color: "var(--cst-text, #fff)", whiteSpace: "nowrap" }}>{rpe.member}</div>
                                 ) : "—"}
                               </td>
                             );
