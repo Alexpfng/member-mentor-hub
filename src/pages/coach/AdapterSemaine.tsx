@@ -28,7 +28,7 @@ import { shouldShowWeekRpeResetButton } from "@/lib/program-weeks";
 import { adapterWeekHorizontalScrollLimit } from "@/lib/adapter-week-horizontal-scroll";
 import { defaultPublishStartDate } from "@/lib/publish-start-date";
 import { normalizeCoachEditableWeek } from "@/lib/coach-exercise-normalizer";
-import { describeGlobalDay } from "@/lib/adapter-global-view";
+import { describeGlobalDay, describeGlobalRpe } from "@/lib/adapter-global-view";
 
 type LibExercise = {
   id: string;
@@ -2529,7 +2529,7 @@ export default function AdapterSemaine() {
                 <table style={{ width: "100%", minWidth: 820, borderCollapse: "collapse", fontSize: 12 }}>
                   <thead>
                     <tr className="cst-mono" style={{ textAlign: "left", color: "var(--cst-text-soft)", fontSize: 9 }}>
-                      {["CODE", "EXERCICE / PHASE", "SÉRIES", "REPS / CONTENU", "CHARGE / ALLURE", "TEMPO", "RÉCUP", "RPE"].map((label) => (
+                      {["CODE", "EXERCICE / PHASE", "SÉRIES", "REPS / CONTENU", "CHARGE / ALLURE", "TEMPO", "RÉCUP", "RPE CIBLE / SÉRIES"].map((label) => (
                         <th key={label} style={{ padding: "9px 10px", borderBottom: "1px solid rgba(255,255,255,0.12)", whiteSpace: "nowrap" }}>{label}</th>
                       ))}
                     </tr>
@@ -2547,9 +2547,28 @@ export default function AdapterSemaine() {
                             <span style={{ display: "inline-block", width: 9, height: 9, borderRadius: "50%", background: COLOR_MAP[(ex.color ?? "").toLowerCase()]?.bg ?? "#666", marginRight: 8 }} />
                             {ex.name}
                           </td>
-                          {[ex.series, ex.reps, ex.charge, ex.tempo, ex.recup, ex.rpe_target].map((value, index) => (
+                          {[ex.series, ex.reps, ex.charge, ex.tempo, ex.recup].map((value, index) => (
                             <td key={index} className="cst-mono" style={{ padding: "9px 10px", whiteSpace: "nowrap", color: "var(--cst-text-soft)" }}>{value == null || value === "" ? "—" : String(value)}</td>
                           ))}
+                          {(() => {
+                            const feedbackMatch = findExerciseFeedback(ctx?.feedback ?? {}, ex.name);
+                            const setRpes = ctx?.recentSetRpes[
+                              feedbackMatch?.key ?? normalizeExerciseFeedbackKey(ex.name)
+                            ] ?? [];
+                            const rpe = describeGlobalRpe(ex.rpe_target, setRpes);
+                            return (
+                              <td
+                                className="cst-mono"
+                                style={{ padding: "7px 10px", minWidth: 150, color: "var(--cst-text-soft)" }}
+                                aria-label={[rpe.target, rpe.member].filter(Boolean).join(" · ") || "Aucun RPE"}
+                              >
+                                {rpe.target && <div style={{ opacity: 0.65, fontSize: 10 }}>{rpe.target}</div>}
+                                {rpe.member ? (
+                                  <div style={{ color: "var(--cst-mid-green)", whiteSpace: "nowrap" }}>{rpe.member}</div>
+                                ) : !rpe.target ? "—" : null}
+                              </td>
+                            );
+                          })()}
                         </tr>
                       )) : [],
                     )}

@@ -9,3 +9,14 @@ export function describeGlobalDay(day: {
     contents: names.length ? names.join(" · ") : "Aucun exercice",
   };
 }
+
+export function describeGlobalRpe(
+  target: string | number | null | undefined,
+  setRpes: number[],
+) {
+  const targetValue = target == null ? "" : String(target).trim();
+  return {
+    target: targetValue ? `Cible ${targetValue}` : null,
+    member: setRpes.length ? setRpes.join(", ") : null,
+  };
+}

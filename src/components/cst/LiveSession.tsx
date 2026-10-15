@@ -38,7 +38,12 @@ import {
   getExpertSetLoggedValue,
   getTimedDurationSeconds,
 } from "@/lib/session-prescription";
-import { buildEmomPlan, parseEmom, type EmomMinutePlanItem } from "@/lib/emom";
+import {
+  aggregateEmomRepsByExercise,
+  buildEmomPlan,
+  parseEmom,
+  type EmomMinutePlanItem,
+} from "@/lib/emom";
 import { parseRpeCell } from "@/lib/rpe-cell";
 import {
   buildLadderCycle,
@@ -1435,7 +1440,11 @@ export function LiveSession({
           return [{ index, exerciseName: step.exercise.name, kind: "set" }];
         }
         if (step.kind === "emom") {
-          return [{ index, exerciseName: step.exercise.name, kind: "emom" }];
+          const exerciseNames =
+            step.emomMode === "alternating-exercises"
+              ? (step.exercises ?? [step.exercise]).map((exercise) => exercise.name)
+              : [step.exercise.name];
+          return exerciseNames.map((exerciseName) => ({ index, exerciseName, kind: "emom" }));
         }
         if (step.kind === "circuit") {
           return step.exercises.map((exercise) => ({
@@ -2961,23 +2970,36 @@ export function LiveSession({
                 ? (getExpertEmomLoggedValue(current.exercise, logs.length) ??
                   logs.reduce((s, l) => s + l, 0))
                 : logs.reduce((s, l) => s + l, 0);
-            // Persist EMOM result as a single "set_log" entry.
-            // Refaire le bloc doit remplacer la ligne existante, pas la dupliquer.
+            const exerciseResults =
+              current.emomMode === "alternating-exercises"
+                ? aggregateEmomRepsByExercise(
+                    logs, current.minutePlan ?? [], current.exercise.name,
+                  )
+                : [{ exerciseName: current.exercise.name, reps: computedReps }];
+            // Persist EMOM results by exercise; redoing the block replaces its rows.
             queueWrite(async () => {
-              await supabase
-                .from("set_logs")
-                .delete()
-                .eq("session_id", sessionId)
-                .eq("exercise_name", current.exercise.name)
-                .eq("set_number", 1);
-              const { error } = await supabase.from("set_logs").insert({
-                session_id: sessionId,
-                exercise_name: current.exercise.name,
-                set_number: 1,
-                reps: computedReps,
-                rpe: emomRpe,
-                completed: true,
-              });
+              const deletions = await Promise.all(
+                exerciseResults.map((result) =>
+                  supabase
+                    .from("set_logs")
+                    .delete()
+                    .eq("session_id", sessionId)
+                    .eq("exercise_name", result.exerciseName)
+                    .eq("set_number", 1),
+                ),
+              );
+              const deleteError = deletions.find(({ error }) => error)?.error;
+              if (deleteError) throw deleteError;
+              const { error } = await supabase.from("set_logs").insert(
+                exerciseResults.map((result) => ({
+                  session_id: sessionId,
+                  exercise_name: result.exerciseName,
+                  set_number: 1,
+                  reps: result.reps,
+                  rpe: emomRpe,
+                  completed: true,
+                })),
+              );
               if (error) throw error;
             }, "emom set_logs insert failed");
             const nextSaved = {
@@ -2994,9 +3016,13 @@ export function LiveSession({
             // sur l'écran EMOM, pour qu'il ne soit ni redemandé ni perdu.
             if (sessionMode === "expert" && emomRpe != null) {
               setExpertRecapRpeByExercise((prev) =>
-                prev[current.exercise.name] != null
-                  ? prev
-                  : { ...prev, [current.exercise.name]: emomRpe },
+                exerciseResults.reduce(
+                  (next, result) =>
+                    next[result.exerciseName] != null
+                      ? next
+                      : { ...next, [result.exerciseName]: emomRpe },
+                  prev,
+                ),
               );
             }
             goNext(nextSaved);

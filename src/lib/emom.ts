@@ -171,6 +171,21 @@ export type EmomPlan = {
   minutePlan: EmomMinutePlanItem[];
 };
 
+export function aggregateEmomRepsByExercise(
+  repsByMinute: number[],
+  minutePlan: EmomMinutePlanItem[],
+  fallbackExerciseName: string,
+): Array<{ exerciseName: string; reps: number }> {
+  const totals = new Map<string, number>();
+
+  repsByMinute.forEach((reps, index) => {
+    const exerciseName = minutePlan[index % minutePlan.length]?.exerciseName ?? fallbackExerciseName;
+    totals.set(exerciseName, (totals.get(exerciseName) ?? 0) + reps);
+  });
+
+  return Array.from(totals, ([exerciseName, reps]) => ({ exerciseName, reps }));
+}
+
 function pluralizeReps(value: number) {
   return `${value} ${value > 1 ? "reps" : "rep"}`;
 }

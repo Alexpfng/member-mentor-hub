@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 
-import { alternatingRepsCycle, buildEmomPlan, parseEmom } from "./emom";
+import { aggregateEmomRepsByExercise, alternatingRepsCycle, buildEmomPlan, parseEmom } from "./emom";
 
 describe("parseEmom — saisie via le builder (Durée = Séries, Reps/min = Reps)", () => {
   it("lit la durée et les reps des deux champs", () => {
@@ -191,5 +191,23 @@ describe("buildEmomPlan", () => {
         { minute: 6, exerciseIndex: 1, exerciseName: "Goblet squat", targetLabel: "5 reps" },
       ],
     });
+  });
+
+  it("saves alternating EMOM reps under each exercise name", () => {
+    const plan = buildEmomPlan([
+      { name: "Pompes minute impaire", block_type: "emom", code: "B", series: "5", reps: "10" },
+      { name: "Pompes minute paire", block_type: "emom", code: "B", series: "5", reps: "10" },
+    ]);
+
+    expect(
+      aggregateEmomRepsByExercise(
+        [45, 40, 44, 40, 42],
+        plan.minutePlan,
+        "Pompes minute impaire",
+      ),
+    ).toEqual([
+      { exerciseName: "Pompes minute impaire", reps: 131 },
+      { exerciseName: "Pompes minute paire", reps: 80 },
+    ]);
   });
 });

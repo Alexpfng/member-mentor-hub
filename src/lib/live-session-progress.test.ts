@@ -90,6 +90,28 @@ describe("buildExerciseOverview", () => {
     ]);
   });
 
+  it("marks both exercises in one alternating EMOM step as completed", () => {
+    const emomStep: SessionProgressStep[] = [
+      { index: 4, exerciseName: "Pompes minute impaire", kind: "emom" },
+      { index: 4, exerciseName: "Pompes minute paire", kind: "emom" },
+    ];
+    const savedByStep = {
+      4: { exo: "Pompes minute impaire", weight: null, reps: 131, rpe: 8 },
+    };
+
+    expect(
+      buildExerciseOverview(
+        ["Pompes minute impaire", "Pompes minute paire"],
+        emomStep,
+        savedByStep,
+        4,
+      ).map(({ exerciseName, state }) => [exerciseName, state]),
+    ).toEqual([
+      ["Pompes minute impaire", "done"],
+      ["Pompes minute paire", "done"],
+    ]);
+  });
+
   it("shows a pain-skipped exercise separately from a completed one", () => {
     const savedByStep = markExerciseSkippedForPain({}, steps, "Squat", "Tendon d'Achille");
 
