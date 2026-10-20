@@ -52,7 +52,7 @@ export default function MemberProgramme() {
           const { data: u } = await supabase.auth.getUser();
           if (u?.user) {
             const [{ data: sessions }, { data: planned }] = await Promise.all([
-              supabase.from('sessions').select('id, status, program_id, week_number, day_number, date, started_at, ended_at').eq('member_id', u.user.id),
+              supabase.from('sessions').select('id, status, program_id, week_number, day_number, date, started_at, ended_at').eq('member_id', u.user.id).in('status', ['in_progress', 'completed']),
               supabase.from('planned_sessions').select('week_number, day_label, planned_date').eq('member_id', u.user.id),
             ]);
             setSessionsByKey(mapCurrentProgramSessions(

@@ -29,7 +29,7 @@ export function mapCurrentProgramSessions(
   const activeSession = sessions
     .filter(
       (session) =>
-        session.program_id === activeProgramId &&
+        (session.program_id === activeProgramId || session.program_id == null) &&
         session.status === "in_progress" &&
         session.started_at,
     )

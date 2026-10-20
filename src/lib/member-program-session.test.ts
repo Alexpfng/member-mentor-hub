@@ -117,7 +117,7 @@ describe("mapCurrentProgramSessions", () => {
         },
         {
           id: "current-active-session",
-          program_id: "active",
+          program_id: null,
           week_number: 4,
           day_number: 1,
           status: "in_progress",
