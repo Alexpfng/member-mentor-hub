@@ -11,7 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { SUPABASE_ENABLED } from '@/lib/app-mode';
 import { currentPlanningWeekNumber, normalizeWeekStartsOn, weekWindowLabel } from '@/lib/planning-weeks';
 import { displayProgramDayLabel } from '@/lib/program-weeks';
-import { getProgramSessionDayNumber } from '@/lib/member-program-session';
+import { getProgramSessionDayNumber, mapCurrentProgramSessions } from '@/lib/member-program-session';
 import { useI18n } from '@/lib/i18n';
 
 function diffDays(a, b) {
@@ -52,18 +52,16 @@ export default function MemberProgramme() {
           const { data: u } = await supabase.auth.getUser();
           if (u?.user) {
             const [{ data: sessions }, { data: planned }] = await Promise.all([
-              supabase.from('sessions').select('id, status, week_number, day_number').eq('member_id', u.user.id),
+              supabase.from('sessions').select('id, status, program_id, week_number, day_number, date, started_at, ended_at').eq('member_id', u.user.id).eq('program_id', r.program?.id ?? ''),
               supabase.from('planned_sessions').select('week_number, day_label, planned_date').eq('member_id', u.user.id),
             ]);
-            const sMap = {};
-            for (const s of sessions ?? []) {
-              const k = `${s.week_number}-${s.day_number}`;
-              // prefer in_progress > completed > scheduled
-              const prev = sMap[k];
-              if (!prev || s.status === 'in_progress') sMap[k] = { status: s.status, id: s.id };
-              else if (prev.status !== 'in_progress' && s.status === 'completed') sMap[k] = { status: s.status, id: s.id };
-            }
-            setSessionsByKey(sMap);
+            setSessionsByKey(mapCurrentProgramSessions(
+              sessions ?? [],
+              r.program?.structure?.weeks ?? [],
+              r.program?.id,
+              r.assignment?.start_date,
+              r.planning_week_start_day,
+            ));
             const pMap = {};
             for (const p of planned ?? []) {
               if (p.week_number != null) pMap[`${p.week_number}-${p.day_label}`] = p.planned_date;

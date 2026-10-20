@@ -17,23 +17,18 @@ export function normExName(name: unknown): string {
     .trim();
 }
 
-/** Vrai si l'exercice n'a aucune démo vidéo. */
-function hasNoVideo(ex: ProgExercise): boolean {
-  return !ex.youtube_id && !ex.youtube_url && !ex.youtube_alt_url;
-}
-
 /**
- * Complète les exercices SANS vidéo avec la démo de la bibliothèque (match par nom).
+ * Synchronise la vidéo de l'exercice avec la version actuelle de la bibliothèque (match par nom).
  *
  * Les démos affichées côté membre viennent du JSONB du programme, figé à sa création.
- * Une vidéo ajoutée manuellement à la bibliothèque APRÈS coup n'y figure pas : on la
- * récupère ici. N'écrase jamais une vidéo déjà présente dans le programme.
+ * Les structures de programme sont des instantanés : la bibliothèque reste la source
+ * de vérité pour la vidéo afin qu'une correction du coach soit visible côté membre.
  */
 export function enrichVideosFromLibrary(
   exos: ProgExercise[],
   libExercises: LibraryVideoEx[] | null | undefined,
 ): ProgExercise[] {
-  if (!Array.isArray(exos) || !exos.some(hasNoVideo)) return exos;
+  if (!Array.isArray(exos) || exos.length === 0) return exos;
   const byName = new Map<string, LibraryVideoEx>();
   for (const libEx of libExercises ?? []) {
     const key = normExName(libEx.name);
@@ -41,7 +36,6 @@ export function enrichVideosFromLibrary(
   }
   if (byName.size === 0) return exos;
   return exos.map((ex) => {
-    if (!hasNoVideo(ex)) return ex;
     const match = byName.get(normExName(ex.name));
     if (!match || (!match.youtube_url && !match.youtube_id)) return ex;
     return {

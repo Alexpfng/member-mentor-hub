@@ -152,13 +152,15 @@ function SeancePage() {
         resolutionError = "Séance introuvable.";
       }
 
-      // Enrichissement vidéo depuis la bibliothèque : une démo ajoutée manuellement
-      // par le coach APRÈS la création du programme n'est pas dans le JSONB de la
-      // séance. On la récupère par nom d'exercice quand la carte n'a aucune vidéo.
-      if (exos.some((ex) => !ex.youtube_id && !ex.youtube_url && !ex.youtube_alt_url)) {
+      // Les exercices du programme sont des instantanés : rafraîchir leurs vidéos
+      // depuis la bibliothèque pour qu'une correction du coach soit visible au membre.
+      if (exos.length > 0) {
         try {
           const lib = (await fetchLibrary()) as { exercises?: unknown[] };
-          exos = enrichVideosFromLibrary(exos, (lib.exercises ?? []) as Parameters<typeof enrichVideosFromLibrary>[1]);
+          exos = enrichVideosFromLibrary(
+            exos,
+            (lib.exercises ?? []) as Parameters<typeof enrichVideosFromLibrary>[1],
+          );
         } catch (e) {
           console.warn("[seance] enrichissement vidéo biblio échoué", e);
         }
