@@ -52,7 +52,7 @@ export default function MemberProgramme() {
           const { data: u } = await supabase.auth.getUser();
           if (u?.user) {
             const [{ data: sessions }, { data: planned }] = await Promise.all([
-              supabase.from('sessions').select('id, status, program_id, week_number, day_number, date, started_at, ended_at').eq('member_id', u.user.id).eq('program_id', r.program?.id ?? ''),
+              supabase.from('sessions').select('id, status, program_id, week_number, day_number, date, started_at, ended_at').eq('member_id', u.user.id),
               supabase.from('planned_sessions').select('week_number, day_label, planned_date').eq('member_id', u.user.id),
             ]);
             setSessionsByKey(mapCurrentProgramSessions(
@@ -205,7 +205,7 @@ export default function MemberProgramme() {
                                 plannedByKey[`${weekNum}-${d.label}`];
                               const isDone = sess?.status === 'completed';
                               const isInProgress = sess?.status === 'in_progress';
-                              const icon = d.type === 'Repos' ? '🛌' : isDone ? '✓' : isInProgress ? '⏱' : plannedDate ? '◐' : '○';
+                              const icon = d.type === 'Repos' ? '🛌' : isDone ? '✓' : isInProgress ? '⏱' : '○';
                               const iconColor = isDone ? 'var(--cst-mid-green)' : isInProgress ? '#F5A623' : plannedDate ? '#6EAB76' : 'rgba(255,255,255,0.4)';
                               return (
                                 <div key={di} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: 10 }}>

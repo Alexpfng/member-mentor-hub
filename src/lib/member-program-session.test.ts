@@ -101,4 +101,37 @@ describe("mapCurrentProgramSessions", () => {
       3,
     );
   });
+
+  it("maps only the latest real in-progress session and keeps planned slots out of that state", () => {
+    const mapped = mapCurrentProgramSessions(
+      [
+        {
+          id: "older-active-session",
+          program_id: "active",
+          week_number: 4,
+          day_number: 2,
+          status: "in_progress",
+          date: "2026-10-21",
+          started_at: "2026-10-20T08:00:00Z",
+          ended_at: null,
+        },
+        {
+          id: "current-active-session",
+          program_id: "active",
+          week_number: 4,
+          day_number: 1,
+          status: "in_progress",
+          date: "2026-10-20",
+          started_at: "2026-10-20T09:00:00Z",
+          ended_at: null,
+        },
+      ],
+      Array.from({ length: 4 }, () => ({ days: [{}, {}, {}, {}] })),
+      "active",
+      "2026-09-28",
+      1,
+    );
+
+    expect(mapped).toEqual({ "4-1": { id: "current-active-session", status: "in_progress" } });
+  });
 });
