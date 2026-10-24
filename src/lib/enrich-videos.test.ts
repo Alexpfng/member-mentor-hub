@@ -18,12 +18,13 @@ describe("enrichVideosFromLibrary", () => {
     expect(result[0]?.youtube_id).toBe("newVideo123");
   });
 
-  it("does not replace a program video when the library has no current video", () => {
+  it("clears a stale program video when the matching library exercise has no video", () => {
     const result = enrichVideosFromLibrary(
       [{ name: "B-stance deadlift", youtube_url: "https://youtu.be/oldVideo123" }],
       [{ name: "B-stance deadlift", youtube_url: null }],
     );
 
-    expect(result[0]?.youtube_url).toBe("https://youtu.be/oldVideo123");
+    expect(result[0]?.youtube_url).toBeNull();
+    expect(result[0]?.youtube_id).toBeNull();
   });
 });

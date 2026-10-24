@@ -2,6 +2,7 @@ import { describe, expect, it } from "bun:test";
 
 import {
   resetWeekExerciseRpeTargets,
+  markMemberRpeAddressedAfterPrescriptionChange,
   setExerciseQuickCoachNote,
   setExerciseQuickRpe,
 } from "./adapter-week-rpe";
@@ -140,5 +141,26 @@ describe("setExerciseQuickRpe", () => {
         },
       ],
     });
+  });
+});
+
+describe("markMemberRpeAddressedAfterPrescriptionChange", () => {
+  it("hides prior member RPE after the coach changes a prescription", () => {
+    expect(
+      markMemberRpeAddressedAfterPrescriptionChange(
+        { name: "Pompes", reps: "10 - 8", member_rpe_hidden: false },
+        { name: "Pompes", reps: "12 - 10", member_rpe_hidden: false },
+      ),
+    ).toEqual({ name: "Pompes", reps: "12 - 10", member_rpe_hidden: true, rpe_cleared: true });
+  });
+
+  it("does not hide RPE for unrelated edits or unchanged prescriptions", () => {
+    const exercise = { name: "Pompes", reps: "10 - 8", coach_notes: "ancienne note" };
+    expect(
+      markMemberRpeAddressedAfterPrescriptionChange(exercise, {
+        ...exercise,
+        coach_notes: "nouvelle note",
+      }),
+    ).toEqual({ ...exercise, coach_notes: "nouvelle note" });
   });
 });

@@ -4,8 +4,10 @@ import { readFileSync } from "node:fs";
 import {
   buildEarlyFinishMemberNote,
   buildExpertExerciseFeedbackRows,
+  buildKoFeedbackRows,
   buildMemberCommentFeedbackRows,
   buildSkippedPainFeedbackRows,
+  GLOBAL_RPE_PICKER_VALUES,
   normalizeExpertRpeForStorage,
   trimOptionalComment,
 } from "./live-session-feedback";
@@ -17,6 +19,36 @@ describe("normalizeExpertRpeForStorage", () => {
 
   test("caps KO values to 10 for storage", () => {
     expect(normalizeExpertRpeForStorage(11)).toBe(10);
+  });
+});
+
+describe("global RPE picker", () => {
+  test("offers KO in addition to the half-point RPE scale", () => {
+    expect(GLOBAL_RPE_PICKER_VALUES).toEqual([
+      ...Array.from({ length: 20 }, (_, index) => (index + 1) * 0.5),
+      11,
+    ]);
+  });
+});
+
+describe("buildKoFeedbackRows", () => {
+  test("records one coach-visible KO feedback per exercise", () => {
+    expect(
+      buildKoFeedbackRows("session-ko", {
+        1: { exo: "Squat", weight: null, reps: 6, rpe: 11 },
+        2: { exo: "Squat", weight: null, reps: 5, rpe: 11 },
+        3: { exo: "Rowing", weight: 30, reps: 10, rpe: 8 },
+      }),
+    ).toEqual([
+      {
+        session_id: "session-ko",
+        exercise_name: "Squat",
+        rpe: 10,
+        could_not_do: true,
+        felt_too_hard: true,
+        member_comment: "Échec (KO)",
+      },
+    ]);
   });
 });
 

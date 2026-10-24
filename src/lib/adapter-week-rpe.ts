@@ -7,6 +7,16 @@ type ProgExerciseWithCoachNoteLike = ProgExerciseLike & { coach_notes?: string |
 type DayLike = { exercises?: ProgExerciseWithCoachNoteLike[] };
 type WeekStructureLike = { days?: DayLike[] };
 
+const PRESCRIPTION_FIELDS = ["series", "reps", "charge", "tempo", "recup", "rpe_target"] as const;
+
+export function markMemberRpeAddressedAfterPrescriptionChange<T extends Record<string, unknown>>(
+  previous: T,
+  next: T,
+): T {
+  const changed = PRESCRIPTION_FIELDS.some((field) => !Object.is(previous[field], next[field]));
+  return changed ? ({ ...next, rpe_cleared: true, member_rpe_hidden: true } as T) : next;
+}
+
 function isNumericCoachRpe(value: string | number | null | undefined) {
   const stringValue = String(value ?? "").trim();
   return stringValue !== "" && !Number.isNaN(Number(stringValue.replace(",", ".")));

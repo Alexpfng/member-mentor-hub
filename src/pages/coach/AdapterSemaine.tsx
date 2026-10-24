@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
+import { Check, X } from "lucide-react";
 import { toast } from "sonner";
 import CoachSidebar from "@/components/CoachSidebar";
 import ReplaceExerciseModal from "@/components/coach/ReplaceExerciseModal";
@@ -16,6 +17,7 @@ import { findExerciseFeedback, normalizeExerciseFeedbackKey } from "@/lib/exerci
 import { listExercises, saveProgramExerciseToLibrary } from "@/lib/exercises.functions";
 import {
   resetWeekExerciseRpeTargets,
+  markMemberRpeAddressedAfterPrescriptionChange,
   setExerciseQuickCoachNote,
   setExerciseQuickRpe,
 } from "@/lib/adapter-week-rpe";
@@ -24,11 +26,12 @@ import { parseRpeCell } from "@/lib/rpe-cell";
 import { getNumericCoachRpeTarget } from "@/lib/coach-rpe-target";
 import { formatSetRpes, getQuickRpePopoverPlacement } from "@/lib/coach-rpe-feedback";
 import { sanitizeLibraryExerciseNotes } from "@/lib/library-exercise-payload";
+import { exerciseVideoForRename } from "@/lib/exercise-video-assignment";
 import { shouldShowWeekRpeResetButton } from "@/lib/program-weeks";
 import { adapterWeekHorizontalScrollLimit } from "@/lib/adapter-week-horizontal-scroll";
 import { defaultPublishStartDate } from "@/lib/publish-start-date";
 import { normalizeCoachEditableWeek } from "@/lib/coach-exercise-normalizer";
-import { describeGlobalDay, describeGlobalRpe } from "@/lib/adapter-global-view";
+import { describeGlobalDay, describeGlobalRpe, getCoachModificationStatus } from "@/lib/adapter-global-view";
 
 type LibExercise = {
   id: string;
@@ -57,6 +60,9 @@ type ProgExercise = {
   coach_notes?: string | null;
   film_requested?: boolean | null;
   youtube_url?: string | null;
+  youtube_id?: string | null;
+  youtube_alt_url?: string | null;
+  image_url?: string | null;
 };
 type DayStructure = { label?: string; exercises?: ProgExercise[] };
 type WeekStructure = { days?: DayStructure[] };
@@ -554,7 +560,10 @@ function ExoEditModal({
           <ColorDot c={ex.color} />
           <input
             value={ex.name}
-            onChange={(e) => onChange((x) => ({ ...x, name: e.target.value }))}
+            onChange={(e) => {
+              const name = e.target.value;
+              onChange((x) => ({ ...x, name, ...exerciseVideoForRename(x, name) }));
+            }}
             className="cst-display"
             style={{
               flex: 1,
@@ -1191,7 +1200,8 @@ export default function AdapterSemaine() {
       const days = [...(s.days ?? [])];
       const day = { ...days[dayIdx] };
       const exos = [...(day.exercises ?? [])];
-      exos[exoIdx] = fn(exos[exoIdx]);
+      const previous = exos[exoIdx];
+      exos[exoIdx] = markMemberRpeAddressedAfterPrescriptionChange(previous, fn(previous));
       day.exercises = exos;
       days[dayIdx] = day;
       return { ...s, days };
@@ -2529,7 +2539,7 @@ export default function AdapterSemaine() {
                 <table style={{ width: "100%", minWidth: 820, borderCollapse: "collapse", fontSize: 12 }}>
                   <thead>
                     <tr className="cst-mono" style={{ textAlign: "left", color: "var(--cst-text-soft)", fontSize: 9 }}>
-                      {["CODE", "EXERCICE / PHASE", "SÉRIES", "REPS / CONTENU", "CHARGE / ALLURE", "TEMPO", "RÉCUP", "RPE COACHÉ · SÉRIES"].map((label) => (
+                      {["CODE", "EXERCICE / PHASE", "MODIFIÉ", "REPS / CONTENU", "CHARGE / ALLURE", "TEMPO", "RÉCUP", "RPE COACHÉ · SÉRIES"].map((label) => (
                         <th key={label} style={{ padding: "9px 10px", borderBottom: "1px solid rgba(255,255,255,0.12)", whiteSpace: "nowrap" }}>{label}</th>
                       ))}
                     </tr>
@@ -2547,7 +2557,22 @@ export default function AdapterSemaine() {
                             <span style={{ display: "inline-block", width: 9, height: 9, borderRadius: "50%", background: COLOR_MAP[(ex.color ?? "").toLowerCase()]?.bg ?? "#666", marginRight: 8 }} />
                             {ex.name}
                           </td>
-                          {[ex.series, ex.reps, ex.charge, ex.tempo, ex.recup].map((value, index) => (
+                          {(() => {
+                            const status = getCoachModificationStatus(!!ex.member_rpe_hidden);
+                            const modified = status === "modified";
+                            const label = modified ? "Prescription modifiée" : "Prescription non modifiée";
+                            return (
+                              <td
+                                className="cst-mono"
+                                style={{ padding: "9px 10px", textAlign: "center" }}
+                                aria-label={label}
+                                title={label}
+                              >
+                                {modified ? <Check size={16} aria-hidden="true" color="#5BA85A" /> : <X size={16} aria-hidden="true" color="#C9483A" />}
+                              </td>
+                            );
+                          })()}
+                          {[ex.reps, ex.charge, ex.tempo, ex.recup].map((value, index) => (
                             <td key={index} className="cst-mono" style={{ padding: "9px 10px", whiteSpace: "nowrap", color: "var(--cst-text-soft)" }}>{value == null || value === "" ? "—" : String(value)}</td>
                           ))}
                           {(() => {
@@ -2555,7 +2580,7 @@ export default function AdapterSemaine() {
                             const setRpes = ctx?.recentSetRpes[
                               feedbackMatch?.key ?? normalizeExerciseFeedbackKey(ex.name)
                             ] ?? [];
-                            const rpe = describeGlobalRpe(setRpes);
+                            const rpe = describeGlobalRpe(setRpes, !!ex.member_rpe_hidden);
                             return (
                               <td
                                 className="cst-mono"

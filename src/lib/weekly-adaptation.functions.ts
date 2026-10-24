@@ -13,6 +13,7 @@ import { buildCoachExerciseFeedback, buildLatestSetRpesByExercise } from "@/lib/
 import { normalizeProgramStructure, normalizeWeekStructure } from "@/lib/week-structure-normalizer";
 import { clearFulfilledFilmRequests, filmedExerciseKeys } from "@/lib/film-requests";
 import { preserveAssignmentSessionMode } from "@/lib/assignment-session-mode";
+import { exerciseVideoForReplacement } from "@/lib/exercise-video-assignment";
 
 /**
  * Adaptation hebdomadaire des programmes (coach).
@@ -36,6 +37,8 @@ type ProgExercise = {
   film_requested?: boolean | null;
   youtube_url?: string | null;
   youtube_id?: string | null;
+  youtube_alt_url?: string | null;
+  image_url?: string | null;
 };
 
 type DayStructure = { label?: string; exercises?: ProgExercise[] };
@@ -1228,7 +1231,7 @@ export const replaceExercise = createServerFn({ method: "POST" })
 
     const { data: exo, error: exErr } = await supabaseAdmin
       .from("exercises")
-      .select("name, color, default_tempo, youtube_url, youtube_id, coach_notes, intensity_code")
+      .select("name, color, default_tempo, youtube_url, youtube_id, image_url, coach_notes, intensity_code")
       .eq("id", data.newExerciseId)
       .maybeSingle();
     if (exErr || !exo) throw new Error("Exercice introuvable.");
@@ -1254,8 +1257,7 @@ export const replaceExercise = createServerFn({ method: "POST" })
       rpe_target: 8,
       tempo: exo.default_tempo ?? null,
       recup: null,
-      youtube_url: exo.youtube_url ?? null,
-      youtube_id: exo.youtube_id ?? null,
+      ...exerciseVideoForReplacement(source, exo),
       coach_notes: data.memberNote?.trim() || exo.coach_notes || null,
       // code conservé depuis ...source (lettre de bloc B1, B2…)
     };

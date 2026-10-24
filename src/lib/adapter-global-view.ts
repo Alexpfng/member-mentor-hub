@@ -10,6 +10,10 @@ export function describeGlobalDay(day: {
   };
 }
 
-export function describeGlobalRpe(setRpes: number[]) {
-  return { member: setRpes.length ? setRpes.join(", ") : null };
+export function describeGlobalRpe(setRpes: number[], memberRpeHidden = false) {
+  return { member: !memberRpeHidden && setRpes.length ? setRpes.join(", ") : null };
+}
+
+export function getCoachModificationStatus(modified: boolean) {
+  return modified ? "modified" : "not-modified";
 }

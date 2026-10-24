@@ -9,6 +9,7 @@ import {
   sanitizeLibraryExerciseNotes,
 } from "./library-exercise-payload";
 import { toProgramExerciseLibraryPayload } from "./program-exercise-library-payload";
+import { videoForLibrarySave } from "./exercise-video-assignment";
 
 type SeedRow = {
   id: string;
@@ -178,15 +179,19 @@ export const saveProgramExerciseToLibrary = createServerFn({ method: "POST" })
     const normalizedName = exactName.toLowerCase();
     const { data: existing, error: existingError } = await (supabaseAdmin as any)
       .from("exercises")
-      .select("id, name")
+      .select("id, name, youtube_url")
       .ilike("name", exactName)
       .limit(1)
       .maybeSingle();
     if (existingError) throw new Error(existingError.message);
     if (existing && String(existing.name ?? "").trim().toLowerCase() === normalizedName) {
+      const updatePayload = {
+        ...payload,
+        youtube_url: videoForLibrarySave(payload.youtube_url, existing.youtube_url ?? null),
+      };
       const { data: row, error } = await (supabaseAdmin as any)
         .from("exercises")
-        .update(payload)
+        .update(updatePayload)
         .eq("id", existing.id)
         .select(
           "id, name, intensity_code, category, color, muscle_group, equipement, default_tempo, youtube_url, youtube_id, image_url, coach_notes, is_archived, is_global, movement_patterns"

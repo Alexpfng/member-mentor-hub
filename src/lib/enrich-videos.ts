@@ -37,12 +37,12 @@ export function enrichVideosFromLibrary(
   if (byName.size === 0) return exos;
   return exos.map((ex) => {
     const match = byName.get(normExName(ex.name));
-    if (!match || (!match.youtube_url && !match.youtube_id)) return ex;
+    if (!match) return ex;
     return {
       ...ex,
-      youtube_url: match.youtube_url ?? ex.youtube_url ?? null,
-      youtube_id: match.youtube_id ?? ex.youtube_id ?? null,
-      image_url: ex.image_url ?? match.image_url ?? null,
+      youtube_url: match.youtube_url ?? null,
+      youtube_id: match.youtube_id ?? null,
+      image_url: match.image_url ?? null,
     };
   });
 }

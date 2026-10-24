@@ -27,8 +27,10 @@ import {
 import {
   buildEarlyFinishMemberNote,
   buildExpertExerciseFeedbackRows,
+  buildKoFeedbackRows,
   buildMemberCommentFeedbackRows,
   buildSkippedPainFeedbackRows,
+  GLOBAL_RPE_PICKER_VALUES,
   normalizeExpertRpeForStorage,
   trimOptionalComment,
 } from "@/lib/live-session-feedback";
@@ -1728,9 +1730,14 @@ export function LiveSession({
    * que les retours libres — commentaire par exercice + mot de fin de séance.
    */
   async function saveMemberFeedback(noteOverride?: string) {
+    const koRows = buildKoFeedbackRows(sessionId, savedByStep, expertRecapCommentByExercise);
+    const koExercises = new Set(koRows.map((row) => row.exercise_name));
     const feedbackRows = [
-      ...buildMemberCommentFeedbackRows(sessionId, expertRecapGroups, expertRecapCommentByExercise),
-      ...buildSkippedPainFeedbackRows(sessionId, savedByStep),
+      ...buildMemberCommentFeedbackRows(sessionId, expertRecapGroups, expertRecapCommentByExercise)
+        .filter((row) => !koExercises.has(row.exercise_name)),
+      ...koRows,
+      ...buildSkippedPainFeedbackRows(sessionId, savedByStep)
+        .filter((row) => !koExercises.has(row.exercise_name)),
     ];
     const { error: deleteError } = await supabase
       .from("exercise_feedbacks")
@@ -2996,21 +3003,21 @@ export function LiveSession({
                   exercise_name: result.exerciseName,
                   set_number: 1,
                   reps: result.reps,
-                  rpe: emomRpe,
+                  rpe: normalizeExpertRpeForStorage(emomRpe),
                   completed: true,
                 })),
               );
               if (error) throw error;
             }, "emom set_logs insert failed");
-            const nextSaved = {
-              ...savedByStep,
-              [stepIdx]: {
-                exo: current.exercise.name,
+            const nextSaved = { ...savedByStep };
+            exerciseResults.forEach((result, index) => {
+              nextSaved[stepIdx + index / 100] = {
+                exo: result.exerciseName,
                 weight: null,
-                reps: computedReps,
+                reps: result.reps,
                 rpe: emomRpe,
-              },
-            };
+              };
+            });
             setSavedByStep(nextSaved);
             // Mode expert : pré-remplit le RPE du récap final avec celui saisi
             // sur l'écran EMOM, pour qu'il ne soit ni redemandé ni perdu.
@@ -3072,7 +3079,7 @@ export function LiveSession({
                   exercise_name: ex.name,
                   set_number: 1,
                   reps: null,
-                  rpe: circuitRpe,
+                  rpe: normalizeExpertRpeForStorage(circuitRpe),
                   completed: true,
                 })),
               );
@@ -4763,7 +4770,7 @@ function EmomScreen({
           RPE GLOBAL SUR CE {blockLabel}
         </span>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 4 }}>
-          {RPE_PICKER_VALUES.filter((value) => value > 0).map((v) => {
+          {GLOBAL_RPE_PICKER_VALUES.map((v) => {
             const on = rpe === v;
             const hue = v >= 9 ? "#C9483A" : v >= 7 ? "#D4A53B" : "#3A8A4D";
             return (
@@ -5201,7 +5208,7 @@ function CircuitScreen({
           RPE GLOBAL SUR CE {modeLabel}
         </span>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 4 }}>
-          {RPE_PICKER_VALUES.filter((value) => value > 0).map((v) => {
+          {GLOBAL_RPE_PICKER_VALUES.map((v) => {
             const on = rpe === v;
             const hue = v >= 9 ? "#C9483A" : v >= 7 ? "#D4A53B" : "#3A8A4D";
             return (

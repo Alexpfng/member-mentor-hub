@@ -1,5 +1,9 @@
 import { describe, expect, it } from "bun:test";
-import { describeGlobalDay, describeGlobalRpe } from "./adapter-global-view";
+import {
+  describeGlobalDay,
+  describeGlobalRpe,
+  getCoachModificationStatus,
+} from "./adapter-global-view";
 
 describe("describeGlobalDay", () => {
   it("makes each session selectable by name and previews its contents", () => {
@@ -37,5 +41,16 @@ describe("describeGlobalRpe", () => {
 
   it("shows no value when the member has not recorded any series RPE", () => {
     expect(describeGlobalRpe([])).toEqual({ member: null });
+  });
+
+  it("hides old series RPE after the coach marks the exercise as reviewed", () => {
+    expect(describeGlobalRpe([8, 8.5, 9], true)).toEqual({ member: null });
+  });
+});
+
+describe("getCoachModificationStatus", () => {
+  it("marks a prescription as modified after the coach addresses its RPE", () => {
+    expect(getCoachModificationStatus(true)).toBe("modified");
+    expect(getCoachModificationStatus(false)).toBe("not-modified");
   });
 });

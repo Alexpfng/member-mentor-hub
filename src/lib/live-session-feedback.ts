@@ -3,6 +3,11 @@ import type { ExpertSavedStep } from "./live-session-progress";
 
 type ExerciseFeedbackInsert = Database["public"]["Tables"]["exercise_feedbacks"]["Insert"];
 
+export const GLOBAL_RPE_PICKER_VALUES = [
+  ...Array.from({ length: 20 }, (_, index) => (index + 1) * 0.5),
+  11,
+];
+
 type ExpertRecapGroupLike = {
   exerciseName: string;
   rows: Array<{
@@ -87,6 +92,30 @@ export function buildSkippedPainFeedbackRows(
     could_not_do: true,
     felt_too_hard: true,
     member_comment: note ? `Douleur signalée : ${note}` : "Douleur signalée : exercice non fait",
+  }));
+}
+
+export function buildKoFeedbackRows(
+  sessionId: string,
+  savedByStep: Record<number, ExpertSavedStep>,
+  commentByExercise: Record<string, string> = {},
+): ExerciseFeedbackInsert[] {
+  const byExercise = new Map<string, string | null>();
+
+  Object.values(savedByStep).forEach((row) => {
+    if (row.rpe == null || row.rpe <= 10 || row.skipped === "pain") return;
+    if (!byExercise.has(row.exo)) {
+      byExercise.set(row.exo, trimOptionalComment(commentByExercise[row.exo]));
+    }
+  });
+
+  return Array.from(byExercise.entries()).map(([exerciseName, comment]) => ({
+    session_id: sessionId,
+    exercise_name: exerciseName,
+    rpe: 10,
+    could_not_do: true,
+    felt_too_hard: true,
+    member_comment: comment ? `Échec (KO) · ${comment}` : "Échec (KO)",
   }));
 }
 
