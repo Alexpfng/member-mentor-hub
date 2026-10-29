@@ -39,7 +39,6 @@ export function mapCurrentProgramSessions(
     const week = session.week_number == null ? null : weeks[session.week_number - 1];
     const day = session.day_number == null ? null : week?.days?.[session.day_number - 1];
     if (
-      session.program_id !== activeProgramId ||
       !week ||
       !day ||
       day.type === "Repos" ||
