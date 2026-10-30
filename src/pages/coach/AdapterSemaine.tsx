@@ -531,6 +531,7 @@ function ExoEditModal({
           : "REPS";
   const tempoLabel = isEnduranceEdit ? "ALLURE / TEMPO" : "TEMPO";
   const recupLabel = isEnduranceEdit ? "RÉCUP / PAUSE" : "RÉCUP";
+  const chargeLabel = isEnduranceEdit ? "DURÉE / OBJECTIF" : "CHARGE (kg)";
   const notesLabel = isEnduranceEdit ? "CONSIGNE FOOTING / OBJECTIF" : "NOTE POUR LE MEMBRE";
   const notesPlaceholder = isEnduranceEdit
     ? "Objectif, allure, ressenti attendu, consigne de course…"
@@ -681,7 +682,7 @@ function ExoEditModal({
             }}
           >
             {isEnduranceEdit
-              ? "Séance endurance : édite le volume, l'allure, la récup et l'objectif. Les champs charge/RPE muscu sont masqués ici."
+              ? "Séance endurance : édite le volume, la durée/objectif, l'allure et la récup. Les champs RPE muscu sont masqués ici."
               : blockType === "emom"
                 ? "EMOM : durée en minutes dans Séries, reps/min dans Reps. « 1/2 » alterne les reps paires/impaires. A1/A2 alterne deux exercices minute par minute."
                 : "Circuit : mets la même lettre de code (C1, C2...) sur les stations. AMRAP : indique la durée dans le premier champ."}
@@ -834,15 +835,15 @@ function ExoEditModal({
               className="cst-input"
             />,
           )}
-          {!isEnduranceEdit &&
-            field(
-              "CHARGE (kg)",
-              <input
-                value={ex.charge ?? ""}
-                onChange={(e) => onChange((x) => ({ ...x, charge: e.target.value }))}
-                className="cst-input"
-              />,
-            )}
+          {field(
+            chargeLabel,
+            <input
+              value={ex.charge ?? ""}
+              onChange={(e) => onChange((x) => ({ ...x, charge: e.target.value || null }))}
+              placeholder={isEnduranceEdit ? "ex. À réaliser 40–50 min" : undefined}
+              className="cst-input"
+            />,
+          )}
           {!isEnduranceEdit &&
             field(
               "RPE PAR SÉRIE · DERNIÈRE SÉANCE",
