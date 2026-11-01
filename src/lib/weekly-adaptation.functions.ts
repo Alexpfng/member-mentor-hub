@@ -9,7 +9,7 @@ import {
   mergeExerciseFeedbackMaps,
   type AdapterExerciseFeedback,
 } from "@/lib/adapter-feedback-source";
-import { buildCoachExerciseFeedback, buildLatestSetRpesByDay } from "@/lib/coach-rpe-feedback";
+import { buildCoachExerciseFeedback, buildLatestSetRpesByExercise } from "@/lib/coach-rpe-feedback";
 import { normalizeProgramStructure, normalizeWeekStructure } from "@/lib/week-structure-normalizer";
 import { clearFulfilledFilmRequests, filmedExerciseKeys } from "@/lib/film-requests";
 import { preserveAssignmentSessionMode } from "@/lib/assignment-session-mode";
@@ -162,7 +162,7 @@ type AggregatedFeedbackContext = {
   weekNumber: number | null;
   sessions: FeedbackSession[];
   feedback: Record<string, AdapterExerciseFeedback>;
-  recentSetRpes: Record<number, Record<string, number[]>>;
+  recentSetRpes: Record<string, number[]>;
 };
 
 async function aggregateFeedback(
@@ -248,7 +248,7 @@ async function aggregateFeedback(
     return {
       weekNumber: mostRecentWeekWithFeedback.weekNumber,
       sessions: mostRecentWeekWithFeedback.sessions,
-      recentSetRpes: buildLatestSetRpesByDay(rpeSessions, rpeLogs),
+      recentSetRpes: buildLatestSetRpesByExercise(rpeSessions, rpeLogs),
       // feedbackMaps est [plus récent … plus ancien] et mergeExerciseFeedbackMaps
       // laisse gagner le DERNIER map pour un même exo → on inverse pour que la
       // semaine la plus récente prime (les semaines antérieures ne servent que de repli).
@@ -259,7 +259,7 @@ async function aggregateFeedback(
   return firstWeekWithSessions
     ? {
         ...firstWeekWithSessions,
-        recentSetRpes: buildLatestSetRpesByDay(rpeSessions, rpeLogs),
+        recentSetRpes: buildLatestSetRpesByExercise(rpeSessions, rpeLogs),
       }
     : null;
 }
