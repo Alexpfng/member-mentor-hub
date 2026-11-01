@@ -2585,7 +2585,7 @@ export default function AdapterSemaine() {
                           ))}
                           {(() => {
                             const feedbackMatch = findExerciseFeedback(ctx?.feedback ?? {}, ex.name);
-                            const setRpes = ctx?.recentSetRpes[dayIdx + 1]?.[
+                            const setRpes = ctx?.recentSetRpes[
                               feedbackMatch?.key ?? normalizeExerciseFeedbackKey(ex.name)
                             ] ?? [];
                             // En vue coach, masquer le RPE uniquement si la prescription
@@ -2751,9 +2751,7 @@ export default function AdapterSemaine() {
           const fbMatch = findExerciseFeedback(ctx.feedback, ex.name);
           const fb = fbMatch?.feedback;
           const setRpes =
-            ctx.recentSetRpes[editTarget.dayIdx + 1]?.[
-              fbMatch?.key ?? normalizeExerciseFeedbackKey(ex.name)
-            ] ?? [];
+            ctx.recentSetRpes[fbMatch?.key ?? normalizeExerciseFeedbackKey(ex.name)] ?? [];
           const emomLetter = /^([A-Za-z])/.exec(String(ex.code ?? "").trim())?.[1]?.toUpperCase();
           const emomPairCount = emomLetter
             ? (day.exercises ?? []).filter(
