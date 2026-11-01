@@ -39,6 +39,8 @@ type ProgExercise = {
   youtube_id?: string | null;
   youtube_alt_url?: string | null;
   image_url?: string | null;
+  /** Repère privé au coach : l'exercice a été traité dans cette copie de semaine. */
+  coach_modified?: boolean | null;
 };
 
 type DayStructure = { label?: string; exercises?: ProgExercise[] };
@@ -69,6 +71,20 @@ function effectiveStructure(week: WeekRowLike): WeekStructure {
   return normalizeWeekStructure(
     ((week.draft_structure ?? week.structure) as WeekStructure) ?? { days: [] },
   );
+}
+
+/** Chaque nouvelle copie repart sans les repères de traitement de sa source. */
+function resetCoachModificationStatus(structure: WeekStructure): WeekStructure {
+  return {
+    ...structure,
+    days: (structure.days ?? []).map((day) => ({
+      ...day,
+      exercises: (day.exercises ?? []).map((exercise) => ({
+        ...exercise,
+        coach_modified: false,
+      })),
+    })),
+  };
 }
 
 /** Patch d'écriture : direct sur `structure` en draft, sinon vers `draft_structure`. */
@@ -126,7 +142,9 @@ async function resolveSourceWeek(
     // autres restent cochés pour que le coach continue de relancer.
     const filmed = await filmedKeysForWeek(memberId, prev.week_number);
     return {
-      structure: clearFulfilledFilmRequests(prev.structure as WeekStructure, filmed),
+      structure: resetCoachModificationStatus(
+        clearFulfilledFilmRequests(prev.structure as WeekStructure, filmed),
+      ),
       basedOn: prev.week_number,
     };
   }
@@ -142,7 +160,10 @@ async function resolveSourceWeek(
   const structure = normalizeProgramStructure(rawStructure ?? { weeks: [] });
   const fallbackWeek = structure?.weeks?.[Math.max(0, weekNumber - 1)] ??
     structure?.weeks?.[0] ?? { days: [] };
-  return { structure: fallbackWeek as WeekStructure, basedOn: null };
+  return {
+    structure: resetCoachModificationStatus(fallbackWeek as WeekStructure),
+    basedOn: null,
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -815,8 +836,10 @@ export const duplicateWeekTo = createServerFn({ method: "POST" })
       const tw = sorted[i];
       // Duplique la version en cours d'édition (brouillon de révision inclus).
       const structure = clearFulfilledFilmRequests(
-        normalizeWeekStructure(
-          JSON.parse(JSON.stringify(effectiveStructure(week))) as WeekStructure,
+        resetCoachModificationStatus(
+          normalizeWeekStructure(
+            JSON.parse(JSON.stringify(effectiveStructure(week))) as WeekStructure,
+          ),
         ),
         filmed,
       );
@@ -883,7 +906,12 @@ export const duplicateProgramForMember = createServerFn({ method: "POST" })
         frequency_per_week: src.frequency_per_week,
         level: src.level,
         objective: src.objective,
-        structure: src.structure as unknown as never,
+        structure: {
+          ...(src.structure as ProgramStructure),
+          weeks: ((src.structure as ProgramStructure | null)?.weeks ?? []).map((week) =>
+            resetCoachModificationStatus(week),
+          ),
+        } as unknown as never,
       })
       .select("id")
       .single();
@@ -1207,7 +1235,7 @@ export const initProgramWeeks = createServerFn({ method: "POST" })
         program_id: assignment.program_id,
         week_number: i,
         based_on_week: null,
-        structure: weekStructure as unknown as never,
+        structure: resetCoachModificationStatus(weekStructure as WeekStructure) as unknown as never,
         status: "draft",
         created_by: context.userId,
       });
