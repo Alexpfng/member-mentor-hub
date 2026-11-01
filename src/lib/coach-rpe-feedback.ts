@@ -38,6 +38,7 @@ type PainRow = {
 type SetRpeSession = {
   id: string;
   status: string | null;
+  day_number?: number | null;
   started_at?: string | null;
   ended_at?: string | null;
 };
@@ -93,6 +94,57 @@ export function buildLatestSetRpesByExercise(sessions: SetRpeSession[], logs: Se
       })[0];
     if (!latestSessionId) continue;
     result[exerciseKey] = rows
+      .filter((row) => row.sessionId === latestSessionId)
+      .sort((a, b) => a.setNumber - b.setNumber)
+      .map((row) => row.rpe);
+  }
+  return result;
+}
+
+/** RPE par jour de programme et exercice, depuis les séances terminées uniquement. */
+export function buildLatestSetRpesByDay(sessions: SetRpeSession[], logs: SetRpeLog[]) {
+  const sessionsById = new Map(
+    sessions
+      .filter((session) => session.status === "completed" && session.day_number != null)
+      .map((session) => [session.id, session]),
+  );
+  const grouped = new Map<
+    string,
+    Array<{ dayNumber: number; sessionId: string; setNumber: number; rpe: number }>
+  >();
+
+  for (const log of logs) {
+    if (log.completed === false || log.rpe == null || !log.session_id) continue;
+    const session = sessionsById.get(log.session_id);
+    const exerciseKey = normalizeExerciseFeedbackKey(log.exercise_name);
+    if (!session || session.day_number == null || !exerciseKey) continue;
+    const key = `${session.day_number}:${exerciseKey}`;
+    const rows = grouped.get(key) ?? [];
+    rows.push({
+      dayNumber: session.day_number,
+      sessionId: session.id,
+      setNumber: log.set_number ?? 0,
+      rpe: Number(log.rpe),
+    });
+    grouped.set(key, rows);
+  }
+
+  const result: Record<number, Record<string, number[]>> = {};
+  const sessionById = new Map(sessions.map((session) => [session.id, session]));
+  for (const [groupKey, rows] of grouped) {
+    const latestSessionId = [...new Set(rows.map((row) => row.sessionId))].sort((a, b) => {
+      const sessionA = sessionById.get(a);
+      const sessionB = sessionById.get(b);
+      return (
+        ts(sessionB?.ended_at ?? sessionB?.started_at) -
+        ts(sessionA?.ended_at ?? sessionA?.started_at)
+      );
+    })[0];
+    if (!latestSessionId) continue;
+    const { dayNumber } = rows[0];
+    const exerciseKey = groupKey.slice(groupKey.indexOf(":") + 1);
+    result[dayNumber] ??= {};
+    result[dayNumber][exerciseKey] = rows
       .filter((row) => row.sessionId === latestSessionId)
       .sort((a, b) => a.setNumber - b.setNumber)
       .map((row) => row.rpe);

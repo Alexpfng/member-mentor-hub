@@ -9,7 +9,7 @@ import {
   mergeExerciseFeedbackMaps,
   type AdapterExerciseFeedback,
 } from "@/lib/adapter-feedback-source";
-import { buildCoachExerciseFeedback, buildLatestSetRpesByExercise } from "@/lib/coach-rpe-feedback";
+import { buildCoachExerciseFeedback, buildLatestSetRpesByDay } from "@/lib/coach-rpe-feedback";
 import { normalizeProgramStructure, normalizeWeekStructure } from "@/lib/week-structure-normalizer";
 import { clearFulfilledFilmRequests, filmedExerciseKeys } from "@/lib/film-requests";
 import { preserveAssignmentSessionMode } from "@/lib/assignment-session-mode";
@@ -153,6 +153,7 @@ type FeedbackSession = {
   status: string | null;
   average_rpe: number | null;
   program_id: string | null;
+  day_number: number | null;
   started_at?: string | null;
   ended_at?: string | null;
 };
@@ -161,7 +162,7 @@ type AggregatedFeedbackContext = {
   weekNumber: number | null;
   sessions: FeedbackSession[];
   feedback: Record<string, AdapterExerciseFeedback>;
-  recentSetRpes: Record<string, number[]>;
+  recentSetRpes: Record<number, Record<string, number[]>>;
 };
 
 async function aggregateFeedback(
@@ -186,13 +187,14 @@ async function aggregateFeedback(
   for (const weekNumber of candidateWeeks) {
     const { data: sessions } = await supabaseAdmin
       .from("sessions")
-      .select("id, status, average_rpe, program_id, started_at, ended_at")
+      .select("id, status, average_rpe, program_id, day_number, started_at, ended_at")
       .eq("member_id", memberId)
       .eq("week_number", weekNumber);
     const sourceSessions = filterFeedbackSessionsForProgram(sessions ?? [], programId);
     const sessionIds = sourceSessions.map((s) => s.id);
     if (sessionIds.length === 0) continue;
-    rpeSessions.push(...sourceSessions);
+    const isReferenceWeek = weekNumber === candidateWeeks[0];
+    if (isReferenceWeek) rpeSessions.push(...sourceSessions);
 
     if (!firstWeekWithSessions) {
       firstWeekWithSessions = {
@@ -218,7 +220,7 @@ async function aggregateFeedback(
         .in("session_id", sessionIds),
       supabaseAdmin.from("pain_reports").select("exercise_name").in("session_id", sessionIds),
     ]);
-    rpeLogs.push(...(logs ?? []));
+    if (isReferenceWeek) rpeLogs.push(...(logs ?? []));
     const feedback = buildCoachExerciseFeedback({
       logs: logs ?? [],
       feedbacks: feedbacks ?? [],
@@ -246,7 +248,7 @@ async function aggregateFeedback(
     return {
       weekNumber: mostRecentWeekWithFeedback.weekNumber,
       sessions: mostRecentWeekWithFeedback.sessions,
-      recentSetRpes: buildLatestSetRpesByExercise(rpeSessions, rpeLogs),
+      recentSetRpes: buildLatestSetRpesByDay(rpeSessions, rpeLogs),
       // feedbackMaps est [plus récent … plus ancien] et mergeExerciseFeedbackMaps
       // laisse gagner le DERNIER map pour un même exo → on inverse pour que la
       // semaine la plus récente prime (les semaines antérieures ne servent que de repli).
@@ -257,7 +259,7 @@ async function aggregateFeedback(
   return firstWeekWithSessions
     ? {
         ...firstWeekWithSessions,
-        recentSetRpes: buildLatestSetRpesByExercise(rpeSessions, rpeLogs),
+        recentSetRpes: buildLatestSetRpesByDay(rpeSessions, rpeLogs),
       }
     : null;
 }

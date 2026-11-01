@@ -2589,7 +2589,7 @@ export default function AdapterSemaine() {
                           ))}
                           {(() => {
                             const feedbackMatch = findExerciseFeedback(ctx?.feedback ?? {}, ex.name);
-                            const setRpes = ctx?.recentSetRpes[
+                            const setRpes = ctx?.recentSetRpes[dayIdx + 1]?.[
                               feedbackMatch?.key ?? normalizeExerciseFeedbackKey(ex.name)
                             ] ?? [];
                             const rpe = describeGlobalRpe(setRpes, !!ex.member_rpe_hidden);
@@ -2751,7 +2751,9 @@ export default function AdapterSemaine() {
           const fbMatch = findExerciseFeedback(ctx.feedback, ex.name);
           const fb = fbMatch?.feedback;
           const setRpes =
-            ctx.recentSetRpes[fbMatch?.key ?? normalizeExerciseFeedbackKey(ex.name)] ?? [];
+            ctx.recentSetRpes[editTarget.dayIdx + 1]?.[
+              fbMatch?.key ?? normalizeExerciseFeedbackKey(ex.name)
+            ] ?? [];
           const emomLetter = /^([A-Za-z])/.exec(String(ex.code ?? "").trim())?.[1]?.toUpperCase();
           const emomPairCount = emomLetter
             ? (day.exercises ?? []).filter(
