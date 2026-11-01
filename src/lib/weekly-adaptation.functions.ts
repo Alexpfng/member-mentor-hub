@@ -9,7 +9,11 @@ import {
   mergeExerciseFeedbackMaps,
   type AdapterExerciseFeedback,
 } from "@/lib/adapter-feedback-source";
-import { buildCoachExerciseFeedback, buildLatestSetRpesByExercise } from "@/lib/coach-rpe-feedback";
+import {
+  buildCoachExerciseFeedback,
+  buildLatestSetRpesByDay,
+  buildLatestSetRpesByExercise,
+} from "@/lib/coach-rpe-feedback";
 import { normalizeProgramStructure, normalizeWeekStructure } from "@/lib/week-structure-normalizer";
 import { clearFulfilledFilmRequests, filmedExerciseKeys } from "@/lib/film-requests";
 import { preserveAssignmentSessionMode } from "@/lib/assignment-session-mode";
@@ -139,7 +143,7 @@ async function resolveSourceWeek(
   if (prev && prev.structure) {
     // La demande de vidéo ne se réarme pas toute seule : on ne décoche que les
     // exercices dont la vidéo est bien arrivée sur la semaine copiée. Les
-    // autres restent cochés pour que le coach continue de relancer.
+    // Les repères de traitement du coach repartent à zéro sur chaque nouvelle copie.
     const filmed = await filmedKeysForWeek(memberId, prev.week_number);
     return {
       structure: resetCoachModificationStatus(
@@ -184,6 +188,8 @@ type AggregatedFeedbackContext = {
   sessions: FeedbackSession[];
   feedback: Record<string, AdapterExerciseFeedback>;
   recentSetRpes: Record<string, number[]>;
+  recentSetRpesByDay: Record<number, Record<string, number[]>>;
+  completedSessionDays: number[];
 };
 
 async function aggregateFeedback(
@@ -223,6 +229,8 @@ async function aggregateFeedback(
         sessions: sourceSessions,
         feedback: {},
         recentSetRpes: {},
+        recentSetRpesByDay: {},
+        completedSessionDays: [],
       };
     }
 
@@ -260,6 +268,8 @@ async function aggregateFeedback(
           sessions: sourceSessions,
           feedback,
           recentSetRpes: {},
+          recentSetRpesByDay: {},
+          completedSessionDays: [],
         };
       }
     }
@@ -270,6 +280,10 @@ async function aggregateFeedback(
       weekNumber: mostRecentWeekWithFeedback.weekNumber,
       sessions: mostRecentWeekWithFeedback.sessions,
       recentSetRpes: buildLatestSetRpesByExercise(rpeSessions, rpeLogs),
+      recentSetRpesByDay: buildLatestSetRpesByDay(rpeSessions, rpeLogs),
+      completedSessionDays: rpeSessions
+        .filter((session) => session.status === "completed" && session.day_number != null)
+        .map((session) => session.day_number!),
       // feedbackMaps est [plus récent … plus ancien] et mergeExerciseFeedbackMaps
       // laisse gagner le DERNIER map pour un même exo → on inverse pour que la
       // semaine la plus récente prime (les semaines antérieures ne servent que de repli).
@@ -281,6 +295,10 @@ async function aggregateFeedback(
     ? {
         ...firstWeekWithSessions,
         recentSetRpes: buildLatestSetRpesByExercise(rpeSessions, rpeLogs),
+        recentSetRpesByDay: buildLatestSetRpesByDay(rpeSessions, rpeLogs),
+        completedSessionDays: rpeSessions
+          .filter((session) => session.status === "completed" && session.day_number != null)
+          .map((session) => session.day_number!),
       }
     : null;
 }
@@ -556,6 +574,8 @@ export const getMemberWeekContext = createServerFn({ method: "POST" })
       },
       feedback,
       recentSetRpes: feedbackContext?.recentSetRpes ?? {},
+      recentSetRpesByDay: feedbackContext?.recentSetRpesByDay ?? {},
+      completedSessionDays: feedbackContext?.completedSessionDays ?? [],
       sourceSummary: {
         adherence,
         avgRpe,

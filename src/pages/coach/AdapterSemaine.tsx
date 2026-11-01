@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 30773)
-Total output lines: 3065
-
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -1125,7 +1122,1066 @@ export default function AdapterSemaine() {
 
   function syncWeekHorizontalScroll(scrollLeft: number) {
     const board = weekBoardScrollRef.current;
-    if (board && board.scrollLeft !== scrollLeft…10773 tokens truncated…
+    if (board && board.scrollLeft !== scrollLeft) board.scrollLeft = scrollLeft;
+    setWeekScrollLeft(scrollLeft);
+  }
+
+  function updateWeekScrollMetrics() {
+    const board = weekBoardScrollRef.current;
+    if (!board) return;
+    const max = adapterWeekHorizontalScrollLimit({
+      scrollWidth: board.scrollWidth,
+      clientWidth: board.clientWidth,
+    });
+    setWeekScrollMax(max);
+    setWeekScrollLeft(Math.min(Math.round(board.scrollLeft), max));
+  }
+
+  async function load() {
+    setLoading(true);
+    setErr(null);
+    try {
+      const c = await fetchCtx({
+        data: { memberId, weekNumber: search.week, ...(safeWeekId ? { weekId: safeWeekId } : {}) },
+      });
+      setCtx(c);
+      setStructure(normalizeCoachEditableWeek((c.week.structure as WeekStructure) ?? { days: [] }));
+      const isAlreadyPublished = ["published", "in_progress"].includes(c.week.status);
+      setMessage(
+        isAlreadyPublished
+          ? `Mise à jour de ta semaine ${c.week.week_number}, ${c.member.name.split(" ")[0]}. Vérifie les changements 👀`
+          : `Nouvelle semaine prête, ${c.member.name.split(" ")[0]}. À toi de jouer 💪`,
+      );
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }
+  useEffect(() => {
+    load(); /* eslint-disable-next-line */
+  }, [memberId, search.week, safeWeekId]);
+
+  useEffect(() => {
+    const raf = window.requestAnimationFrame(updateWeekScrollMetrics);
+    window.addEventListener("resize", updateWeekScrollMetrics);
+    return () => {
+      window.cancelAnimationFrame(raf);
+      window.removeEventListener("resize", updateWeekScrollMetrics);
+    };
+  }, [structure.days?.length]);
+
+  useEffect(() => {
+    function onPointerDown(event: MouseEvent) {
+      if (!quickRpeTarget) return;
+      if (quickRpePopoverRef.current?.contains(event.target as Node)) return;
+      setQuickRpeTarget(null);
+    }
+
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, [quickRpeTarget]);
+
+  // Auto-save with debounce
+  useEffect(() => {
+    if (!ctx?.week.id) return;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(async () => {
+      try {
+        await saveFn({ data: { weekId: ctx.week.id, structure } });
+        setSavedAt(Date.now());
+      } catch (e) {
+        console.error("[autosave]", e);
+        toast.error("La modification n’a pas pu être enregistrée. Réessaie.");
+      }
+    }, 700);
+    return () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+    };
+  }, [structure, ctx?.week.id, saveFn]);
+
+  function updateExo(dayIdx: number, exoIdx: number, fn: (ex: ProgExercise) => ProgExercise) {
+    setStructure((s) => {
+      const days = [...(s.days ?? [])];
+      const day = { ...days[dayIdx] };
+      const exos = [...(day.exercises ?? [])];
+      const previous = exos[exoIdx];
+      const next = markMemberRpeAddressedAfterPrescriptionChange(previous, fn(previous));
+      const changed = Object.keys(next).some(
+        (key) =>
+          key !== "coach_modified" &&
+          !Object.is(
+            (previous as Record<string, unknown>)[key],
+            (next as Record<string, unknown>)[key],
+          ),
+      );
+      exos[exoIdx] = changed ? { ...next, coach_modified: true } : next;
+      day.exercises = exos;
+      days[dayIdx] = day;
+      return { ...s, days };
+    });
+  }
+
+  function setExoEmomMode(dayIdx: number, exoIdx: number, mode: EmomEditorMode) {
+    clearExoSelection();
+    updateExo(dayIdx, exoIdx, (ex) => applyEmomEditorMode(ex, mode));
+  }
+
+  function createEmomPairExercise(dayIdx: number, exoIdx: number) {
+    clearExoSelection();
+    setStructure((s) => {
+      const days = [...(s.days ?? [])];
+      const day = { ...days[dayIdx] };
+      const exos = [...(day.exercises ?? [])];
+      const source = exos[exoIdx];
+      if (!source) return s;
+      const letter = looseBlockLetterOf(source.code);
+      exos[exoIdx] = {
+        ...applyEmomEditorMode(source, "alternating-exercises"),
+        coach_modified: true,
+      };
+      const pair: ProgExercise = {
+        ...source,
+        name: `${source.name} — minute paire`,
+        code: `${letter}2`,
+        block_type: "emom",
+        reps: hasAlternatingReps(source.reps) ? String(source.reps).match(/\d+/)?.[0] ?? "1" : source.reps,
+        coach_notes: source.coach_notes ?? null,
+        coach_modified: true,
+      };
+      exos.splice(exoIdx + 1, 0, pair);
+      day.exercises = exos;
+      days[dayIdx] = day;
+      return { ...s, days };
+    });
+    setEditTarget({ dayIdx, exoIdx: exoIdx + 1 });
+  }
+
+  function exoKey(dayIdx: number, exoIdx: number) {
+    return `${dayIdx}:${exoIdx}`;
+  }
+  function toggleExoSelected(dayIdx: number, exoIdx: number) {
+    const key = exoKey(dayIdx, exoIdx);
+    setSelectedExos((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+  /** Applique une couleur à tous les exercices cochés, dans tous les jours. */
+  function bulkSetColor(color: string) {
+    if (selectedExos.size === 0) return;
+    const count = selectedExos.size;
+    setStructure((s) => {
+      const days = (s.days ?? []).map((day, di) => ({
+        ...day,
+        exercises: (day.exercises ?? []).map((ex, ei) =>
+          selectedExos.has(exoKey(di, ei)) ? { ...ex, color, coach_modified: true } : ex,
+        ),
+      }));
+      return { ...s, days };
+    });
+    setSelectedExos(new Set());
+    setShowBulkColors(false);
+    toast.success(`Couleur appliquée à ${count} exercice${count > 1 ? "s" : ""}`);
+  }
+  /** La sélection est indexée par position : tout ce qui déplace ou supprime un
+   *  exercice la rend caduque, on la vide plutôt que de recolorer le mauvais. */
+  function clearExoSelection() {
+    setSelectedExos(new Set());
+    setShowBulkColors(false);
+  }
+
+  function removeExo(dayIdx: number, exoIdx: number) {
+    clearExoSelection();
+    setStructure((s) => {
+      const days = [...(s.days ?? [])];
+      const day = { ...days[dayIdx] };
+      day.exercises = (day.exercises ?? []).filter((_, i) => i !== exoIdx);
+      days[dayIdx] = day;
+      return { ...s, days };
+    });
+  }
+  // Réordonne un exercice (ou un bloc cardio fusionné de `len` exercices) dans sa séance.
+  // dir = -1 monter, +1 descendre. Pour un exercice simple, len = 1.
+  function moveBlock(dayIdx: number, startIdx: number, len: number, dir: -1 | 1) {
+    clearExoSelection();
+    setStructure((s) => {
+      const days = [...(s.days ?? [])];
+      const day = { ...days[dayIdx] };
+      const exos = [...(day.exercises ?? [])];
+      if (dir === -1) {
+        if (startIdx <= 0) return s;
+        const block = exos.splice(startIdx, len);
+        exos.splice(
+          startIdx - 1,
+          0,
+          ...block.map((exercise) => ({ ...exercise, coach_modified: true })),
+        );
+      } else {
+        if (startIdx + len >= exos.length) return s;
+        const block = exos.splice(startIdx, len);
+        exos.splice(
+          startIdx + 1,
+          0,
+          ...block.map((exercise) => ({ ...exercise, coach_modified: true })),
+        );
+      }
+      day.exercises = exos;
+      days[dayIdx] = day;
+      return { ...s, days };
+    });
+  }
+  function addExoFromLibrary(dayIdx: number, lib: LibExercise) {
+    setStructure((s) => {
+      const days = [...(s.days ?? [])];
+      const day = { ...days[dayIdx] };
+      const newExo: ProgExercise = {
+        name: lib.name,
+        series: 3,
+        reps: 10,
+        charge: null,
+        rpe_target: 8,
+        color: libColorToKey(lib.color),
+        tempo: lib.default_tempo ?? null,
+        recup: null,
+        coach_notes: null,
+        youtube_url: lib.youtube_url ?? null,
+        code: null,
+        coach_modified: true,
+      };
+      day.exercises = [...(day.exercises ?? []), newExo];
+      days[dayIdx] = day;
+      return { ...s, days };
+    });
+    // open the new card for immediate tweaking
+    const newIdx = structure.days?.[dayIdx]?.exercises?.length ?? 0;
+    setLibraryTarget(null);
+    setEditTarget({ dayIdx, exoIdx: newIdx });
+  }
+
+  async function addCurrentExoToLibrary(ex: ProgExercise) {
+    try {
+      const result = await saveLibraryExerciseFn({
+        data: {
+          name: ex.name,
+          block_type: ex.block_type ?? null,
+          color: ex.color ?? null,
+          tempo: ex.tempo ?? null,
+          youtube_url: ex.youtube_url ?? null,
+          coach_notes: sanitizeLibraryExerciseNotes(ex.coach_notes),
+        },
+      });
+      toast.success(
+        result.created
+          ? `Ajouté à la bibliothèque : ${result.exercise.name}`
+          : `Fiche bibliothèque mise à jour : ${result.exercise.name}`,
+      );
+    } catch (error) {
+      toast.error((error as Error).message);
+    }
+  }
+  function removeDay(dayIdx: number) {
+    setStructure((s) => ({ ...s, days: (s.days ?? []).filter((_, i) => i !== dayIdx) }));
+    setConfirmDeleteDay(null);
+  }
+  function addDay() {
+    setStructure((s) => ({ ...s, days: [...(s.days ?? []), emptySession(s.days?.length ?? 0)] }));
+  }
+
+  function resetAllRpe() {
+    if (!window.confirm("Effacer tous les RPE de cette semaine ?")) return;
+    // Count from current state before update (functional updater runs async,
+    // so computing count inside it leads to count=0 in the toast).
+    const count = (structure.days ?? []).reduce(
+      (total, day) =>
+        total +
+        (day.exercises ?? []).filter((ex) => {
+          const str = String(ex.rpe_target ?? "").trim();
+          const hasCoachRpe = str !== "" && !Number.isNaN(Number(str.replace(",", ".")));
+          const hasVisibleMemberRpe =
+            !ex.member_rpe_hidden &&
+            findExerciseFeedback(ctx?.feedback ?? {}, ex.name)?.feedback?.rpe != null;
+          return hasCoachRpe || hasVisibleMemberRpe;
+        }).length,
+      0,
+    );
+    setStructure((s) => resetWeekExerciseRpeTargets(s));
+    setQuickRpeTarget(null);
+    toast.success(`${count > 0 ? count : "Aucun"} RPE réinitialisé${count > 1 ? "s" : ""}`);
+  }
+
+  function applyQuickRpe(dayIdx: number, exoIdx: number, rpe: string | number | null) {
+    setStructure((current) =>
+      markExerciseModified(setExerciseQuickRpe(current, dayIdx, exoIdx, rpe), dayIdx, exoIdx),
+    );
+  }
+
+  function applyQuickCoachNote(dayIdx: number, exoIdx: number, coachNote: string) {
+    setStructure((current) =>
+      markExerciseModified(
+        setExerciseQuickCoachNote(current, dayIdx, exoIdx, coachNote),
+        dayIdx,
+        exoIdx,
+      ),
+    );
+  }
+
+  function markExerciseModified(current: WeekStructure, dayIdx: number, exoIdx: number) {
+    const days = [...(current.days ?? [])];
+    const day = days[dayIdx];
+    if (!day) return current;
+    const exercises = [...(day.exercises ?? [])];
+    if (!exercises[exoIdx]) return current;
+    exercises[exoIdx] = { ...exercises[exoIdx], coach_modified: true };
+    days[dayIdx] = { ...day, exercises };
+    return { ...current, days };
+  }
+
+  async function openPublish() {
+    if (!ctx?.week.id) return;
+    try {
+      // Flush : le preview et la publication lisent la base — on pousse d'abord
+      // l'état local, sinon les dernières frappes (< 700 ms) seraient ignorées.
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      await saveFn({ data: { weekId: ctx.week.id, structure } });
+      setSavedAt(Date.now());
+      const { changes } = await previewFn({ data: { weekId: ctx.week.id } });
+      setChanges(changes);
+      setPublishStartDate(defaultPublishStartDate(ctx.week.start_date));
+      setShowPublish(true);
+    } catch (e) {
+      alert((e as Error).message);
+    }
+  }
+
+  async function doPublish() {
+    if (!ctx?.week.id) return;
+    if (!publishStartDate) {
+      alert("Choisis une date de démarrage pour cette semaine.");
+      return;
+    }
+    setPublishing(true);
+    try {
+      await publishFn({
+        data: {
+          weekId: ctx.week.id,
+          startDate: publishStartDate || undefined,
+          notify,
+          message: notify ? message : undefined,
+        },
+      });
+      setShowPublish(false);
+      navigate({ to: "/coach/membre/$memberId", params: { memberId } });
+    } catch (e) {
+      alert((e as Error).message);
+    } finally {
+      setPublishing(false);
+    }
+  }
+
+  if (loading)
+    return (
+      <Shell>
+        <div style={{ opacity: 0.6, padding: 40 }}>Chargement…</div>
+      </Shell>
+    );
+  if (err || !ctx)
+    return (
+      <Shell>
+        <div style={{ padding: 40 }}>
+          <div
+            className="cst-mono"
+            style={{ fontSize: 10, letterSpacing: "0.18em", opacity: 0.5, marginBottom: 8 }}
+          >
+            ERREUR · ADAPTER SEMAINE
+          </div>
+          <div style={{ color: "#C44A3A", fontSize: 15, marginBottom: 20 }}>
+            {err ?? "Erreur inconnue"}
+          </div>
+          <div style={{ display: "flex", gap: 10 }}>
+            <button onClick={load} className="cst-btn cst-btn-primary">
+              Réessayer
+            </button>
+            <button
+              onClick={() => navigate({ to: "/coach/membre/$memberId", params: { memberId } })}
+              className="cst-btn cst-btn-ghost-dark"
+            >
+              ← Retour fiche membre
+            </button>
+          </div>
+        </div>
+      </Shell>
+    );
+
+  return (
+    <Shell>
+      <div style={{ padding: 20, maxWidth: 1100 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            marginBottom: 16,
+            flexWrap: "wrap",
+          }}
+        >
+          <button
+            onClick={() => navigate({ to: "/coach/membre/$memberId", params: { memberId } })}
+            className="cst-mono"
+            style={{
+              background: "transparent",
+              border: "1px solid rgba(255,255,255,0.15)",
+              color: "rgba(255,255,255,0.6)",
+              borderRadius: 6,
+              padding: "4px 10px",
+              fontSize: 10,
+              cursor: "pointer",
+            }}
+          >
+            ← FICHE MEMBRE
+          </button>
+          {ctx && ctx.week.week_number > 0 && (
+            <button
+              onClick={() =>
+                navigate({
+                  to: "/coach/membre/$memberId/adapter",
+                  params: { memberId },
+                  search: { week: ctx.week.week_number - 1 },
+                })
+              }
+              className="cst-mono"
+              style={{
+                background: "transparent",
+                border: "1px solid rgba(255,255,255,0.15)",
+                color: "rgba(255,255,255,0.6)",
+                borderRadius: 6,
+                padding: "4px 10px",
+                fontSize: 10,
+                cursor: "pointer",
+              }}
+            >
+              ← S{String(ctx.week.week_number - 1).padStart(2, "0")}
+            </button>
+          )}
+          {ctx && ctx.week.week_number < ctx.maxWeekNumber && (
+            <button
+              onClick={() =>
+                navigate({
+                  to: "/coach/membre/$memberId/adapter",
+                  params: { memberId },
+                  search: { week: ctx.week.week_number + 1 },
+                })
+              }
+              className="cst-mono"
+              style={{
+                background: "transparent",
+                border: "1px solid rgba(255,255,255,0.15)",
+                color: "rgba(255,255,255,0.6)",
+                borderRadius: 6,
+                padding: "4px 10px",
+                fontSize: 10,
+                cursor: "pointer",
+              }}
+            >
+              S{String(ctx.week.week_number + 1).padStart(2, "0")} →
+            </button>
+          )}
+        </div>
+
+        <div
+          className="cst-mono"
+          style={{ fontSize: 10, letterSpacing: "0.18em", opacity: 0.55, marginBottom: 4 }}
+        >
+          ADAPTER · {ctx.member.name} · {ctx.assignment.program_name}
+        </div>
+        <h1 className="cst-display" style={{ fontSize: 28, marginBottom: 6 }}>
+          Semaine {ctx.week.week_number}
+          {ctx.week.based_on_week != null && (
+            <span style={{ opacity: 0.5, fontSize: 16 }}>
+              {" "}
+              · copiée de S{ctx.week.based_on_week}
+            </span>
+          )}
+        </h1>
+
+        {(ctx.week.status === "published" || ctx.week.status === "in_progress") && (
+          <div
+            style={{
+              padding: "12px 16px",
+              background: "rgba(212,168,46,0.12)",
+              border: "1px solid rgba(212,168,46,0.35)",
+              borderRadius: 8,
+              marginBottom: 16,
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+            }}
+          >
+            <span style={{ fontSize: 16 }}>⚠</span>
+            <div>
+              <div
+                className="cst-mono"
+                style={{ fontSize: 10, color: "#D4A82E", letterSpacing: "0.15em" }}
+              >
+                SEMAINE {ctx.week.status === "in_progress" ? "EN COURS" : "DÉJÀ PUBLIÉE"}
+              </div>
+              <div style={{ fontSize: 12, opacity: 0.85, marginTop: 2 }}>
+                Tes modifications seront visibles par le membre après republication. Un message de
+                notification lui sera envoyé.
+              </div>
+            </div>
+          </div>
+        )}
+
+        {ctx.sourceSummary.weekNumber != null && (
+          <div className="cst-mono" style={{ fontSize: 11, opacity: 0.7, marginBottom: 20 }}>
+            RÉSUMÉ S{ctx.sourceSummary.weekNumber} ·
+            {ctx.sourceSummary.adherence &&
+              ` Adhérence ${ctx.sourceSummary.adherence.done}/${ctx.sourceSummary.adherence.total} · `}
+            {ctx.sourceSummary.avgRpe != null && `RPE moy. ${ctx.sourceSummary.avgRpe} · `}
+            {ctx.sourceSummary.painCount > 0
+              ? `${ctx.sourceSummary.painCount} douleur(s) signalée(s)`
+              : "aucune douleur"}
+          </div>
+        )}
+
+        {/* Séances */}
+        {(structure.days ?? []).length === 0 && (
+          <div className="cst-card-dark" style={{ padding: 28, textAlign: "center" }}>
+            <div className="cst-display" style={{ fontSize: 18, marginBottom: 8 }}>
+              Semaine vide
+            </div>
+            <div style={{ fontSize: 13, opacity: 0.65, marginBottom: 20, lineHeight: 1.5 }}>
+              Cette semaine n'a pas encore de séances.
+              <br />
+              Commence en ajoutant une séance, ou génère depuis les séances passées.
+            </div>
+            <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+              <button
+                onClick={() => setStructure((s) => ({ ...s, days: [emptySession(0)] }))}
+                className="cst-btn cst-btn-primary"
+              >
+                + Ajouter une première séance
+              </button>
+              <button
+                onClick={() => navigate({ to: "/coach/membre/$memberId", params: { memberId } })}
+                className="cst-btn cst-btn-ghost-dark"
+              >
+                ← Retour fiche membre
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Modification groupée — apparaît dès qu'un exercice est coché */}
+        {selectedExos.size > 0 && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              flexWrap: "wrap",
+              marginBottom: 12,
+              padding: "10px 12px",
+              borderRadius: 8,
+              background: "rgba(45,90,53,0.18)",
+              border: "1px solid var(--cst-mid-green)",
+            }}
+          >
+            <span
+              className="cst-mono"
+              style={{ fontSize: 12, letterSpacing: "0.1em", color: "var(--cst-text)" }}
+            >
+              {selectedExos.size} SÉLECTIONNÉ{selectedExos.size > 1 ? "S" : ""}
+            </span>
+            <button
+              onClick={() => setShowBulkColors((v) => !v)}
+              style={{
+                background: "var(--cst-mid-green)",
+                border: "none",
+                color: "#fff",
+                borderRadius: 6,
+                padding: "6px 12px",
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              Modifier la couleur ▾
+            </button>
+            {showBulkColors && (
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                {Object.entries(COLOR_MAP).map(([key, { bg, label }]) => (
+                  <button
+                    key={key}
+                    onClick={() => bulkSetColor(key)}
+                    title={label}
+                    aria-label={label}
+                    style={{
+                      width: 26,
+                      height: 26,
+                      borderRadius: "50%",
+                      background: bg,
+                      border: "1px solid rgba(255,255,255,0.25)",
+                      cursor: "pointer",
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+            <button
+              onClick={clearExoSelection}
+              style={{
+                marginLeft: "auto",
+                background: "none",
+                border: "1px solid rgba(255,255,255,0.2)",
+                color: "var(--cst-text-soft)",
+                borderRadius: 6,
+                padding: "6px 10px",
+                fontSize: 12,
+                cursor: "pointer",
+              }}
+            >
+              Annuler
+            </button>
+          </div>
+        )}
+
+        {/* Jours en colonnes (builder léger) */}
+        {(structure.days ?? []).length > 0 && (
+          <>
+            <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+              {([
+                ["cards", "Cartes"],
+                ["global", "Vue globale"],
+              ] as const).map(([view, label]) => (
+                <button
+                  key={view}
+                  onClick={() => setWeekView(view)}
+                  aria-pressed={weekView === view}
+                  className="cst-btn cst-btn-sm"
+                  style={{
+                    background: weekView === view ? "var(--cst-mid-green)" : "transparent",
+                    border: "1px solid rgba(255,255,255,0.18)",
+                    color: "var(--cst-text)",
+                    borderRadius: 6,
+                    padding: "7px 12px",
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {weekView === "cards" ? <div
+              ref={weekBoardScrollRef}
+              className="adapter-week-board-scroll"
+              onScroll={(event) => {
+                setWeekScrollLeft(Math.round(event.currentTarget.scrollLeft));
+                updateWeekScrollMetrics();
+              }}
+              onWheel={(event) => {
+                const horizontalDelta =
+                  Math.abs(event.deltaX) > Math.abs(event.deltaY) || event.shiftKey
+                    ? event.deltaX || event.deltaY
+                    : 0;
+                if (!horizontalDelta) return;
+                event.preventDefault();
+                const nextScrollLeft = Math.max(
+                  0,
+                  Math.min(weekScrollMax, weekScrollLeft + horizontalDelta),
+                );
+                syncWeekHorizontalScroll(nextScrollLeft);
+              }}
+              style={{
+                display: "flex",
+                gap: 14,
+                overflowX: "hidden",
+                paddingBottom: 8,
+                marginBottom: 10,
+                alignItems: "flex-start",
+                WebkitOverflowScrolling: "touch",
+              }}
+            >
+              {(structure.days ?? []).map((day, di) => (
+                <div
+                  key={di}
+                  className="cst-card-dark"
+                  style={{
+                    padding: 14,
+                    width: 360,
+                    minWidth: 360,
+                    flexShrink: 0,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 10,
+                  }}
+                >
+                  {/* En-tête colonne jour */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <input
+                      value={day.label ?? ""}
+                      onChange={(e) =>
+                        setStructure((s) => {
+                          const days = [...(s.days ?? [])];
+                          days[di] = { ...days[di], label: e.target.value };
+                          return { ...s, days };
+                        })
+                      }
+                      placeholder={sessionLabel(di)}
+                      className="cst-display"
+                      style={{
+                        flex: 1,
+                        minWidth: 0,
+                        background: "transparent",
+                        border: "none",
+                        borderBottom: "1px solid rgba(255,255,255,0.1)",
+                        color: "var(--cst-text)",
+                        fontSize: 15,
+                        paddingBottom: 4,
+                      }}
+                    />
+                    {confirmDeleteDay === di ? (
+                      <>
+                        <button
+                          onClick={() => removeDay(di)}
+                          style={{
+                            background: "#C44A3A",
+                            border: "none",
+                            color: "#fff",
+                            borderRadius: 5,
+                            padding: "3px 7px",
+                            fontSize: 10,
+                            cursor: "pointer",
+                          }}
+                        >
+                          Oui
+                        </button>
+                        <button
+                          onClick={() => setConfirmDeleteDay(null)}
+                          style={{
+                            background: "transparent",
+                            border: "1px solid rgba(255,255,255,0.2)",
+                            color: "var(--cst-text-soft)",
+                            borderRadius: 5,
+                            padding: "3px 7px",
+                            fontSize: 10,
+                            cursor: "pointer",
+                          }}
+                        >
+                          Non
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => setConfirmDeleteDay(di)}
+                        title="Supprimer ce jour"
+                        style={{
+                          background: "transparent",
+                          border: "1px solid rgba(196,74,58,0.3)",
+                          color: "#C44A3A",
+                          borderRadius: 5,
+                          padding: "3px 7px",
+                          fontSize: 12,
+                          cursor: "pointer",
+                        }}
+                      >
+                        🗑
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Cartes exercices */}
+                  {(day.exercises ?? []).map((ex, ei) => {
+                    const exos = day.exercises ?? [];
+                    // La fusion ne s'applique qu'aux séances d'endurance (course, natation,
+                    // renfo, trail…). En muscu, chaque exercice garde sa carte et son RPE.
+                    const dayIsEndurance = isEnduranceSession(day);
+                    // En endurance, chaque ligne est une phase distincte. On ne fusionne plus
+                    // les fragments cardio en une seule grosse carte : le coach doit pouvoir
+                    // lire et modifier échauffement / bloc / récupération séparément.
+                    const blockLen = 1;
+                    const fbMatch = findExerciseFeedback(ctx.feedback, ex.name);
+                    const fb = fbMatch?.feedback;
+                    const sugg = dayIsEndurance ? null : suggestFor(ex, fb);
+                    const cardColor = COLOR_MAP[(ex.color || "").toLowerCase()]?.bg || "#555";
+                    const lastIdx = (day.exercises?.length ?? 1) - 1;
+                    // Enchaînement (superset) : cet exercice partage sa lettre de code
+                    // (B1/B2…) avec au moins un autre du même jour.
+                    const blockLetter = blockLetterOf(ex.code);
+                    const isSuperset =
+                      !dayIsEndurance &&
+                      !!blockLetter &&
+                      exos.filter((e) => blockLetterOf(e.code) === blockLetter).length >= 2;
+                    const prevLetter = ei > 0 ? blockLetterOf(exos[ei - 1]?.code) : null;
+                    const nextLetter = blockLetterOf(exos[ei + 1]?.code);
+                    const isBlockStart = isSuperset && blockLetter !== prevLetter;
+                    const isBlockEnd = isSuperset && blockLetter !== nextLetter;
+                    // Le RPE est une valeur numérique (badge). La virgule décimale (9,5)
+                    // est acceptée. Tout texte libre hérité d'un ancien import cardio reste
+                    // affiché sous la carte, mais ne s'affiche plus comme un badge « CONSIGNE ».
+                    const rpeStr = ex.rpe_target == null ? "" : String(ex.rpe_target).trim();
+                    // « 10 (10kg trop lourd) » → RPE 10 dans le badge + commentaire sur sa ligne dédiée.
+                    const parsedRpe = parseRpeCell(ex.rpe_target);
+                    const rpeIsNumeric = parsedRpe.rpe != null;
+                    const rpeDisplay =
+                      parsedRpe.rpe != null ? parsedRpe.rpe.replace(".", ",") : null;
+                    const rpeIsFailure = parsedRpe.isFailure;
+                    const rpeComment = parsedRpe.comment;
+                    const rpeConsigne = parsedRpe.consigne;
+                    const memberRpeValue = fb?.rpe ?? null;
+                    const badgeLabel = getCoachRpeBadgeLabel({
+                      rpe_target: ex.rpe_target,
+                      memberRpe: memberRpeValue,
+                      memberRpeHidden: ex.member_rpe_hidden,
+                    });
+                    const badgeShowsMemberRpe =
+                      memberRpeValue != null &&
+                      !rpeIsNumeric &&
+                      !rpeIsFailure &&
+                      !ex.member_rpe_hidden;
+                    const badgeColor = badgeShowsMemberRpe
+                      ? memberRpeValue >= 9
+                        ? "#C0392B"
+                        : memberRpeValue >= 7
+                          ? "#E07B39"
+                          : "#5BA85A"
+                      : rpeIsNumeric
+                        ? cardColor
+                        : rpeIsFailure
+                          ? "#ffb0a5"
+                          : "rgba(255,255,255,0.35)";
+                    return (
+                      <Fragment key={ei}>
+                        {isBlockStart && (
+                          <div
+                            className="cst-mono"
+                            style={{
+                              fontSize: 9,
+                              letterSpacing: "0.16em",
+                              fontWeight: 700,
+                              color: "var(--cst-mid-green)",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 6,
+                              padding: "4px 2px 0",
+                            }}
+                          >
+                            ⛓ SUPERSET {blockLetter} · enchaîner sans repos
+                          </div>
+                        )}
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: 4,
+                            alignItems: "stretch",
+                            ...(isSuperset
+                              ? {
+                                  borderLeft: "2px solid var(--cst-mid-green)",
+                                  paddingLeft: 6,
+                                  marginLeft: 1,
+                                  paddingBottom: isBlockEnd ? 4 : 0,
+                                }
+                              : {}),
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedExos.has(exoKey(di, ei))}
+                            onChange={() => toggleExoSelected(di, ei)}
+                            title="Sélectionner pour changer la couleur en groupe"
+                            aria-label={`Sélectionner ${ex.name}`}
+                            style={{
+                              marginTop: 10,
+                              width: 15,
+                              height: 15,
+                              flexShrink: 0,
+                              cursor: "pointer",
+                              accentColor: "var(--cst-mid-green)",
+                            }}
+                          />
+                          <div
+                            onClick={() => setEditTarget({ dayIdx: di, exoIdx: ei })}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault();
+                                setEditTarget({ dayIdx: di, exoIdx: ei });
+                              }
+                            }}
+                            style={{
+                              textAlign: "left",
+                              cursor: "pointer",
+                              flex: 1,
+                              minWidth: 0,
+                              background: `${cardColor}0d`,
+                              border: sugg
+                                ? "1px solid rgba(212,168,46,0.5)"
+                                : `1px solid ${cardColor}40`,
+                              borderLeft: `3px solid ${cardColor}`,
+                              borderRadius: 8,
+                              padding: "9px 10px",
+                              color: "var(--cst-text)",
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: 4,
+                            }}
+                          >
+                            <div
+                              style={{
+                                display: "grid",
+                                gridTemplateColumns: "minmax(0, 1fr) auto",
+                                alignItems: "start",
+                                columnGap: 7,
+                              }}
+                            >
+                              <div
+                                style={{
+                                  display: "flex",
+                                  alignItems: "flex-start",
+                                  gap: 6,
+                                  minWidth: 0,
+                                }}
+                              >
+                                <ColorDot c={ex.color} />
+                                {ex.code && (
+                                  <span
+                                    className="cst-mono"
+                                    title={isSuperset ? `Superset ${blockLetter}` : undefined}
+                                    style={{
+                                      width: 34,
+                                      minWidth: 34,
+                                      maxWidth: 42,
+                                      textAlign: "center",
+                                      fontSize: 10,
+                                      fontWeight: 700,
+                                      flexShrink: 0,
+                                      color: "var(--cst-mid-green)",
+                                      background: "rgba(45,90,53,0.14)",
+                                      border: "1px solid rgba(45,90,53,0.3)",
+                                      borderRadius: 4,
+                                      padding: "1px 4px",
+                                      whiteSpace: "nowrap",
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                    }}
+                                  >
+                                    {ex.code}
+                                  </span>
+                                )}
+                                <span
+                                  style={{
+                                    minWidth: 0,
+                                    fontSize: 13,
+                                    fontWeight: 600,
+                                    whiteSpace: "normal",
+                                    overflowWrap: "anywhere",
+                                    wordBreak: "normal",
+                                    hyphens: "auto",
+                                    lineHeight: 1.3,
+                                  }}
+                                >
+                                  {ex.name}
+                                </span>
+                              </div>
+                              {sugg && (
+                                <span
+                                  title="Suggestion d'après les retours"
+                                  style={{ fontSize: 11 }}
+                                >
+                                  {sugg.type === "pain" ? "🔴" : "⚠"}
+                                </span>
+                              )}
+                            </div>
+                            <div
+                              style={{
+                                display: "flex",
+                                justifyContent: "flex-end",
+                                alignItems: "center",
+                                gap: 6,
+                                minHeight: 24,
+                              }}
+                            >
+                              <button
+                                type="button"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  void addCurrentExoToLibrary(ex);
+                                }}
+                                title="Ajouter cet exercice à la bibliothèque"
+                                className="cst-mono"
+                                style={{
+                                  background: "rgba(255,255,255,0.04)",
+                                  border: "1px solid rgba(255,255,255,0.12)",
+                                  color: "var(--cst-text-soft)",
+                                  borderRadius: 6,
+                                  padding: "4px 7px",
+                                  fontSize: 9,
+                                  letterSpacing: "0.12em",
+                                  cursor: "pointer",
+                                  flexShrink: 0,
+                                }}
+                              >
+                                ↥ BIBLIO
+                              </button>
+                              {!dayIsEndurance && (
+                                <div style={{ position: "relative", flexShrink: 0 }}>
+                                  <button
+                                    type="button"
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      const rect = (
+                                        event.currentTarget as HTMLButtonElement
+                                      ).getBoundingClientRect();
+                                      const side = getQuickRpePopoverPlacement({
+                                        anchorTop: rect.top,
+                                        anchorBottom: rect.bottom,
+                                        popoverHeight: QUICK_RPE_POPOVER_HEIGHT,
+                                        viewportHeight: window.innerHeight,
+                                      });
+                                      const left = Math.max(
+                                        12,
+                                        Math.min(
+                                          rect.right - QUICK_RPE_POPOVER_WIDTH,
+                                          window.innerWidth - QUICK_RPE_POPOVER_WIDTH - 12,
+                                        ),
+                                      );
+                                      setQuickRpeTarget((current) =>
+                                        current?.dayIdx === di && current?.exoIdx === ei
+                                          ? null
+                                          : {
+                                              dayIdx: di,
+                                              exoIdx: ei,
+                                              top:
+                                                side === "bottom" ? rect.bottom + 6 : rect.top - 6,
+                                              left,
+                                              side,
+                                            },
+                                      );
+                                    }}
+                                    className="cst-mono"
+                                    title={rpeConsigne ?? "Modifier le RPE"}
+                                    style={{
+                                      fontSize: 10,
+                                      fontWeight: 700,
+                                      maxWidth: 90,
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                      whiteSpace: "nowrap",
+                                      background: rpeIsNumeric
+                                        ? `${cardColor}33`
+                                        : rpeIsFailure
+                                          ? "rgba(201,72,58,0.22)"
+                                          : "rgba(255,255,255,0.06)",
+                                      border: `1px solid ${rpeIsNumeric ? cardColor + "66" : rpeIsFailure ? "rgba(255,138,122,0.32)" : "rgba(255,255,255,0.12)"}`,
+                                      borderRadius: 5,
+                                      padding: "2px 7px",
+                                      color: badgeColor,
+                                      cursor: "pointer",
+                                    }}
+                                  >
                                     {badgeLabel}
                                   </button>
                                   {quickRpeTarget?.dayIdx === di &&
@@ -1562,22 +2618,27 @@ export default function AdapterSemaine() {
                             <td key={index} className="cst-mono" style={{ padding: "9px 10px", whiteSpace: "nowrap", color: "var(--cst-text-soft)" }}>{value == null || value === "" ? "—" : String(value)}</td>
                           ))}
                           {(() => {
-                            const feedbackMatch = findExerciseFeedback(ctx?.feedback ?? {}, ex.name);
-                            const setRpes = ctx?.recentSetRpes[
-                              feedbackMatch?.key ?? normalizeExerciseFeedbackKey(ex.name)
-                            ] ?? [];
+                            const exerciseKey = normalizeExerciseFeedbackKey(ex.name);
+                            const setRpes = ctx?.recentSetRpesByDay[dayIdx + 1]?.[exerciseKey] ?? [];
+                            const sourceWeekExists = ctx?.sourceSummary.weekNumber != null;
+                            const sourceSessionDone = ctx?.completedSessionDays.includes(dayIdx + 1) ?? false;
                             // Le repère de traitement du coach ne doit jamais masquer
                             // les RPE saisis par le membre.
                             const rpe = describeGlobalRpe(setRpes);
+                            const rpeLabel = sourceWeekExists && !sourceSessionDone
+                              ? "Exercice non fait"
+                              : rpe.member ?? "—";
                             return (
                               <td
                                 className="cst-mono"
                                 style={{ padding: "7px 10px", minWidth: 150, color: "var(--cst-text-soft)" }}
-                                aria-label={rpe.member ? `RPE coaché par série : ${rpe.member}` : "Aucun RPE coaché"}
+                                aria-label={sourceWeekExists && !sourceSessionDone
+                                  ? "Exercice non fait la semaine précédente"
+                                  : rpe.member ? `RPE coaché par série : ${rpe.member}` : "Aucun RPE coaché"}
                               >
-                                {rpe.member ? (
-                                  <div style={{ color: "var(--cst-text, #fff)", whiteSpace: "nowrap" }}>{rpe.member}</div>
-                                ) : "—"}
+                                <div style={{ color: rpe.member ? "var(--cst-text, #fff)" : "var(--cst-text-soft)", whiteSpace: "nowrap" }}>
+                                  {rpeLabel}
+                                </div>
                               </td>
                             );
                           })()}
@@ -1735,7 +2796,9 @@ export default function AdapterSemaine() {
           const fbMatch = findExerciseFeedback(ctx.feedback, ex.name);
           const fb = fbMatch?.feedback;
           const setRpes =
-            ctx.recentSetRpes[fbMatch?.key ?? normalizeExerciseFeedbackKey(ex.name)] ?? [];
+            ctx.recentSetRpesByDay[editTarget.dayIdx + 1]?.[
+              normalizeExerciseFeedbackKey(ex.name)
+            ] ?? [];
           const emomLetter = /^([A-Za-z])/.exec(String(ex.code ?? "").trim())?.[1]?.toUpperCase();
           const emomPairCount = emomLetter
             ? (day.exercises ?? []).filter(
