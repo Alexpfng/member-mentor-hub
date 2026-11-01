@@ -46,7 +46,6 @@ export function mapCurrentProgramSessions(
       !week ||
       !day ||
       day.type === "Repos" ||
-      (session.program_id != null && session.program_id !== activeProgramId) ||
       !session.date ||
       session.status !== "completed" ||
       !session.started_at ||
