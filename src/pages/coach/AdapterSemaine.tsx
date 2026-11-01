@@ -31,7 +31,13 @@ import { shouldShowWeekRpeResetButton } from "@/lib/program-weeks";
 import { adapterWeekHorizontalScrollLimit } from "@/lib/adapter-week-horizontal-scroll";
 import { defaultPublishStartDate } from "@/lib/publish-start-date";
 import { normalizeCoachEditableWeek } from "@/lib/coach-exercise-normalizer";
-import { describeGlobalDay, describeGlobalRpe, getCoachModificationStatus } from "@/lib/adapter-global-view";
+import {
+  describeGlobalDay,
+  describeGlobalRpe,
+  findPreviousExerciseForModification,
+  getCoachModificationStatus,
+  isExercisePrescriptionModified,
+} from "@/lib/adapter-global-view";
 
 type LibExercise = {
   id: string;
@@ -2559,7 +2565,12 @@ export default function AdapterSemaine() {
                             {ex.name}
                           </td>
                           {(() => {
-                            const status = getCoachModificationStatus(!!ex.member_rpe_hidden);
+                            const previousExercises = (ctx?.basedOnStructure as WeekStructure | null)?.days?.[dayIdx]?.exercises;
+                            const previous = findPreviousExerciseForModification(ex, previousExercises, exoIdx);
+                            const hasSourceWeek = !!ctx?.basedOnStructure;
+                            const status = getCoachModificationStatus(
+                              hasSourceWeek && isExercisePrescriptionModified(ex, previous),
+                            );
                             const modified = status === "modified";
                             const label = modified ? "Prescription modifiée" : "Prescription non modifiée";
                             return (

@@ -399,6 +399,20 @@ export const getMemberWeekContext = createServerFn({ method: "POST" })
       }
     }
 
+    let basedOnStructure: WeekStructure | null = null;
+    if (weekRow.based_on_week != null) {
+      const { data: sourceWeek } = await supabaseAdmin
+        .from("assignment_weeks")
+        .select("structure")
+        .eq("assignment_id", weekRow.assignment_id)
+        .eq("week_number", weekRow.based_on_week)
+        .in("status", ["published", "in_progress", "done"])
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      basedOnStructure = (sourceWeek?.structure as WeekStructure | null) ?? null;
+    }
+
     // Profile
     const { data: profile } = await supabaseAdmin
       .from("profiles")
@@ -503,6 +517,7 @@ export const getMemberWeekContext = createServerFn({ method: "POST" })
         structure: effectiveStructure(weekRow as WeekRowLike) as unknown as never,
         has_pending_draft: pendingDraft,
       },
+      basedOnStructure,
       assignment: {
         id: assignment?.id ?? weekRow.assignment_id,
         program_id: assignment?.program_id ?? weekRow.program_id,
