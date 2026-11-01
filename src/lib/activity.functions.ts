@@ -196,7 +196,8 @@ export const getMemberTracking = createServerFn({ method: "GET" })
         .from("weight_logs")
         .select("date, weight_kg")
         .eq("member_id", data.memberId)
-        .order("date", { ascending: true }),
+        .order("date", { ascending: true })
+        .order("created_at", { ascending: true }),
       supabaseAdmin
         .from("activity_logs")
         .select("date, steps, calories")
@@ -224,4 +225,78 @@ export const getMemberTracking = createServerFn({ method: "GET" })
         calories: profile?.daily_calories_goal ?? null,
       },
     };
+  });
+
+/** Le coach ajoute ou corrige une pesée d'un coaché, avec sa date réelle. */
+export const saveMemberWeight = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        memberId: z.string().uuid(),
+        date: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/)
+          .refine((value) => {
+            const parsed = new Date(`${value}T00:00:00Z`);
+            return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+          }, "Date invalide"),
+        weightKg: z.number().min(20).max(400),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertCoach(context.userId);
+
+    const { data: existingRows, error: lookupError } = await supabaseAdmin
+      .from("weight_logs")
+      .select("id")
+      .eq("member_id", data.memberId)
+      .eq("date", data.date)
+      .order("created_at", { ascending: false })
+      .limit(1);
+    if (lookupError) throw new Error(lookupError.message);
+
+    const existing = existingRows?.[0];
+    const write = existing
+      ? await supabaseAdmin
+          .from("weight_logs")
+          .update({ weight_kg: data.weightKg })
+          .eq("id", existing.id)
+      : await supabaseAdmin.from("weight_logs").insert({
+          member_id: data.memberId,
+          date: data.date,
+          weight_kg: data.weightKg,
+        });
+    if (write.error) throw new Error(write.error.message);
+
+    const { data: latest, error: latestError } = await supabaseAdmin
+      .from("weight_logs")
+      .select("weight_kg")
+      .eq("member_id", data.memberId)
+      .order("date", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+    if (latestError) throw new Error(latestError.message);
+
+    const { data: profile, error: profileLookupError } = await supabaseAdmin
+      .from("member_profiles")
+      .select("id")
+      .eq("user_id", data.memberId)
+      .maybeSingle();
+    if (profileLookupError) throw new Error(profileLookupError.message);
+
+    const currentWeight = Number(latest.weight_kg);
+    const profileWrite = profile
+      ? await supabaseAdmin
+          .from("member_profiles")
+          .update({ weight_kg: currentWeight })
+          .eq("user_id", data.memberId)
+      : await supabaseAdmin
+          .from("member_profiles")
+          .insert({ user_id: data.memberId, weight_kg: currentWeight });
+    if (profileWrite.error) throw new Error(profileWrite.error.message);
+
+    return { date: data.date, weight_kg: data.weightKg, currentWeight };
   });

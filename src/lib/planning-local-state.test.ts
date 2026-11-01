@@ -4,8 +4,8 @@ import { applyPlannedSessionToWeekPlan, groupSessionsByDate } from "./planning-l
 
 describe("applyPlannedSessionToWeekPlan", () => {
   it("adds the saved planned session immediately to the current planning state", () => {
-    const state = { planned: [] };
-    const row = {
+    const state: { planned: Array<{ id: string; day_label: string; planned_date: string | null; week_number: number }> } = { planned: [] };
+    const row: { id: string; day_label: string; planned_date: string | null; week_number: number } = {
       id: "plan-1",
       day_label: "LOWER 2",
       planned_date: "2026-08-08",
@@ -16,7 +16,7 @@ describe("applyPlannedSessionToWeekPlan", () => {
   });
 
   it("replaces an existing planned session instead of duplicating it", () => {
-    const oldRow = {
+    const oldRow: { id: string; day_label: string; planned_date: string | null; week_number: number } = {
       id: "plan-1",
       day_label: "LOWER 2",
       planned_date: null,

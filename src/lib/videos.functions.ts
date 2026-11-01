@@ -220,6 +220,7 @@ export const listMemberVideos = createServerFn({ method: "POST" })
     ]);
 
     return [...techniqueVideos, ...sessionVideos].sort(
-      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      (a, b) =>
+        Date.parse(b.created_at ?? "") - Date.parse(a.created_at ?? ""),
     );
   });

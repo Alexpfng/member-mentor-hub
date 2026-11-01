@@ -1,10 +1,12 @@
+import type { Json } from "@/integrations/supabase/types";
+
 export type MemberAppEvent = {
   id: string;
   memberId: string;
   memberName: string;
   eventName: string;
   eventAt: string;
-  metadata?: Record<string, unknown> | null;
+  metadata?: Json | null;
 };
 
 export type MemberAppEventSummary = {
@@ -29,7 +31,7 @@ type MemberAppEventRow = {
   member_id: string;
   event_name: string;
   created_at: string;
-  metadata?: Record<string, unknown> | null;
+  metadata?: Json | null;
   profiles?: {
     first_name?: string | null;
     last_name?: string | null;
@@ -124,7 +126,11 @@ export function summarizeMemberAppEvents(events: MemberAppEvent[]): MemberAppEve
   const byMember = new Map<string, MemberAppEventSummary>();
 
   for (const event of ordered) {
-    const label = formatMemberAppEventLabel(event.eventName, event.metadata);
+    const metadata = event.metadata;
+    const label = formatMemberAppEventLabel(
+      event.eventName,
+      metadata && typeof metadata === "object" && !Array.isArray(metadata) ? metadata : null,
+    );
     const existing = byMember.get(event.memberId);
     if (!existing) {
       byMember.set(event.memberId, {

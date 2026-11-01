@@ -86,7 +86,9 @@ describe("fetchRecentStravaActivities", () => {
 
     expect(activities).toEqual([{ id: 123, sport_type: "Run" }]);
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [url, init] = fetchMock.mock.calls[0];
+    const [url, init] = (fetchMock as unknown as {
+      mock: { calls: Array<[RequestInfo | URL, RequestInit?]> };
+    }).mock.calls[0];
     expect(String(url)).toBe(
       "https://www.strava.com/api/v3/athlete/activities?after=1788048000&before=1788652800&per_page=12&page=1",
     );

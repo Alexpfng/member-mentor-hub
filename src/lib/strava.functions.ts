@@ -809,9 +809,9 @@ export const syncRecentStravaActivities = createServerFn({ method: "POST" })
           summary.ignored += 1;
         } else if (result.createdSession) {
           summary.created += 1;
-        } else if (result.match.status === "matched") {
+        } else if (result.match?.status === "matched") {
           summary.matched += 1;
-        } else if (result.match.status === "ambiguous") {
+        } else if (result.match?.status === "ambiguous") {
           summary.ambiguous += 1;
         } else {
           summary.imported += 1;

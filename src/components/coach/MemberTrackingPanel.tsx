@@ -7,7 +7,7 @@
  *
  * Écran coach : pas d'i18n (l'espace coach reste en français).
  */
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState, type FormEvent } from "react";
 import {
   LineChart,
   Line,
@@ -22,6 +22,7 @@ import {
 } from "recharts";
 import { CSTSectionNum } from "../Atoms";
 import { buildMemberWeeklySteps } from "../../lib/member-weekly-steps";
+import { localDateISO } from "../../lib/local-date";
 
 type WeightLog = { date: string; weight_kg: number };
 type ActivityLog = { date: string; steps: number | null; calories: number | null };
@@ -61,11 +62,41 @@ export default function MemberTrackingPanel({
   weights,
   activity,
   goals,
+  onSaveWeight,
 }: {
   weights: WeightLog[];
   activity: ActivityLog[];
   goals: Goals;
+  onSaveWeight: (date: string, weightKg: number) => Promise<unknown>;
 }) {
+  const [weightDate, setWeightDate] = useState(localDateISO());
+  const [weightValue, setWeightValue] = useState("");
+  const [weightBusy, setWeightBusy] = useState(false);
+  const [weightMessage, setWeightMessage] = useState("");
+  const [weightError, setWeightError] = useState("");
+
+  async function saveWeight(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const value = Number(weightValue.replace(",", "."));
+    if (!weightDate || !Number.isFinite(value) || value < 20 || value > 400) {
+      setWeightError("Saisis une date et un poids entre 20 et 400 kg.");
+      setWeightMessage("");
+      return;
+    }
+    setWeightBusy(true);
+    setWeightError("");
+    setWeightMessage("");
+    try {
+      await onSaveWeight(weightDate, value);
+      setWeightMessage("Pesée enregistrée.");
+      setWeightValue("");
+    } catch (error) {
+      setWeightError(error instanceof Error ? error.message : "Impossible d'enregistrer la pesée.");
+    } finally {
+      setWeightBusy(false);
+    }
+  }
+
   // ─── Poids ───
   const weightAsc = useMemo(
     () =>
@@ -175,12 +206,50 @@ export default function MemberTrackingPanel({
           label="TRACKING POIDS"
           sub={weightAsc.length > 0 ? `${weightAsc.length} PESÉES` : "AUCUNE DONNÉE"}
         />
+        <form
+          onSubmit={saveWeight}
+          className="cst-card-dark"
+          style={{ padding: 14, marginTop: 14, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "end" }}
+        >
+          <label style={{ display: "grid", gap: 5, flex: "1 1 150px" }}>
+            <span className="cst-mono" style={{ fontSize: 8, opacity: 0.6 }}>DATE DE LA PESÉE</span>
+            <input
+              type="date"
+              value={weightDate}
+              onChange={(event) => setWeightDate(event.target.value)}
+              required
+              style={{ minHeight: 40, padding: "8px 10px", borderRadius: 6, border: "1px solid rgba(255,255,255,0.15)", background: "var(--cst-dark-green, #16241a)", color: "var(--cst-text, #fff)", font: "inherit" }}
+            />
+          </label>
+          <label style={{ display: "grid", gap: 5, flex: "1 1 120px" }}>
+            <span className="cst-mono" style={{ fontSize: 8, opacity: 0.6 }}>POIDS (KG)</span>
+            <input
+              type="number"
+              min="20"
+              max="400"
+              step="0.1"
+              value={weightValue}
+              onChange={(event) => setWeightValue(event.target.value)}
+              placeholder="ex. 82,4"
+              required
+              style={{ minHeight: 40, padding: "8px 10px", borderRadius: 6, border: "1px solid rgba(255,255,255,0.15)", background: "var(--cst-dark-green, #16241a)", color: "var(--cst-text, #fff)", font: "inherit" }}
+            />
+          </label>
+          <button type="submit" disabled={weightBusy} className="cst-btn cst-btn-primary" style={{ minHeight: 40 }}>
+            {weightBusy ? "ENREGISTREMENT…" : "ENREGISTRER LA PESÉE"}
+          </button>
+          {(weightError || weightMessage) && (
+            <div role={weightError ? "alert" : "status"} style={{ flexBasis: "100%", fontSize: 12, color: weightError ? "#ff8a7a" : "#6EAB76" }}>
+              {weightError || weightMessage}
+            </div>
+          )}
+        </form>
         {weightAsc.length === 0 ? (
           <div
             className="cst-card-dark"
             style={{ padding: 18, marginTop: 14, opacity: 0.6, fontSize: 13 }}
           >
-            Aucune pesée pour l'instant. Le coaché renseigne son poids depuis l'app.
+            Aucune pesée pour l'instant. Tu peux saisir ici le poids communiqué par le coaché.
           </div>
         ) : (
           <div className="cst-card-dark" style={{ padding: 16, marginTop: 14 }}>
@@ -235,7 +304,7 @@ export default function MemberTrackingPanel({
                 className="cst-mono"
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "1fr 0.8fr 0.8fr 0.9fr",
+                  gridTemplateColumns: "1fr 0.8fr 0.8fr 0.9fr auto",
                   gap: 6,
                   fontSize: 8,
                   opacity: 0.5,
@@ -249,13 +318,14 @@ export default function MemberTrackingPanel({
                 <span style={{ textAlign: "right" }}>POIDS</span>
                 <span style={{ textAlign: "right" }}>% SEM.</span>
                 <span style={{ textAlign: "right" }}>% TOTAL</span>
+                <span />
               </div>
               {weightRows.map((r) => (
                 <div
                   key={r.date}
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "1fr 0.8fr 0.8fr 0.9fr",
+                    gridTemplateColumns: "1fr 0.8fr 0.8fr 0.9fr auto",
                     gap: 6,
                     fontSize: 12,
                     padding: "6px 2px",
@@ -287,6 +357,20 @@ export default function MemberTrackingPanel({
                   >
                     {r.totalPct != null ? `${signed(r.totalPct)}%` : "—"}
                   </span>
+                  <button
+                    type="button"
+                    className="cst-btn cst-btn-sm"
+                    aria-label={`Modifier la pesée du ${fmtDate(r.date)}`}
+                    onClick={() => {
+                      setWeightDate(r.date);
+                      setWeightValue(String(r.kg));
+                      setWeightMessage("");
+                      setWeightError("");
+                    }}
+                    style={{ padding: "3px 7px", fontSize: 9, whiteSpace: "nowrap" }}
+                  >
+                    MODIFIER
+                  </button>
                 </div>
               ))}
             </div>

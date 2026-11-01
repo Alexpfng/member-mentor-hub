@@ -9,6 +9,11 @@ type ProgramExerciseLibrarySource = {
   tempo?: string | null;
   youtube_url?: string | null;
   coach_notes?: string | null;
+  series?: string | number | null;
+  reps?: string | number | null;
+  charge?: string | null;
+  recup?: string | null;
+  rpe_target?: string | number | null;
 };
 
 function extractYoutubeId(url: string | null | undefined): string | null {

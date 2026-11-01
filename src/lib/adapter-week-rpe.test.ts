@@ -7,9 +7,22 @@ import {
   setExerciseQuickRpe,
 } from "./adapter-week-rpe";
 
+type TestWeek = {
+  days: Array<{
+    label: string;
+    exercises: Array<{
+      name: string;
+      rpe_target?: string | number | null;
+      rpe_cleared?: boolean;
+      member_rpe_hidden?: boolean;
+      coach_notes?: string | null;
+    }>;
+  }>;
+};
+
 describe("setExerciseQuickRpe", () => {
   it("updates only the targeted exercise rpe in the selected day", () => {
-    const structure = {
+    const structure: TestWeek = {
       days: [
         {
           label: "Séance 1",
@@ -37,7 +50,7 @@ describe("setExerciseQuickRpe", () => {
   });
 
   it("clears the rpe when value is null", () => {
-    const structure = {
+    const structure: TestWeek = {
       days: [
         { label: "Séance 1", exercises: [{ name: "A", rpe_target: 6 as string | number | null }] },
       ],
@@ -54,7 +67,7 @@ describe("setExerciseQuickRpe", () => {
   });
 
   it("removes the explicit member rpe hide marker when a new coach target is set again", () => {
-    const structure = {
+    const structure: TestWeek = {
       days: [
         {
           label: "Séance 1",
@@ -81,7 +94,7 @@ describe("setExerciseQuickRpe", () => {
   });
 
   it("updates only the targeted exercise coach note in the selected day", () => {
-    const structure = {
+    const structure: TestWeek = {
       days: [
         {
           label: "Séance 1",
@@ -109,7 +122,7 @@ describe("setExerciseQuickRpe", () => {
   });
 
   it("clears only numeric coach rpe targets across the full week", () => {
-    const structure = {
+    const structure: TestWeek = {
       days: [
         {
           label: "Séance 1",
@@ -146,16 +159,23 @@ describe("setExerciseQuickRpe", () => {
 
 describe("markMemberRpeAddressedAfterPrescriptionChange", () => {
   it("hides prior member RPE after the coach changes a prescription", () => {
+    const previous: Record<string, unknown> = {
+      name: "Pompes",
+      reps: "10 - 8",
+      member_rpe_hidden: false,
+    };
+    const next: Record<string, unknown> = {
+      name: "Pompes",
+      reps: "12 - 10",
+      member_rpe_hidden: false,
+    };
     expect(
-      markMemberRpeAddressedAfterPrescriptionChange(
-        { name: "Pompes", reps: "10 - 8", member_rpe_hidden: false },
-        { name: "Pompes", reps: "12 - 10", member_rpe_hidden: false },
-      ),
+      markMemberRpeAddressedAfterPrescriptionChange(previous, next),
     ).toEqual({ name: "Pompes", reps: "12 - 10", member_rpe_hidden: true, rpe_cleared: true });
   });
 
   it("does not hide RPE for unrelated edits or unchanged prescriptions", () => {
-    const exercise = { name: "Pompes", reps: "10 - 8", coach_notes: "ancienne note" };
+    const exercise: Record<string, unknown> = { name: "Pompes", reps: "10 - 8", coach_notes: "ancienne note" };
     expect(
       markMemberRpeAddressedAfterPrescriptionChange(exercise, {
         ...exercise,

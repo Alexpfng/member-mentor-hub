@@ -2,10 +2,20 @@ import { describe, expect, it } from "bun:test";
 
 import { normalizeCoachEditableExercise, normalizeCoachEditableWeek } from "./coach-exercise-normalizer";
 
+type TestExercise = {
+  name: string;
+  rpe_target?: string | number | null;
+  coach_notes?: string | null;
+  series?: string | number | null;
+  reps?: string | number | null;
+  tempo?: string | null;
+  recup?: string | null;
+};
+
 describe("normalizeCoachEditableExercise", () => {
   it("moves legacy text stored in rpe_target into coach notes for editing", () => {
     expect(
-      normalizeCoachEditableExercise({
+      normalizeCoachEditableExercise<TestExercise>({
         name: "Mouvements balistiques hanches",
         rpe_target: "Echauffer les hanches",
         coach_notes: null,
@@ -19,7 +29,7 @@ describe("normalizeCoachEditableExercise", () => {
 
   it("appends legacy text to existing coach notes without duplicating it", () => {
     expect(
-      normalizeCoachEditableExercise({
+      normalizeCoachEditableExercise<TestExercise>({
         name: "Mouvements balistiques hanches",
         rpe_target: "Echauffer les hanches",
         coach_notes: "Course basse intensite",
@@ -52,7 +62,7 @@ describe("normalizeCoachEditableExercise", () => {
 
   it("normalizes all exercises in a coach week structure", () => {
     expect(
-      normalizeCoachEditableWeek({
+      normalizeCoachEditableWeek<{ days: Array<{ label: string; exercises: TestExercise[] }> }>({
         days: [
           {
             label: "EF",
