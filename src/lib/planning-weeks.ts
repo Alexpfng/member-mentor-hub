@@ -1,5 +1,4 @@
 import { addDaysISO, localDateISO } from "@/lib/local-date";
-import { mondayOf } from "@/lib/streak";
 
 function isoUtc(iso: string) {
   return new Date(`${iso.slice(0, 10)}T00:00:00Z`);
@@ -44,9 +43,15 @@ function currentCustomWeekStart(iso: string, options?: PlanningWeekOptions) {
 }
 
 function assignmentWeekAnchor(iso: string, options?: PlanningWeekOptions) {
-  const monday = mondayOf(iso);
-  const offsetDays = normalizeWeekStartsOn(options?.weekStartsOn) - 1;
-  return addDaysISO(monday, offsetDays);
+  const startISO = iso.slice(0, 10);
+  const weekStart = currentCustomWeekStart(startISO, options);
+  const configuredStart = weekStartsOnToUtcDay(options?.weekStartsOn);
+  const dayBeforeStart = (configuredStart + 6) % 7;
+  const startDay = isoUtc(startISO).getUTCDay();
+
+  // A programme created on the final day of a personal week starts its first
+  // full training week on the next configured week boundary.
+  return startDay === dayBeforeStart ? addDaysISO(weekStart, 7) : weekStart;
 }
 
 export function weekWindowLabel(weekStartsOn?: number | null) {
@@ -112,14 +117,7 @@ export function planningWeekBoundsForPublishedWeek(
   options?: PlanningWeekOptions,
 ) {
   if (publishedWeekStartDate) {
-    const publishedDate = isoUtc(publishedWeekStartDate);
-    const configuredStart = weekStartsOnToUtcDay(options?.weekStartsOn);
-    const dayBeforeStart = (configuredStart + 6) % 7;
-    const containingWeekStart = assignmentWeekAnchor(publishedWeekStartDate, options);
-    const anchorWeekStart =
-      publishedDate.getUTCDay() === dayBeforeStart
-        ? addDaysISO(containingWeekStart, 7)
-        : containingWeekStart;
+    const anchorWeekStart = assignmentWeekAnchor(publishedWeekStartDate, options);
     return { weekStart: anchorWeekStart, weekEnd: addDaysISO(anchorWeekStart, 6) };
   }
   return planningWeekBounds(assignmentStartDate, weekNumber, options);
