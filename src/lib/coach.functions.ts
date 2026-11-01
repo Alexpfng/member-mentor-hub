@@ -1076,12 +1076,14 @@ export const getMyAssignedProgram = createServerFn({ method: "GET" })
       .maybeSingle();
 
     // Override weeks with published assignment_weeks (latest adapted version wins)
+    let assignmentWeeks: Array<{ week_number: number; structure: unknown; start_date: string | null }> = [];
     if (program) {
       const { data: weeks } = await supabaseAdmin
         .from("assignment_weeks")
-        .select("week_number, structure")
+        .select("week_number, structure, start_date")
         .eq("assignment_id", assignment.id)
         .in("status", ["published", "in_progress", "done"]);
+      assignmentWeeks = (weeks ?? []) as typeof assignmentWeeks;
       if (weeks && weeks.length > 0) {
         const base = (program.structure as object | null) ?? {};
         const merged = mergeAssignmentWeeks(base as never, weeks);
@@ -1092,6 +1094,11 @@ export const getMyAssignedProgram = createServerFn({ method: "GET" })
     return {
       assignment,
       program: program ?? null,
+      published_week_start_dates: Object.fromEntries(
+        assignmentWeeks
+          .filter((week: any) => week.start_date)
+          .map((week: any) => [week.week_number, week.start_date]),
+      ),
       planning_week_start_day: normalizeWeekStartsOn(profile?.planning_week_start_day),
     };
   });

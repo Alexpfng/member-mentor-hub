@@ -61,6 +61,7 @@ export default function MemberProgramme() {
               r.program?.id,
               r.assignment?.start_date,
               r.planning_week_start_day,
+              r.published_week_start_dates,
             ));
             const pMap = {};
             for (const p of planned ?? []) {

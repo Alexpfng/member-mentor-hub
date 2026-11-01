@@ -1,4 +1,7 @@
-import { planningWeekBounds, normalizeWeekStartsOn } from "@/lib/planning-weeks";
+import {
+  planningWeekBoundsForPublishedWeek,
+  normalizeWeekStartsOn,
+} from "@/lib/planning-weeks";
 
 export function getProgramSessionDayNumber(dayIndex: number) {
   return dayIndex + 1;
@@ -22,6 +25,7 @@ export function mapCurrentProgramSessions(
   activeProgramId: string | null | undefined,
   assignmentStartDate: string | null | undefined,
   weekStartsOn?: number | null,
+  publishedWeekStartDates?: Record<number, string | null | undefined>,
 ) {
   const mapped: Record<string, { id: string; status: string }> = {};
   if (!activeProgramId) return mapped;
@@ -42,6 +46,7 @@ export function mapCurrentProgramSessions(
       !week ||
       !day ||
       day.type === "Repos" ||
+      (session.program_id != null && session.program_id !== activeProgramId) ||
       !session.date ||
       session.status !== "completed" ||
       !session.started_at ||
@@ -50,9 +55,14 @@ export function mapCurrentProgramSessions(
       continue;
     }
 
-    const bounds = planningWeekBounds(assignmentStartDate, session.week_number!, {
-      weekStartsOn: normalizeWeekStartsOn(weekStartsOn),
-    });
+    const bounds = planningWeekBoundsForPublishedWeek(
+      assignmentStartDate,
+      session.week_number!,
+      publishedWeekStartDates?.[session.week_number!],
+      {
+        weekStartsOn: normalizeWeekStartsOn(weekStartsOn),
+      },
+    );
     if (session.date < bounds.weekStart || session.date > bounds.weekEnd) continue;
 
     const key = `${session.week_number}-${session.day_number}`;
