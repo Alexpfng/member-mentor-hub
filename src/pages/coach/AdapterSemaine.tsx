@@ -2553,7 +2553,15 @@ export default function AdapterSemaine() {
                   </thead>
                   <tbody>
                     {(structure.days ?? []).flatMap((day, dayIdx) => dayIdx === globalDayIndex ?
-                      (day.exercises ?? []).map((ex, exoIdx) => (
+                      (day.exercises ?? []).map((ex, exoIdx) => {
+                        const previousExercises = (ctx?.basedOnStructure as WeekStructure | null)?.days?.[dayIdx]?.exercises;
+                        const previous = findPreviousExerciseForModification(ex, previousExercises, exoIdx);
+                        const hasSourceWeek = !!ctx?.basedOnStructure;
+                        const modified = getCoachModificationStatus(
+                          hasSourceWeek && isExercisePrescriptionModified(ex, previous),
+                        ) === "modified";
+                        const label = modified ? "Prescription modifiée" : "Prescription non modifiée";
+                        return (
                         <tr
                           key={`${dayIdx}-${exoIdx}`}
                           onClick={() => setEditTarget({ dayIdx, exoIdx })}
@@ -2564,26 +2572,14 @@ export default function AdapterSemaine() {
                             <span style={{ display: "inline-block", width: 9, height: 9, borderRadius: "50%", background: COLOR_MAP[(ex.color ?? "").toLowerCase()]?.bg ?? "#666", marginRight: 8 }} />
                             {ex.name}
                           </td>
-                          {(() => {
-                            const previousExercises = (ctx?.basedOnStructure as WeekStructure | null)?.days?.[dayIdx]?.exercises;
-                            const previous = findPreviousExerciseForModification(ex, previousExercises, exoIdx);
-                            const hasSourceWeek = !!ctx?.basedOnStructure;
-                            const status = getCoachModificationStatus(
-                              hasSourceWeek && isExercisePrescriptionModified(ex, previous),
-                            );
-                            const modified = status === "modified";
-                            const label = modified ? "Prescription modifiée" : "Prescription non modifiée";
-                            return (
-                              <td
-                                className="cst-mono"
-                                style={{ padding: "9px 10px", textAlign: "center" }}
-                                aria-label={label}
-                                title={label}
-                              >
-                                {modified ? <Check size={16} aria-hidden="true" color="#5BA85A" /> : <X size={16} aria-hidden="true" color="#C9483A" />}
-                              </td>
-                            );
-                          })()}
+                          <td
+                            className="cst-mono"
+                            style={{ padding: "9px 10px", textAlign: "center" }}
+                            aria-label={label}
+                            title={label}
+                          >
+                            {modified ? <Check size={16} aria-hidden="true" color="#5BA85A" /> : <X size={16} aria-hidden="true" color="#C9483A" />}
+                          </td>
                           {[ex.reps, ex.charge, ex.tempo, ex.recup].map((value, index) => (
                             <td key={index} className="cst-mono" style={{ padding: "9px 10px", whiteSpace: "nowrap", color: "var(--cst-text-soft)" }}>{value == null || value === "" ? "—" : String(value)}</td>
                           ))}
@@ -2592,7 +2588,10 @@ export default function AdapterSemaine() {
                             const setRpes = ctx?.recentSetRpes[dayIdx + 1]?.[
                               feedbackMatch?.key ?? normalizeExerciseFeedbackKey(ex.name)
                             ] ?? [];
-                            const rpe = describeGlobalRpe(setRpes, !!ex.member_rpe_hidden);
+                            // En vue coach, masquer le RPE uniquement si la prescription
+                            // de CETTE semaine diffère de sa source. Le flag membre est
+                            // persistant et ne décrit pas le traitement de cette semaine.
+                            const rpe = describeGlobalRpe(setRpes, modified);
                             return (
                               <td
                                 className="cst-mono"
@@ -2606,7 +2605,8 @@ export default function AdapterSemaine() {
                             );
                           })()}
                         </tr>
-                      )) : [],
+                        );
+                      }) : [],
                     )}
                   </tbody>
                 </table>
