@@ -1,4 +1,5 @@
 import {
+  planningWeekBounds,
   planningWeekBoundsForPublishedWeek,
   normalizeWeekStartsOn,
 } from "@/lib/planning-weeks";
@@ -47,6 +48,7 @@ export function mapCurrentProgramSessions(
       !day ||
       day.type === "Repos" ||
       !session.date ||
+      (assignmentStartDate && session.date < assignmentStartDate.slice(0, 10)) ||
       session.status !== "completed" ||
       !session.started_at ||
       !session.ended_at
@@ -54,15 +56,21 @@ export function mapCurrentProgramSessions(
       continue;
     }
 
-    const bounds = planningWeekBoundsForPublishedWeek(
+    const options = {
+      weekStartsOn: normalizeWeekStartsOn(weekStartsOn),
+    };
+    const publishedBounds = planningWeekBoundsForPublishedWeek(
       assignmentStartDate,
       session.week_number!,
       publishedWeekStartDates?.[session.week_number!],
-      {
-        weekStartsOn: normalizeWeekStartsOn(weekStartsOn),
-      },
+      options,
     );
-    if (session.date < bounds.weekStart || session.date > bounds.weekEnd) continue;
+    const assignmentBounds = planningWeekBounds(assignmentStartDate, session.week_number!, options);
+    const isInPublishedWeek =
+      session.date >= publishedBounds.weekStart && session.date <= publishedBounds.weekEnd;
+    const isInAssignmentWeek =
+      session.date >= assignmentBounds.weekStart && session.date <= assignmentBounds.weekEnd;
+    if (!isInPublishedWeek && !isInAssignmentWeek) continue;
 
     const key = `${session.week_number}-${session.day_number}`;
     mapped[key] = { id: session.id, status: session.status };
