@@ -1676,7 +1676,9 @@ export function LiveSession({
         set_number: step.setNumber,
         weight_kg,
         reps,
-        rpe: l.rpe,
+        // KO est représenté par 11 dans l'état de séance pour le distinguer
+        // d'un RPE 10, mais la colonne set_logs accepte uniquement 0–10.
+        rpe: normalizeExpertRpeForStorage(l.rpe),
         note,
         completed: true,
       });
@@ -3857,6 +3859,28 @@ export function LiveSession({
                     </button>
                   );
                 })}
+                <button
+                  type="button"
+                  aria-label="RPE KO : échec, impossible de terminer la série"
+                  onClick={() => {
+                    setLogging({ ...logging, rpe: 11 });
+                    setValidationError(null);
+                  }}
+                  className="cst-mono"
+                  style={{
+                    padding: "12px 0",
+                    borderRadius: 6,
+                    border: `1px solid ${logging.rpe === 11 ? "#C9483A" : "rgba(255,138,122,0.35)"}`,
+                    background: logging.rpe === 11 ? "rgba(201,72,58,0.4)" : "rgba(201,72,58,0.12)",
+                    color: "#fff",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    ...rpeButtonReset("#ffffff"),
+                  }}
+                >
+                  KO
+                </button>
               </div>
             </div>
 

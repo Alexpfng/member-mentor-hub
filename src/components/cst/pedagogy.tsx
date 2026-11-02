@@ -290,6 +290,20 @@ export function RPEReferenceSheet({ open, onClose }: { open: boolean; onClose: (
       </div>
       <div
         style={{
+          marginTop: 10,
+          padding: "10px 12px",
+          background: "rgba(201,72,58,0.14)",
+          border: "1px solid rgba(201,72,58,0.4)",
+          borderRadius: 6,
+          fontSize: 13,
+          lineHeight: 1.45,
+        }}
+      >
+        <strong style={{ color: "#ff8a7a" }}>KO — </strong>
+        Échec sur la série : tu n’as pas pu terminer les répétitions prévues. C’est un choix distinct du RPE 10.
+      </div>
+      <div
+        style={{
           marginTop: 16,
           padding: 12,
           background: "rgba(45,90,53,0.15)",
