@@ -102,11 +102,11 @@ async function ensureDemoProgram(memberId: string, admin: any) {
 
   const { error: memberProfileError } = await admin.from("member_profiles").upsert({
     user_id: memberId,
-    level: "intermédiaire",
+    level: "intermediate",
     goal: "Préparer un trail de 30 km · 1 500 m D+",
     weight_kg: 112,
     height_cm: 198,
-  });
+  }, { onConflict: "user_id" });
   if (memberProfileError) throw new Error("Impossible de préparer le profil sportif démo.");
   if (activeAssignment) {
     const { error: programFlagError } = await admin
