@@ -33,12 +33,13 @@ async function notifyCoachPlanning(memberId: string, content: string) {
         .eq("member_id", memberId)
         .eq("active", true)
         .maybeSingle(),
-      supabaseAdmin
+      (supabaseAdmin as any)
         .from("profiles")
-        .select("first_name, last_name")
+        .select("first_name, last_name, is_demo")
         .eq("id", memberId)
         .maybeSingle(),
     ]);
+    if ((profile as any)?.is_demo) return;
     const coachId = (assignment as any)?.programs?.coach_id as string | undefined;
     if (!coachId) return;
     const name = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || "Le membre";

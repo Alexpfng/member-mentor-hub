@@ -54,11 +54,12 @@ async function listCoachMembers() {
     .eq("role", "member");
   const ids = (roles ?? []).map((r) => r.user_id);
   if (!ids.length) return [] as Member[];
-  const { data: profs } = await supabaseAdmin
+  const { data: profs } = await (supabaseAdmin as any)
     .from("profiles")
     .select("id, first_name, last_name, email, is_archived")
-    .in("id", ids);
-  return (profs ?? []).map((p) => ({
+    .in("id", ids)
+    .eq("is_demo", false);
+  return (profs ?? []).map((p: any) => ({
     user_id: p.id,
     first_name: p.first_name,
     last_name: p.last_name,

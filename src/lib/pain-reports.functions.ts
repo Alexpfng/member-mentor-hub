@@ -16,6 +16,10 @@ export const createPainReport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => createSchema.parse(d))
   .handler(async ({ data, context }) => {
+    if ((context.claims as any)?.app_metadata?.demo_mode === true) {
+      return { id: crypto.randomUUID() };
+    }
+
     const { error, data: row } = await supabaseAdmin
       .from("pain_reports")
       .insert({
