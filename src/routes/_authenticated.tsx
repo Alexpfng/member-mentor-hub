@@ -117,7 +117,7 @@ function DemoModeBadge() {
   const leaveDemo = async () => {
     await supabase.auth.signOut();
     window.sessionStorage.removeItem("cst-demo-mode");
-    window.location.assign("https://www.colosmartraining.fr/demo.html");
+    window.location.assign("https://www.colosmartraining.fr/essayer");
   };
 
   return (

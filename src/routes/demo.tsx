@@ -52,7 +52,7 @@ function DemoEntry() {
         <div style={{ color: "#a9d27b", font: "10px 'DM Mono', monospace", letterSpacing: ".16em", textTransform: "uppercase" }}>COLOSMARTRAINING · MODE DÉMO</div>
         <h1 style={{ margin: "18px 0 12px", font: "700 36px 'Big Shoulders Display', 'Arial Narrow', sans-serif", textTransform: "uppercase" }}>On prépare ton espace.</h1>
         <p role="status" style={{ margin: 0, color: "#b8b1a0", fontSize: 13, lineHeight: 1.7 }}>{message}</p>
-        <a href="https://www.colosmartraining.fr/demo.html" style={{ display: "inline-block", marginTop: 24, color: "#a9d27b", fontSize: 12 }}>Retour à l’essai interactif ↗</a>
+        <a href="https://www.colosmartraining.fr/essayer" target="_top" rel="noopener" style={{ display: "inline-block", marginTop: 24, color: "#a9d27b", fontSize: 12 }}>Retour à l’essai interactif ↗</a>
       </section>
     </main>
   );
