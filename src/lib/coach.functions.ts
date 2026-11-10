@@ -86,12 +86,13 @@ export const listPrograms = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertCoach(context.userId);
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await (supabaseAdmin as any)
       .from("programs")
       .select(
         "id, name, description, duration_weeks, frequency_per_week, objective, level, created_at",
       )
       .eq("coach_id", context.userId)
+      .eq("is_demo", false)
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     return { programs: data ?? [] };
@@ -110,10 +111,11 @@ export const listMembers = createServerFn({ method: "GET" })
     if (ids.length === 0) return { members: [] };
 
     const [{ data: profiles }, { data: assignments }] = await Promise.all([
-      supabaseAdmin
+      (supabaseAdmin as any)
         .from("profiles")
         .select("id, email, first_name, last_name, created_at, is_archived")
-        .in("id", ids),
+        .in("id", ids)
+        .eq("is_demo", false),
       supabaseAdmin
         .from("assignments")
         .select("member_id, program_id, active, start_date")
@@ -140,7 +142,7 @@ export const listMembers = createServerFn({ method: "GET" })
 
     const members = (profiles ?? [])
       .filter((p: any) => !p.is_archived)
-      .map((p) => {
+      .map((p: any) => {
         const a = assignMap.get(p.id);
         return {
           id: p.id,
@@ -381,6 +383,20 @@ export const sendMessage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => sendMsgSchema.parse(d))
   .handler(async ({ data, context }) => {
+    if ((context.claims as any)?.app_metadata?.demo_mode === true) {
+      return {
+        message: {
+          id: `demo-${Date.now()}`,
+          from_id: context.userId,
+          to_id: data.to_user_id,
+          content: data.body,
+          pinned: false,
+          read: false,
+          created_at: new Date().toISOString(),
+        },
+      } as any;
+    }
+
     // Enforce coach-involved constraint (mirrors RLS, since we use supabaseAdmin)
     if (context.userId === data.to_user_id) {
       throw new Error("Impossible de s'envoyer un message à soi-même");
@@ -590,11 +606,12 @@ export const getProgram = createServerFn({ method: "GET" })
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertCoach(context.userId);
-    const { data: row, error } = await supabaseAdmin
+    const { data: row, error } = await (supabaseAdmin as any)
       .from("programs")
       .select("*")
       .eq("id", data.id)
       .eq("coach_id", context.userId)
+      .eq("is_demo", false)
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!row) throw new Error("Programme introuvable");
@@ -606,11 +623,12 @@ export const duplicateProgram = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertCoach(context.userId);
-    const { data: src, error: e1 } = await supabaseAdmin
+    const { data: src, error: e1 } = await (supabaseAdmin as any)
       .from("programs")
       .select("*")
       .eq("id", data.id)
       .eq("coach_id", context.userId)
+      .eq("is_demo", false)
       .maybeSingle();
     if (e1) throw new Error(e1.message);
     if (!src) throw new Error("Programme introuvable");

@@ -48,10 +48,24 @@ export default function MemberMessages() {
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isDemo, setIsDemo] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setCurrentUserId(data.user?.id ?? null));
+    supabase.auth.getUser().then(({ data }) => {
+      const user = data.user;
+      setCurrentUserId(user?.id ?? null);
+      const demo = user?.app_metadata?.demo_mode === true;
+      setIsDemo(demo);
+      if (demo) {
+        try {
+          const saved = window.localStorage.getItem("cst-demo-messages");
+          if (saved) setMessages(JSON.parse(saved) as Message[]);
+        } catch {
+          window.localStorage.removeItem("cst-demo-messages");
+        }
+      }
+    });
   }, []);
 
   useEffect(() => {
@@ -68,6 +82,7 @@ export default function MemberMessages() {
   }, [coachFn]);
 
   const loadMessages = useCallback(async (partnerId: string) => {
+    if (isDemo) return;
     try {
       const r = await msgsFn({ data: { partner_id: partnerId } });
       setMessages(r.messages as Message[]);
@@ -76,13 +91,13 @@ export default function MemberMessages() {
       console.error("loadMessages", e);
       toast.error("Impossible de charger les messages. Réessaie.");
     }
-  }, [msgsFn]);
+  }, [isDemo, msgsFn]);
 
   useEffect(() => { if (coach) loadMessages(coach.id); }, [coach, loadMessages]);
 
   // Realtime
   useEffect(() => {
-    if (!coach || !currentUserId) return;
+    if (!coach || !currentUserId || isDemo) return;
     const ch = supabase.channel(`user:${currentUserId}:msgs`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, (payload) => {
         const m = payload.new as Message;
@@ -95,7 +110,7 @@ export default function MemberMessages() {
         }
       }).subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [coach, currentUserId]);
+  }, [coach, currentUserId, isDemo]);
 
   const handleSend = async () => {
     if (!body.trim() || !coach || sending) return;
@@ -108,6 +123,13 @@ export default function MemberMessages() {
     setMessages((prev) => [...prev, optimistic]);
     setBody("");
     setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+    if (isDemo) {
+      const next = [...messages, optimistic];
+      window.localStorage.setItem("cst-demo-messages", JSON.stringify(next));
+      toast.info("Message ajouté à la démo : il n’est pas envoyé au coach.");
+      setSending(false);
+      return;
+    }
     try {
       await sendFn({ data: { to_user_id: coach.id, body: text } });
     } catch (e: any) {
@@ -135,6 +157,7 @@ export default function MemberMessages() {
             Avec {coach.first_name} {coach.last_name}
           </div>
         )}
+        {isDemo && <div style={{ fontSize: 10, color: "#a9d27b", marginTop: 6 }}>Conversation de démonstration · aucun message ne part chez Léo</div>}
       </div>
 
       {/* Messages */}

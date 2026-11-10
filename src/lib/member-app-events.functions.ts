@@ -39,6 +39,13 @@ export async function recordMemberAppEvent(input: {
   metadata?: Record<string, unknown>;
   userAgent?: string | null;
 }) {
+  const { data: member } = await (supabaseAdmin as any)
+    .from("profiles")
+    .select("is_demo")
+    .eq("id", input.memberId)
+    .maybeSingle();
+  if (member?.is_demo) return;
+
   const { error } = await supabaseAdmin.from("member_app_events").insert({
     member_id: input.memberId,
     actor_user_id: input.actorUserId ?? null,

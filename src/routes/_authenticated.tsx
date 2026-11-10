@@ -97,5 +97,33 @@ function AuthenticatedLayout() {
       </div>
     );
   }
-  return <Outlet />;
+  return <>
+    <Outlet />
+    <DemoModeBadge />
+  </>;
+}
+
+function DemoModeBadge() {
+  const [active, setActive] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setActive(data.user?.app_metadata?.demo_mode === true);
+    });
+  }, []);
+
+  if (!active) return null;
+
+  const leaveDemo = async () => {
+    await supabase.auth.signOut();
+    window.sessionStorage.removeItem("cst-demo-mode");
+    window.location.assign("https://www.colosmartraining.fr/demo.html");
+  };
+
+  return (
+    <div style={{ position: "fixed", zIndex: 10000, top: 10, right: 12, display: "flex", alignItems: "center", gap: 10, padding: "8px 11px", border: "1px solid #a9d27b55", borderRadius: 999, background: "#142016ee", color: "#eaf2e0", boxShadow: "0 8px 26px #0006", font: "9px 'DM Mono', monospace", letterSpacing: ".06em" }}>
+      <span style={{ color: "#a9d27b" }}>MODE DÉMO · rien n’est envoyé au coach</span>
+      <button onClick={leaveDemo} style={{ padding: 0, border: 0, background: "transparent", color: "#f4efdf", font: "inherit", cursor: "pointer" }}>Quitter</button>
+    </div>
+  );
 }
