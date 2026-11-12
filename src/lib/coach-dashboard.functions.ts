@@ -568,10 +568,30 @@ export const getRecentSessions = createServerFn({ method: "GET" })
   .handler(async ({ context, data }) => {
     await assertCoach(context.userId);
     const members = await listCoachMembers();
+    const memberIds = members.map((member) => member.user_id);
+    if (memberIds.length === 0) return [];
+
+    // Older accounts can have their name in Supabase Auth metadata while the
+    // matching profiles row still has empty first/last name fields.
+    const authNames = await Promise.all(
+      members
+        .filter((member) => !member.first_name?.trim() && !member.last_name?.trim())
+        .map(async (member) => {
+          const { data } = await supabaseAdmin.auth.admin.getUserById(member.user_id);
+          const metadata = (data.user?.user_metadata ?? {}) as Record<string, unknown>;
+          const firstName = String(metadata.first_name ?? metadata.firstName ?? metadata.given_name ?? "").trim();
+          const lastName = String(metadata.last_name ?? metadata.lastName ?? metadata.family_name ?? "").trim();
+          const fullName = [firstName, lastName].filter(Boolean).join(" ") ||
+            String(metadata.full_name ?? metadata.name ?? metadata.display_name ?? "").trim();
+          return [member.user_id, fullName] as const;
+        }),
+    );
+    const authNameOf = new Map(authNames);
     const nameOf = new Map(
-      members.map((m) => [
-        m.user_id,
-        [m.first_name, m.last_name].filter(Boolean).join(" ") || m.email || "Membre",
+      members.map((member) => [
+        member.user_id,
+        [member.first_name, member.last_name].filter(Boolean).join(" ") ||
+          authNameOf.get(member.user_id) || member.email || "Membre",
       ]),
     );
 
@@ -581,6 +601,7 @@ export const getRecentSessions = createServerFn({ method: "GET" })
         "id, member_id, session_label, week_number, day_number, started_at, ended_at, duration_minutes, average_rpe, member_note, coach_seen, coach_hidden_at, status, session_type, free_title, free_category",
       )
       .eq("status", "completed")
+      .in("member_id", memberIds)
       .is("coach_hidden_at", null)
       // Tri par date de COMPLÉTION (toujours renseignée en fin de séance), pas par
       // started_at : une séance terminée récemment mais dont le started_at est
